@@ -162,6 +162,21 @@ for tema in org.kaelix.escuro.desktop org.kaelix.claro.desktop; do
 done
 # Tela de boas-vindas do primeiro uso com a cara do Kaelix (endereço do projeto).
 sed -i "s|@REPO_URL@|${REPO_URL}|" /usr/share/plasma/plasma-welcome/intro-customization.desktop
+# Tela de carregamento depois da senha: o emblema do Kaelix no lugar do logo do KDE.
+kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Engine KSplashQML
+kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Theme org.kaelix.escuro.desktop
+chmod 0644 /etc/xdg/ksplashrc
+# Tela de login e tela de bloqueio com o papel de parede do Kaelix.
+for f in /etc/plasmalogin.conf /etc/xdg/kscreenlockerrc; do
+  for chave in Image PreviewImage; do
+    kwriteconfig6 --file "$f" --group Greeter --group Wallpaper --group org.kde.image --group General \
+      --key "$chave" "file:///usr/share/wallpapers/Kaelix"
+  done
+  chmod 0644 "$f"
+done
+# Para o registro da montagem: o que a tela de login lê.
+ls -la /etc/plasmalogin.conf* /usr/lib/plasmalogin* /usr/share/plasmalogin* 2>/dev/null || true
+cat /etc/plasmalogin.conf
 # Tema Plasma do Kaelix: ilhas de vidro com cantos redondos (o resto vem do KDE).
 kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Kaelix
 chmod 0644 /etc/xdg/plasmarc

@@ -24,4 +24,4 @@ theme=Breeze
 LayoutName=org.kde.breeze.desktop
 
 [KSplash]
-Theme=org.kde.breeze.desktop
+Theme=org.kaelix.escuro.desktop

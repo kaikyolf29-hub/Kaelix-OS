@@ -43,7 +43,12 @@ sleep 30
 shot "02-login"
 hmp type "$USER_PASS"
 hmp key ret
-sleep 60
+# Tela de carregamento do Kaelix (aparece por poucos segundos depois da senha).
+for i in 1 2 3; do
+  sleep 3
+  shot "02b-carregando-$i"
+done
+sleep 51
 shot "03-area-de-trabalho"
 sleep 40
 shot "04-primeiro-login"
@@ -188,6 +193,11 @@ sleep 6
 shot "22-central-de-controle-escuro"
 hmp key esc
 sleep 2
+
+# Tela de bloqueio (Meta+L), com o papel de parede do Kaelix.
+hmp key meta_l-l
+sleep 8
+shot "23-tela-de-bloqueio"
 
 echo "Prints em $OUT"
 ls -l "$OUT"
