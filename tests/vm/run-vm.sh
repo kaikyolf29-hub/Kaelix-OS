@@ -180,6 +180,13 @@ hmp type "/usr/libexec/kaelix/kaelix-central estado"
 hmp key ret
 sleep 4
 shot "20-central-estado-lido-do-sistema"
+# Onde o atalho Meta+A da central ficou registrado (ou com quem ele briga).
+hmp type "clear"
+hmp key ret
+hmp type "grep -i -e meta.a -e widget .config/kglobalshortcutsrc"
+hmp key ret
+sleep 3
+shot "20b-atalho-da-central"
 # Se algo do Kaelix reclamou ao carregar, aparece aqui.
 hmp type "clear"
 hmp key ret
