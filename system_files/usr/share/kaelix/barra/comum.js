@@ -65,6 +65,18 @@ function porApps(painel) {
     return apps;
 }
 
+// Lixeira do Kaelix no fim dos apps, separada por um risquinho, como no Mac.
+// Recebe arquivos arrastados, mostra quando está cheia e abre com um clique.
+function porLixeira(painel) {
+    if (!tem("org.kde.plasma.trash")) {
+        return;
+    }
+    if (tem("org.kde.plasma.marginsseparator")) {
+        painel.addWidget("org.kde.plasma.marginsseparator");
+    }
+    painel.addWidget("org.kde.plasma.trash");
+}
+
 // Ilha da direita, como no vídeo da fusão: ícones dos apps em segundo plano
 // (com a setinha "mostrar mais"), a pílula de rede, Bluetooth, som e bateria
 // (central de controle), a hora com a data e o sino.

@@ -21,6 +21,7 @@ porBusca(esquerda);
 
 var centro = ilha("center");
 porApps(centro);
+porLixeira(centro);
 
 var direita = ilha("right");
 porBandeja(direita);

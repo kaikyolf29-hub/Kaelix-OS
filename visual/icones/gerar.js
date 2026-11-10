@@ -94,7 +94,30 @@ const ICONES = {
       `<g clip-path="url(#c-img)"><rect x="-44" y="-36" width="88" height="66" fill="url(#ceu-img)"/><circle cx="20" cy="-14" r="10" fill="#FFC677"/>` +
       `<path d="M-44 30 L-14 -4 L6 16 L20 4 L44 28 V30 Z" fill="#4353D6"/></g></g>`,
   },
+  // Lixeira do Kaelix (vazia e cheia), no fim dos apps da barra, como a do Mac.
+  lixeira: {
+    nomes: ['user-trash', 'trashcan_empty'],
+    svg: base('lix', '#9AA6D6', '#4C5690') + lata(false),
+  },
+  'lixeira-cheia': {
+    nomes: ['user-trash-full', 'trashcan_full'],
+    svg: base('lixc', '#9AA6D6', '#4C5690') + lata(true),
+  },
 };
+
+// Lata de lixo: tampa com alça, corpo com frisos. Cheia: sem tampa, com papéis saindo.
+function lata(cheia) {
+  const corpo = `<path d="M82 104 h92 l-8 82 a12 12 0 0 1 -12 11 h-52 a12 12 0 0 1 -12 -11 z" fill="${B}" stroke="${B}" stroke-width="8" ${liso}/>` +
+    `<path d="M108 122 l2 54 M128 122 v54 M148 122 l-2 54" fill="none" stroke="#5C66A3" stroke-width="9" ${liso}/>`;
+  if (!cheia) {
+    return corpo + `<path d="M72 88 h112" fill="none" stroke="${B}" stroke-width="14" ${liso}/>` +
+      `<path d="M110 84 v-10 a6 6 0 0 1 6 -6 h24 a6 6 0 0 1 6 6 v10" fill="none" stroke="${B}" stroke-width="10" ${liso}/>`;
+  }
+  return `<g transform="rotate(-14 104 92)"><rect x="80" y="66" width="46" height="56" rx="5" fill="#FFC677"/><path d="M90 82 h26 M90 94 h20" stroke="#E98A28" stroke-width="5" ${liso}/></g>` +
+    `<g transform="rotate(12 152 92)"><rect x="130" y="62" width="44" height="58" rx="5" fill="#8FA2FF"/><path d="M140 78 h24 M140 90 h18" stroke="#4353D6" stroke-width="5" ${liso}/></g>` +
+    `<path d="M112 98 q16 -26 34 -4 q-8 -22 -30 -12 z" fill="${B}" opacity=".85"/>` +
+    corpo;
+}
 
 const saida = process.argv[2];
 if (!saida) { console.error('uso: node gerar.js <pasta de saída>'); process.exit(1); }

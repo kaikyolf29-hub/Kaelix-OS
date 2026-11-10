@@ -24,3 +24,4 @@ doca.maximumLength = Math.round(screenGeometry(doca.screen).width * 0.8);
 doca.floating = true;
 doca.hiding = "none";
 porApps(doca);
+porLixeira(doca);
