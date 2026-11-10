@@ -17,22 +17,22 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | ✅ | Repositório público `kaelix-os`, licença GPL-3.0 | Criado em 10/11/2026 |
 | ✅ | Plano salvo em `docs/PLANO.md` | |
 | ✅ | Chave de assinatura cosign criada no pendrive do criador | Pública em `cosign.pub`. Ver `docs/CHAVES.md` |
-| 🔧 | Chave privada e senha nos segredos do GitHub | Colocadas pelo criador em 10/11/2026. Provado quando a primeira imagem sair assinada |
+| ✅ | Chave privada e senha nos segredos do GitHub | Provado: a imagem de 10/11/2026 saiu assinada e conferida |
 | ✅ | Chave guardada no pendrive (nasceu nele, nunca ficou solta no PC) | |
 | ⬜ | Verificação em duas etapas na conta do GitHub | Passo do criador |
-| 🔧 | `Containerfile` em cima do Fedora Atomic KDE (Fedora 44) | Base `ublue-os/kinoite-main` |
+| ✅ | `Containerfile` em cima do Fedora Atomic KDE (Fedora 44) | Base `ublue-os/kinoite-main`. Monta sem erro no GitHub (montagem 20261110.6) |
 | 🔧 | Steam (com Proton), GameMode e MangoHud | Pacotes RPM na imagem |
 | 🔧 | Heroic e Lutris | Flatpak, instalados no primeiro boot com internet |
 | 🔧 | Flathub ligado | Serviço `kaelix-flatpak-setup` |
 | 🔧 | Escolha entre Chrome e Brave | Pergunta no primeiro login e `kaelix navegador` |
 | 🔧 | Ferramentas de programação, VS Code e Distrobox | |
 | 🔧 | OBS Studio e Kdenlive | Flatpak |
-| 🔧 | GitHub Actions monta, assina com cosign e publica em `ghcr.io` | Fluxo `Montar imagem` |
-| 🔧 | Variante NVIDIA | Base `ublue-os/kinoite-nvidia`. Só dá para testar com placa NVIDIA |
+| ✅ | GitHub Actions monta, assina com cosign e publica em `ghcr.io` | `ghcr.io/kaikyolf29-hub/kaelix-os:teste`, assinatura conferida no próprio fluxo |
+| 🔧 | Variante NVIDIA | `ghcr.io/kaikyolf29-hub/kaelix-os-nvidia:teste` montada e assinada. Falta testar numa placa NVIDIA |
 | 🔧 | ISO de instalação | Fluxo `Montar ISO` (instalador de rede) |
 | 🔧 | Publicar como Release | Fluxo `Publicar versão estável`. Só roda quando o criador manda |
 | ✅ | Comandos `kaelix atualizar`, `voltar`, `drivers`, `seguranca` (e `navegador`, `versao`) | 24 testes automáticos passando |
-| ⬜ | Imagens públicas no ghcr.io | Depois da primeira montagem, mudar os pacotes para públicos |
+| ✅ | Imagens públicas no ghcr.io | Já ficaram públicas sozinhas (herdaram do repositório) |
 | ⬜ | Testar na máquina virtual | `docs/COMO-TESTAR.md` |
 | ⬜ | Testar no SSD, em dual boot | `docs/COMO-TESTAR.md` |
 | ⬜ | **Pronto quando:** instala pela ISO, joga um jogo da Steam e recebe atualização assinada | |
