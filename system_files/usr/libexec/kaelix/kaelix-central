@@ -11,8 +11,16 @@
 #   kaelix-central mudo
 #   kaelix-central brilho 1..100
 #   kaelix-central perfil economia|equilibrado|desempenho
-#   kaelix-central abrir rede|bluetooth|som|tela|configuracoes|barra
+#   kaelix-central abrir rede|bluetooth|som|tela|luz-noturna|energia|notificacoes|sobre|ajustes|atualizar|configuracoes|barra
+#   kaelix-central abrir kcm kcm_<nome>             (qualquer tela de ajustes do KDE)
 #   kaelix-central bloquear | sair
+#
+# Usados pelos Ajustes do Kaelix (a janela de ajustes, como a do Mac):
+#   kaelix-central vidro <cor> mais|normal|menos     (chama "kaelix vidro")
+#   kaelix-central barra fusao|mac|windows pequena|media|grande   (chama "kaelix barra")
+#   kaelix-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
+#   kaelix-central papel <pasta ou imagem>|escolher
+#   kaelix-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
 #
 # A central só desenha: quem lê e muda o sistema é este arquivo, que tem teste.
 # Cada parte funciona sozinha: o que a máquina não tem (Wi-Fi, Bluetooth, tela
@@ -24,8 +32,12 @@ export LC_ALL=C
 SYS_BACKLIGHT="${KAELIX_SYS_BACKLIGHT:-/sys/class/backlight}"
 SYS_POWER="${KAELIX_SYS_POWER:-/sys/class/power_supply}"
 SYS_BLUETOOTH="${KAELIX_SYS_BLUETOOTH:-/sys/class/bluetooth}"
-# Onde o comando "kaelix" guarda as escolhas da pessoa (estilo da barra).
+# Onde o comando "kaelix" guarda as escolhas da pessoa (estilo da barra, vidro).
 STATE_DIR="${KAELIX_STATE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/kaelix}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+KAELIX_BIN="${KAELIX_BIN:-kaelix}"
+# Pastas dos papéis de parede: primeiro os da pessoa, depois os do sistema.
+WALL_DIRS="${KAELIX_WALL_DIRS:-${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers:/usr/share/wallpapers}"
 
 have() { command -v "$1" >/dev/null 2>&1; }
 # Nenhum comando pode travar a central: dois segundos e segue.
@@ -179,11 +191,38 @@ estado_perfil() {
   echo "perfil_desempenho=$desempenho"
 }
 
+escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "kaelix"
+  [[ -r $STATE_DIR/$1 ]] && sed -n "s/^$2=//p" "$STATE_DIR/$1" | head -n1
+}
+
 estado_barra() {
-  local estilo=""
-  if [[ -r $STATE_DIR/barra ]]; then estilo="$(sed -n 's/^estilo=//p' "$STATE_DIR/barra" | head -n1)"; fi
+  local estilo tamanho
+  estilo="$(escolha barra estilo)"
+  tamanho="$(escolha barra tamanho)"
   case "$estilo" in mac|windows) ;; *) estilo=fusao ;; esac
+  case "$tamanho" in pequena|grande) ;; *) tamanho=media ;; esac
   echo "barra=$estilo"
+  echo "barra_tamanho=$tamanho"
+}
+
+estado_vidro() {
+  local cor nivel
+  cor="$(escolha vidro cor)"
+  nivel="$(escolha vidro transparencia)"
+  case "$nivel" in mais|menos) ;; *) nivel=normal ;; esac
+  echo "vidro_cor=${cor:-padrao}"
+  echo "vidro_transparencia=$nivel"
+}
+
+# Papel de parede da área de trabalho (o da primeira tela), sem "file://" e sem a barra do fim.
+estado_papel() {
+  local papel=""
+  if [[ -r $CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc ]]; then
+    papel="$(sed -n 's/^Image=//p' "$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc" | head -n1)"
+  fi
+  papel="${papel#file://}"
+  papel="${papel%/}"
+  echo "papel=$papel"
 }
 
 cmd_estado() {
@@ -204,6 +243,36 @@ cmd_estado() {
   estado_bateria
   estado_perfil
   estado_barra
+  estado_vidro
+  estado_papel
+}
+
+# Os papéis de parede instalados, um por linha: papel|pasta|nome|miniatura
+cmd_papeis() {
+  local pasta d nome mini f
+  local IFS=:
+  for pasta in $WALL_DIRS; do
+    [[ -d $pasta ]] || continue
+    for d in "$pasta"/*/; do
+      d="${d%/}"
+      [[ -d $d/contents/images || -d $d/contents/images_dark ]] || continue
+      nome=""
+      if have jq && [[ -r $d/metadata.json ]]; then
+        nome="$(jq -r '.KPlugin.Name // empty' "$d/metadata.json" 2>/dev/null)"
+      fi
+      [[ -n $nome ]] || nome="${d##*/}"
+      # Miniatura: a do pacote; se não tiver, a menor imagem dele.
+      mini=""
+      for f in "$d"/contents/screenshot.{png,jpg,webp}; do
+        if [[ -r $f ]]; then mini="$f"; break; fi
+      done
+      if [[ -z $mini ]]; then
+        mini="$(find "$d/contents/images" "$d/contents/images_dark" -maxdepth 1 -type f 2>/dev/null \
+                | awk -F/ '{ split($NF, m, "x"); print m[1] + 0 "\t" $0 }' | sort -n | head -n1 | cut -f2)"
+      fi
+      printf 'papel|%s|%s|%s\n' "$d" "$nome" "$mini"
+    done
+  done
 }
 
 # ------------------------------------------------------------------- ações
@@ -304,12 +373,54 @@ solto() { # abre um programa sem prender a central
   (setsid "$@" >/dev/null 2>&1 &)
 }
 
+cmd_pagina_pedida() {
+  [[ -r $STATE_DIR/ajustes-pagina ]] || return 0
+  echo "pagina=$(head -n1 "$STATE_DIR/ajustes-pagina")"
+  rm -f "$STATE_DIR/ajustes-pagina"
+}
+
+cmd_vidro() {
+  local cor="${1:-}" nivel="${2:-normal}"
+  [[ -n $cor ]] || { echo "use: vidro <cor> mais|normal|menos" >&2; exit 2; }
+  timeout 60 "$KAELIX_BIN" vidro "$cor" --transparencia "$nivel" >/dev/null 2>&1
+}
+
+cmd_barra() {
+  local estilo="${1:-}" tamanho="${2:-media}"
+  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande]" >&2; exit 2 ;; esac
+  timeout 60 "$KAELIX_BIN" barra "$estilo" --tamanho "$tamanho" >/dev/null 2>&1
+}
+
+cmd_papel() {
+  local alvo="${1:-}"
+  if [[ $alvo == escolher ]]; then
+    have kdialog || exit 1
+    alvo="$(kdialog --title "Kaelix OS" --getopenfilename "$HOME" "image/png image/jpeg image/webp image/avif" 2>/dev/null)" || exit 0
+  fi
+  [[ -n $alvo && -e $alvo ]] || { echo "use: papel <pasta ou imagem>|escolher" >&2; exit 2; }
+  timeout 20 plasma-apply-wallpaperimage "$alvo" >/dev/null 2>&1
+}
+
 cmd_abrir() {
   case "${1:-}" in
     rede)          solto kcmshell6 kcm_networkmanagement ;;
     bluetooth)     solto kcmshell6 kcm_bluetooth ;;
     som)           solto kcmshell6 kcm_pulseaudio ;;
     tela)          solto kcmshell6 kcm_kscreen ;;
+    luz-noturna)   solto kcmshell6 kcm_nightlight ;;
+    energia)       solto kcmshell6 kcm_powerdevilprofilesconfig ;;
+    notificacoes)  solto kcmshell6 kcm_notifications ;;
+    sobre)         solto kinfocenter ;;
+    ajustes)
+      # "abrir ajustes barra" abre direto na página da barra: os Ajustes leem o
+      # pedido com "pagina-pedida" (vale também se a janela já estiver aberta).
+      if [[ ${2:-} =~ ^[a-z]+$ ]]; then mkdir -p "$STATE_DIR" && echo "$2" > "$STATE_DIR/ajustes-pagina"; fi
+      solto plasmawindowed org.kaelix.ajustes ;;
+    atualizar)     solto konsole --hold -e kaelix atualizar ;;
+    kcm)
+      # Qualquer tela de ajustes do KDE, pelo nome (kcm_keyboard, kcm_users...).
+      [[ ${2:-} =~ ^kcm_[a-z0-9_]+$ ]] || { echo "use: abrir kcm kcm_<nome>" >&2; exit 2; }
+      solto kcmshell6 "$2" ;;
     configuracoes) solto systemsettings ;;
     barra)         solto kaelix barra ;;
     *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;
@@ -330,6 +441,11 @@ main() {
     mudo)          cmd_mudo ;;
     brilho)        cmd_brilho "$@" ;;
     perfil)        cmd_perfil "$@" ;;
+    vidro)         cmd_vidro "$@" ;;
+    barra)         cmd_barra "$@" ;;
+    papeis)        cmd_papeis ;;
+    pagina-pedida) cmd_pagina_pedida ;;
+    papel)         cmd_papel "$@" ;;
     abrir)         cmd_abrir "$@" ;;
     bloquear)      curto loginctl lock-session ;;
     sair)          curto busctl --user call org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt promptAll >/dev/null ;;

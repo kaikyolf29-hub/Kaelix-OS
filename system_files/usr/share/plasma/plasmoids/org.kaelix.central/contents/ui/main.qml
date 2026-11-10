@@ -297,7 +297,7 @@ PlasmoidItem {
                     detalhe: raiz.texto("barra") === "mac" ? "Mac" : raiz.texto("barra") === "windows" ? "Windows" : raiz.t("Fusão", "Fusion")
                     onAcionado: {
                         raiz.expanded = false;
-                        raiz.fazer("abrir barra");
+                        raiz.fazer("abrir ajustes barra");
                     }
                 }
             }
@@ -377,7 +377,7 @@ PlasmoidItem {
                 }
                 Repeater {
                     model: [
-                        { icone: "kaelix-ajustes-symbolic", nome: raiz.t("Configurações", "Settings"), acao: "abrir configuracoes" },
+                        { icone: "kaelix-ajustes-symbolic", nome: raiz.t("Ajustes do Kaelix", "Kaelix Settings"), acao: "abrir ajustes" },
                         { icone: "kaelix-cadeado-symbolic", nome: raiz.t("Bloquear", "Lock"), acao: "bloquear" },
                         { icone: "kaelix-desligar-symbolic", nome: raiz.t("Desligar", "Power"), acao: "sair" }
                     ]

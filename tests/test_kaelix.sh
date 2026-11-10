@@ -40,10 +40,12 @@ mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUS
 INFO="$WORK/image-info.json"
 echo '{"image-name":"kaelix-os","image-variant":"main","image-registry":"ghcr.io/dono","build-id":"20261110.1","fedora-version":"44"}' > "$INFO"
 
+VIDRO="$WORK/share/plasma/desktoptheme/Kaelix"
 run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
   OUT="$(PATH="$MOCK:$PATH" KAELIX_IMAGE_INFO="$INFO" KAELIX_STATE_DIR="$WORK/state" KAELIX_BAR_DIR="$ROOT/system_files/usr/share/kaelix/barra" \
-         KAELIX_LANG="${L:-pt}" KAELIX_YES=1 KAELIX_FIRST_DELAY=0 DISPLAY="${GUI:-}" WAYLAND_DISPLAY='' \
+         KAELIX_VIDRO_GEN="$ROOT/system_files/usr/share/kaelix/vidro/gerar.py" KAELIX_VIDRO_DIR="$VIDRO" KAELIX_VIDRO_PAUSA=0 \
+         XDG_CACHE_HOME="$WORK/cache" KAELIX_LANG="${L:-pt}" KAELIX_YES=1 KAELIX_FIRST_DELAY=0 DISPLAY="${GUI:-}" WAYLAND_DISPLAY='' \
          bash "$KAELIX" "$@" 2>&1 </dev/null)"
   CODE=$?
 }
@@ -198,6 +200,43 @@ mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUS
 run barra fusao --tamanho media
 FAKE_BUSCTL_RC=1 run barra mac
 check "sem área de trabalho avisa e não guarda" bash -c "grep -qF 'Não consegui falar' <<<\"\$0\" && grep -qF 'estilo=fusao' '$WORK/state/barra'" "$OUT"
+
+echo "vidro"
+mock plasma-apply-desktoptheme 'exit 0'
+mock plasma-apply-colorscheme 'exit 0'
+mock kreadconfig6 'echo Kaelix'
+SVG="$VIDRO/translucent/widgets/panel-background.svg"
+run vidro
+check "sem escolha mostra o vidro atual" has "Vidro atual: cor padrao, transparência normal"
+run vidro roxo
+check "gera o vidro roxo na pasta da pessoa" grep -qF 'fill="#8b5cf6"' "$SVG"
+check "marca o tema como feito pelo Kaelix" test -e "$VIDRO/.kaelix-vidro"
+check "o destaque do sistema fica roxo" called "plasma-apply-colorscheme --accent-color #8b5cf6"
+check "o Plasma relê o tema (passa pelo do KDE e volta)" bash -c "grep -n 'plasma-apply-desktoptheme' '$CALLS' | tr '\n' ' ' | grep -qE 'default.*Kaelix'"
+check "a transparência continua a normal (cobre 62%)" grep -qF 'opacity="0.5"' "$SVG"
+run vidro
+check "lembra a cor escolhida" has "Vidro atual: cor roxo, transparência normal"
+run vidro --transparencia mais
+check "trocar só a transparência mantém a cor" grep -qF 'fill="#8b5cf6"' "$SVG"
+check "mais transparente cobre menos" grep -qF 'opacity="0.237"' "$SVG"
+L=en run glass blue --transparency=less
+check "em inglês também (blue, less)" bash -c "grep -qF 'fill=\"#2f80ed\"' '$SVG' && grep -qF 'transparencia=menos' '$WORK/state/vidro' && grep -qF 'cor=azul' '$WORK/state/vidro'"
+run vidro '#FF8800'
+check "aceita cor em #rrggbb" grep -qF 'fill="#ff8800"' "$SVG"
+run vidro padrao --transparencia normal
+check "no padrão apaga o tema da pessoa (vale o do sistema)" test ! -e "$VIDRO"
+check "no padrão o destaque volta ao anil do Kaelix" called "plasma-apply-colorscheme --accent-color #5468e8"
+run vidro padrao --transparencia mais
+check "padrão mais transparente gera o vidro sem cor" bash -c "grep -qF 'opacity=\"0.42\"' '$SVG' && ! grep -qE 'fill=\"#[0-9a-f]{6}\" opacity=\"0.24\"' '$SVG'"
+run vidro magenta
+check "cor desconhecida é recusada" test "$CODE" -ne 0
+run vidro azul --transparencia total
+check "transparência desconhecida é recusada" test "$CODE" -ne 0
+run vidro padrao --transparencia normal
+mkdir -p "$VIDRO" && echo meu > "$VIDRO/metadata.json"
+run vidro verde
+check "não apaga um tema que a pessoa fez" bash -c "grep -qF 'Não vou mexer' <<<\"\$0\" && grep -qF meu '$VIDRO/metadata.json'" "$OUT"
+rm -rf "$VIDRO"
 
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"

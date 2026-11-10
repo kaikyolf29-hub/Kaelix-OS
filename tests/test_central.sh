@@ -21,7 +21,8 @@ mock() { # mock <nome> <corpo>
 run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
   OUT="$(PATH="$MOCK:$PATH" KAELIX_SYS_BACKLIGHT="$WORK/backlight" KAELIX_SYS_POWER="$WORK/power" \
-         KAELIX_SYS_BLUETOOTH="$WORK/bluetooth" KAELIX_STATE_DIR="$WORK/state" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
+         KAELIX_SYS_BLUETOOTH="$WORK/bluetooth" KAELIX_STATE_DIR="$WORK/state" \
+         XDG_CONFIG_HOME="$WORK/config" KAELIX_WALL_DIRS="$WORK/papeis-meus:$WORK/papeis" KAELIX_BIN="$MOCK/kaelix" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
   CODE=$?
 }
 
@@ -31,6 +32,7 @@ check() { # check <descrição> <condição...>
   else FAILN=$((FAILN+1)); echo "  FAIL $desc"; printf '       | %s\n' "${OUT//$'\n'/$'\n'       | }"; fi
 }
 linha()  { grep -qxF -- "$1" <<<"$OUT"; }
+has()    { grep -qF -- "$1" <<<"$OUT"; }
 called() { grep -qF -- "$1" "$CALLS"; }
 
 # Programas do sistema que não são o assunto de cada teste ficam quietos.
@@ -147,6 +149,53 @@ mock busctl 'exit 0'
 run perfil desempenho; check "sem perfil de energia, avisa" test "$CODE" -eq 1
 run bloquear;  check "bloqueia a tela" called "loginctl lock-session"
 run sair;      check "abre a tela de desligar" called "org.kde.LogoutPrompt promptAll"
+echo "ajustes do Kaelix"
+mock kaelix 'exit 0'
+mock plasma-apply-wallpaperimage 'exit 0'
+mock plasmawindowed 'exit 0'
+rm -rf "$WORK/state"
+run estado
+check "sem escolha, barra média e vidro padrão" bash -c "grep -qx 'barra_tamanho=media' <<<\"\$0\" && grep -qx 'vidro_cor=padrao' <<<\"\$0\" && grep -qx 'vidro_transparencia=normal' <<<\"\$0\"" "$OUT"
+mkdir -p "$WORK/state" "$WORK/config"
+printf 'estilo=mac\ntamanho=grande\n' > "$WORK/state/barra"
+printf 'cor=roxo\ntransparencia=mais\n' > "$WORK/state/vidro"
+printf '[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///usr/share/wallpapers/Kaelix/\n' > "$WORK/config/plasma-org.kde.plasma.desktop-appletsrc"
+run estado
+check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\"" "$OUT"
+check "lê a cor e a transparência do vidro" bash -c "grep -qx 'vidro_cor=roxo' <<<\"\$0\" && grep -qx 'vidro_transparencia=mais' <<<\"\$0\"" "$OUT"
+check "lê o papel de parede sem file:// e sem a barra do fim" bash -c "grep -qx 'papel=/usr/share/wallpapers/Kaelix' <<<\"\$0\"" "$OUT"
+run vidro azul menos
+check "vidro chama o comando kaelix" called "kaelix vidro azul --transparencia menos"
+run vidro; check "vidro sem cor é recusado" test "$CODE" -eq 2
+run barra windows pequena
+check "barra chama o comando kaelix" called "kaelix barra windows --tamanho pequena"
+run barra linux; check "barra desconhecida é recusada" test "$CODE" -eq 2
+mkdir -p "$WORK/papeis/Kaelix/contents/images" "$WORK/papeis/Kaelix/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
+touch "$WORK/papeis/Kaelix/contents/images/3840x2160.png" "$WORK/papeis/Kaelix/contents/screenshot.png"
+touch "$WORK/papeis/Nuvens/contents/images/3840x2160.jpg" "$WORK/papeis/Nuvens/contents/images/1280x720.jpg" "$WORK/papeis/Nuvens/contents/images/640x480.jpg"
+echo '{"KPlugin":{"Name":"Kaelix Pixel"}}' > "$WORK/papeis/Kaelix/metadata.json"
+run papeis
+check "lista os papéis com nome e miniatura do pacote" has "papel|$WORK/papeis/Kaelix|Kaelix Pixel|$WORK/papeis/Kaelix/contents/screenshot.png"
+check "sem miniatura usa a menor imagem" has "papel|$WORK/papeis/Nuvens|Nuvens|$WORK/papeis/Nuvens/contents/images/640x480.jpg"
+check "pasta sem imagens fica de fora" bash -c "! grep -qF vazio <<<\"\$0\"" "$OUT"
+run papel "$WORK/papeis/Nuvens"
+check "troca o papel de parede" called "plasma-apply-wallpaperimage $WORK/papeis/Nuvens"
+run papel /nao/existe; check "papel que não existe é recusado" test "$CODE" -eq 2
+mock kdialog "echo $WORK/foto.png"
+touch "$WORK/foto.png"
+run papel escolher
+check "escolher abre a janela de arquivo e aplica" bash -c "grep -qF 'kdialog' '$CALLS' && grep -qF 'plasma-apply-wallpaperimage $WORK/foto.png' '$CALLS'"
+run abrir ajustes
+check "abre os Ajustes do Kaelix" bash -c "sleep 0.3; grep -qF 'plasmawindowed org.kaelix.ajustes' '$CALLS'"
+run pagina-pedida; check "sem pedido não diz página" test -z "$OUT"
+run abrir ajustes barra
+run pagina-pedida; check "abrir ajustes barra pede a página da barra" linha "pagina=barra"
+run pagina-pedida; check "o pedido vale uma vez só" test -z "$OUT"
+
+mock kcmshell6 'exit 0'
+run abrir kcm kcm_keyboard
+check "abre uma tela de ajustes do KDE pelo nome" bash -c "sleep 0.3; grep -qF 'kcmshell6 kcm_keyboard' '$CALLS'"
+run abrir kcm "kcm_x; rm -rf /"; check "nome de tela estranho é recusado" test "$CODE" -eq 2
 run abrir nada; check "abrir algo desconhecido é recusado" test "$CODE" -eq 2
 run dancar; check "comando desconhecido sai com código 2" test "$CODE" -eq 2
 run estado tudo; check "parte do estado desconhecida sai com código 2" test "$CODE" -eq 2

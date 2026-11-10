@@ -38,13 +38,18 @@ function fixadosPadrao() {
         "steam.desktop",
         "code.desktop",
         "org.kde.discover.desktop",
-        "org.kde.plasma-systemmonitor.desktop",
-        "systemsettings.desktop"
+        "org.kde.plasma-systemmonitor.desktop"
     ];
     for (var c = 0; c < candidatos.length; c++) {
         if (applicationExists(candidatos[c])) {
             fixados.push("applications:" + candidatos[c]);
         }
+    }
+    // Ajustes do Kaelix (como os Ajustes do Mac); sem eles, os do KDE.
+    if (applicationExists("org.kaelix.ajustes.desktop")) {
+        fixados.push("applications:org.kaelix.ajustes.desktop");
+    } else if (applicationExists("systemsettings.desktop")) {
+        fixados.push("applications:systemsettings.desktop");
     }
     return fixados;
 }

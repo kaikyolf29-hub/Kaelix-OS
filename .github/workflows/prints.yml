@@ -69,6 +69,7 @@ jobs:
             # Apps de bandeja de verdade para o teste da bandeja (só na imagem de teste).
             echo "RUN dnf5 -y install --skip-unavailable copyq udiskie libnotify && dnf5 clean all"
             echo "COPY tests/vm/teste-bandeja.sh /usr/bin/kaelix-teste-bandeja"
+            echo "COPY tests/vm/teste-ajustes.sh /usr/bin/kaelix-teste-ajustes"
           } > Containerfile.vm
           cat Containerfile.vm
           sudo podman build -t localhost/kaelix-vm:latest -f Containerfile.vm .

@@ -239,6 +239,24 @@ shot "29-relogio-notificacoes-e-calendario"
 hmp key esc
 sleep 2
 
+# Ajustes do Kaelix (como os Ajustes do Mac): o ajudante passa pelas páginas a
+# cada 8 segundos e no fim deixa o vidro roxo e mais transparente.
+hmp key ctrl-alt-t
+sleep 8
+hmp type "kaelix-teste-ajustes"
+hmp key ret
+sleep 7
+for pagina in aparencia barra papel telas sobre; do
+  shot "30-ajustes-$pagina"
+  sleep 8
+done
+sleep 4
+shot "31-vidro-roxo-mais-transparente"
+sleep 14
+shot "32-vidro-de-volta-ao-padrao"
+hmp key alt-f4
+sleep 2
+
 # Tela de bloqueio (Meta+L), com o papel de parede do Kaelix.
 hmp key meta_l-l
 sleep 8

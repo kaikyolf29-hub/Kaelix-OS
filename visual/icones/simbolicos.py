@@ -76,6 +76,19 @@ ICONES = {
     "kaelix-cadeado": svg(traco("M7.5 11V8a4.5 4.5 0 0 1 9 0v3"
                                 "M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2z")),
     "kaelix-desligar": svg(traco("M12 3.5v8M6.7 6.6a8 8 0 1 0 10.6 0")),
+    # Ajustes do Kaelix (a janela de ajustes, como a do Mac).
+    "kaelix-aparencia": svg(traco("M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0 -17z"),
+                            f'<path {CHEIO} d="M12 3.5a8.5 8.5 0 0 1 0 17z"/>\n'),
+    "kaelix-papel": svg(traco("M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2H5a2 2 0 0 1 -2 -2V6a2 2 0 0 1 2 -2z"
+                              "M3.5 17l5 -5.5 4 4 2.5 -2.5 5.5 5.5"),
+                        f'<circle {CHEIO} cx="15.5" cy="8.5" r="1.7"/>\n'),
+    "kaelix-tela": svg(traco("M4.5 4h15a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-15a2 2 0 0 1 -2 -2V6a2 2 0 0 1 2 -2z"
+                             "M12 17v3.5M8 20.5h8")),
+    "kaelix-info": svg(traco("M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0 -17zM12 11v5.5"),
+                       f'<circle {CHEIO} cx="12" cy="7.8" r="1.25"/>\n'),
+    "kaelix-seta": svg(traco("M9.5 6l6 6-6 6")),
+    "kaelix-busca": svg(traco("M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0 -13zM15.3 15.3l5 5")),
+    "kaelix-certo": svg(traco("M5.5 12.5l4.2 4.2 8.8 -9.2")),
 }
 for nivel in range(4):
     ICONES[f"kaelix-wifi-{nivel}"] = svg(PONTO, *[traco(a, 1.0 if i < nivel else 0.3) for i, a in enumerate(ARCOS)])

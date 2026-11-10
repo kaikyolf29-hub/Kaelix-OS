@@ -7,6 +7,8 @@ IMAGE_INFO="${KAELIX_IMAGE_INFO:-/usr/share/kaelix/image-info.json}"
 STATE_DIR="${KAELIX_STATE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/kaelix}"
 FLATHUB_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
 BAR_DIR="${KAELIX_BAR_DIR:-/usr/share/kaelix/barra}"
+VIDRO_GEN="${KAELIX_VIDRO_GEN:-/usr/share/kaelix/vidro/gerar.py}"
+VIDRO_DIR="${KAELIX_VIDRO_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/plasma/desktoptheme/Kaelix}"
 KALI_NAME="${KAELIX_KALI_NAME:-kali}"
 KALI_IMAGE="docker.io/kalilinux/kali-rolling:latest"
 
@@ -89,6 +91,7 @@ $(t "Uso" "Usage"): kaelix <$(t "comando" "command")>
   ${C_BOLD}seguranca${C_OFF} | security   $(t "Abre o contêiner do Kali (cria na primeira vez)" "Opens the Kali container (creates it the first time)")
   ${C_BOLD}navegador${C_OFF} | browser    $(t "Instala o Google Chrome, o Brave ou os dois" "Installs Google Chrome, Brave or both")
   ${C_BOLD}barra${C_OFF}     | bar        $(t "Troca o estilo da barra: fusao, mac ou windows" "Changes the bar style: fusao, mac or windows")
+  ${C_BOLD}vidro${C_OFF}     | glass      $(t "Escolhe a cor e a transparência do vidro da barra" "Picks the color and transparency of the bar glass")
   ${C_BOLD}versao${C_OFF}    | version    $(t "Mostra a versão do Kaelix OS" "Shows the Kaelix OS version")
   ${C_BOLD}ajuda${C_OFF}     | help       $(t "Mostra esta ajuda" "Shows this help")
 
@@ -99,6 +102,7 @@ $(t "Exemplos" "Examples"):
   kaelix seguranca remover       $(t "(apaga o contêiner do Kali)" "(deletes the Kali container)")
   kaelix barra windows           $(t "(uma barra só embaixo, como no Windows)" "(a single bar at the bottom, like Windows)")
   kaelix barra --tamanho grande  $(t "(barra maior; também pequena e media)" "(bigger bar; also pequena and media)")
+  kaelix vidro roxo --transparencia mais  $(t "(vidro roxo e mais transparente)" "(purple, more transparent glass)")
 EOF
 }
 
@@ -535,6 +539,157 @@ cmd_bar() {
   tip "Para voltar ao padrão: kaelix barra fusao --tamanho media" "To go back to the default: kaelix bar fusao --size media"
 }
 
+# ---------------------------------------------------------------------------
+# vidro / glass: a cor e a transparência das ilhas da barra e dos balões.
+# A cor também vira a cor de destaque do sistema (botões ligados, seleção).
+VIDRO_CORES=(padrao azul roxo rosa vermelho laranja amarelo verde grafite)
+VIDRO_PADRAO_DESTAQUE="#5468e8"   # o anil do Kaelix (KaelixEscuro e KaelixClaro)
+
+# vidro_hex <nome ou #rrggbb>: a cor em #rrggbb ("" para o vidro sem cor).
+vidro_hex() {
+  case "${1,,}" in
+    padrao|padrão|default|anil) printf '' ;;
+    azul|blue)           printf '#2f80ed' ;;
+    roxo|purple|violeta) printf '#8b5cf6' ;;
+    rosa|pink)           printf '#ec4899' ;;
+    vermelho|red)        printf '#ef4444' ;;
+    laranja|orange)      printf '#f97316' ;;
+    amarelo|yellow)      printf '#eab308' ;;
+    verde|green)         printf '#22c55e' ;;
+    grafite|graphite|cinza|gray|grey) printf '#6b7280' ;;
+    \#[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) printf '%s' "${1,,}" ;;
+    *) return 1 ;;
+  esac
+}
+
+vidro_saved() { # vidro_saved <chave> <padrão>
+  local v=""
+  [[ -r $STATE_DIR/vidro ]] && v="$(sed -n "s/^$1=//p" "$STATE_DIR/vidro" | head -n1)"
+  printf '%s' "${v:-$2}"
+}
+
+# O Plasma só relê o tema quando ele troca: passa pelo tema do KDE e volta.
+vidro_recarregar() {
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}" atual
+  rm -f "$cache"/plasma_theme_Kaelix*.kcache "$cache"/plasma-svgelements-Kaelix* 2>/dev/null
+  command -v plasma-apply-desktoptheme >/dev/null 2>&1 || return 0
+  atual="$(kreadconfig6 --file plasmarc --group Theme --key name 2>/dev/null)"
+  if [[ $atual == Kaelix ]]; then
+    plasma-apply-desktoptheme default >/dev/null 2>&1 || true
+    sleep "${KAELIX_VIDRO_PAUSA:-1}"
+  fi
+  plasma-apply-desktoptheme Kaelix >/dev/null 2>&1 || true
+}
+
+cmd_glass() {
+  local cor="" nivel="" arg hex
+  while [[ $# -gt 0 ]]; do
+    arg="$1"; shift
+    case "$arg" in
+      --transparencia|--transparência|--transparency) nivel="${1:-}"; shift || true ;;
+      --transparencia=*|--transparência=*|--transparency=*) nivel="${arg#*=}" ;;
+      -*) fail "Opção desconhecida: $arg" "Unknown option: $arg" ;;
+      *) cor="$arg" ;;
+    esac
+  done
+  case "$nivel" in
+    "") ;;
+    mais|more|alta|high)         nivel=mais ;;
+    normal|media|média|medium)   nivel=normal ;;
+    menos|less|baixa|low|solido|sólido) nivel=menos ;;
+    *) fail "Transparência desconhecida: $nivel. Use mais, normal ou menos." "Unknown transparency: $nivel. Use mais, normal or menos." ;;
+  esac
+  if [[ -n $cor ]]; then
+    vidro_hex "$cor" >/dev/null || fail "Cor desconhecida: $cor. Use ${VIDRO_CORES[*]} ou #rrggbb." \
+                                        "Unknown color: $cor. Use ${VIDRO_CORES[*]} or #rrggbb."
+    case "${cor,,}" in \#*) cor="${cor,,}" ;; *) cor="$(vidro_nome "$cor")" ;; esac
+  fi
+
+  local cur_cor cur_nivel
+  cur_cor="$(vidro_saved cor padrao)"
+  cur_nivel="$(vidro_saved transparencia normal)"
+
+  if [[ -z $cor && -z $nivel ]]; then
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
+      local c on lista=()
+      for c in "${VIDRO_CORES[@]}"; do
+        on=off; [[ $c == "$cur_cor" ]] && on=on
+        lista+=("$c" "$(vidro_rotulo "$c")" "$on")
+      done
+      cor="$(kdialog --title "Kaelix OS" --radiolist "$(t "De que cor você quer o vidro?" "What color do you want the glass?")" "${lista[@]}" | tr -d '"')" || return 0
+      local on_m=off on_n=off on_s=off
+      case "$cur_nivel" in mais) on_m=on ;; menos) on_s=on ;; *) on_n=on ;; esac
+      nivel="$(kdialog --title "Kaelix OS" --radiolist "$(t "Quanto de transparência?" "How much transparency?")" \
+        mais   "$(t "Mais transparente" "More transparent")" "$on_m" \
+        normal "$(t "Normal" "Normal")" "$on_n" \
+        menos  "$(t "Menos transparente" "Less transparent")" "$on_s" | tr -d '"')" || return 0
+      [[ -z $cor ]] && return 0
+    else
+      say "Vidro atual: cor $cur_cor, transparência $cur_nivel." "Current glass: color $cur_cor, transparency $cur_nivel."
+      say "Para trocar: kaelix vidro <${VIDRO_CORES[*]// /|}|#rrggbb> [--transparencia mais|normal|menos]" \
+          "To change: kaelix glass <${VIDRO_CORES[*]// /|}|#rrggbb> [--transparency mais|normal|menos]"
+      return 0
+    fi
+  fi
+  cor="${cor:-$cur_cor}"
+  nivel="${nivel:-$cur_nivel}"
+  hex="$(vidro_hex "$cor")"
+
+  step "Trocando o vidro: cor $cor, transparência $nivel" "Changing the glass: color $cor, transparency $nivel"
+  # O tema da pessoa só é apagado se foi o Kaelix que fez (tem a marca).
+  if [[ -d $VIDRO_DIR && ! -e $VIDRO_DIR/.kaelix-vidro ]]; then
+    fail "Já existe um tema seu em $VIDRO_DIR. Não vou mexer nele." "There is already a theme of yours in $VIDRO_DIR. Leaving it alone."
+  fi
+  rm -rf "$VIDRO_DIR"
+  if [[ -n $hex || $nivel != normal ]]; then
+    need python3
+    [[ -r $VIDRO_GEN ]] || fail "Não achei o gerador do vidro: $VIDRO_GEN" "Glass generator not found: $VIDRO_GEN"
+    mkdir -p "$VIDRO_DIR" && : > "$VIDRO_DIR/.kaelix-vidro"
+    if ! python3 "$VIDRO_GEN" ${hex:+--cor "$hex"} --transparencia "$nivel" "$VIDRO_DIR" >/dev/null; then
+      rm -rf "$VIDRO_DIR"
+      fail "Não consegui gerar o vidro." "Could not generate the glass."
+    fi
+  fi
+  # A cor do destaque acompanha o vidro (no padrão, o anil do Kaelix).
+  if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
+    plasma-apply-colorscheme --accent-color "${hex:-$VIDRO_PADRAO_DESTAQUE}" >/dev/null 2>&1 \
+      || warn "Não consegui trocar a cor de destaque." "Could not change the accent color."
+  fi
+  vidro_recarregar
+  mkdir -p "$STATE_DIR" && printf 'cor=%s\ntransparencia=%s\n' "$cor" "$nivel" > "$STATE_DIR/vidro"
+  ok "Vidro trocado." "Glass changed."
+  tip "Para voltar ao padrão: kaelix vidro padrao --transparencia normal" "To go back to the default: kaelix glass padrao --transparency normal"
+}
+
+# Nome em português da cor (o que fica guardado e aparece na escolha).
+vidro_nome() {
+  case "${1,,}" in
+    padrao|padrão|default|anil) echo padrao ;;
+    azul|blue) echo azul ;;
+    roxo|purple|violeta) echo roxo ;;
+    rosa|pink) echo rosa ;;
+    vermelho|red) echo vermelho ;;
+    laranja|orange) echo laranja ;;
+    amarelo|yellow) echo amarelo ;;
+    verde|green) echo verde ;;
+    *) echo grafite ;;
+  esac
+}
+
+vidro_rotulo() {
+  case "$1" in
+    padrao)   t "Anil do Kaelix (padrão)" "Kaelix indigo (default)" ;;
+    azul)     t "Azul" "Blue" ;;
+    roxo)     t "Roxo" "Purple" ;;
+    rosa)     t "Rosa" "Pink" ;;
+    vermelho) t "Vermelho" "Red" ;;
+    laranja)  t "Laranja" "Orange" ;;
+    amarelo)  t "Amarelo" "Yellow" ;;
+    verde)    t "Verde" "Green" ;;
+    grafite)  t "Grafite" "Graphite" ;;
+  esac
+}
+
 cmd_version() {
   local ref
   printf '%sKaelix OS%s\n' "$C_BOLD" "$C_OFF"
@@ -559,6 +714,7 @@ main() {
     seguranca|segurança|security|kali) cmd_security "$@" ;;
     navegador|browser)                 cmd_browser "$@" ;;
     barra|bar|dock)                    cmd_bar "$@" ;;
+    vidro|glass|cor|color)             cmd_glass "$@" ;;
     versao|versão|version|--version)   cmd_version ;;
     ajuda|help|-h|--help)              cmd_help ;;
     *)
