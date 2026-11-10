@@ -32,11 +32,12 @@ trap 'kill $QEMU_PID 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 30); do [[ -S $SOCK ]] && break; sleep 1; done
 
-# Boot: um print a cada 20 segundos nos primeiros 3 minutos.
-for i in $(seq -w 1 9); do
+# Boot: três prints no primeiro minuto (o sistema liga em uns 15 segundos).
+for i in 1 2 3; do
   sleep 20
   shot "01-boot-$i"
 done
+sleep 30
 
 # Tela de login: digita a senha do usuário de teste.
 shot "02-login"
@@ -50,6 +51,7 @@ shot "04-primeiro-login"
 # Fecha a pergunta do navegador (se apareceu) e abre o terminal.
 hmp key esc
 sleep 5
+shot "04b-depois-do-esc"
 hmp key ctrl-alt-t
 sleep 15
 shot "05-terminal"

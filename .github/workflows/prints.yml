@@ -57,7 +57,11 @@ jobs:
       - name: Baixar a imagem e preparar a versão de teste
         run: |
           sudo podman pull "$IMAGE"
-          sudo podman tag "$IMAGE" localhost/kaelix-vm:latest
+          # A imagem de verdade abre o assistente de primeiro uso do KDE (Plasma
+          # Setup) para a pessoa criar a conta. No teste a conta já vem pronta,
+          # então marcamos o assistente como feito para cair direto no login.
+          printf 'FROM %s\nRUN touch /etc/plasma-setup-done\n' "$IMAGE" > Containerfile.vm
+          sudo podman build -t localhost/kaelix-vm:latest -f Containerfile.vm .
 
       - name: Montar o disco virtual (bootc-image-builder)
         run: |
