@@ -1,0 +1,14 @@
+[Icon Theme]
+Name=Kaelix-claro
+Comment=Ícones do Kaelix OS, tema claro
+Inherits=breeze,hicolor
+Example=system-file-manager
+FollowsColorScheme=true
+Directories=apps/scalable
+
+[apps/scalable]
+Size=48
+MinSize=16
+MaxSize=512
+Type=Scalable
+Context=Applications

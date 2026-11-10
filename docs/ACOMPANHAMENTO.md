@@ -46,17 +46,17 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | ✅ | Vídeo de demonstração do visual, antes de começar | Feito fora do sistema. Fonte em `docs/visual/` (abrir `demo.html` no navegador) |
 | ✅ | O criador aprovar o vídeo | Aprovado em 10/11/2026 |
 | ⬜ | Servir para PC e para notebook | Pedido do criador: no PC mostra a rede por cabo e esconde a bateria; no notebook mostra Wi-Fi e bateria; com os dois, mostra os dois |
-| 🔧 | Tema escuro e claro, nenhum com preto puro | Cores `KaelixEscuro` e `KaelixClaro` e temas globais `org.kaelix.escuro.desktop` e `org.kaelix.claro.desktop`. Falta o print da máquina virtual |
-| 🔧 | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global. Falta o print da máquina virtual |
-| 🔧 | Papel de parede próprio em pixel art | Pedido do criador: fundo bonito de verdade. Pôr do sol no lago, feito por código (`visual/papel-de-parede/gerar.py`), versão escura e clara |
+| ✅ | Tema escuro e claro, nenhum com preto puro | Cores `KaelixEscuro` e `KaelixClaro` e temas globais `org.kaelix.escuro.desktop` e `org.kaelix.claro.desktop`. Provado na máquina virtual em 10/11/2026 |
+| 🔧 | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global. Provada na máquina virtual em 10/11/2026. Falta o acabamento de vidro com cantos bem redondos |
+| ✅ | Papel de parede próprio em pixel art | Pedido do criador: fundo bonito de verdade. Pôr do sol no lago, feito por código (`visual/papel-de-parede/gerar.py`), versão escura e clara. Provado na máquina virtual em 10/11/2026 |
 | ⬜ | Personalizar a barra | Pedido do criador. Predefinições "Fusão", "Estilo Mac" e "Estilo Windows", mais tamanho e posição, nas configurações e por comando |
-| ⬜ | Ícones próprios para os apps da barra | Pedido do criador: bem personalizados e bonitos |
-| ⬜ | Botões de janela nas cores do Kaelix | Rosa (fechar), azul claro (minimizar), verde água (tela cheia) |
+| 🔧 | Ícones próprios para os apps da barra | Pedido do criador: bem personalizados e bonitos. Primeira leva: Arquivos, Terminal, Loja, Monitor, Configurações, Editor de texto, Capturas e Imagens (`visual/icones/gerar.js`, tema de ícones `Kaelix`). Programas de outras marcas (Steam, navegador) ficam com o ícone deles. Falta o print e a opinião do criador |
+| 🔧 | Botões de janela nas cores do Kaelix | Rosa (fechar), azul claro (minimizar), verde água (tela cheia), do lado esquerdo. Feitos em cima da moldura do KDE (`build_files/deco/`). Falta o print da máquina virtual |
 | ⬜ | Dock que aumenta os ícones perto do mouse | |
 | ⬜ | Central de controle no canto direito | Rede, Bluetooth, modo escuro, som, brilho, perfil de energia |
-| ⬜ | Busca de apps e arquivos no canto esquerdo | |
+| 🔧 | Busca de apps e arquivos no canto esquerdo | Pílula "Buscar" na ilha da esquerda (`org.kaelix.busca`), abre a busca do sistema. Falta o print da máquina virtual |
 | ⬜ | Assistente de primeiro uso em português e com a cara do Kaelix | Hoje abre o do KDE (Plasma Setup), em inglês, e depois a "Welcome Center" do KDE |
-| 💬 | Logo do Kaelix | Quatro caminhos desenhados (Anel, Asas, Escudo, Disco), no estilo que o criador gosta: emblema branco e forte em fundo escuro. Esperando ele escolher. O "K" amarelo é só um marcador |
+| ✅ | Logo do Kaelix | O criador escolheu o caminho "Asas" e aprovou a versão refinada em 10/11/2026: um K com três penas, branco em fundo índigo escuro. Fonte em `visual/logo/`. Já é o botão do menu e o logo do sistema. Falta levar para a tela de boot e para o instalador |
 | ⬜ | Apps próprios: configurações, gerenciador de tarefas, terminal | |
 
 ## Seção 6: o que provavelmente faltou pedir

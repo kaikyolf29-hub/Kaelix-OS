@@ -17,6 +17,16 @@ COPY build_files /build_files
 COPY system_files /system_files
 COPY cosign.pub /cosign.pub
 
+# Etapa que compila os botões de janela do Kaelix. Usa a mesma base da imagem,
+# para a versão do KDE ser exatamente a mesma. Só o arquivo pronto (/out) vai
+# para a imagem final; os compiladores ficam de fora.
+FROM ${BASE_IMAGE}:${FEDORA_VERSION} AS deco
+RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/build_files/deco/build.sh
+
 FROM ${BASE_IMAGE}:${FEDORA_VERSION}
 
 ARG IMAGE_NAME=kaelix-os
@@ -26,6 +36,7 @@ ARG BUILD_ID=local
 ARG FEDORA_VERSION=44
 
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
+    --mount=type=bind,from=deco,source=/out,target=/deco \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \

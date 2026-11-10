@@ -84,6 +84,12 @@ sed -i \
   -e "s|^BUG_REPORT_URL=.*|BUG_REPORT_URL=\"${REPO_URL}/issues\"|" \
   /usr/lib/os-release
 grep -q '^VARIANT_ID=' /usr/lib/os-release || echo 'VARIANT_ID=kaelix' >> /usr/lib/os-release
+# Logo do Kaelix (o "Asas") como logo do sistema, por exemplo em "Sobre este sistema".
+if grep -q '^LOGO=' /usr/lib/os-release; then
+  sed -i 's/^LOGO=.*/LOGO=kaelix-logo/' /usr/lib/os-release
+else
+  echo 'LOGO=kaelix-logo' >> /usr/lib/os-release
+fi
 
 mkdir -p /usr/share/kaelix
 jq -n \
@@ -128,14 +134,27 @@ for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kde
   if [[ $f == /etc/xdg/kdeglobals || -e $f ]]; then
     kwriteconfig6 --file "$f" --group KDE --key LookAndFeelPackage org.kaelix.escuro.desktop
     kwriteconfig6 --file "$f" --group General --key ColorScheme KaelixEscuro
-    kwriteconfig6 --file "$f" --group Icons --key Theme breeze-dark
+    kwriteconfig6 --file "$f" --group Icons --key Theme Kaelix
   fi
 done
+# Botões de janela do Kaelix (bolinhas rosa, azul e verde água), compilados na
+# etapa "deco" do Containerfile. Entram no lugar da moldura padrão.
+if [[ -s /deco/org.kde.breeze.so && -s /deco/destino ]]; then
+  install -m0755 /deco/org.kde.breeze.so "$(cat /deco/destino)"
+  echo "Botões de janela do Kaelix instalados em $(cat /deco/destino)"
+else
+  echo "ERRO: os botões de janela do Kaelix não foram compilados." >&2
+  exit 1
+fi
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
 chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
+# Ícones próprios dos apps do sistema (tema de ícones Kaelix). Fica no registro
+# qual nome de ícone cada app pede, para conferir que o nosso está cobrindo.
+grep -H '^Icon=' /usr/share/applications/org.kde.{dolphin,konsole,discover,plasma-systemmonitor,kwrite,kate,spectacle,gwenview}.desktop \
+  /usr/share/applications/{systemsettings,kdesystemsettings}.desktop 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
 log "Ligando os serviços do Kaelix"

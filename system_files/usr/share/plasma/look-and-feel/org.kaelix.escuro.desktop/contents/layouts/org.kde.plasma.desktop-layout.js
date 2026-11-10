@@ -36,16 +36,23 @@ if (tem("org.kaelix.busca")) {
 var centro = ilha("center");
 var apps = centro.addWidget("org.kde.plasma.icontasks");
 apps.currentConfigGroup = ["General"];
-apps.writeConfig("launchers", [
-    "preferred://filemanager",
-    "preferred://browser",
-    "applications:org.kde.konsole.desktop",
-    "applications:steam.desktop",
-    "applications:code.desktop",
-    "applications:org.kde.discover.desktop",
-    "applications:org.kde.plasma-systemmonitor.desktop",
-    "applications:systemsettings.desktop"
-]);
+// Só entra na barra o programa que está instalado, para não sobrar um ícone
+// em branco (foi o que aconteceu com o VS Code no primeiro teste).
+var fixados = ["preferred://filemanager", "preferred://browser"];
+var candidatos = [
+    "org.kde.konsole.desktop",
+    "steam.desktop",
+    "code.desktop",
+    "org.kde.discover.desktop",
+    "org.kde.plasma-systemmonitor.desktop",
+    "systemsettings.desktop"
+];
+for (var c = 0; c < candidatos.length; c++) {
+    if (applicationExists(candidatos[c])) {
+        fixados.push("applications:" + candidatos[c]);
+    }
+}
+apps.writeConfig("launchers", fixados);
 
 // Direita: rede, som, o resto da bandeja e o relógio. A bandeja mostra sozinha
 // o que a máquina tem: cabo no PC, Wi-Fi e bateria no notebook.
