@@ -21,7 +21,7 @@ mock() { # mock <nome> <corpo>
 run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
   OUT="$(PATH="$MOCK:$PATH" KAELIX_SYS_BACKLIGHT="$WORK/backlight" KAELIX_SYS_POWER="$WORK/power" \
-         KAELIX_SYS_BLUETOOTH="$WORK/bluetooth" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
+         KAELIX_SYS_BLUETOOTH="$WORK/bluetooth" KAELIX_STATE_DIR="$WORK/state" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
   CODE=$?
 }
 
@@ -55,13 +55,15 @@ check "sem bateria" linha "bateria_tem=0"
 check "tema escuro é o padrão" linha "escuro=1"
 check "não perturbe desligado" linha "dnd=0"
 check "luz noturna desligada" linha "noturna=0"
+check "estilo da barra padrão é a fusão" linha "barra=fusao"
+check "sem perfil de energia quando o serviço não responde" linha "perfil_tem=0"
 
 echo "notebook: Wi-Fi, Bluetooth, brilho e bateria"
 mock nmcli 'case "$*" in *"wifi list"*) printf " :40\n*:78\n" ;; *device*) printf "wifi:connected:Casa\\\\:5G\nethernet:unavailable:\n" ;; *radio*) echo enabled ;; esac'
 mkdir -p "$WORK/backlight/intel_backlight" "$WORK/power/BAT0" "$WORK/bluetooth/hci0"
 echo 600 > "$WORK/backlight/intel_backlight/brightness"; echo 1200 > "$WORK/backlight/intel_backlight/max_brightness"
 echo 82 > "$WORK/power/BAT0/capacity"; echo Charging > "$WORK/power/BAT0/status"
-mock busctl 'case "$*" in *get-property*) echo "b true" ;; esac'
+mock busctl 'case "$*" in *PowerProfiles*ActiveProfile*) echo "s \"balanced\"" ;; *PowerProfiles*Profiles*) echo "aa{sv} 3 2 \"Profile\" s \"power-saver\" \"Driver\" s \"x\" 2 \"Profile\" s \"balanced\" \"Driver\" s \"x\" 2 \"Profile\" s \"performance\" \"Driver\" s \"x\"" ;; *get-property*) echo "b true" ;; esac'
 mock wpctl 'case "$1" in get-volume) echo "Volume: 0.75 [MUTED]" ;; *) exit 0 ;; esac'
 run estado
 check "Wi-Fi ligado com o nome da rede" bash -c "grep -qx wifi_tem=1 <<<\"\$0\" && grep -qx wifi_ligado=1 <<<\"\$0\" && grep -qx 'wifi_nome=Casa:5G' <<<\"\$0\"" "$OUT"
@@ -70,6 +72,7 @@ check "cabo existe mas está solto" bash -c "grep -qx cabo_tem=1 <<<\"\$0\" && g
 check "Bluetooth ligado" bash -c "grep -qx bt_tem=1 <<<\"\$0\" && grep -qx bt_ligado=1 <<<\"\$0\"" "$OUT"
 check "brilho em 50" bash -c "grep -qx brilho_tem=1 <<<\"\$0\" && grep -qx brilho=50 <<<\"\$0\"" "$OUT"
 check "bateria em 82 carregando" bash -c "grep -qx bateria_tem=1 <<<\"\$0\" && grep -qx bateria=82 <<<\"\$0\" && grep -qx carregando=1 <<<\"\$0\"" "$OUT"
+check "perfil de energia equilibrado, com desempenho disponível" bash -c "grep -qx perfil_tem=1 <<<\"\$0\" && grep -qx perfil=balanced <<<\"\$0\" && grep -qx perfil_desempenho=1 <<<\"\$0\"" "$OUT"
 check "som mudo" bash -c "grep -qx vol=75 <<<\"\$0\" && grep -qx mudo=1 <<<\"\$0\"" "$OUT"
 
 echo "Wi-Fi desligado no botão"
@@ -77,6 +80,12 @@ mock nmcli 'case "$*" in *device*) printf "wifi:unavailable:\n" ;; *radio*) echo
 run estado
 check "Wi-Fi existe mas está desligado" bash -c "grep -qx wifi_tem=1 <<<\"\$0\" && grep -qx wifi_ligado=0 <<<\"\$0\" && grep -qx wifi_nome= <<<\"\$0\"" "$OUT"
 check "sem Wi-Fi conectado, sinal zero" linha "wifi_sinal=0"
+
+echo "estilo da barra escolhido"
+mkdir -p "$WORK/state"; printf 'estilo=mac\ntamanho=media\n' > "$WORK/state/barra"
+run estado
+check "mostra o estilo da barra que a pessoa escolheu" linha "barra=mac"
+rm -rf "$WORK/state"
 
 echo "tema, não perturbe e luz noturna"
 mock kreadconfig6 'case "$*" in *LookAndFeelPackage*) echo org.kaelix.claro.desktop ;; *DoNotDisturb*) echo "2999,1,2,3,4,5" ;; *NightColor*) echo true ;; esac'
@@ -128,6 +137,14 @@ mkdir -p "$WORK/backlight/amdgpu_bl0"
 echo 10 > "$WORK/backlight/amdgpu_bl0/brightness"; echo 255 > "$WORK/backlight/amdgpu_bl0/max_brightness"
 run brilho 50; check "ajusta o brilho pela sessão" called "SetBrightness ssu backlight amdgpu_bl0 128"
 run brilho 0;  check "brilho nunca apaga a tela" called "SetBrightness ssu backlight amdgpu_bl0 3"
+mock busctl 'case "$*" in *UPower.PowerProfiles*ActiveProfile*) [[ $* == *get-property* ]] && echo "s \"balanced\"" ;; esac; exit 0'
+run perfil desempenho; check "muda o perfil de energia para desempenho" called "set-property org.freedesktop.UPower.PowerProfiles /org/freedesktop/UPower/PowerProfiles org.freedesktop.UPower.PowerProfiles ActiveProfile s performance"
+run perfil economia;   check "muda o perfil de energia para economia" called "ActiveProfile s power-saver"
+run perfil turbo;      check "perfil desconhecido é recusado" test "$CODE" -eq 2
+mock busctl 'case "$*" in *net.hadess*ActiveProfile*) [[ $* == *get-property* ]] && echo "s \"balanced\"" ;; esac; exit 0'
+run perfil equilibrado; check "usa o nome antigo do serviço quando o novo não responde" called "set-property net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles ActiveProfile s balanced"
+mock busctl 'exit 0'
+run perfil desempenho; check "sem perfil de energia, avisa" test "$CODE" -eq 1
 run bloquear;  check "bloqueia a tela" called "loginctl lock-session"
 run sair;      check "abre a tela de desligar" called "org.kde.LogoutPrompt promptAll"
 run abrir nada; check "abrir algo desconhecido é recusado" test "$CODE" -eq 2

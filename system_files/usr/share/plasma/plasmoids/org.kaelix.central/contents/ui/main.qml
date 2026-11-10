@@ -5,6 +5,7 @@
 // O que a máquina não tem fica escondido: no PC aparece a rede cabeada e não
 // aparecem brilho nem bateria; no notebook aparecem Wi-Fi, brilho e bateria.
 import QtQuick
+import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -209,11 +210,13 @@ PlasmoidItem {
         }
     }
 
+    // O balão, como no vídeo da fusão: blocos de liga e desliga, som, brilho e
+    // perfil de energia. Embaixo, bateria (no notebook), ajustes, bloquear e desligar.
     fullRepresentation: Item {
         id: cheia
 
-        readonly property int largura: Kirigami.Units.gridUnit * 21
-        readonly property int margem: Kirigami.Units.largeSpacing
+        readonly property int largura: Kirigami.Units.gridUnit * 19
+        readonly property int margem: Math.round(Kirigami.Units.gridUnit * 0.35)
 
         Layout.minimumWidth: largura
         Layout.preferredWidth: largura
@@ -226,53 +229,29 @@ PlasmoidItem {
             id: coluna
             anchors.fill: parent
             anchors.margins: cheia.margem
-            spacing: Kirigami.Units.largeSpacing
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Kirigami.Units.smallSpacing
-
-                Kirigami.Heading {
-                    Layout.fillWidth: true
-                    level: 3
-                    text: raiz.t("Central de controle", "Control center")
-                    elide: Text.ElideRight
-                }
-                Kirigami.Icon {
-                    visible: raiz.sim("bateria_tem")
-                    source: raiz.sim("carregando") ? "battery-full-charging" : "battery-full"
-                    implicitWidth: Kirigami.Units.iconSizes.small
-                    implicitHeight: Kirigami.Units.iconSizes.small
-                }
-                PlasmaComponents.Label {
-                    visible: raiz.sim("bateria_tem")
-                    text: raiz.numero("bateria") + "%"
-                    opacity: 0.8
-                }
-            }
+            spacing: Math.round(Kirigami.Units.gridUnit * 0.67)
 
             GridLayout {
                 Layout.fillWidth: true
                 columns: 2
-                columnSpacing: Kirigami.Units.smallSpacing * 2
-                rowSpacing: Kirigami.Units.smallSpacing * 2
+                columnSpacing: Math.round(Kirigami.Units.gridUnit * 0.55)
+                rowSpacing: Math.round(Kirigami.Units.gridUnit * 0.55)
 
                 Botao {
                     visible: raiz.sim("wifi_tem")
-                    icone: raiz.sim("wifi_ligado") ? "network-wireless" : "network-wireless-disconnected"
+                    icone: raiz.sim("wifi_ligado") ? "kaelix-wifi-3-symbolic" : "kaelix-wifi-desligado-symbolic"
                     titulo: "Wi-Fi"
                     detalhe: !raiz.sim("wifi_ligado") ? raiz.t("Desligado", "Off")
                            : raiz.texto("wifi_nome").length > 0 ? raiz.texto("wifi_nome")
-                           : raiz.sim("cabo_ligado") ? raiz.t("Usando o cabo", "Using the cable")
                            : raiz.t("Sem conexão", "Not connected")
                     ligado: raiz.sim("wifi_ligado")
                     onAcionado: raiz.alternar("wifi_ligado", "wifi")
                     onDetalhado: raiz.fazer("abrir rede")
                 }
                 Botao {
-                    visible: !raiz.sim("wifi_tem")
-                    icone: "network-wired"
-                    titulo: raiz.t("Rede cabeada", "Wired network")
+                    visible: raiz.sim("cabo_ligado") || !raiz.sim("wifi_tem")
+                    icone: raiz.sim("cabo_ligado") ? "kaelix-rede-cabo-symbolic" : "kaelix-rede-desconectada-symbolic"
+                    titulo: raiz.t("Rede por cabo", "Wired network")
                     detalhe: raiz.sim("cabo_ligado") ? raiz.t("Conectada", "Connected") : raiz.t("Sem cabo", "No cable")
                     ligado: raiz.sim("cabo_ligado")
                     onAcionado: raiz.fazer("abrir rede")
@@ -280,7 +259,7 @@ PlasmoidItem {
                 }
                 Botao {
                     visible: raiz.sim("bt_tem")
-                    icone: "network-bluetooth"
+                    icone: "kaelix-bluetooth-symbolic"
                     titulo: "Bluetooth"
                     detalhe: raiz.sim("bt_ligado") ? raiz.t("Ligado", "On") : raiz.t("Desligado", "Off")
                     ligado: raiz.sim("bt_ligado")
@@ -288,15 +267,15 @@ PlasmoidItem {
                     onDetalhado: raiz.fazer("abrir bluetooth")
                 }
                 Botao {
-                    icone: raiz.sim("dnd") ? "notifications-disabled" : "notifications"
+                    icone: "kaelix-nao-perturbe-symbolic"
                     titulo: raiz.t("Não perturbe", "Do not disturb")
-                    detalhe: raiz.sim("dnd") ? raiz.t("Avisos em silêncio", "Notifications silenced") : raiz.t("Desligado", "Off")
+                    detalhe: raiz.sim("dnd") ? raiz.t("Ligado", "On") : raiz.t("Desligado", "Off")
                     ligado: raiz.sim("dnd")
                     onAcionado: raiz.alternar("dnd", "nao-perturbe")
                 }
                 Botao {
-                    icone: "weather-clear-night"
-                    titulo: raiz.t("Tema escuro", "Dark theme")
+                    icone: "kaelix-lua-symbolic"
+                    titulo: raiz.t("Modo escuro", "Dark mode")
                     detalhe: raiz.sim("escuro") ? raiz.t("Ligado", "On") : raiz.t("Desligado", "Off")
                     ligado: raiz.sim("escuro")
                     onAcionado: {
@@ -306,16 +285,16 @@ PlasmoidItem {
                     }
                 }
                 Botao {
-                    icone: "redshift-status-on"
+                    icone: "kaelix-luz-noturna-symbolic"
                     titulo: raiz.t("Luz noturna", "Night light")
                     detalhe: raiz.sim("noturna") ? raiz.t("Tela mais quente", "Warmer screen") : raiz.t("Desligada", "Off")
                     ligado: raiz.sim("noturna")
                     onAcionado: raiz.alternar("noturna", "luz-noturna")
                 }
                 Botao {
-                    icone: "view-split-top-bottom"
+                    icone: "kaelix-barra-symbolic"
                     titulo: raiz.t("Estilo da barra", "Bar style")
-                    detalhe: raiz.t("Fusão, Mac ou Windows", "Fusion, Mac or Windows")
+                    detalhe: raiz.texto("barra") === "mac" ? "Mac" : raiz.texto("barra") === "windows" ? "Windows" : raiz.t("Fusão", "Fusion")
                     onAcionado: {
                         raiz.expanded = false;
                         raiz.fazer("abrir barra");
@@ -326,8 +305,8 @@ PlasmoidItem {
             Deslizante {
                 Layout.fillWidth: true
                 visible: raiz.sim("vol_tem")
-                icone: raiz.sim("mudo") || raiz.numero("vol") === 0 ? "audio-volume-muted" : "audio-volume-high"
-                nome: raiz.t("Volume", "Volume")
+                icone: raiz.iconeSom
+                nome: raiz.t("Som", "Sound")
                 valor: raiz.numero("vol")
                 botaoClicavel: true
                 onMudou: (novo) => {
@@ -343,7 +322,7 @@ PlasmoidItem {
             Deslizante {
                 Layout.fillWidth: true
                 visible: raiz.sim("brilho_tem")
-                icone: "brightness-high"
+                icone: "kaelix-brilho-symbolic"
                 nome: raiz.t("Brilho", "Brightness")
                 valor: raiz.numero("brilho")
                 minimo: 1
@@ -353,35 +332,67 @@ PlasmoidItem {
                 }
             }
 
+            Cartao {
+                Layout.fillWidth: true
+                visible: raiz.sim("perfil_tem")
+
+                PlasmaComponents.Label {
+                    Layout.fillWidth: true
+                    text: raiz.t("Perfil de energia", "Power profile")
+                    font.weight: Font.DemiBold
+                }
+                Segmentado {
+                    Layout.fillWidth: true
+                    atual: raiz.texto("perfil")
+                    opcoes: [
+                        { valor: "power-saver", nome: raiz.t("Economia", "Power saver") },
+                        { valor: "balanced", nome: raiz.t("Equilibrado", "Balanced") },
+                        { valor: "performance", nome: raiz.t("Desempenho", "Performance"), ativa: raiz.sim("perfil_desempenho") }
+                    ]
+                    onEscolhido: (valor) => {
+                        raiz.definir("perfil", valor);
+                        raiz.fazer("perfil " + valor);
+                    }
+                }
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
 
-                PlasmaComponents.ToolButton {
-                    icon.name: "configure"
-                    text: raiz.t("Configurações", "Settings")
-                    onClicked: {
-                        raiz.expanded = false;
-                        raiz.fazer("abrir configuracoes");
-                    }
+                Bateria {
+                    visible: raiz.sim("bateria_tem")
+                    height: Kirigami.Units.iconSizes.small
+                    nivel: raiz.numero("bateria")
+                    carregando: raiz.sim("carregando")
+                    Layout.leftMargin: Kirigami.Units.smallSpacing
+                }
+                PlasmaComponents.Label {
+                    visible: raiz.sim("bateria_tem")
+                    text: raiz.numero("bateria") + "%" + (raiz.sim("carregando") ? raiz.t(", carregando", ", charging") : "")
+                    opacity: 0.8
                 }
                 Item {
                     Layout.fillWidth: true
                 }
-                PlasmaComponents.ToolButton {
-                    icon.name: "system-lock-screen"
-                    text: raiz.t("Bloquear", "Lock")
-                    onClicked: {
-                        raiz.expanded = false;
-                        raiz.fazer("bloquear");
-                    }
-                }
-                PlasmaComponents.ToolButton {
-                    icon.name: "system-shutdown"
-                    text: raiz.t("Desligar", "Power")
-                    onClicked: {
-                        raiz.expanded = false;
-                        raiz.fazer("sair");
+                Repeater {
+                    model: [
+                        { icone: "kaelix-ajustes-symbolic", nome: raiz.t("Configurações", "Settings"), acao: "abrir configuracoes" },
+                        { icone: "kaelix-cadeado-symbolic", nome: raiz.t("Bloquear", "Lock"), acao: "bloquear" },
+                        { icone: "kaelix-desligar-symbolic", nome: raiz.t("Desligar", "Power"), acao: "sair" }
+                    ]
+                    PlasmaComponents.ToolButton {
+                        required property var modelData
+                        icon.name: modelData.icone
+                        text: modelData.nome
+                        display: QQC2.AbstractButton.IconOnly
+                        QQC2.ToolTip.text: modelData.nome
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                        onClicked: {
+                            raiz.expanded = false;
+                            raiz.fazer(modelData.acao);
+                        }
                     }
                 }
             }

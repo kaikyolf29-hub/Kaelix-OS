@@ -47,10 +47,16 @@ dnf5 -y install --skip-unavailable \
 rpm -q libayatana-appindicator-gtk3 libappindicator-gtk3 libdbusmenu-gtk3 || true
 if command -v xembedsniproxy >/dev/null; then
   echo "Ponte XEmbed: $(command -v xembedsniproxy) ($(rpm -qf "$(command -v xembedsniproxy)"))"
-  ls /usr/lib/systemd/user /etc/xdg/autostart 2>/dev/null | grep -i xembed || true
+  for f in /usr/lib/systemd/user/*xembed* /etc/xdg/autostart/*xembed*; do [[ -e $f ]] && echo "  $f"; done
 else
   echo "AVISO: xembedsniproxy não está na imagem; apps antigos (XEmbed) não vão aparecer na bandeja." >&2
 fi
+
+# Perfil de energia (economia, equilibrado, desempenho) para a central de controle.
+if ! rpm -q tuned-ppd >/dev/null 2>&1 && ! rpm -q power-profiles-daemon >/dev/null 2>&1; then
+  dnf5 -y install --skip-unavailable tuned-ppd
+fi
+echo "Perfil de energia: $(rpm -q tuned-ppd power-profiles-daemon 2>/dev/null | grep -v 'not installed\|não está' | tr '\n' ' ')"
 
 # Fonte Inter, a mesma do vídeo de demonstração da fusão.
 dnf5 -y install --skip-unavailable rsms-inter-fonts rsms-inter-vf-fonts
