@@ -6,7 +6,7 @@ import org.kde.kirigami as Kirigami
 
 import org.kde.plasma.welcome
 
-GenericPage {
+Page {
     id: pagina
 
     readonly property bool pt: Qt.locale().name.indexOf("pt") === 0
@@ -33,7 +33,7 @@ GenericPage {
         }
     }
 
-    heading: t("Escolha o seu navegador", "Pick your browser")
+    title: t("Escolha o seu navegador", "Pick your browser")
     description: t("O Firefox já vem instalado. Se preferir, instale o Google Chrome, o Brave ou os dois.",
                    "Firefox is already installed. If you prefer, install Google Chrome, Brave or both.")
 

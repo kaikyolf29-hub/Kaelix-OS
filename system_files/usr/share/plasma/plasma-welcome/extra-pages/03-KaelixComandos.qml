@@ -6,7 +6,7 @@ import org.kde.kirigami as Kirigami
 
 import org.kde.plasma.welcome
 
-GenericPage {
+Page {
     id: pagina
 
     readonly property bool pt: Qt.locale().name.indexOf("pt") === 0
@@ -14,7 +14,7 @@ GenericPage {
         return pt ? portugues : ingles;
     }
 
-    heading: t("Um comando para cuidar do sistema", "One command to look after the system")
+    title: t("Um comando para cuidar do sistema", "One command to look after the system")
     description: t("Abra o Terminal e digite kaelix. As atualizações são assinadas e, se algo der errado, dá para voltar à versão anterior.",
                    "Open the Terminal and type kaelix. Updates are signed and, if something goes wrong, you can go back to the previous version.")
 
