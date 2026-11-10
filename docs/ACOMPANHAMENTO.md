@@ -56,7 +56,7 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | ⬜ | Central de controle no canto direito | Rede, Bluetooth, modo escuro, som, brilho, perfil de energia |
 | ⬜ | Busca de apps e arquivos no canto esquerdo | |
 | ⬜ | Assistente de primeiro uso em português e com a cara do Kaelix | Hoje abre o do KDE (Plasma Setup), em inglês, e depois a "Welcome Center" do KDE |
-| ⬜ | Logo do Kaelix | O "K" é só um marcador. O criador gosta de emblema branco e forte em fundo escuro (como o da Unreal Engine e os dos apps dele). Desenhar opções para ele escolher |
+| 💬 | Logo do Kaelix | Quatro caminhos desenhados (Anel, Asas, Escudo, Disco), no estilo que o criador gosta: emblema branco e forte em fundo escuro. Esperando ele escolher. O "K" amarelo é só um marcador |
 | ⬜ | Apps próprios: configurações, gerenciador de tarefas, terminal | |
 
 ## Seção 6: o que provavelmente faltou pedir
@@ -70,6 +70,7 @@ esqueceu de pedir. O que entrar é avisado a ele e marcado aqui. Escolhas de gos
 |---|---|---|
 | 💬 | Teclado ABNT2, português do Brasil e fuso de Brasília já marcados no instalador | Hoje o instalador pergunta. Dá para deixar pré-marcado |
 | 💬 | Duas telas: posição, taxa de atualização, VRR/FreeSync e HDR | O KDE já tem. Falta testar no PC do criador |
+| 🔧 | Escolha de telas com Meta+P: estender, duplicar, só a tela do PC, só a segunda tela | Pedido do criador (10/11/2026). Já vem no KDE, com o mesmo atalho do Windows. Falta dar a cara do Kaelix e provar com as duas telas dele |
 | 💬 | Controles de Xbox e PlayStation (USB e Bluetooth) | `steam-devices` já entra na imagem. Falta testar; Xbox sem fio pode precisar do `xone` |
 | 💬 | Bluetooth, fones, microfone, impressora e scanner | Já vêm na base. Falta testar |
 | 💬 | Perfis de energia visíveis na barra | Já vêm no KDE. Falta conferir |
