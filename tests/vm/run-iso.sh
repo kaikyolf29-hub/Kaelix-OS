@@ -45,8 +45,13 @@ hmp key up
 sleep 1
 hmp key ret
 
-# O instalador demora um pouco para abrir. Um print a cada 30 segundos.
-for i in 1 2 3 4 5 6; do
+# O instalador abre em menos de um minuto. Um print a cada 30 segundos.
+for i in 1 2 3 4; do
   sleep 30
   shot "02-instalador-$i"
 done
+
+# Abre a tela do teclado (o ABNT2 deve estar marcado), que também mostra a barra de cima.
+hmp click 812 468
+sleep 8
+shot "03-teclado"
