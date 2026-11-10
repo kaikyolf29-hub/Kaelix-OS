@@ -1,0 +1,8 @@
+# Nunca enviar chaves privadas
+cosign.key
+*.key
+*.private
+senha*.txt
+# Arquivos gerados
+*.iso
+out/

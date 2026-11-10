@@ -1,0 +1,111 @@
+# Monta a ISO de instalação do Kaelix OS.
+#
+# É um instalador de rede (cerca de 1 GB): ele usa o instalador oficial do Fedora
+# e baixa a imagem assinada do Kaelix direto do ghcr.io durante a instalação.
+# Assim a pessoa sempre instala a versão mais nova do canal escolhido.
+#
+# Rodado à mão: gera a ISO do canal escolhido e deixa para baixar na página do fluxo.
+# Chamado pelo "Publicar versão estável": anexa a ISO ao Release.
+name: Montar ISO
+
+on:
+  workflow_dispatch:
+    inputs:
+      canal:
+        description: "Canal que a ISO instala"
+        type: choice
+        options: [teste, estavel]
+        default: teste
+  workflow_call:
+    inputs:
+      canal:
+        type: string
+        required: true
+      release_tag:
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  FEDORA_VERSION: "44"
+
+jobs:
+  iso:
+    name: ISO ${{ matrix.suffix }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: kaelix-os
+            suffix: amd
+          - image: kaelix-os-nvidia
+            suffix: nvidia
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Preparar nomes
+        env:
+          CANAL: ${{ inputs.canal }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "IMAGE_REF=ghcr.io/${OWNER}/${{ matrix.image }}:${CANAL}" >> "$GITHUB_ENV"
+          if [ -n "$RELEASE_TAG" ]; then
+            NAME="kaelix-os-${RELEASE_TAG#v}-${{ matrix.suffix }}.iso"
+          else
+            NAME="kaelix-os-${CANAL}-$(date -u +%Y%m%d)-${{ matrix.suffix }}.iso"
+          fi
+          echo "ISO_NAME=${NAME}" >> "$GITHUB_ENV"
+
+      - name: Baixar e conferir o instalador de rede do Fedora
+        run: |
+          BASE="https://download.fedoraproject.org/pub/fedora/linux/releases/${FEDORA_VERSION}/Everything/x86_64/iso"
+          LIST="$(curl -fsSL "${BASE}/")"
+          ISO="$(grep -oE 'Fedora-Everything-netinst-x86_64-[0-9.-]+\.iso' <<<"$LIST" | head -1)"
+          SUMS="$(grep -oE 'Fedora-Everything-[0-9.-]+-x86_64-CHECKSUM' <<<"$LIST" | head -1)"
+          echo "Instalador: ${ISO}"
+          curl -fL --retry 3 -o netinst.iso "${BASE}/${ISO}"
+          curl -fsSL --retry 3 -o CHECKSUM "${BASE}/${SUMS}"
+          # Confere a assinatura do Fedora no arquivo de somas e depois a ISO.
+          curl -fsSL -o fedora.asc https://fedoraproject.org/fedora.gpg
+          gpg --dearmor < fedora.asc > fedora.gpg
+          gpgv --keyring ./fedora.gpg CHECKSUM
+          EXPECTED="$(grep "SHA256 (${ISO})" CHECKSUM | awk '{print $NF}')"
+          echo "${EXPECTED}  netinst.iso" | sha256sum -c -
+
+      - name: Escrever o kickstart
+        run: |
+          sed "s|@IMAGE_REF@|${IMAGE_REF}|g" installer/kaelix.ks.in > kaelix.ks
+          cat kaelix.ks
+
+      - name: Montar a ISO
+        run: |
+          mkdir -p out
+          sudo podman run --rm --privileged -v "$PWD:/work:z" \
+            "registry.fedoraproject.org/fedora:${FEDORA_VERSION}" \
+            bash -euc "dnf -y install lorax xorriso isomd5sum > /dev/null && \
+                       mkksiso --ks /work/kaelix.ks /work/netinst.iso /work/out/${ISO_NAME}"
+          sudo chown -R "$(id -u):$(id -g)" out
+          cd out && sha256sum "${ISO_NAME}" > "${ISO_NAME}.sha256"
+          ls -lh
+
+      - name: Guardar a ISO para baixar (teste)
+        if: inputs.release_tag == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ISO_NAME }}
+          path: out/
+          retention-days: 14
+          compression-level: 0
+
+      - name: Anexar a ISO ao Release
+        if: inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" out/* --clobber

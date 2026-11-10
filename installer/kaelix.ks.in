@@ -1,0 +1,12 @@
+# Kaelix OS — instalador
+#
+# Este arquivo só diz de onde vem o sistema. Idioma, teclado, disco e
+# usuário continuam sendo escolhidos na tela do instalador.
+# O GitHub Actions troca @IMAGE_REF@ pela imagem certa (AMD/Intel ou NVIDIA).
+
+ostreecontainer --url=@IMAGE_REF@ --transport=registry --no-signature-verification
+
+%post --erroronfail
+# A partir daqui o sistema só aceita atualizações assinadas com a chave do Kaelix.
+bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry @IMAGE_REF@
+%end

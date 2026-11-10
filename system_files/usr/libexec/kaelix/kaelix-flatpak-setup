@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+# Liga o Flathub e instala os apps Flatpak que já vêm com o Kaelix OS.
+# Roda a cada boot, mas só faz algo quando a lista de apps mudou.
+set -uo pipefail
+
+LIST=/usr/share/kaelix/flatpaks.txt
+STAMP=/var/lib/kaelix/flatpaks.sha256
+
+flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+  || { echo "Sem internet ainda; tentando de novo daqui a pouco." >&2; exit 1; }
+# A loja de apps mostra o Flathub completo, em vez do repositório reduzido do Fedora.
+flatpak remote-modify --system --enable flathub || true
+for r in fedora fedora-testing; do
+  flatpak remotes --system --columns=name | grep -qx "$r" && flatpak remote-modify --system --disable "$r" || true
+done
+
+want="$(sha256sum "$LIST" | cut -d' ' -f1)"
+if [[ -r $STAMP && "$(cat "$STAMP")" == "$want" ]]; then
+  exit 0
+fi
+
+failed=0
+while read -r app; do
+  app="${app%%#*}"; app="${app//[[:space:]]/}"
+  [[ -n $app ]] || continue
+  echo "Instalando $app"
+  flatpak install --system --noninteractive --or-update flathub "$app" || failed=1
+done < "$LIST"
+
+if [[ $failed == 0 ]]; then
+  mkdir -p "$(dirname "$STAMP")"
+  echo "$want" > "$STAMP"
+else
+  echo "Alguns apps não instalaram; vai tentar de novo no próximo boot." >&2
+fi

@@ -1,0 +1,22 @@
+# Confere os scripts e roda os testes do comando kaelix a cada mudança.
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Conferir os scripts (shellcheck)
+        run: |
+          shellcheck -x system_files/usr/bin/kaelix system_files/usr/libexec/kaelix/* build_files/*.sh tests/*.sh
+      - name: Testar o comando kaelix
+        run: bash tests/test_kaelix.sh

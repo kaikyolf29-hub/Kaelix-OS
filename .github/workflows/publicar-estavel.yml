@@ -1,0 +1,81 @@
+# Publica uma versão estável do Kaelix OS.
+#
+# Só roda quando o criador manda, pela aba Actions, escrevendo PUBLICAR.
+# Pega a imagem do canal "teste" (já assinada), coloca no canal "estavel"
+# com o número da versão, cria o Release com as notas e anexa as ISOs.
+name: Publicar versão estável
+
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Número da versão (exemplo: 1.0)"
+        required: true
+      notas:
+        description: "Notas da versão: o que mudou"
+        required: true
+      confirmar:
+        description: "Escreva PUBLICAR para confirmar"
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  promover:
+    name: Promover teste para estavel
+    if: inputs.confirmar == 'PUBLICAR' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Conferir o número da versão
+        id: tag
+        env:
+          VERSAO: ${{ inputs.versao }}
+        run: |
+          if ! [[ "$VERSAO" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Versão inválida: use números como 1.0 ou 1.1.2"
+            exit 1
+          fi
+          echo "tag=v${VERSAO}" >> "$GITHUB_OUTPUT"
+
+      - uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: v2.5.0
+
+      - name: Copiar as imagens assinadas para o canal estavel
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSAO: ${{ inputs.versao }}
+        run: |
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          echo "$TOKEN" | skopeo login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          for IMG in kaelix-os kaelix-os-nvidia; do
+            # Só promove imagem com assinatura válida.
+            cosign verify --key cosign.pub "${REGISTRY}/${IMG}:teste" > /dev/null
+            for TAG in estavel "${VERSAO}"; do
+              skopeo copy --all --preserve-digests "docker://${REGISTRY}/${IMG}:teste" "docker://${REGISTRY}/${IMG}:${TAG}"
+            done
+            cosign verify --key cosign.pub "${REGISTRY}/${IMG}:estavel" > /dev/null
+            echo "${IMG}:estavel e ${IMG}:${VERSAO} publicados" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Criar o Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSAO: ${{ inputs.versao }}
+          NOTAS: ${{ inputs.notas }}
+        run: |
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "Kaelix OS ${VERSAO}" --notes "$NOTAS"
+
+  iso:
+    needs: promover
+    uses: ./.github/workflows/iso.yml
+    with:
+      canal: estavel
+      release_tag: ${{ needs.promover.outputs.tag }}

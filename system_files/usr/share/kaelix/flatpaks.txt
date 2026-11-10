@@ -1,0 +1,13 @@
+# Apps Flatpak que o Kaelix OS instala sozinho na primeira vez que liga com internet.
+# Um app por linha (ID do Flathub). Linhas com # são comentários.
+
+# Jogos
+com.heroicgameslauncher.hgl
+net.lutris.Lutris
+
+# Vídeo e gravação
+com.obsproject.Studio
+org.kde.kdenlive
+
+# Utilidades
+com.github.tchx84.Flatseal

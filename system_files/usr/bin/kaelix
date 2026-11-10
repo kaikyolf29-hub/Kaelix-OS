@@ -1,0 +1,364 @@
+#!/usr/bin/bash
+# kaelix — o comando do Kaelix OS (português e inglês).
+# Licença: GPL-3.0-only. Repositório: kaelix-os.
+set -uo pipefail
+
+IMAGE_INFO="${KAELIX_IMAGE_INFO:-/usr/share/kaelix/image-info.json}"
+STATE_DIR="${KAELIX_STATE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/kaelix}"
+FLATHUB_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
+KALI_NAME="${KAELIX_KALI_NAME:-kali}"
+KALI_IMAGE="docker.io/kalilinux/kali-rolling:latest"
+
+# ---------------------------------------------------------------------------
+# Idioma: português se o sistema estiver em português, senão inglês.
+# KAELIX_LANG=pt ou KAELIX_LANG=en força um dos dois.
+detect_lang() {
+  local l="${KAELIX_LANG:-${LC_ALL:-${LC_MESSAGES:-${LANG:-en}}}}"
+  case "$l" in pt*) echo pt ;; *) echo en ;; esac
+}
+LANG_UI="$(detect_lang)"
+
+# t "texto em português" "text in English"
+t() { if [[ $LANG_UI == pt ]]; then printf '%s' "$1"; else printf '%s' "$2"; fi; }
+
+if [[ -t 1 ]]; then
+  C_BOLD=$'\e[1m'; C_DIM=$'\e[2m'; C_OK=$'\e[32m'; C_WARN=$'\e[33m'; C_ERR=$'\e[31m'; C_ACC=$'\e[36m'; C_OFF=$'\e[0m'
+else
+  C_BOLD=; C_DIM=; C_OK=; C_WARN=; C_ERR=; C_ACC=; C_OFF=
+fi
+
+say()   { printf '%s\n' "$(t "$1" "$2")"; }
+step()  { printf '%s==>%s %s\n' "$C_ACC" "$C_OFF" "$(t "$1" "$2")"; }
+ok()    { printf '%s✔%s %s\n' "$C_OK" "$C_OFF" "$(t "$1" "$2")"; }
+warn()  { printf '%s!%s %s\n' "$C_WARN" "$C_OFF" "$(t "$1" "$2")" >&2; }
+fail()  { printf '%s✖%s %s\n' "$C_ERR" "$C_OFF" "$(t "$1" "$2")" >&2; exit 1; }
+tip()   { printf '  %s%s%s\n' "$C_DIM" "$(t "$1" "$2")" "$C_OFF"; }
+
+# Pergunta sim/não. Retorna 0 para sim. KAELIX_YES=1 responde sim sozinho.
+confirm() {
+  [[ ${KAELIX_YES:-0} == 1 ]] && return 0
+  local answer
+  printf '%s %s ' "$(t "$1" "$2")" "$(t "[s/N]" "[y/N]")"
+  read -r answer || return 1
+  case "${answer,,}" in s|sim|y|yes) return 0 ;; *) return 1 ;; esac
+}
+
+as_root() {
+  if [[ $(id -u) -eq 0 ]]; then "$@"; else sudo "$@"; fi
+}
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || fail "O programa '$1' não foi encontrado." "The program '$1' was not found."
+}
+
+info_field() {
+  [[ -r $IMAGE_INFO ]] || return 1
+  jq -r --arg k "$1" '.[$k] // empty' "$IMAGE_INFO"
+}
+
+bootc_status() { as_root bootc status --format=json 2>/dev/null; }
+
+# Imagem que está rodando agora, por exemplo ghcr.io/usuario/kaelix-os:teste
+booted_ref() {
+  bootc_status | jq -r '.status.booted.image.image.image // empty'
+}
+
+# ---------------------------------------------------------------------------
+cmd_help() {
+  cat <<EOF
+${C_BOLD}Kaelix OS${C_OFF} — $(t "comando do sistema" "system command")
+
+$(t "Uso" "Usage"): kaelix <$(t "comando" "command")>
+
+  ${C_BOLD}atualizar${C_OFF} | update     $(t "Baixa e prepara a nova versão assinada do sistema" "Downloads and stages the new signed system version")
+  ${C_BOLD}voltar${C_OFF}    | rollback   $(t "Volta para a versão anterior no próximo boot" "Goes back to the previous version on next boot")
+  ${C_BOLD}drivers${C_OFF}               $(t "Mostra a placa de vídeo e confere o driver" "Shows the graphics card and checks the driver")
+  ${C_BOLD}seguranca${C_OFF} | security   $(t "Abre o contêiner do Kali (cria na primeira vez)" "Opens the Kali container (creates it the first time)")
+  ${C_BOLD}navegador${C_OFF} | browser    $(t "Instala o Google Chrome, o Brave ou os dois" "Installs Google Chrome, Brave or both")
+  ${C_BOLD}versao${C_OFF}    | version    $(t "Mostra a versão do Kaelix OS" "Shows the Kaelix OS version")
+  ${C_BOLD}ajuda${C_OFF}     | help       $(t "Mostra esta ajuda" "Shows this help")
+
+$(t "Exemplos" "Examples"):
+  kaelix atualizar
+  kaelix atualizar --reiniciar   $(t "(atualiza e já reinicia)" "(updates and reboots right away)")
+  kaelix drivers --trocar        $(t "(troca para a imagem certa da sua placa)" "(switches to the right image for your card)")
+  kaelix seguranca remover       $(t "(apaga o contêiner do Kali)" "(deletes the Kali container)")
+EOF
+}
+
+# ---------------------------------------------------------------------------
+# atualizar / update
+cmd_update() {
+  local reboot=0 arg
+  for arg in "$@"; do
+    case "$arg" in
+      --reiniciar|--reboot) reboot=1 ;;
+      *) fail "Opção desconhecida: $arg" "Unknown option: $arg" ;;
+    esac
+  done
+  need bootc; need jq
+
+  local status ref sig
+  step "Conferindo a versão atual" "Checking the current version"
+  status="$(bootc_status)" || fail "Não consegui ler o estado do sistema (bootc status)." "Could not read the system state (bootc status)."
+  ref="$(jq -r '.status.booted.image.image.image // empty' <<<"$status")"
+  sig="$(jq -c '.spec.image.signature // "insecure"' <<<"$status")"
+  [[ -n $ref ]] || fail "Este sistema não foi instalado a partir de uma imagem do Kaelix." "This system was not installed from a Kaelix image."
+  tip "Imagem: $ref" "Image: $ref"
+
+  if [[ $sig != *containerPolicy* ]]; then
+    # Primeira vez: liga a verificação de assinatura para todas as próximas atualizações.
+    step "Ligando a verificação de assinatura e atualizando" "Turning on signature checking and updating"
+    as_root bootc switch --enforce-container-sigpolicy "$ref" \
+      || fail "A atualização falhou. Nada foi mudado no sistema." "The update failed. Nothing was changed on the system."
+  else
+    step "Procurando atualização assinada" "Looking for a signed update"
+    as_root bootc upgrade \
+      || fail "A atualização falhou. Nada foi mudado no sistema." "The update failed. Nothing was changed on the system."
+  fi
+
+  if command -v flatpak >/dev/null 2>&1; then
+    step "Atualizando os apps (Flatpak)" "Updating apps (Flatpak)"
+    as_root flatpak update --system -y --noninteractive || warn "Alguns apps não atualizaram." "Some apps did not update."
+    flatpak update --user -y --noninteractive >/dev/null 2>&1 || true
+  fi
+
+  local staged
+  staged="$(bootc_status | jq -r '.status.staged.image.image.image // empty')"
+  if [[ -n $staged ]]; then
+    ok "Nova versão pronta. Ela entra quando você reiniciar." "New version ready. It takes effect when you reboot."
+    tip "Se algo der errado depois, use: kaelix voltar" "If something goes wrong afterwards, use: kaelix rollback"
+    if [[ $reboot == 1 ]]; then
+      step "Reiniciando" "Rebooting"
+      as_root systemctl reboot
+    fi
+  else
+    ok "O sistema já está na versão mais nova." "The system is already on the newest version."
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# voltar / rollback
+cmd_rollback() {
+  need bootc; need jq
+  local status rb
+  status="$(bootc_status)" || fail "Não consegui ler o estado do sistema (bootc status)." "Could not read the system state (bootc status)."
+  rb="$(jq -r '.status.rollback.image.image.image // empty' <<<"$status")"
+  if [[ -z $rb ]]; then
+    warn "Não existe versão anterior guardada para voltar." "There is no previous version saved to go back to."
+    exit 1
+  fi
+  say "A versão anterior ($rb) vai ser usada no próximo boot." "The previous version ($rb) will be used on next boot."
+  confirm "Quer voltar para ela?" "Do you want to go back to it?" || { say "Nada foi mudado." "Nothing was changed."; exit 0; }
+  as_root bootc rollback || fail "Não consegui voltar a versão." "Could not roll back."
+  ok "Pronto. Reinicie para usar a versão anterior." "Done. Reboot to use the previous version."
+  tip "Também dá para escolher a versão anterior no menu de boot." "You can also pick the previous version in the boot menu."
+}
+
+# ---------------------------------------------------------------------------
+# drivers
+gpu_vendors() {
+  # Lista os fabricantes das placas de vídeo: nvidia, amd, intel.
+  lspci -nn 2>/dev/null | grep -Ei 'VGA|3D controller|Display controller' | while read -r line; do
+    case "$line" in
+      *"[10de:"*) echo nvidia ;;
+      *"[1002:"*) echo amd ;;
+      *"[8086:"*) echo intel ;;
+      *) echo other ;;
+    esac
+  done | sort -u
+}
+
+cmd_drivers() {
+  local do_switch=0 arg
+  for arg in "$@"; do
+    case "$arg" in
+      --trocar|--switch) do_switch=1 ;;
+      *) fail "Opção desconhecida: $arg" "Unknown option: $arg" ;;
+    esac
+  done
+  need lspci; need jq
+
+  step "Placas de vídeo encontradas" "Graphics cards found"
+  lspci -nnk 2>/dev/null | grep -EiA3 'VGA|3D controller|Display controller' | grep -Ei 'VGA|3D|Display|driver in use' | sed 's/^/  /'
+
+  local vendors variant want=""
+  vendors="$(gpu_vendors)"
+  variant="$(info_field image-variant || echo main)"
+  [[ -n $variant ]] || variant=main
+  tip "Imagem instalada: variante '$variant'" "Installed image: '$variant' variant"
+
+  if grep -qx nvidia <<<"$vendors"; then
+    [[ $variant == nvidia ]] || want=nvidia
+  elif [[ $variant == nvidia ]]; then
+    want=main
+  fi
+
+  if [[ -z $want ]]; then
+    ok "O driver certo para a sua placa já vem no sistema." "The right driver for your card is already in the system."
+    if command -v fwupdmgr >/dev/null 2>&1; then
+      tip "Para atualizar o firmware (BIOS, SSD): fwupdmgr get-updates" "To update firmware (BIOS, SSD): fwupdmgr get-updates"
+    fi
+    return 0
+  fi
+
+  local target_name ref registry tag
+  if [[ $want == nvidia ]]; then
+    target_name=kaelix-os-nvidia
+    warn "Você tem uma placa NVIDIA, mas está na imagem sem o driver da NVIDIA." "You have an NVIDIA card but are on the image without the NVIDIA driver."
+  else
+    target_name=kaelix-os
+    warn "Você está na imagem NVIDIA, mas não tem placa NVIDIA." "You are on the NVIDIA image but have no NVIDIA card."
+  fi
+
+  registry="$(info_field image-registry)"
+  ref="$(booted_ref)"
+  tag="${ref##*:}"
+  [[ -n $ref && $tag != "$ref" ]] || tag=estavel
+  [[ -n $registry ]] || fail "Não sei de onde baixar a imagem (image-info.json)." "I don't know where to download the image from (image-info.json)."
+  local target="${registry}/${target_name}:${tag}"
+
+  if [[ $do_switch == 0 ]]; then
+    say "Para trocar para a imagem certa, rode: kaelix drivers --trocar" "To switch to the right image, run: kaelix drivers --switch"
+    return 0
+  fi
+  confirm "Trocar para $target?" "Switch to $target?" || { say "Nada foi mudado." "Nothing was changed."; return 0; }
+  need bootc
+  as_root bootc switch --enforce-container-sigpolicy "$target" \
+    || fail "A troca falhou. Nada foi mudado no sistema." "The switch failed. Nothing was changed on the system."
+  ok "Pronto. Reinicie para usar a nova imagem." "Done. Reboot to use the new image."
+}
+
+# ---------------------------------------------------------------------------
+# seguranca / security
+kali_exists() {
+  distrobox list --no-color 2>/dev/null | awk -F'|' 'NR>1 {gsub(/ /,"",$2); print $2}' | grep -qx "$KALI_NAME"
+}
+
+cmd_security() {
+  need distrobox
+  local action="${1:-entrar}"
+  case "$action" in
+    entrar|enter|"") ;;
+    remover|remove)
+      if ! kali_exists; then say "O contêiner do Kali não existe." "The Kali container does not exist."; return 0; fi
+      confirm "Apagar o contêiner do Kali e tudo dentro dele?" "Delete the Kali container and everything inside it?" || return 0
+      distrobox rm --force "$KALI_NAME" && ok "Contêiner do Kali apagado." "Kali container deleted."
+      return 0 ;;
+    *) fail "Opção desconhecida: $action" "Unknown option: $action" ;;
+  esac
+
+  if ! kali_exists; then
+    say "O Kali vai rodar dentro de um contêiner. O sistema principal continua limpo." \
+        "Kali will run inside a container. The main system stays clean."
+    say "Isso baixa alguns GB e pode demorar." "This downloads a few GB and may take a while."
+    confirm "Criar o contêiner do Kali agora?" "Create the Kali container now?" || { say "Nada foi feito." "Nothing was done."; return 0; }
+    step "Criando o contêiner do Kali" "Creating the Kali container"
+    distrobox create --yes --name "$KALI_NAME" --image "$KALI_IMAGE" \
+      || fail "Não consegui criar o contêiner." "Could not create the container."
+    step "Instalando as ferramentas do Kali (kali-linux-headless)" "Installing Kali tools (kali-linux-headless)"
+    distrobox enter "$KALI_NAME" -- sh -c 'sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y kali-linux-headless' \
+      || warn "Algumas ferramentas não instalaram. Dá para tentar de novo dentro do contêiner." "Some tools did not install. You can try again inside the container."
+    ok "Contêiner do Kali pronto." "Kali container ready."
+  fi
+  tip "Para sair do Kali, digite: exit" "To leave Kali, type: exit"
+  exec distrobox enter "$KALI_NAME"
+}
+
+# ---------------------------------------------------------------------------
+# navegador / browser
+install_flatpak_user() {
+  flatpak remote-add --user --if-not-exists flathub "$FLATHUB_URL" >/dev/null 2>&1 || true
+  flatpak install --user -y --noninteractive flathub "$1"
+}
+
+cmd_browser() {
+  need flatpak
+  local first=0 choice=""
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      --primeira-vez|--first-run) first=1 ;;
+      chrome|brave) choice="$arg" ;;
+      os-dois|ambos|both) choice="chrome brave" ;;
+      nenhum|none) choice="none" ;;
+      *) fail "Opção desconhecida: $arg" "Unknown option: $arg" ;;
+    esac
+  done
+
+  local stamp="$STATE_DIR/navegador-escolhido"
+  if [[ $first == 1 && -e $stamp ]]; then return 0; fi
+
+  if [[ -z $choice ]]; then
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
+      choice="$(kdialog --title "Kaelix OS" --checklist \
+        "$(t "Qual navegador você quer instalar? Pode escolher os dois." "Which browser do you want to install? You can pick both.")" \
+        chrome "Google Chrome" off brave "Brave" off 2>/dev/null | tr -d '"')" || choice="none"
+      [[ -n $choice ]] || choice="none"
+    else
+      say "Qual navegador você quer instalar?" "Which browser do you want to install?"
+      say "  1) Google Chrome   2) Brave   3) $(t "Os dois" "Both")   4) $(t "Nenhum" "None")" \
+          "  1) Google Chrome   2) Brave   3) Both   4) None"
+      local n; read -r n || n=4
+      case "$n" in 1) choice=chrome ;; 2) choice=brave ;; 3) choice="chrome brave" ;; *) choice=none ;; esac
+    fi
+  fi
+
+  local failed=0 b
+  if [[ $choice != none ]]; then
+    for b in $choice; do
+      case "$b" in
+        chrome) step "Instalando o Google Chrome" "Installing Google Chrome"; install_flatpak_user com.google.Chrome || failed=1 ;;
+        brave)  step "Instalando o Brave" "Installing Brave"; install_flatpak_user com.brave.Browser || failed=1 ;;
+      esac
+    done
+  fi
+
+  if [[ $failed == 1 ]]; then
+    warn "Não consegui instalar. Confira a internet e rode: kaelix navegador" "Could not install. Check the internet and run: kaelix browser"
+    return 1
+  fi
+  mkdir -p "$STATE_DIR" && : > "$stamp"
+  if [[ $choice == none ]]; then
+    say "Tudo bem. Para instalar depois: kaelix navegador" "Okay. To install later: kaelix browser"
+  else
+    ok "Navegador instalado." "Browser installed."
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# versao / version
+cmd_version() {
+  local ref
+  printf '%sKaelix OS%s\n' "$C_BOLD" "$C_OFF"
+  if [[ -r $IMAGE_INFO ]]; then
+    say "  Variante:  $(info_field image-variant)" "  Variant:   $(info_field image-variant)"
+    say "  Montagem:  $(info_field build-id)" "  Build:     $(info_field build-id)"
+    say "  Base:      Fedora $(info_field fedora-version)" "  Base:      Fedora $(info_field fedora-version)"
+  fi
+  if command -v bootc >/dev/null 2>&1; then
+    ref="$(booted_ref)"
+    [[ -n $ref ]] && say "  Imagem:    $ref" "  Image:     $ref"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+main() {
+  local cmd="${1:-ajuda}"
+  shift || true
+  case "$cmd" in
+    atualizar|update|upgrade)          cmd_update "$@" ;;
+    voltar|rollback)                   cmd_rollback "$@" ;;
+    drivers|driver)                    cmd_drivers "$@" ;;
+    seguranca|segurança|security|kali) cmd_security "$@" ;;
+    navegador|browser)                 cmd_browser "$@" ;;
+    versao|versão|version|--version)   cmd_version ;;
+    ajuda|help|-h|--help)              cmd_help ;;
+    *)
+      warn "Comando desconhecido: $cmd" "Unknown command: $cmd"
+      cmd_help
+      exit 2 ;;
+  esac
+}
+
+main "$@"

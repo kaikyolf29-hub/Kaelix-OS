@@ -1,0 +1,125 @@
+# Monta a imagem do Kaelix OS, assina com cosign e publica no canal "teste".
+# O canal "estavel" só muda pelo fluxo "Publicar versão estável", que o criador roda à mão.
+name: Montar imagem
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**.md", "tests/**"]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *" # todo dia às 3h de Brasília, para pegar as correções de segurança da base
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FEDORA_VERSION: "44"
+
+jobs:
+  build:
+    name: Imagem ${{ matrix.variant }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: main
+            image: kaelix-os
+            base: ghcr.io/ublue-os/kinoite-main
+          - variant: nvidia
+            image: kaelix-os-nvidia
+            base: ghcr.io/ublue-os/kinoite-nvidia
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Conferir a chave pública
+        run: |
+          if ! grep -q "BEGIN PUBLIC KEY" cosign.pub; then
+            echo "::error::Falta a chave pública em cosign.pub. Veja docs/CHAVES.md."
+            exit 1
+          fi
+
+      - name: Conferir a chave privada (segredo)
+        if: github.event_name != 'pull_request'
+        env:
+          SIGNING_SECRET: ${{ secrets.SIGNING_SECRET }}
+        run: |
+          if [ -z "$SIGNING_SECRET" ]; then
+            echo "::error::Falta o segredo SIGNING_SECRET em Settings > Secrets > Actions. Veja docs/CHAVES.md."
+            exit 1
+          fi
+
+      - name: Liberar espaço em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune --all --force > /dev/null
+          df -h /
+
+      - name: Preparar nomes
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "REGISTRY=ghcr.io/${OWNER}" >> "$GITHUB_ENV"
+          echo "BUILD_ID=$(date -u +%Y%m%d).${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Montar a imagem
+        run: |
+          sudo podman build \
+            --pull=newer \
+            --build-arg BASE_IMAGE=${{ matrix.base }} \
+            --build-arg FEDORA_VERSION="${FEDORA_VERSION}" \
+            --build-arg IMAGE_NAME=${{ matrix.image }} \
+            --build-arg IMAGE_VARIANT=${{ matrix.variant }} \
+            --build-arg IMAGE_REGISTRY="${REGISTRY}" \
+            --build-arg BUILD_ID="${BUILD_ID}" \
+            --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
+            --label org.opencontainers.image.version="${BUILD_ID}" \
+            --label org.opencontainers.image.revision="${GITHUB_SHA}" \
+            --tag localhost/${{ matrix.image }}:build \
+            --file Containerfile .
+
+      - name: Entrar no ghcr.io
+        if: github.event_name != 'pull_request'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$TOKEN" | sudo podman login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          echo "$TOKEN" | podman login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Publicar no canal teste
+        if: github.event_name != 'pull_request'
+        run: |
+          IMG="${REGISTRY}/${{ matrix.image }}"
+          sudo podman push --digestfile /tmp/digest localhost/${{ matrix.image }}:build "docker://${IMG}:teste"
+          sudo podman push localhost/${{ matrix.image }}:build "docker://${IMG}:teste-${BUILD_ID}"
+          echo "DIGEST=$(cat /tmp/digest)" >> "$GITHUB_ENV"
+
+      - name: Instalar o cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: v2.5.0
+
+      - name: Assinar a imagem
+        if: github.event_name != 'pull_request'
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$TOKEN" | cosign login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${REGISTRY}/${{ matrix.image }}@${DIGEST}"
+
+      - name: Conferir a assinatura
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign verify --key cosign.pub "${REGISTRY}/${{ matrix.image }}@${DIGEST}" > /dev/null
+          echo "Imagem ${REGISTRY}/${{ matrix.image }}:teste assinada e conferida (${DIGEST})" >> "$GITHUB_STEP_SUMMARY"
