@@ -71,6 +71,46 @@ ColumnLayout {
         }
     }
 
+    // Papel de parede animado: o Waywallen roda os papéis do Wallpaper Engine da Steam.
+    Grupo {
+        readonly property bool pronto: ajustes.sim("papel_animado_tem") && ajustes.texto("papel_animado_peca").length > 0
+        readonly property bool usando: pronto && ajustes.texto("papel_tipo") === ajustes.texto("papel_animado_peca")
+
+        id: animado
+        titulo: ajustes.t("Papel de parede animado", "Animated wallpaper")
+        nota: animado.pronto ? ajustes.t("Os papéis do Wallpaper Engine aparecem no Waywallen quando ele está comprado e instalado na Steam.",
+                                         "Wallpaper Engine wallpapers show up in Waywallen when it is bought and installed on Steam.")
+                             : ajustes.t("O papel animado chega com o Waywallen, que o Kaelix instala sozinho quando o computador liga com internet.",
+                                         "Animated wallpapers come with Waywallen, which Kaelix installs by itself when the computer starts with internet.")
+
+        Linha {
+            primeira: true
+            enabled: animado.pronto
+            nome: ajustes.t("Usar papel animado", "Use an animated wallpaper")
+            detalhe: ajustes.t("Vídeos e papéis do Wallpaper Engine, em todas as telas.", "Videos and Wallpaper Engine wallpapers, on every screen.")
+            PlasmaComponents.Switch {
+                checked: animado.usando
+                onToggled: {
+                    if (checked) {
+                        ajustes.definir("papel_tipo", ajustes.texto("papel_animado_peca"));
+                        ajustes.fazer("papel animado");
+                    } else {
+                        ajustes.definir("papel_tipo", "org.kde.image");
+                        ajustes.fazer("papel " + ajustes.aspas("/usr/share/wallpapers/Kaelix"));
+                    }
+                }
+                Accessible.name: ajustes.t("Usar papel animado", "Use an animated wallpaper")
+            }
+        }
+        Linha {
+            visible: animado.pronto
+            abre: true
+            nome: ajustes.t("Escolher o papel animado", "Choose the animated wallpaper")
+            detalhe: ajustes.t("Abre o Waywallen.", "Opens Waywallen.")
+            onAberto: ajustes.abrir("papel-animado")
+        }
+    }
+
     Grupo {
         titulo: ajustes.t("Papéis de parede", "Wallpapers")
 

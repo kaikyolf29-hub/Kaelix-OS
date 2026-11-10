@@ -19,7 +19,7 @@
 #   kaelix-central vidro <cor> mais|normal|menos     (chama "kaelix vidro")
 #   kaelix-central barra fusao|mac|windows pequena|media|grande [sim|nao]   (chama "kaelix barra"; sim = esconder sozinha)
 #   kaelix-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
-#   kaelix-central papel <pasta ou imagem>|escolher
+#   kaelix-central papel <pasta ou imagem>|escolher|animado
 #   kaelix-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
 #
 # A central só desenha: quem lê e muda o sistema é este arquivo, que tem teste.
@@ -38,6 +38,10 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 KAELIX_BIN="${KAELIX_BIN:-kaelix}"
 # Pastas dos papéis de parede: primeiro os da pessoa, depois os do sistema.
 WALL_DIRS="${KAELIX_WALL_DIRS:-${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers:/usr/share/wallpapers}"
+# Papel de parede animado: o app Waywallen (Flatpak) e a peça dele no KDE.
+WAYWALLEN_ID=org.waywallen.waywallen
+FLATPAK_DIRS="${KAELIX_FLATPAK_DIRS:-/var/lib/flatpak/app:${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/app}"
+PLASMA_WALL_DIRS="${KAELIX_PLASMA_WALL_DIRS:-/usr/share/plasma/wallpapers:${XDG_DATA_HOME:-$HOME/.local/share}/plasma/wallpapers}"
 
 have() { command -v "$1" >/dev/null 2>&1; }
 # Nenhum comando pode travar a central: dois segundos e segue.
@@ -216,15 +220,42 @@ estado_vidro() {
   echo "vidro_transparencia=$nivel"
 }
 
-# Papel de parede da área de trabalho (o da primeira tela), sem "file://" e sem a barra do fim.
+# Id da peça do Waywallen no KDE (vazio se não estiver instalada).
+peca_animada() {
+  local d f
+  local IFS=:
+  for d in $PLASMA_WALL_DIRS; do
+    for f in "$d"/*/metadata.json; do
+      [[ -r $f ]] || continue
+      if grep -qi waywallen "$f"; then
+        basename "$(dirname "$f")"
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
+# Papel de parede da área de trabalho (o da primeira tela), sem "file://" e sem
+# a barra do fim, e se o papel animado está pronto para usar.
 estado_papel() {
-  local papel=""
-  if [[ -r $CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc ]]; then
-    papel="$(sed -n 's/^Image=//p' "$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc" | head -n1)"
+  local papel="" tipo="" animado=0 peca d
+  local cfg="$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
+  if [[ -r $cfg ]]; then
+    papel="$(sed -n 's/^Image=//p' "$cfg" | head -n1)"
+    tipo="$(sed -n 's/^wallpaperplugin=//p' "$cfg" | head -n1)"
   fi
   papel="${papel#file://}"
   papel="${papel%/}"
+  peca="$(peca_animada)" || peca=""
+  local IFS=:
+  for d in $FLATPAK_DIRS; do
+    if [[ -d $d/$WAYWALLEN_ID ]]; then animado=1; break; fi
+  done
   echo "papel=$papel"
+  echo "papel_tipo=${tipo:-org.kde.image}"
+  echo "papel_animado_tem=$animado"
+  echo "papel_animado_peca=$peca"
 }
 
 cmd_estado() {
@@ -400,8 +431,20 @@ cmd_barra() {
   timeout 60 "$KAELIX_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} >/dev/null 2>&1
 }
 
+# Usa o papel animado (a peça do Waywallen) em todas as telas.
+papel_animado() {
+  local peca
+  peca="$(peca_animada)" || { echo "a peça do papel animado não está instalada" >&2; exit 1; }
+  curto busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s \
+    "var d = desktops(); for (var i = 0; i < d.length; i++) { d[i].wallpaperPlugin = \"$peca\"; }" >/dev/null
+}
+
 cmd_papel() {
   local alvo="${1:-}"
+  if [[ $alvo == animado ]]; then
+    papel_animado
+    return
+  fi
   if [[ $alvo == escolher ]]; then
     have kdialog || exit 1
     alvo="$(kdialog --title "Kaelix OS" --getopenfilename "$HOME" "image/png image/jpeg image/webp image/avif" 2>/dev/null)" || exit 0
@@ -420,6 +463,7 @@ cmd_abrir() {
     energia)       solto kcmshell6 kcm_powerdevilprofilesconfig ;;
     notificacoes)  solto kcmshell6 kcm_notifications ;;
     sobre)         solto kinfocenter ;;
+    papel-animado) solto flatpak run "$WAYWALLEN_ID" ;;
     ajustes)
       # "abrir ajustes barra" abre direto na página da barra: os Ajustes leem o
       # pedido com "pagina-pedida" (vale também se a janela já estiver aberta).

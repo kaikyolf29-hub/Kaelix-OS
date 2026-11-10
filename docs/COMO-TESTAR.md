@@ -56,4 +56,36 @@ Antes de instalar:
 - [ ] Recebe uma atualização assinada com `kaelix atualizar`.
 - [ ] O relógio fica certo ao voltar para o Windows (ver a lista de acompanhamento).
 
+### Bandeja perto do relógio (como no Windows)
+
+Os ícones dos apps que ficam rodando em segundo plano aparecem na ilha da
+direita, à esquerda da pílula de rede e som. O Kaelix é KDE, então isso já vem
+pronto, sem instalar extensão. Para conferir no PC:
+
+1. Abra a Steam e o Discord (instale pela Loja, se quiser) e feche a janela
+   deles: os dois continuam rodando na bandeja.
+- [ ] Os dois ícones aparecem na ilha da direita.
+- [ ] Um clique no ícone abre o app de novo.
+- [ ] O botão direito no ícone mostra o menu do app (na Steam: Loja, Biblioteca, Sair...).
+- [ ] A setinha "mostrar mais" (ou Meta+B) mostra os ícones escondidos. Pelo
+      botão direito na setinha, em "Configurar a bandeja", dá para escolher quais
+      ficam sempre à vista.
+- [ ] No tema claro (central de controle, botão "Modo escuro") os ícones continuam
+      fáceis de ver.
+- [ ] Um app antigo também aparece. Os apps antigos usam um jeito velho de bandeja
+      (XEmbed), que o Kaelix converte sozinho para o novo. Exemplo: um programa do
+      Windows aberto pelo Wine ou pelo Proton que fica na bandeja.
+
+Se um ícone não aparecer, estes comandos no terminal mostram o que a bandeja
+recebeu (mande o resultado):
+
+```sh
+busctl --user get-property org.kde.StatusNotifierWatcher /StatusNotifierWatcher \
+  org.kde.StatusNotifierWatcher RegisteredStatusNotifierItems
+pgrep -a xembedsniproxy
+```
+
+A primeira linha lista os apps registrados (protocolo novo, StatusNotifierItem e
+AppIndicator). A segunda mostra se o conversor dos apps antigos está rodando.
+
 Tire foto ou grave a tela de cada item: é a prova de que está pronto.

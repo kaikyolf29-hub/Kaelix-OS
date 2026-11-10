@@ -195,6 +195,21 @@ for tema in org.kaelix.escuro.desktop org.kaelix.claro.desktop; do
   cat /usr/share/kaelix/barra/comum.js /usr/share/kaelix/barra/fusao.js /usr/share/kaelix/barra/papel-de-parede.js \
     > "/usr/share/plasma/look-and-feel/$tema/contents/layouts/org.kde.plasma.desktop-layout.js"
 done
+# Papel de parede animado: a peça do KDE do Waywallen, que mostra na área de
+# trabalho os papéis do Wallpaper Engine da Steam (e vídeos). O app Waywallen
+# vem do Flathub no primeiro boot. Se não der para baixar, a imagem sai sem ela.
+ww_url="$(curl -fsSL --retry 3 https://api.github.com/repos/waywallen/waywallen-display/releases/latest 2>/dev/null \
+  | jq -r '.assets[]?.browser_download_url | select(test("waywallen-kde-.*-(x86_64|amd64)-embed\\.zip$"))' | head -n1 || true)"
+if [[ -n $ww_url ]] && curl -fsSL --retry 3 -o /tmp/waywallen-kde.zip "$ww_url"; then
+  echo "Waywallen (peça do KDE): $ww_url sha256=$(sha256sum /tmp/waywallen-kde.zip | cut -d' ' -f1)"
+  mkdir -p /usr/share/plasma/wallpapers
+  kpackagetool6 --type Plasma/Wallpaper --packageroot /usr/share/plasma/wallpapers --install /tmp/waywallen-kde.zip \
+    || echo "AVISO: a peça do KDE do Waywallen não instalou"
+  grep -l -i waywallen /usr/share/plasma/wallpapers/*/metadata.json 2>/dev/null || true
+  rm -f /tmp/waywallen-kde.zip
+else
+  echo "AVISO: não deu para baixar a peça do KDE do Waywallen; o papel animado fica para depois"
+fi
 # Tela de boas-vindas do primeiro uso com a cara do Kaelix (endereço do projeto).
 sed -i "s|@REPO_URL@|${REPO_URL}|" /usr/share/plasma/plasma-welcome/intro-customization.desktop
 # Tela de carregamento depois da senha: o emblema do Kaelix no lugar do logo do KDE.

@@ -9,5 +9,8 @@ net.lutris.Lutris
 com.obsproject.Studio
 org.kde.kdenlive
 
+# Papel de parede animado (roda os papéis do Wallpaper Engine da Steam)
+org.waywallen.waywallen
+
 # Utilidades
 com.github.tchx84.Flatseal

@@ -22,7 +22,8 @@ run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
   OUT="$(PATH="$MOCK:$PATH" KAELIX_SYS_BACKLIGHT="$WORK/backlight" KAELIX_SYS_POWER="$WORK/power" \
          KAELIX_SYS_BLUETOOTH="$WORK/bluetooth" KAELIX_STATE_DIR="$WORK/state" \
-         XDG_CONFIG_HOME="$WORK/config" KAELIX_WALL_DIRS="$WORK/papeis-meus:$WORK/papeis" KAELIX_BIN="$MOCK/kaelix" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
+         XDG_CONFIG_HOME="$WORK/config" KAELIX_WALL_DIRS="$WORK/papeis-meus:$WORK/papeis" KAELIX_BIN="$MOCK/kaelix" \
+         KAELIX_FLATPAK_DIRS="$WORK/flatpak" KAELIX_PLASMA_WALL_DIRS="$WORK/pecas" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
   CODE=$?
 }
 
@@ -192,6 +193,18 @@ mock kdialog "echo $WORK/foto.png"
 touch "$WORK/foto.png"
 run papel escolher
 check "escolher abre a janela de arquivo e aplica" bash -c "grep -qF 'kdialog' '$CALLS' && grep -qF 'plasma-apply-wallpaperimage $WORK/foto.png' '$CALLS'"
+run estado
+check "sem Waywallen o papel animado não aparece" bash -c "grep -qx 'papel_animado_tem=0' <<<\"\$0\" && grep -qx 'papel_animado_peca=' <<<\"\$0\" && grep -qx 'papel_tipo=org.kde.image' <<<\"\$0\"" "$OUT"
+run papel animado; check "sem a peça, usar o papel animado falha" test "$CODE" -ne 0
+mkdir -p "$WORK/flatpak/org.waywallen.waywallen" "$WORK/pecas/org.waywallen.kde"
+echo '{"KPlugin":{"Id":"org.waywallen.kde","Name":"Waywallen"}}' > "$WORK/pecas/org.waywallen.kde/metadata.json"
+run estado
+check "com o Waywallen e a peça, o papel animado aparece" bash -c "grep -qx 'papel_animado_tem=1' <<<\"\$0\" && grep -qx 'papel_animado_peca=org.waywallen.kde' <<<\"\$0\"" "$OUT"
+run papel animado
+check "usar o papel animado troca a peça do papel em todas as telas" called 'wallpaperPlugin = "org.waywallen.kde"'
+mock flatpak 'exit 0'
+run abrir papel-animado
+check "abre o Waywallen" bash -c "sleep 0.3; grep -qF 'flatpak run org.waywallen.waywallen' '$CALLS'"
 run abrir ajustes
 check "abre os Ajustes do Kaelix" bash -c "sleep 0.3; grep -qF 'plasmawindowed org.kaelix.ajustes' '$CALLS'"
 run pagina-pedida; check "sem pedido não diz página" test -z "$OUT"
