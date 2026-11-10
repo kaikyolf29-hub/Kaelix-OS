@@ -140,7 +140,7 @@ jobs:
 
       - name: Guardar os prints do instalador
         if: matrix.suffix == 'amd' && always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prints-instalador
           path: prints-iso/
@@ -170,7 +170,7 @@ jobs:
 
       - name: Guardar a ISO para baixar (teste)
         if: inputs.release_tag == ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ISO_NAME }}
           path: out/
