@@ -99,6 +99,43 @@ PlasmoidItem {
 
     Component.onCompleted: atualizar()
 
+    // Ícone na barra do mesmo tamanho dos ícones da bandeja (22 px), com a
+    // pílula clara ao passar o mouse e enquanto o balão está aberto.
+    compactRepresentation: MouseArea {
+        id: compacta
+
+        readonly property int icone: Kirigami.Units.iconSizes.smallMedium
+
+        Layout.minimumWidth: icone + Kirigami.Units.smallSpacing * 2
+        Layout.preferredWidth: Layout.minimumWidth
+        Layout.maximumWidth: Layout.minimumWidth
+        Layout.fillHeight: true
+        hoverEnabled: true
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: raiz.t("Central de controle", "Control center")
+        onClicked: raiz.expanded = !raiz.expanded
+        Keys.onReturnPressed: raiz.expanded = !raiz.expanded
+        Keys.onSpacePressed: raiz.expanded = !raiz.expanded
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: compacta.icone + Kirigami.Units.smallSpacing * 2
+            height: width
+            radius: 6
+            color: raiz.expanded ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+            opacity: raiz.expanded ? 0.42 : (compacta.containsMouse || compacta.activeFocus ? 0.17 : 0)
+        }
+
+        Kirigami.Icon {
+            anchors.centerIn: parent
+            width: compacta.icone
+            height: compacta.icone
+            source: "configure"
+            active: compacta.containsMouse
+        }
+    }
+
     fullRepresentation: Item {
         id: cheia
 

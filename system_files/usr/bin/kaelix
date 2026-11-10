@@ -283,6 +283,44 @@ cmd_security() {
 
 # ---------------------------------------------------------------------------
 # navegador / browser
+# Deixa o navegador instalado como padrão do sistema. A barra mostra o navegador
+# padrão, então ele toma o lugar do Firefox, que continua instalado como reserva.
+set_default_browser() {
+  local desktop="$1"
+  if command -v xdg-settings >/dev/null 2>&1 && xdg-settings set default-web-browser "$desktop" 2>/dev/null; then
+    :
+  elif command -v xdg-mime >/dev/null 2>&1; then
+    xdg-mime default "$desktop" x-scheme-handler/http x-scheme-handler/https text/html || return 1
+  else
+    return 1
+  fi
+  if command -v kwriteconfig6 >/dev/null 2>&1; then
+    kwriteconfig6 --file kdeglobals --group General --key BrowserApplication "$desktop" || true
+  fi
+  refresh_bar_browser
+}
+
+# A barra só confere qual é o navegador padrão quando a lista de apps muda.
+# Tira e põe de volta o "navegador padrão" para ela trocar o ícone na hora.
+refresh_bar_browser() {
+  [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] || return 0
+  command -v busctl >/dev/null 2>&1 || return 0
+  local script='var ps = panels();
+for (var i = 0; i < ps.length; i++) {
+  var ids = ps[i].widgetIds;
+  for (var j = 0; j < ids.length; j++) {
+    var w = ps[i].widgetById(ids[j]);
+    if (w.type !== "org.kde.plasma.icontasks" && w.type !== "org.kde.plasma.taskmanager") continue;
+    w.currentConfigGroup = ["General"];
+    var lista = String(w.readConfig("launchers", "")).split(",").filter(function (x) { return x.length > 0; });
+    if (lista.indexOf("preferred://browser") === -1) continue;
+    w.writeConfig("launchers", lista.filter(function (x) { return x !== "preferred://browser"; }));
+    w.writeConfig("launchers", lista);
+  }
+}'
+  busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$script" >/dev/null 2>&1 || true
+}
+
 install_flatpak_user() {
   flatpak remote-add --user --if-not-exists flathub "$FLATHUB_URL" >/dev/null 2>&1 || true
   flatpak install --user -y --noninteractive flathub "$1"
@@ -346,14 +384,24 @@ cmd_browser() {
     fi
   fi
 
-  local failed=0 b
+  local failed=0 b padrao=""
   if [[ $choice != none ]]; then
     for b in $choice; do
       case "$b" in
-        chrome) step "Instalando o Google Chrome" "Installing Google Chrome"; install_flatpak_user com.google.Chrome || failed=1 ;;
-        brave)  step "Instalando o Brave" "Installing Brave"; install_flatpak_user com.brave.Browser || failed=1 ;;
+        chrome) step "Instalando o Google Chrome" "Installing Google Chrome"
+                if install_flatpak_user com.google.Chrome; then padrao="${padrao:-com.google.Chrome.desktop}"; else failed=1; fi ;;
+        brave)  step "Instalando o Brave" "Installing Brave"
+                if install_flatpak_user com.brave.Browser; then padrao="${padrao:-com.brave.Browser.desktop}"; else failed=1; fi ;;
       esac
     done
+  fi
+  # O primeiro que instalou vira o padrão (com os dois, o Chrome, que vem primeiro na lista).
+  if [[ -n $padrao ]]; then
+    if set_default_browser "$padrao"; then
+      ok "Agora ele é o navegador padrão e fica na barra no lugar do Firefox." "It is now the default browser and takes Firefox's place on the bar."
+    else
+      warn "Não consegui deixar como padrão; dá para escolher em Configurações > Aplicativos padrão." "Could not set it as default; choose it in Settings > Default Applications."
+    fi
   fi
 
   if [[ $failed == 1 ]]; then

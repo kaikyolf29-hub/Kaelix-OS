@@ -33,6 +33,8 @@ mock lspci 'echo "01:00.0 VGA compatible controller [0300]: Advanced Micro Devic
 mock distrobox 'case "$1" in list) printf "ID | NAME | STATUS | IMAGE\nabc | ${FAKE_BOX:-nada} | Up | x\n" ;; *) exit 0 ;; esac'
 mock kdialog 'exit 0'
 mock pgrep 'exit 1'
+mock xdg-settings 'exit 0'
+mock kwriteconfig6 'exit 0'
 mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
 
 INFO="$WORK/image-info.json"
@@ -102,11 +104,28 @@ check "remover apaga o contêiner" called "distrobox rm --force kali"
 echo "navegador"
 run navegador brave
 check "instala o Brave pelo Flathub" called "flatpak install --user -y --noninteractive flathub com.brave.Browser"
+check "o Brave vira o navegador padrão (e vai para a barra)" called "xdg-settings set default-web-browser com.brave.Browser.desktop"
+check "avisa que tomou o lugar do Firefox" has "no lugar do Firefox"
+rm -rf "$WORK/state"
+GUI=:0 run navegador brave
+check "com a área de trabalho aberta, a barra troca o ícone na hora" bash -c "grep -qzP 'busctl[^\\n]*evaluateScript[\\s\\S]*preferred://browser' '$CALLS'"
 run navegador --primeira-vez
 check "primeira vez não pergunta de novo depois de escolher" bash -c "! grep -qF 'flatpak install' '$CALLS'"
 rm -rf "$WORK/state"
 run browser both
 check "os dois instala Chrome e Brave" bash -c "grep -qF com.google.Chrome '$CALLS' && grep -qF com.brave.Browser '$CALLS'"
+check "com os dois, o Chrome fica como padrão" called "xdg-settings set default-web-browser com.google.Chrome.desktop"
+rm -rf "$WORK/state"
+mock flatpak 'case "$1" in install) exit 1 ;; *) exit 0 ;; esac'
+run navegador chrome
+check "se a instalação falha, não mexe no navegador padrão" bash -c "[ '$CODE' -ne 0 ] && ! grep -q xdg-settings '$CALLS'"
+mock flatpak 'exit 0'
+rm -rf "$WORK/state"
+mock xdg-settings 'exit 1'
+mock xdg-mime 'exit 0'
+run navegador brave
+check "sem xdg-settings, usa o xdg-mime" called "xdg-mime default com.brave.Browser.desktop x-scheme-handler/http x-scheme-handler/https text/html"
+mock xdg-settings 'exit 0'
 
 echo "navegador no primeiro login"
 rm -rf "$WORK/state"

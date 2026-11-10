@@ -26,7 +26,8 @@ Page {
     property var terminou: (codigo, saida) => {
         instalando = false;
         if (codigo === 0) {
-            estado.text = t("Pronto, o navegador está instalado.", "Done, the browser is installed.");
+            estado.text = t("Pronto! Ele já é o navegador padrão e aparece na barra no lugar do Firefox, que fica guardado como reserva.",
+                            "Done! It is now the default browser and takes Firefox's place on the bar. Firefox stays installed as a backup.");
         } else {
             estado.text = t("Não deu para instalar agora. Confira a internet e tente de novo aqui, ou rode: kaelix navegador",
                             "Could not install right now. Check the internet and try again here, or run: kaelix browser");
@@ -34,8 +35,8 @@ Page {
     }
 
     heading: t("Escolha o seu navegador", "Pick your browser")
-    description: t("O Firefox já vem instalado. Se preferir, instale o Google Chrome, o Brave ou os dois.",
-                   "Firefox is already installed. If you prefer, install Google Chrome, Brave or both.")
+    description: t("O Firefox já vem instalado. Se preferir, instale o Google Chrome, o Brave ou os dois: o escolhido vira o padrão e fica na barra.",
+                   "Firefox is already installed. If you prefer, install Google Chrome, Brave or both: your pick becomes the default and goes on the bar.")
 
     ColumnLayout {
         anchors.centerIn: parent
