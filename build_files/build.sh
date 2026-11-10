@@ -156,7 +156,7 @@ EOF
 log "Português do Brasil como padrão"
 # O sistema já nasce em português, com data, moeda e horário do Brasil. Quem
 # preferir outro idioma troca na instalação ou nas configurações. O teclado
-# não é fixado aqui: a instalação pergunta (ABNT2 ou outro).
+# vem do instalador, que já deixa o ABNT2 marcado (installer/kaelix.ks.in).
 dnf5 -y install --skip-unavailable glibc-langpack-pt langpacks-core-pt_BR || true
 echo 'LANG=pt_BR.UTF-8' > /etc/locale.conf
 cat > /etc/xdg/plasma-localerc <<'EOF'
@@ -273,6 +273,31 @@ grep -H '^Icon=' /usr/share/applications/org.kde.{dolphin,konsole,discover,plasm
 log "Ligando os serviços do Kaelix"
 # Flathub e os apps Flatpak que já vêm (Heroic, Lutris, OBS, Kdenlive...).
 systemctl enable kaelix-flatpak-setup.service
+
+# ---------------------------------------------------------------------------
+log "Tela de boot do Kaelix"
+# Tema próprio do Plymouth (visual/boot/gerar.py): o emblema Asas no fundo
+# índigo com três pontos pulsando, igual à tela que aparece depois da senha.
+# Os ícones do teclado e do Caps Lock da senha do disco vêm do tema do Fedora.
+for f in keyboard.png keymap-render.png capslock.png; do
+  if [[ -f /usr/share/plymouth/themes/spinner/$f ]]; then
+    cp "/usr/share/plymouth/themes/spinner/$f" /usr/share/plymouth/themes/kaelix/
+  fi
+done
+mkdir -p /etc/plymouth
+printf '%s\n' \
+  "# Kaelix OS: tela de boot própria. O resto vem de /usr/share/plymouth/plymouthd.defaults." \
+  "[Daemon]" "Theme=kaelix" > /etc/plymouth/plymouthd.conf
+# A tela de boot mora dentro do initramfs, então ele é refeito aqui com o tema
+# novo (do mesmo jeito que o Bazzite e o Bluefin fazem).
+for kdir in /usr/lib/modules/*/; do
+  kver="$(basename "$kdir")"
+  [[ -f ${kdir}vmlinuz ]] || continue
+  DRACUT_NO_XATTR=1 dracut --no-hostonly --kver "$kver" --reproducible --zstd --add ostree \
+    -f "${kdir}initramfs.img"
+  chmod 0600 "${kdir}initramfs.img"
+  echo "initramfs $kver: $(lsinitrd "${kdir}initramfs.img" 2>/dev/null | grep -c 'plymouth/themes/kaelix/' || true) arquivos do tema kaelix"
+done
 
 # ---------------------------------------------------------------------------
 log "Limpando"

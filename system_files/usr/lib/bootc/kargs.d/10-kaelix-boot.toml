@@ -1,0 +1,3 @@
+# Kaelix OS: mostra a tela de boot do Kaelix (rhgb) em vez das mensagens do
+# sistema (quiet), como no Fedora. Apertar Esc no boot mostra as mensagens.
+kargs = ["rhgb", "quiet"]

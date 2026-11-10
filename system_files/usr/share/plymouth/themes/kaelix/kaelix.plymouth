@@ -1,0 +1,67 @@
+[Plymouth Theme]
+Name=Kaelix
+Name[pt_BR]=Kaelix
+Description=Kaelix OS boot screen: the Wings emblem on indigo with three pulsing dots.
+Description[pt_BR]=Tela de boot do Kaelix OS: o emblema Asas no fundo índigo, com três pontos pulsando.
+ModuleName=two-step
+
+[two-step]
+Font=Inter 12
+TitleFont=Inter Light 30
+ImageDir=/usr/share/plymouth/themes/kaelix
+DialogHorizontalAlignment=.5
+DialogVerticalAlignment=.72
+TitleHorizontalAlignment=.5
+TitleVerticalAlignment=.2
+HorizontalAlignment=.5
+VerticalAlignment=.5
+WatermarkHorizontalAlignment=.5
+WatermarkVerticalAlignment=.5
+ProgressBarHorizontalAlignment=.5
+ProgressBarVerticalAlignment=.72
+ProgressBarWidth=240
+ProgressBarHeight=6
+Transition=none
+TransitionDuration=0.0
+BackgroundStartColor=0x12152b
+BackgroundEndColor=0x12152b
+ProgressBarBackgroundColor=0x2a2f52
+ProgressBarForegroundColor=0x5468e8
+MessageBelowAnimation=true
+
+[boot-up]
+UseEndAnimation=false
+
+[shutdown]
+UseEndAnimation=false
+
+[reboot]
+UseEndAnimation=false
+
+[updates]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Instalando atualizações...
+SubTitle=Não desligue o computador
+
+[system-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Atualizando o sistema...
+SubTitle=Não desligue o computador
+
+[firmware-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Atualizando o firmware...
+SubTitle=Não desligue o computador
+
+[system-reset]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Restaurando o sistema...
+SubTitle=Não desligue o computador

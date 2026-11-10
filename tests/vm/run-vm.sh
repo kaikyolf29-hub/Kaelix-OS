@@ -33,8 +33,16 @@ trap 'kill $QEMU_PID 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 30); do [[ -S $SOCK ]] && break; sleep 1; done
 
+# Tela de boot do Kaelix (Plymouth): aparece por poucos segundos, então tira
+# um print a cada 2 segundos no começo.
+for i in 1 2 3 4 5 6 7 8; do
+  sleep 2
+  shot "01a-tela-de-boot-$i"
+done
 # Boot: três prints no primeiro minuto (o sistema liga em uns 15 segundos).
-for i in 1 2 3; do
+sleep 4
+shot "01-boot-1"
+for i in 2 3; do
   sleep 20
   shot "01-boot-$i"
 done

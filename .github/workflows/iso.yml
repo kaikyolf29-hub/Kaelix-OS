@@ -83,16 +83,90 @@ jobs:
           sed "s|@IMAGE_REF@|${IMAGE_REF}|g" installer/kaelix.ks.in > kaelix.ks
           cat kaelix.ks
 
+      - name: Montar a cara do Kaelix no instalador
+        env:
+          CANAL: ${{ inputs.canal }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          # As imagens e o estilo vêm de installer/marca (visual/instalador/gerar.py).
+          # O .buildstamp troca o nome "Fedora" por "Kaelix OS" nas telas do instalador.
+          VERSAO="${RELEASE_TAG#v}"
+          [ -n "$VERSAO" ] || VERSAO="$CANAL"
+          rm -rf marca && cp -a installer/marca marca
+          printf '%s\n' "[Main]" "Product=Kaelix OS" "Version=${VERSAO}" "IsFinal=True" \
+            "BugURL=https://github.com/${GITHUB_REPOSITORY}/issues" "Variant=Everything" > marca/.buildstamp
+          cat marca/.buildstamp
+          (cd marca && find . -print | cpio --quiet -o -H newc | gzip -9) > updates.img
+          ls -l updates.img
+
       - name: Montar a ISO
         run: |
           mkdir -p out
+          # O menu de boot da ISO ganha o nome do Kaelix, em português e sem
+          # acento (nem todo PC mostra acento nessa tela).
+          cat > mkiso.sh <<EOF
+          set -euo pipefail
+          dnf -y install lorax xorriso isomd5sum > /dev/null
+          mkksiso --ks /work/kaelix.ks --updates /work/updates.img \\
+            -R 'Test this media & install Fedora ${FEDORA_VERSION}' 'Conferir o pendrive e instalar o Kaelix OS' \\
+            -R 'Install Fedora ${FEDORA_VERSION} in basic graphics mode' 'Instalar o Kaelix OS em modo simples' \\
+            -R 'Install Fedora ${FEDORA_VERSION}' 'Instalar o Kaelix OS' \\
+            -R 'Rescue a Fedora system' 'Consertar um sistema instalado' \\
+            -R 'Troubleshooting' 'Se algo der errado' \\
+            /work/netinst.iso /work/out/${ISO_NAME}
+          EOF
+          cat mkiso.sh
           sudo podman run --rm --privileged -v "$PWD:/work:z" \
-            "registry.fedoraproject.org/fedora:${FEDORA_VERSION}" \
-            bash -euc "dnf -y install lorax xorriso isomd5sum > /dev/null && \
-                       mkksiso --ks /work/kaelix.ks /work/netinst.iso /work/out/${ISO_NAME}"
+            "registry.fedoraproject.org/fedora:${FEDORA_VERSION}" bash /work/mkiso.sh
           sudo chown -R "$(id -u):$(id -g)" out
           cd out && sha256sum "${ISO_NAME}" > "${ISO_NAME}.sha256"
           ls -lh
+
+      - name: Ligar o KVM e instalar o QEMU
+        if: matrix.suffix == 'amd'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils ovmf > /dev/null
+
+      # Liga a ISO numa máquina virtual e tira prints do menu de boot e do
+      # instalador (não instala nada). Um problema aqui não segura a ISO.
+      - name: Testar a ISO na máquina virtual
+        if: matrix.suffix == 'amd'
+        continue-on-error: true
+        run: bash tests/vm/run-iso.sh "out/${ISO_NAME}" prints-iso
+
+      - name: Guardar os prints do instalador
+        if: matrix.suffix == 'amd' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints-instalador
+          path: prints-iso/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Publicar os prints do instalador no ramo "prints-instalador"
+        if: matrix.suffix == 'amd' && always()
+        run: |
+          [ -d prints-iso ] || exit 0
+          cp -r prints-iso /tmp/prints-iso
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan prints-instalador
+          git rm -rf --quiet . || true
+          mkdir -p ultimo && cp /tmp/prints-iso/* ultimo/
+          {
+            echo "# Prints do instalador"
+            echo
+            echo "ISO: \`${ISO_NAME}\` · commit ${GITHUB_SHA::7} · $(date -u '+%d/%m/%Y %H:%M') UTC"
+            echo
+            for f in ultimo/*.png; do echo "### $(basename "$f" .png)"; echo "![]($f)"; echo; done
+          } > README.md
+          git add README.md ultimo
+          git commit -q -m "Prints do instalador (${GITHUB_SHA::7})"
+          git push -f origin prints-instalador
 
       - name: Guardar a ISO para baixar (teste)
         if: inputs.release_tag == ''
