@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Kaelix OS"
+            }
+        ],
+        "Category": "",
+        "Description": "Visual do Kaelix OS no tema claro",
+        "Id": "org.kaelix.claro.desktop",
+        "License": "GPL-3.0",
+        "Name": "Kaelix Claro",
+        "Version": "0.1",
+        "Website": "https://github.com/kaikyolf29-hub/kaelix-os"
+    },
+    "X-Plasma-APIVersion": "2"
+}

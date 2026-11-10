@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Kaelix OS"
+            }
+        ],
+        "Category": "",
+        "Description": "Visual do Kaelix OS no tema escuro, sem preto puro",
+        "Id": "org.kaelix.escuro.desktop",
+        "License": "GPL-3.0",
+        "Name": "Kaelix Escuro",
+        "Version": "0.1",
+        "Website": "https://github.com/kaikyolf29-hub/kaelix-os"
+    },
+    "X-Plasma-APIVersion": "2"
+}

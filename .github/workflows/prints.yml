@@ -60,7 +60,13 @@ jobs:
           # A imagem de verdade abre o assistente de primeiro uso do KDE (Plasma
           # Setup) para a pessoa criar a conta. No teste a conta já vem pronta,
           # então marcamos o assistente como feito para cair direto no login.
-          printf 'FROM %s\nRUN touch /etc/plasma-setup-done\n' "$IMAGE" > Containerfile.vm
+          # A tela de boas-vindas do KDE também fica de fora, para os prints
+          # mostrarem a área de trabalho.
+          {
+            echo "FROM $IMAGE"
+            echo "RUN touch /etc/plasma-setup-done && printf '[General]\\nShouldShow=false\\nLastSeenVersion=9.0.0\\n' > /etc/xdg/plasma-welcomerc"
+          } > Containerfile.vm
+          cat Containerfile.vm
           sudo podman build -t localhost/kaelix-vm:latest -f Containerfile.vm .
 
       - name: Montar o disco virtual (bootc-image-builder)

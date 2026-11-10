@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Kaelix OS"
+            }
+        ],
+        "Id": "Kaelix",
+        "License": "GPL-3.0",
+        "Name": "Kaelix: pôr do sol no lago",
+        "Name[en]": "Kaelix: lake sunset"
+    }
+}

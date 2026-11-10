@@ -37,6 +37,19 @@ dnf5 -y install \
 
 dnf5 -y install --skip-unavailable gamemode.i686 mangohud.i686
 
+# Controle da placa de vídeo (ventoinha, temperatura, desempenho). O driver da
+# AMD já vem no sistema; isto faz o papel do "AMD Software" do Windows.
+# Preferimos o LACT; se o Fedora não tiver, entra o CoreCtrl.
+if dnf5 -y install lact; then
+  systemctl enable lactd.service || true
+  echo "lact" > /tmp/kaelix-gpu-tool
+else
+  dnf5 -y install --skip-unavailable corectrl
+  echo "corectrl" > /tmp/kaelix-gpu-tool
+fi
+echo "Controle da placa de vídeo: $(cat /tmp/kaelix-gpu-tool)"
+rm -f /tmp/kaelix-gpu-tool
+
 # Steam (com Proton) vem do repositório oficial "rpmfusion-nonfree-steam",
 # o mesmo que o Fedora oferece. Ele só é ligado durante a instalação.
 dnf5 -y install fedora-workstation-repositories
@@ -105,6 +118,24 @@ docker:
   ${IMAGE_REGISTRY}:
     use-sigstore-attachments: true
 EOF
+
+# ---------------------------------------------------------------------------
+log "Deixando o visual do Kaelix como padrão"
+# O tema global (cores sem preto puro, papel de parede em pixel art e a barra em
+# três ilhas) fica em /usr/share/plasma/look-and-feel. Aqui ele vira o padrão
+# para toda conta nova. A pessoa pode trocar depois nas configurações.
+for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals; do
+  if [[ $f == /etc/xdg/kdeglobals || -e $f ]]; then
+    kwriteconfig6 --file "$f" --group KDE --key LookAndFeelPackage org.kaelix.escuro.desktop
+    kwriteconfig6 --file "$f" --group General --key ColorScheme KaelixEscuro
+    kwriteconfig6 --file "$f" --group Icons --key Theme breeze-dark
+  fi
+done
+# Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
+kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
+kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
+chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
+gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
 log "Ligando os serviços do Kaelix"

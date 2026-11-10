@@ -44,20 +44,25 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 |---|---|---|
 | ✅ | Escolher onde ficam a rede, o som e o relógio | O criador escolheu a **fusão** (09/11/2026): tudo embaixo, em três ilhas de vidro flutuantes. Busca à esquerda, apps no meio, rede, som e relógio à direita. Sem barra no topo |
 | ✅ | Vídeo de demonstração do visual, antes de começar | Feito fora do sistema. Fonte em `docs/visual/` (abrir `demo.html` no navegador) |
-| ⬜ | O criador aprovar o vídeo | Só depois disso o tema entra no sistema |
+| ✅ | O criador aprovar o vídeo | Aprovado em 10/11/2026 |
 | ⬜ | Servir para PC e para notebook | Pedido do criador: no PC mostra a rede por cabo e esconde a bateria; no notebook mostra Wi-Fi e bateria; com os dois, mostra os dois |
-| ⬜ | Tema escuro e claro, nenhum com preto puro | O monitor do criador esmaga o preto |
+| 🔧 | Tema escuro e claro, nenhum com preto puro | Cores `KaelixEscuro` e `KaelixClaro` e temas globais `org.kaelix.escuro.desktop` e `org.kaelix.claro.desktop`. Falta o print da máquina virtual |
+| 🔧 | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global. Falta o print da máquina virtual |
+| 🔧 | Papel de parede próprio em pixel art | Pedido do criador: fundo bonito de verdade. Pôr do sol no lago, feito por código (`visual/papel-de-parede/gerar.py`), versão escura e clara |
+| ⬜ | Personalizar a barra | Pedido do criador. Predefinições "Fusão", "Estilo Mac" e "Estilo Windows", mais tamanho e posição, nas configurações e por comando |
+| ⬜ | Ícones próprios para os apps da barra | Pedido do criador: bem personalizados e bonitos |
 | ⬜ | Botões de janela nas cores do Kaelix | Rosa (fechar), azul claro (minimizar), verde água (tela cheia) |
 | ⬜ | Dock que aumenta os ícones perto do mouse | |
 | ⬜ | Central de controle no canto direito | Rede, Bluetooth, modo escuro, som, brilho, perfil de energia |
 | ⬜ | Busca de apps e arquivos no canto esquerdo | |
 | ⬜ | Assistente de primeiro uso em português e com a cara do Kaelix | Hoje abre o do KDE (Plasma Setup), em inglês, e depois a "Welcome Center" do KDE |
-| ⬜ | Logo do Kaelix | O "K" da demonstração é só um marcador. Logo de verdade só com a aprovação do criador |
+| ⬜ | Logo do Kaelix | O "K" é só um marcador. O criador gosta de emblema branco e forte em fundo escuro (como o da Unreal Engine e os dos apps dele). Desenhar opções para ele escolher |
 | ⬜ | Apps próprios: configurações, gerenciador de tarefas, terminal | |
 
 ## Seção 6: o que provavelmente faltou pedir
 
-Propostas. Nada aqui entra sem o criador escolher. Algumas já vêm na base e só precisam ser conferidas.
+Em 10/11/2026 o criador autorizou colocar por conta própria o que um sistema operacional precisa e ele
+esqueceu de pedir. O que entrar é avisado a ele e marcado aqui. Escolhas de gosto continuam com ele.
 
 ### Hardware e uso diário
 
@@ -69,6 +74,8 @@ Propostas. Nada aqui entra sem o criador escolher. Algumas já vêm na base e s�
 | 💬 | Bluetooth, fones, microfone, impressora e scanner | Já vêm na base. Falta testar |
 | 💬 | Perfis de energia visíveis na barra | Já vêm no KDE. Falta conferir |
 | 💬 | Firmware (BIOS, SSD) pelo `fwupd` | Já vem na base. Entra na central de configurações na Etapa 2 |
+
+| 🔧 | Controle da placa de vídeo (ventoinha, temperatura, desempenho) | Entrou: LACT (ou CoreCtrl, se o Fedora não tiver o LACT). Faz o papel do "AMD Software" do Windows. O driver da AMD já vem no sistema |
 
 ### Dual boot com o Windows
 

@@ -22,7 +22,7 @@ qemu-system-x86_64 \
   -enable-kvm -cpu host -machine q35 -smp 4 -m 6144 \
   -bios "$OVMF" \
   -drive file="$DISK",if=virtio,format=qcow2 \
-  -device virtio-vga -display none \
+  -device virtio-vga,xres=1920,yres=1080 -display none \
   -netdev user,id=net0 -device virtio-net-pci,netdev=net0 \
   -device qemu-xhci -device usb-tablet \
   -monitor unix:"$SOCK",server,nowait \
@@ -50,8 +50,23 @@ shot "04-primeiro-login"
 
 # Fecha a pergunta do navegador (se apareceu) e abre o terminal.
 hmp key esc
+sleep 3
+shot "04b-area-de-trabalho-limpa"
+
+# Gerenciador de arquivos (Meta+E), para ver as janelas e as cores.
+hmp key meta_l-e
+sleep 12
+shot "04c-arquivos"
+hmp key alt-f4
+sleep 2
+
+# Menu do Kaelix (tecla Meta).
+hmp key meta_l
 sleep 5
-shot "04b-depois-do-esc"
+shot "04d-menu"
+hmp key esc
+sleep 2
+
 hmp key ctrl-alt-t
 sleep 15
 shot "05-terminal"
@@ -81,6 +96,18 @@ hmp key ret
 sleep 8
 shot "09-escolha-do-navegador"
 hmp key esc
+sleep 2
+
+# Tema claro.
+hmp type "clear"
+hmp key ret
+hmp type "plasma-apply-lookandfeel -a org.kaelix.claro.desktop"
+hmp key ret
+sleep 15
+shot "10-tema-claro"
+hmp key alt-f4
+sleep 3
+shot "11-tema-claro-area-de-trabalho"
 
 echo "Prints em $OUT"
 ls -l "$OUT"
