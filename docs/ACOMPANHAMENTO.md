@@ -24,7 +24,7 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | 🔧 | Steam (com Proton), GameMode e MangoHud | Pacotes RPM na imagem |
 | 🔧 | Heroic e Lutris | Flatpak, instalados no primeiro boot com internet |
 | 🔧 | Flathub ligado | Serviço `kaelix-flatpak-setup` |
-| 🔧 | Escolha entre Chrome e Brave | `kaelix navegador` funciona. No teste da máquina virtual a pergunta não abriu sozinha no primeiro login: em conferência |
+| 🔧 | Escolha entre Chrome e Brave | A pergunta abre sozinha no primeiro login (provado na máquina virtual) e também por `kaelix navegador`. Falta provar a instalação do navegador escolhido |
 | 🔧 | Ferramentas de programação, VS Code e Distrobox | |
 | 🔧 | OBS Studio e Kdenlive | Flatpak |
 | ✅ | GitHub Actions monta, assina com cosign e publica em `ghcr.io` | `ghcr.io/kaikyolf29-hub/kaelix-os:teste`, assinatura conferida no próprio fluxo |
