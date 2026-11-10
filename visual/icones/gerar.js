@@ -53,7 +53,7 @@ const ICONES = {
       `<polyline points="54,138 90,138 108,92 134,176 152,118 164,138 202,138" fill="none" stroke="${B}" stroke-width="15" ${liso}/>`,
   },
   configuracoes: {
-    nomes: ['systemsettings', 'org.kde.systemsettings'],
+    nomes: ['systemsettings', 'org.kde.systemsettings', 'preferences-system'],
     svg: base('conf', '#A3AEDC', '#5A659F') + engrenagem(128, 128, 8, 66, 50, 22),
   },
   editor: {

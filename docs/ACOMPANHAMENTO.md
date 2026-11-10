@@ -47,16 +47,16 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | ✅ | O criador aprovar o vídeo | Aprovado em 10/11/2026 |
 | ⬜ | Servir para PC e para notebook | Pedido do criador: no PC mostra a rede por cabo e esconde a bateria; no notebook mostra Wi-Fi e bateria; com os dois, mostra os dois |
 | ✅ | Tema escuro e claro, nenhum com preto puro | Cores `KaelixEscuro` e `KaelixClaro` e temas globais `org.kaelix.escuro.desktop` e `org.kaelix.claro.desktop`. Provado na máquina virtual em 10/11/2026 |
-| 🔧 | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global. Provada na máquina virtual em 10/11/2026. Falta o acabamento de vidro com cantos bem redondos |
+| 🔧 | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global. Provada na máquina virtual em 10/11/2026. O vidro com cantos redondos vem do tema Plasma `Kaelix` (`visual/tema-plasma/gerar.py`); falta o print dele |
 | ✅ | Papel de parede próprio em pixel art | Pedido do criador: fundo bonito de verdade. Pôr do sol no lago, feito por código (`visual/papel-de-parede/gerar.py`), versão escura e clara. Provado na máquina virtual em 10/11/2026 |
 | ⬜ | Personalizar a barra | Pedido do criador. Predefinições "Fusão", "Estilo Mac" e "Estilo Windows", mais tamanho e posição, nas configurações e por comando |
-| 🔧 | Ícones próprios para os apps da barra | Pedido do criador: bem personalizados e bonitos. Primeira leva: Arquivos, Terminal, Loja, Monitor, Configurações, Editor de texto, Capturas e Imagens (`visual/icones/gerar.js`, tema de ícones `Kaelix`). Programas de outras marcas (Steam, navegador) ficam com o ícone deles. Falta o print e a opinião do criador |
-| 🔧 | Botões de janela nas cores do Kaelix | Rosa (fechar), azul claro (minimizar), verde água (tela cheia), do lado esquerdo. Feitos em cima da moldura do KDE (`build_files/deco/`). Falta o print da máquina virtual |
+| 🔧 | Ícones próprios para os apps da barra | Pedido do criador: bem personalizados e bonitos. Primeira leva: Arquivos, Terminal, Loja, Monitor, Configurações, Editor de texto, Capturas e Imagens (`visual/icones/gerar.js`, tema de ícones `Kaelix`). Programas de outras marcas (Steam, navegador) ficam com o ícone deles. Provados na máquina virtual em 10/11/2026. Falta a opinião do criador |
+| ✅ | Botões de janela nas cores do Kaelix | Rosa (fechar), azul claro (minimizar), verde água (tela cheia), do lado esquerdo. Feitos em cima da moldura do KDE (`build_files/deco/`). Provados na máquina virtual em 10/11/2026 |
 | ⬜ | Dock que aumenta os ícones perto do mouse | |
 | ⬜ | Central de controle no canto direito | Rede, Bluetooth, modo escuro, som, brilho, perfil de energia |
-| 🔧 | Busca de apps e arquivos no canto esquerdo | Pílula "Buscar" na ilha da esquerda (`org.kaelix.busca`), abre a busca do sistema. Falta o print da máquina virtual |
+| ✅ | Busca de apps e arquivos no canto esquerdo | Pílula "Buscar" na ilha da esquerda (`org.kaelix.busca`), abre a busca do sistema. Provada na máquina virtual em 10/11/2026 |
 | ⬜ | Assistente de primeiro uso em português e com a cara do Kaelix | Hoje abre o do KDE (Plasma Setup), em inglês, e depois a "Welcome Center" do KDE |
-| ✅ | Logo do Kaelix | O criador escolheu o caminho "Asas" e aprovou a versão refinada em 10/11/2026: um K com três penas, branco em fundo índigo escuro. Fonte em `visual/logo/`. Já é o botão do menu e o logo do sistema. Falta levar para a tela de boot e para o instalador |
+| ✅ | Logo do Kaelix | O criador escolheu o caminho "Asas" e aprovou a versão refinada em 10/11/2026: um K com três penas, branco em fundo índigo escuro. Fonte em `visual/logo/`. Já é o botão do menu e o logo do sistema (provado na máquina virtual). Falta levar para a tela de boot e para o instalador |
 | ⬜ | Apps próprios: configurações, gerenciador de tarefas, terminal | |
 
 ## Seção 6: o que provavelmente faltou pedir
@@ -68,7 +68,7 @@ esqueceu de pedir. O que entrar é avisado a ele e marcado aqui. Escolhas de gos
 
 | | Item | Observação |
 |---|---|---|
-| 💬 | Teclado ABNT2, português do Brasil e fuso de Brasília já marcados no instalador | Hoje o instalador pergunta. Dá para deixar pré-marcado |
+| 🔧 | Teclado ABNT2, português do Brasil e fuso de Brasília já marcados no instalador | O sistema já nasce em português do Brasil, com o horário de Brasília (falta o print). O teclado ainda é perguntado na instalação; falta deixar o ABNT2 pré-marcado |
 | 💬 | Duas telas: posição, taxa de atualização, VRR/FreeSync e HDR | O KDE já tem. Falta testar no PC do criador |
 | 🔧 | Escolha de telas com Meta+P: estender, duplicar, só a tela do PC, só a segunda tela | Pedido do criador (10/11/2026). Já vem no KDE, com o mesmo atalho do Windows. Falta dar a cara do Kaelix e provar com as duas telas dele |
 | 💬 | Controles de Xbox e PlayStation (USB e Bluetooth) | `steam-devices` já entra na imagem. Falta testar; Xbox sem fio pode precisar do `xone` |
@@ -76,7 +76,7 @@ esqueceu de pedir. O que entrar é avisado a ele e marcado aqui. Escolhas de gos
 | 💬 | Perfis de energia visíveis na barra | Já vêm no KDE. Falta conferir |
 | 💬 | Firmware (BIOS, SSD) pelo `fwupd` | Já vem na base. Entra na central de configurações na Etapa 2 |
 
-| 🔧 | Controle da placa de vídeo (ventoinha, temperatura, desempenho) | Entrou: LACT (ou CoreCtrl, se o Fedora não tiver o LACT). Faz o papel do "AMD Software" do Windows. O driver da AMD já vem no sistema |
+| 🔧 | Controle da placa de vídeo (ventoinha, temperatura, desempenho) | Entrou o CoreCtrl (o Fedora não tem o LACT no repositório oficial). Faz o papel do "AMD Software" do Windows. O driver da AMD já vem no sistema. Falta testar na RX 580 |
 
 ### Dual boot com o Windows
 

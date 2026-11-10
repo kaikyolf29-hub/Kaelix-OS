@@ -126,6 +126,22 @@ docker:
 EOF
 
 # ---------------------------------------------------------------------------
+log "Português do Brasil como padrão"
+# O sistema já nasce em português, com data, moeda e horário do Brasil. Quem
+# preferir outro idioma troca na instalação ou nas configurações. O teclado
+# não é fixado aqui: a instalação pergunta (ABNT2 ou outro).
+dnf5 -y install --skip-unavailable glibc-langpack-pt langpacks-core-pt_BR || true
+echo 'LANG=pt_BR.UTF-8' > /etc/locale.conf
+cat > /etc/xdg/plasma-localerc <<'EOF'
+[Formats]
+LANG=pt_BR.UTF-8
+
+[Translations]
+LANGUAGE=pt_BR:pt:en_US
+EOF
+ln -sfn ../usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+
+# ---------------------------------------------------------------------------
 log "Deixando o visual do Kaelix como padrão"
 # O tema global (cores sem preto puro, papel de parede em pixel art e a barra em
 # três ilhas) fica em /usr/share/plasma/look-and-feel. Aqui ele vira o padrão
@@ -137,6 +153,9 @@ for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kde
     kwriteconfig6 --file "$f" --group Icons --key Theme Kaelix
   fi
 done
+# Tema Plasma do Kaelix: ilhas de vidro com cantos redondos (o resto vem do KDE).
+kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Kaelix
+chmod 0644 /etc/xdg/plasmarc
 # Botões de janela do Kaelix (bolinhas rosa, azul e verde água), compilados na
 # etapa "deco" do Containerfile. Entram no lugar da moldura padrão.
 if [[ -s /deco/org.kde.breeze.so && -s /deco/destino ]]; then
