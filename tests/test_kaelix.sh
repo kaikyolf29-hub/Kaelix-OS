@@ -32,7 +32,7 @@ mock systemctl 'exit 0'
 mock lspci 'echo "01:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Ellesmere [Radeon RX 470/480/570/580] [1002:67df]"'
 mock distrobox 'case "$1" in list) printf "ID | NAME | STATUS | IMAGE\nabc | ${FAKE_BOX:-nada} | Up | x\n" ;; *) exit 0 ;; esac'
 mock kdialog 'exit 0'
-mock busctl 'exit "${FAKE_BUSCTL_RC:-0}"'
+mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
 
 INFO="$WORK/image-info.json"
 echo '{"image-name":"kaelix-os","image-variant":"main","image-registry":"ghcr.io/dono","build-id":"20261110.1","fedora-version":"44"}' > "$INFO"
@@ -122,7 +122,7 @@ rm -rf "$WORK/state"
 GUI=:0 run navegador --primeira-vez
 check "cancelar não pergunta de novo" bash -c "[ -e '$WORK/state/navegador-escolhido' ] && ! grep -qF 'flatpak install' '$CALLS'"
 mock kdialog 'exit 0'
-mock busctl 'exit "${FAKE_BUSCTL_RC:-0}"'
+mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
 
 echo "versao"
 run versao
@@ -154,6 +154,9 @@ check "estilo mac põe a barra no topo" called 'topo.location = "top"'
 check "tamanho pequeno usa a escala menor" called "var kaelixEscala = 2.25;"
 run barra fusao --tamanho media
 check "estilo fusão volta com as três ilhas" called 'var direita = ilha("right");'
+check "sem --detalhes não mostra a resposta da área de trabalho" bash -c "! grep -qF 'resposta da area' <<<\"\$0\"" "$OUT"
+run barra fusao --detalhes
+check "--detalhes mostra a resposta da área de trabalho" has "resposta da area de trabalho"
 run barra linux
 check "estilo desconhecido é recusado" test "$CODE" -ne 0
 run barra --tamanho enorme

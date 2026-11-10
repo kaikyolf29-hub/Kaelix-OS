@@ -374,10 +374,11 @@ bar_saved() { # bar_saved <chave> <padrão>
 }
 
 cmd_bar() {
-  local style="" size="" arg
+  local style="" size="" details=0 arg
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
+      --detalhes|--details) details=1 ;;
       fusao|fusão|fusion)   style=fusao ;;
       mac)                  style=mac ;;
       windows|win)          style=windows ;;
@@ -434,10 +435,13 @@ cmd_bar() {
   local script
   script="$(cat "$BAR_DIR/trocar.js"; printf 'var kaelixEscala = %s;\n' "$scale"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
   step "Trocando a barra para o estilo $style, tamanho $size" "Switching the bar to style $style, size $size"
-  if ! busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$script" >/dev/null; then
+  local reply
+  if ! reply="$(busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$script")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Kaelix." \
          "Could not reach the desktop. Run this command inside the Kaelix session."
   fi
+  # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
+  if [[ $details == 1 ]]; then printf '%b\n' "$reply"; fi
   mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\n' "$style" "$size" > "$STATE_DIR/barra"
   ok "Barra trocada. Os apps que você fixou foram mantidos." "Bar changed. The apps you pinned were kept."
   tip "Para voltar ao padrão: kaelix barra fusao --tamanho media" "To go back to the default: kaelix bar fusao --size media"

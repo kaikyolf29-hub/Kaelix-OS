@@ -54,7 +54,9 @@ function porApps(painel) {
     var apps = painel.addWidget("org.kde.plasma.icontasks");
     apps.currentConfigGroup = ["General"];
     var guardados = (typeof kaelixFixados !== "undefined") ? kaelixFixados : null;
-    apps.writeConfig("launchers", (guardados && guardados.length) ? guardados : fixadosPadrao());
+    var lista = (guardados && guardados.length) ? guardados : fixadosPadrao();
+    apps.writeConfig("launchers", lista);
+    print("kaelix: barra com " + lista.length + " apps fixados\n");
     return apps;
 }
 
