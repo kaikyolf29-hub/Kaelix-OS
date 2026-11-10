@@ -11,7 +11,7 @@ function ilha(alinhamento) {
     p.minimumLength = gridUnit * 4;
     p.maximumLength = Math.round(screenGeometry(p.screen).width * 0.6);
     p.floating = true;
-    p.hiding = "none";
+    p.hiding = esconder();
     return p;
 }
 

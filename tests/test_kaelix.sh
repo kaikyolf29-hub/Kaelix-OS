@@ -185,6 +185,13 @@ check "estilo fusão volta com as três ilhas" called 'var direita = ilha("right
 check "sem --detalhes não mostra a resposta da área de trabalho" bash -c "! grep -qF 'resposta da area' <<<\"\$0\"" "$OUT"
 run barra fusao --detalhes
 check "--detalhes mostra a resposta da área de trabalho" has "resposta da area de trabalho"
+run barra fusao --esconder sim
+check "a barra pode se esconder sozinha" called "var kaelixEsconder = true;"
+check "lembra que a barra se esconde" grep -qx "esconder=sim" "$WORK/state/barra"
+run barra --esconder nao
+check "só desligar o esconder também troca a barra" called "var kaelixEsconder = false;"
+run barra fusao --esconder talvez
+check "esconder com valor estranho é recusado" test "$CODE" -ne 0
 run barra linux
 check "estilo desconhecido é recusado" test "$CODE" -ne 0
 run barra --tamanho enorme

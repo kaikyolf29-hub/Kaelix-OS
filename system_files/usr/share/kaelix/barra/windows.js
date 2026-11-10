@@ -6,7 +6,7 @@ barra.location = "bottom";
 barra.height = alturaDaBarra();
 barra.lengthMode = "fill";
 barra.floating = false;
-barra.hiding = "none";
+barra.hiding = esconder();
 porMenu(barra);
 porBusca(barra);
 porApps(barra);

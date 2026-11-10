@@ -27,6 +27,7 @@ MouseArea {
 
     Rectangle {
         id: moldura
+        anchors.horizontalCenter: parent.horizontalCenter
         width: mini.largura
         height: Math.round(mini.largura * mini.proporcao)
         radius: Math.round(Kirigami.Units.gridUnit * 0.5)

@@ -11,11 +11,13 @@ ColumnLayout {
 
     readonly property string estilo: ajustes.texto("barra") || "fusao"
     readonly property string tamanho: ajustes.texto("barra_tamanho") || "media"
+    readonly property bool esconde: ajustes.sim("barra_esconder")
 
-    function trocar(estilo, tamanho) {
+    function trocar(estilo, tamanho, esconde) {
         ajustes.definir("barra", estilo);
         ajustes.definir("barra_tamanho", tamanho);
-        ajustes.fazer("barra " + estilo + " " + tamanho);
+        ajustes.definir("barra_esconder", esconde ? "1" : "0");
+        ajustes.fazer("barra " + estilo + " " + tamanho + " " + (esconde ? "sim" : "nao"));
     }
 
     Grupo {
@@ -32,7 +34,8 @@ ColumnLayout {
             }
 
             RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+                id: estilos
+                Layout.fillWidth: true
                 spacing: Kirigami.Units.gridUnit
 
                 Repeater {
@@ -44,10 +47,12 @@ ColumnLayout {
                     Miniatura {
                         id: opcao
                         required property var modelData
-                        largura: Kirigami.Units.gridUnit * 7.5
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        largura: Math.min(Kirigami.Units.gridUnit * 9, (estilos.width - estilos.spacing * 2) / 3)
                         nome: modelData.nome
                         escolhida: pagina.estilo === modelData.id
-                        onClicked: pagina.trocar(modelData.id, pagina.tamanho)
+                        onClicked: pagina.trocar(modelData.id, pagina.tamanho, pagina.esconde)
                         MiniTela {
                             escuro: ajustes.sim("escuro") || ajustes.texto("escuro") === ""
                             estilo: opcao.modelData.id
@@ -68,7 +73,18 @@ ColumnLayout {
                     { valor: "media", nome: ajustes.t("Média", "Medium") },
                     { valor: "grande", nome: ajustes.t("Grande", "Large") }
                 ]
-                onEscolhido: valor => pagina.trocar(pagina.estilo, valor)
+                onEscolhido: valor => pagina.trocar(pagina.estilo, valor, pagina.esconde)
+            }
+        }
+
+        Linha {
+            nome: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
+            detalhe: pagina.estilo === "mac" ? ajustes.t("A doca aparece quando o mouse encosta embaixo; a barra de cima fica.", "The dock shows up when the mouse touches the bottom; the top bar stays.")
+                                              : ajustes.t("Ela aparece quando o mouse encosta embaixo da tela.", "It shows up when the mouse touches the bottom of the screen.")
+            PlasmaComponents.Switch {
+                checked: pagina.esconde
+                onToggled: pagina.trocar(pagina.estilo, pagina.tamanho, checked)
+                Accessible.name: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
             }
         }
     }

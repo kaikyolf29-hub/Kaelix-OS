@@ -162,11 +162,11 @@ rm -rf "$WORK/state"
 run estado
 check "sem escolha, barra média e vidro padrão" bash -c "grep -qx 'barra_tamanho=media' <<<\"\$0\" && grep -qx 'vidro_cor=padrao' <<<\"\$0\" && grep -qx 'vidro_transparencia=normal' <<<\"\$0\"" "$OUT"
 mkdir -p "$WORK/state" "$WORK/config"
-printf 'estilo=mac\ntamanho=grande\n' > "$WORK/state/barra"
+printf 'estilo=mac\ntamanho=grande\nesconder=sim\n' > "$WORK/state/barra"
 printf 'cor=roxo\ntransparencia=mais\n' > "$WORK/state/vidro"
 printf '[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///usr/share/wallpapers/Kaelix/\n' > "$WORK/config/plasma-org.kde.plasma.desktop-appletsrc"
 run estado
-check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\"" "$OUT"
+check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\" && grep -qx 'barra_esconder=1' <<<\"\$0\"" "$OUT"
 check "lê a cor e a transparência do vidro" bash -c "grep -qx 'vidro_cor=roxo' <<<\"\$0\" && grep -qx 'vidro_transparencia=mais' <<<\"\$0\"" "$OUT"
 check "lê o papel de parede sem file:// e sem a barra do fim" bash -c "grep -qx 'papel=/usr/share/wallpapers/Kaelix' <<<\"\$0\"" "$OUT"
 run vidro azul menos
@@ -174,6 +174,8 @@ check "vidro chama o comando kaelix" called "kaelix vidro azul --transparencia m
 run vidro; check "vidro sem cor é recusado" test "$CODE" -eq 2
 run barra windows pequena
 check "barra chama o comando kaelix" called "kaelix barra windows --tamanho pequena"
+run barra mac media sim
+check "barra pode pedir para se esconder sozinha" called "kaelix barra mac --tamanho media --esconder sim"
 run barra linux; check "barra desconhecida é recusada" test "$CODE" -eq 2
 mkdir -p "$WORK/papeis/Kaelix/contents/images" "$WORK/papeis/Kaelix/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
 touch "$WORK/papeis/Kaelix/contents/images/3840x2160.png" "$WORK/papeis/Kaelix/contents/screenshot.png"

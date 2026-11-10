@@ -29,7 +29,7 @@ RowLayout {
         Layout.preferredWidth: Kirigami.Units.gridUnit * 2.2
         horizontalAlignment: Text.AlignRight
         text: Math.round(trilho.value) + "%"
-        font.features: { "tnum": 1 }
+        font.features: ({ "tnum": 1 })
         opacity: 0.75
     }
     // Não manda um comando por pixel: espera um instante.

@@ -22,6 +22,6 @@ doca.lengthMode = "fit";
 doca.minimumLength = gridUnit * 4;
 doca.maximumLength = Math.round(screenGeometry(doca.screen).width * 0.8);
 doca.floating = true;
-doca.hiding = "none";
+doca.hiding = esconder();
 porApps(doca);
 porLixeira(doca);

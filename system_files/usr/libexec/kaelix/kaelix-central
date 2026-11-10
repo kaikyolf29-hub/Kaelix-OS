@@ -17,7 +17,7 @@
 #
 # Usados pelos Ajustes do Kaelix (a janela de ajustes, como a do Mac):
 #   kaelix-central vidro <cor> mais|normal|menos     (chama "kaelix vidro")
-#   kaelix-central barra fusao|mac|windows pequena|media|grande   (chama "kaelix barra")
+#   kaelix-central barra fusao|mac|windows pequena|media|grande [sim|nao]   (chama "kaelix barra"; sim = esconder sozinha)
 #   kaelix-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
 #   kaelix-central papel <pasta ou imagem>|escolher
 #   kaelix-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
@@ -196,13 +196,15 @@ escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "kaelix"
 }
 
 estado_barra() {
-  local estilo tamanho
+  local estilo tamanho esconder=0
   estilo="$(escolha barra estilo)"
   tamanho="$(escolha barra tamanho)"
   case "$estilo" in mac|windows) ;; *) estilo=fusao ;; esac
   case "$tamanho" in pequena|grande) ;; *) tamanho=media ;; esac
+  [[ "$(escolha barra esconder)" == sim ]] && esconder=1
   echo "barra=$estilo"
   echo "barra_tamanho=$tamanho"
+  echo "barra_esconder=$esconder"
 }
 
 estado_vidro() {
@@ -393,9 +395,9 @@ cmd_vidro() {
 }
 
 cmd_barra() {
-  local estilo="${1:-}" tamanho="${2:-media}"
-  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande]" >&2; exit 2 ;; esac
-  timeout 60 "$KAELIX_BIN" barra "$estilo" --tamanho "$tamanho" >/dev/null 2>&1
+  local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}"
+  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao]" >&2; exit 2 ;; esac
+  timeout 60 "$KAELIX_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} >/dev/null 2>&1
 }
 
 cmd_papel() {

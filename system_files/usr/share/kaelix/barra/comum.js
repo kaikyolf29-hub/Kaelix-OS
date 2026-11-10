@@ -3,9 +3,15 @@
 // Variáveis opcionais que o comando "kaelix barra" define antes:
 //   kaelixEscala   tamanho da barra (2.25 pequena, 2.75 média, 3.25 grande)
 //   kaelixFixados  lista dos apps que a pessoa já tinha fixado
+//   kaelixEsconder true para a barra se esconder sozinha (aparece com o mouse)
 
 function tem(tipo) {
     return knownWidgetTypes.indexOf(tipo) !== -1;
+}
+
+// "autohide" quando a pessoa pediu para a barra se esconder sozinha.
+function esconder() {
+    return (typeof kaelixEsconder !== "undefined" && kaelixEsconder) ? "autohide" : "none";
 }
 
 function alturaDaBarra() {
