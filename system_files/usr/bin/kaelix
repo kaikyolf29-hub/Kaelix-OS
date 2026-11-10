@@ -58,8 +58,20 @@ info_field() {
 
 bootc_status() { as_root bootc status --format=json 2>/dev/null; }
 
+# Imagem que está rodando agora, lida sem pedir senha (o rpm-ostree responde
+# para qualquer usuário). Vazio se não der para saber.
+booted_ref_noroot() {
+  command -v rpm-ostree >/dev/null 2>&1 || return 0
+  rpm-ostree status --booted --json 2>/dev/null \
+    | jq -r '.deployments[0]["container-image-reference"] // empty' 2>/dev/null \
+    | sed -E 's#^ostree-[a-z-]+:(docker://)?##'
+}
+
 # Imagem que está rodando agora, por exemplo ghcr.io/usuario/kaelix-os:teste
 booted_ref() {
+  local ref
+  ref="$(booted_ref_noroot)"
+  if [[ -n $ref ]]; then printf '%s\n' "$ref"; return 0; fi
   bootc_status | jq -r '.status.booted.image.image.image // empty'
 }
 
@@ -336,10 +348,9 @@ cmd_version() {
     say "  Montagem:  $(info_field build-id)" "  Build:     $(info_field build-id)"
     say "  Base:      Fedora $(info_field fedora-version)" "  Base:      Fedora $(info_field fedora-version)"
   fi
-  if command -v bootc >/dev/null 2>&1; then
-    ref="$(booted_ref)"
-    [[ -n $ref ]] && say "  Imagem:    $ref" "  Image:     $ref"
-  fi
+  # Só mostra a imagem se der para ler sem senha: ver a versão nunca pede senha.
+  ref="$(booted_ref_noroot)"
+  if [[ -n $ref ]]; then say "  Imagem:    $ref" "  Image:     $ref"; fi
 }
 
 # ---------------------------------------------------------------------------

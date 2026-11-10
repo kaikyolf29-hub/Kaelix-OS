@@ -110,6 +110,13 @@ echo "versao"
 run versao
 check "mostra a variante e a montagem" bash -c "grep -qF main <<<\"\$0\" && grep -qF 20261110.1 <<<\"\$0\"" "$OUT"
 
+: > "$CALLS"
+run versao
+check "ver a versão não pede senha" bash -c "! grep -q '^sudo' '$CALLS'"
+mock rpm-ostree 'echo "{\"deployments\":[{\"booted\":true,\"container-image-reference\":\"ostree-image-signed:docker://ghcr.io/dono/kaelix-os:teste\"}]}"'
+run versao
+check "mostra a imagem em uso sem o prefixo" bash -c "grep -qF 'ghcr.io/dono/kaelix-os:teste' <<<\"\$0\" && ! grep -qF 'ostree-image-signed' <<<\"\$0\"" "$OUT"
+
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"
 [[ $FAILN -eq 0 ]]

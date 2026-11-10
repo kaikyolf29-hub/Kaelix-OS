@@ -4,13 +4,13 @@
 Uso:
   hmp.py <socket> shot <arquivo.png>      tira um print da tela
   hmp.py <socket> key <tecla> [...]       aperta teclas (ex.: ctrl-alt-t, ret, esc)
-  hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _)
+  hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _ |)
 """
 import socket
 import sys
 import time
 
-KEYMAP = {" ": "spc", "-": "minus", ".": "dot", "/": "slash", "_": "shift-minus", "\n": "ret"}
+KEYMAP = {" ": "spc", "-": "minus", ".": "dot", "/": "slash", "_": "shift-minus", "|": "shift-backslash", "\n": "ret"}
 
 
 def send(sock_path, cmd):

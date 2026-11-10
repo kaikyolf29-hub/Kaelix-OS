@@ -69,5 +69,18 @@ hmp key ret
 sleep 8
 shot "07-kaelix-versao-fastfetch"
 
+# A pergunta do navegador, aberta à mão, e o registro do primeiro login.
+hmp type "clear"
+hmp key ret
+hmp type "journalctl --user -b | grep -i kaelix | tail -n 12"
+hmp key ret
+sleep 4
+shot "08-registro-do-primeiro-login"
+hmp type "kaelix navegador"
+hmp key ret
+sleep 8
+shot "09-escolha-do-navegador"
+hmp key esc
+
 echo "Prints em $OUT"
 ls -l "$OUT"
