@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fundo dos balões do Kaelix. Gerado por visual/tema-plasma/gerar.py: não editar à mão. -->
+<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="180" viewBox="0 0 280 180">
+<defs>
+  <style type="text/css" id="current-color-scheme">
+    .ColorScheme-Text { color:#232629; stop-color:#232629; }
+    .ColorScheme-Background { color:#eff0f1; stop-color:#eff0f1; }
+  </style>
+  <linearGradient id="s-cima" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.0"/><stop offset="0.75" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+  <linearGradient id="s-baixo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.0"/><stop offset="0.75" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+  <linearGradient id="s-esq" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.0"/><stop offset="0.75" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+  <linearGradient id="s-dir" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.0"/><stop offset="0.75" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+  <radialGradient id="s-tl" cx="1" cy="1" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.5455" stop-color="#000" stop-opacity="0"/><stop offset="0.5456" stop-color="#000" stop-opacity="0"/><stop offset="0.6591" stop-color="#000" stop-opacity="0.0"/><stop offset="0.7955" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="s-tr" cx="0" cy="1" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.5455" stop-color="#000" stop-opacity="0"/><stop offset="0.5456" stop-color="#000" stop-opacity="0"/><stop offset="0.6591" stop-color="#000" stop-opacity="0.0"/><stop offset="0.7955" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="s-bl" cx="1" cy="0" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.5455" stop-color="#000" stop-opacity="0"/><stop offset="0.5456" stop-color="#000" stop-opacity="0"/><stop offset="0.6591" stop-color="#000" stop-opacity="0.0"/><stop offset="0.7955" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="s-br" cx="0" cy="0" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.5455" stop-color="#000" stop-opacity="0"/><stop offset="0.5456" stop-color="#000" stop-opacity="0"/><stop offset="0.6591" stop-color="#000" stop-opacity="0.0"/><stop offset="0.7955" stop-color="#000" stop-opacity="0.0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+</defs>
+<g id="topleft" transform="translate(0,10)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="1" d="M0,12 H12 V0 A12,12 0 0 0 0,12 Z"/><path fill="#ffffff" opacity="0.12" d="M0,12 A12,12 0 0 1 12,0 V1 A11,11 0 0 0 1,12 Z"/></g>
+<g id="topright" transform="translate(44,10)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="1" d="M0,0 V12 H12 A12,12 0 0 0 0,0 Z"/><path fill="#ffffff" opacity="0.12" d="M0,0 A12,12 0 0 1 12,12 H11 A11,11 0 0 0 0,1 Z"/></g>
+<g id="bottomleft" transform="translate(0,54)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="1" d="M0,0 H12 V12 A12,12 0 0 1 0,0 Z"/><path fill="#ffffff" opacity="0.12" d="M12,12 A12,12 0 0 1 0,0 H1 A11,11 0 0 0 12,11 Z"/></g>
+<g id="bottomright" transform="translate(44,54)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="1" d="M0,0 H12 A12,12 0 0 1 0,12 Z"/><path fill="#ffffff" opacity="0.12" d="M12,0 A12,12 0 0 1 0,12 V11 A11,11 0 0 0 11,0 Z"/></g>
+<g id="top" transform="translate(12,10)"><rect class="ColorScheme-Background" fill="currentColor" opacity="1" width="32" height="12"/><rect fill="#ffffff" opacity="0.12" width="32" height="1"/></g>
+<g id="bottom" transform="translate(12,54)"><rect class="ColorScheme-Background" fill="currentColor" opacity="1" width="32" height="12"/><rect fill="#ffffff" opacity="0.12" y="11" width="32" height="1"/></g>
+<g id="left" transform="translate(0,22)"><rect class="ColorScheme-Background" fill="currentColor" opacity="1" width="12" height="32"/><rect fill="#ffffff" opacity="0.12" width="1" height="32"/></g>
+<g id="right" transform="translate(44,22)"><rect class="ColorScheme-Background" fill="currentColor" opacity="1" width="12" height="32"/><rect fill="#ffffff" opacity="0.12" x="11" width="1" height="32"/></g>
+<g id="center" transform="translate(12,22)"><rect class="ColorScheme-Background" fill="currentColor" opacity="1" width="32" height="32"/></g>
+<rect id="hint-tile-center" width="5" height="5" fill="#ff6600"/>
+<rect id="hint-top-margin" x="20" y="10" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-bottom-margin" x="20" y="62" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-left-margin" x="0" y="30" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-right-margin" x="52" y="30" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-top-inset" x="28" y="10" width="4" height="0.00000001" fill="#00ff00"/>
+<rect id="hint-bottom-inset" x="28" y="66" width="4" height="0.00000001" fill="#00ff00"/>
+<rect id="hint-left-inset" x="0" y="38" width="0.00000001" height="4" fill="#00ff00"/>
+<rect id="hint-right-inset" x="56" y="38" width="0.00000001" height="4" fill="#00ff00"/>
+<rect id="shadow-topleft" x="80" y="0" width="22" height="22" fill="url(#s-tl)"/>
+<rect id="shadow-topright" x="134" y="0" width="22" height="22" fill="url(#s-tr)"/>
+<rect id="shadow-bottomleft" x="80" y="54" width="22" height="22" fill="url(#s-bl)"/>
+<rect id="shadow-bottomright" x="134" y="54" width="22" height="22" fill="url(#s-br)"/>
+<g id="shadow-top"><rect x="102" y="0" width="32" height="10" fill="url(#s-cima)"/><rect fill="#000000" opacity="0.001" x="102" y="10" width="32" height="12"/></g>
+<g id="shadow-bottom"><rect fill="#000000" opacity="0.001" x="102" y="54" width="32" height="12"/><rect x="102" y="66" width="32" height="10" fill="url(#s-baixo)"/></g>
+<g id="shadow-left"><rect x="80" y="22" width="10" height="32" fill="url(#s-esq)"/><rect fill="#000000" opacity="0.001" x="90" y="22" width="12" height="32"/></g>
+<g id="shadow-right"><rect fill="#000000" opacity="0.001" x="134" y="22" width="12" height="32"/><rect x="146" y="22" width="10" height="32" fill="url(#s-dir)"/></g>
+<rect id="shadow-center" fill="#000000" opacity="0.001" x="102" y="22" width="32" height="32"/>
+<rect id="shadow-hint-top-margin" x="110" y="0" width="2" height="10" fill="#ff00ff"/>
+<rect id="shadow-hint-bottom-margin" x="110" y="66" width="2" height="10" fill="#ff00ff"/>
+<rect id="shadow-hint-left-margin" x="80" y="30" width="10" height="2" fill="#ff00ff"/>
+<rect id="shadow-hint-right-margin" x="146" y="30" width="10" height="2" fill="#ff00ff"/>
+<rect id="shadow-hint-top-inset" x="118" y="0" width="2" height="10" fill="#00ff00"/>
+<rect id="shadow-hint-bottom-inset" x="118" y="66" width="2" height="10" fill="#00ff00"/>
+<rect id="shadow-hint-left-inset" x="80" y="38" width="10" height="2" fill="#00ff00"/>
+<rect id="shadow-hint-right-inset" x="146" y="38" width="10" height="2" fill="#00ff00"/>
+<path id="mask-topleft" d="M200,22 H212 V10 A12,12 0 0 0 200,22 Z"/>
+<path id="mask-topright" d="M244,10 V22 H256 A12,12 0 0 0 244,10 Z"/>
+<path id="mask-bottomleft" d="M200,54 H212 V66 A12,12 0 0 1 200,54 Z"/>
+<path id="mask-bottomright" d="M244,54 H256 A12,12 0 0 1 244,66 Z"/>
+<rect id="mask-top" x="212" y="10" width="32" height="12"/>
+<rect id="mask-bottom" x="212" y="54" width="32" height="12"/>
+<rect id="mask-left" x="200" y="22" width="12" height="32"/>
+<rect id="mask-right" x="244" y="22" width="12" height="32"/>
+<rect id="mask-center" x="212" y="22" width="32" height="32"/>
+</svg>

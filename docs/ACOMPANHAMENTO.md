@@ -70,7 +70,7 @@ esqueceu de pedir. O que entrar é avisado a ele e marcado aqui. Escolhas de gos
 |---|---|---|
 | 🔧 | Teclado ABNT2, português do Brasil e fuso de Brasília já marcados no instalador | O sistema já nasce em português do Brasil, com o horário de Brasília (provado na máquina virtual em 10/11/2026). O teclado ainda é perguntado na instalação; falta deixar o ABNT2 pré-marcado |
 | 💬 | Duas telas: posição, taxa de atualização, VRR/FreeSync e HDR | O KDE já tem. Falta testar no PC do criador |
-| 🔧 | Escolha de telas com Meta+P: estender, duplicar, só a tela do PC, só a segunda tela | Pedido do criador (10/11/2026). Já vem no KDE, com o mesmo atalho do Windows. Falta dar a cara do Kaelix e provar com as duas telas dele |
+| 🔧 | Escolha de telas com Meta+P: estender, duplicar, só a tela do PC, só a segunda tela | Pedido do criador (10/11/2026). Já vem no KDE, com o mesmo atalho do Windows. Os balões do sistema (menu, bandeja, avisos e esta escolha de telas) ganharam o canto redondo e a borda clara das ilhas; aguardando o print da VM. Falta provar com as duas telas dele |
 | 💬 | Controles de Xbox e PlayStation (USB e Bluetooth) | `steam-devices` já entra na imagem. Falta testar; Xbox sem fio pode precisar do `xone` |
 | 💬 | Bluetooth, fones, microfone, impressora e scanner | Já vêm na base. Falta testar |
 | 💬 | Perfis de energia visíveis na barra | Já vêm no KDE. Falta conferir |

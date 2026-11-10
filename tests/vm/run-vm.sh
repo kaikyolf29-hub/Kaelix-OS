@@ -142,6 +142,21 @@ for n in 2 3 4 5 6 7 8; do
   sleep 3
   shot "16-boas-vindas-$n"
 done
+hmp key alt-f4
+sleep 3
+
+# Escolha de telas do Meta+P (estender, duplicar, só uma tela), com o balão do Kaelix.
+hmp key meta_l-p
+sleep 5
+shot "17-escolha-de-telas"
+hmp key esc
+sleep 2
+# Menu de novo, agora que os balões têm o canto redondo do Kaelix.
+hmp key meta_l
+sleep 5
+shot "18-menu-com-balao-redondo"
+hmp key esc
+sleep 2
 
 echo "Prints em $OUT"
 ls -l "$OUT"

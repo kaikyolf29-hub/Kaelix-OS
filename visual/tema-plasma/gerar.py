@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera o tema Plasma do Kaelix: o fundo das ilhas da barra.
+"""Gera o tema Plasma do Kaelix: o fundo das ilhas da barra, dos balões e das dicas.
 
 Uso: gerar.py <pasta do tema>   (ex.: system_files/usr/share/plasma/desktoptheme/Kaelix)
 
@@ -40,11 +40,11 @@ def paradas(pares):
     return "".join('<stop offset="%s" stop-color="#000" stop-opacity="%s"/>' % p for p in pares)
 
 
-def fundo(opacidade, borda):
+def fundo(opacidade, borda, r=R):
     """As nove peças do fundo (canto, lado, miolo), com a linha clara na borda."""
     f = 'class="ColorScheme-Background" fill="currentColor" opacity="%s"' % opacidade
     l = 'fill="#ffffff" opacity="%s"' % borda
-    r, c, n = R, C, R - 1
+    c, n = C, r - 1
     x1, x2, y1, y2 = r, r + c, Y0 + r, Y0 + r + c
     p = []
     # Cantos: um quarto de disco e, por cima, um anel fino claro (a borda).
@@ -70,19 +70,24 @@ def fundo(opacidade, borda):
     return p
 
 
-def dicas():
-    """Margens de dentro do painel e as peças que o Plasma procura pelo nome."""
-    x1, y1 = R, Y0 + R
-    return [
+def dicas(r=R, mv=4, mh=8, grosso=True):
+    """Margens de dentro (mv em cima e embaixo, mh dos lados) e as peças que o Plasma procura pelo nome."""
+    x1, y1 = r, Y0 + r
+    R = r
+    pecas = [
         '<rect id="hint-tile-center" width="5" height="5" fill="#ff6600"/>',
-        '<rect id="hint-top-margin" x="%d" y="%d" width="4" height="4" fill="#ff00ff"/>' % (x1 + 8, Y0),
-        '<rect id="hint-bottom-margin" x="%d" y="%d" width="4" height="4" fill="#ff00ff"/>' % (x1 + 8, Y0 + 2 * R + C - 4),
-        '<rect id="hint-left-margin" x="0" y="%d" width="8" height="4" fill="#ff00ff"/>' % (y1 + 8),
-        '<rect id="hint-right-margin" x="%d" y="%d" width="8" height="4" fill="#ff00ff"/>' % (2 * R + C - 8, y1 + 8),
+        '<rect id="hint-top-margin" x="%d" y="%d" width="4" height="%d" fill="#ff00ff"/>' % (x1 + 8, Y0, mv),
+        '<rect id="hint-bottom-margin" x="%d" y="%d" width="4" height="%d" fill="#ff00ff"/>' % (x1 + 8, Y0 + 2 * R + C - mv, mv),
+        '<rect id="hint-left-margin" x="0" y="%d" width="%d" height="4" fill="#ff00ff"/>' % (y1 + 8, mh),
+        '<rect id="hint-right-margin" x="%d" y="%d" width="%d" height="4" fill="#ff00ff"/>' % (2 * R + C - mh, y1 + 8, mh),
         '<rect id="hint-top-inset" x="%d" y="%d" width="4" height="0.00000001" fill="#00ff00"/>' % (x1 + 16, Y0),
         '<rect id="hint-bottom-inset" x="%d" y="%d" width="4" height="0.00000001" fill="#00ff00"/>' % (x1 + 16, Y0 + 2 * R + C),
         '<rect id="hint-left-inset" x="0" y="%d" width="0.00000001" height="4" fill="#00ff00"/>' % (y1 + 16),
         '<rect id="hint-right-inset" x="%d" y="%d" width="0.00000001" height="4" fill="#00ff00"/>' % (2 * R + C, y1 + 16),
+    ]
+    if not grosso:
+        return pecas
+    return pecas + [
         '<rect id="thick-center" class="ColorScheme-Background" fill="currentColor" x="20" y="130" width="32" height="32"/>',
         '<rect id="thick-hint-top-margin" x="34" y="122" width="4" height="8" fill="#800080"/>',
         '<rect id="thick-hint-bottom-margin" x="34" y="162" width="4" height="8" fill="#800080"/>',
@@ -91,9 +96,9 @@ def dicas():
     ]
 
 
-def mascara(x0):
+def mascara(x0, r=R):
     """A forma cheia do painel, que o Plasma usa para recortar o desfoque."""
-    r, c = R, C
+    c = C
     x1, x2, y1, y2 = x0 + r, x0 + r + c, Y0 + r, Y0 + r + c
     return [
         '<path id="mask-topleft" d="M%d,%d H%d V%d A%d,%d 0 0 0 %d,%d Z"/>' % (x0, y1, x1, Y0, r, r, x0, y1),
@@ -108,8 +113,9 @@ def mascara(x0):
     ]
 
 
-def sombra(x0):
+def sombra(x0, r=R):
     """Sombra suave em volta da ilha. Por baixo da ilha ela é invisível."""
+    R = r
     t = S + R
     x1, x2, y1, y2 = x0 + t, x0 + t + C, t, t + C
     inv = 'fill="#000000" opacity="0.001"'
@@ -134,16 +140,18 @@ def sombra(x0):
     ]
 
 
-def painel(opacidade, borda, forca_sombra):
+def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra"):
+    """Uma folha completa: fundo, margens, sombra e máscara. Serve para a barra, os balões e as dicas."""
+    R = r
     k = R / float(S + R)
     estilo = ESTILO % {
         "lin": paradas([(0, 0), (0.45, round(forca_sombra * 0.12, 3)), (0.75, round(forca_sombra * 0.4, 3)), (1, forca_sombra)]),
         "rad": paradas([(0, 0), (round(k, 4), 0), (round(k + 0.0001, 4), forca_sombra), (round(k + (1 - k) * 0.25, 4), round(forca_sombra * 0.4, 3)), (round(k + (1 - k) * 0.55, 4), round(forca_sombra * 0.12, 3)), (1, 0)]),
     }
-    pecas = fundo(opacidade, borda) + dicas() + sombra(80) + mascara(200)
+    pecas = fundo(opacidade, borda, r) + dicas(r, mv, mh, grosso) + sombra(80, r) + mascara(200, r)
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<!-- Fundo das ilhas da barra do Kaelix. Gerado por visual/tema-plasma/gerar.py: não editar à mão. -->\n'
-            '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="180" viewBox="0 0 280 180">\n'
+            '<!-- %s do Kaelix. Gerado por visual/tema-plasma/gerar.py: não editar à mão. -->\n' % nome
+            + '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="180" viewBox="0 0 280 180">\n'
             + estilo + "\n" + "\n".join(pecas) + "\n</svg>\n")
 
 
@@ -209,6 +217,59 @@ def tarefas():
             + ESTILO_TAREFAS + "\n" + "\n".join(pecas) + "\n</svg>\n")
 
 
+RB = 12     # raio do canto dos balões (menu, bandeja, avisos, escolha de telas do Meta+P)
+RD = 8      # raio do canto das dicas (o texto que aparece ao parar o mouse)
+
+
+def cabecalho():
+    """Faixa de cima e de baixo dos balões, com os cantos acompanhando o canto redondo."""
+    r, c = RB, 32
+    f = 'class="ColorScheme-Background" fill="currentColor" opacity="0.75"'
+    lin = 'class="ColorScheme-Text" fill="currentColor" opacity="0.14"'
+    inv = 'fill="#000000" opacity="0.001"'
+    pecas = ['<rect id="hint-stretch-borders" x="0" y="0" width="5" height="5" opacity="0.6"/>']
+
+    def peca(nome, x, y, w, h, desenho):
+        pecas.append('<g id="%s" transform="translate(%d,%d)"><rect %s width="%d" height="%d"/>%s</g>' % (nome, x, y, inv, w, h, desenho))
+
+    def cheio(w, h):
+        return '<rect %s width="%d" height="%d"/>' % (f, w, h)
+
+    for pre, x0, redondo_em_cima in (("header", 10, True), ("footer", 80, False)):
+        y0 = 10
+        x1, x2, y1, y2 = x0 + r, x0 + r + c, y0 + r, y0 + r + c
+        risco_baixo = '<rect %s y="%d" width="%%d" height="1"/>' % (lin, r - 1)
+        risco_cima = '<rect %s y="0" width="%%d" height="1"/>' % lin
+        if redondo_em_cima:
+            peca(pre + "-topleft", x0, y0, r, r, '<path %s d="M0,%d H%d V0 A%d,%d 0 0 0 0,%d Z"/>' % (f, r, r, r, r, r))
+            peca(pre + "-topright", x2, y0, r, r, '<path %s d="M0,0 V%d H%d A%d,%d 0 0 0 0,0 Z"/>' % (f, r, r, r, r))
+            peca(pre + "-top", x1, y0, c, r, cheio(c, r))
+            peca(pre + "-bottomleft", x0, y2, r, r, cheio(r, r) + risco_baixo % r)
+            peca(pre + "-bottomright", x2, y2, r, r, cheio(r, r) + risco_baixo % r)
+            peca(pre + "-bottom", x1, y2, c, r, cheio(c, r) + risco_baixo % c)
+        else:
+            peca(pre + "-topleft", x0, y0, r, r, cheio(r, r) + risco_cima % r)
+            peca(pre + "-topright", x2, y0, r, r, cheio(r, r) + risco_cima % r)
+            peca(pre + "-top", x1, y0, c, r, cheio(c, r) + risco_cima % c)
+            peca(pre + "-bottomleft", x0, y2, r, r, '<path %s d="M0,0 H%d V%d A%d,%d 0 0 1 0,0 Z"/>' % (f, r, r, r, r))
+            peca(pre + "-bottomright", x2, y2, r, r, '<path %s d="M0,0 H%d A%d,%d 0 0 1 0,%d Z"/>' % (f, r, r, r, r))
+            peca(pre + "-bottom", x1, y2, c, r, cheio(c, r))
+        peca(pre + "-left", x0, y1, r, c, cheio(r, c))
+        peca(pre + "-right", x2, y1, r, c, cheio(r, c))
+        peca(pre + "-center", x1, y1, c, c, cheio(c, c))
+    # mesmas margens de dentro do tema do KDE (6), para o conteúdo não mudar de lugar
+    pecas += [
+        '<rect id="hint-top-margin" x="30" y="10" width="4" height="6" fill="#ff00ff"/>',
+        '<rect id="hint-bottom-margin" x="30" y="60" width="4" height="6" fill="#ff00ff"/>',
+        '<rect id="hint-left-margin" x="10" y="30" width="6" height="4" fill="#ff00ff"/>',
+        '<rect id="hint-right-margin" x="60" y="30" width="6" height="4" fill="#ff00ff"/>',
+    ]
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<!-- Faixas dos balões do Kaelix. Gerado por visual/tema-plasma/gerar.py: não editar à mão. -->\n'
+            '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="150" height="80" viewBox="0 0 150 80">\n'
+            + ESTILO_TAREFAS + "\n" + "\n".join(pecas) + "\n</svg>\n")
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit("uso: gerar.py <pasta do tema>")
@@ -220,6 +281,16 @@ def main():
             f.write(painel(op, borda, somb))
     with open(os.path.join(raiz, "widgets", "tasks.svg"), "w") as f:
         f.write(tarefas())
+    # Balões (menu, bandeja, avisos, a escolha de telas do Meta+P): mesmos cantos e borda das ilhas.
+    baloes = {"translucent/dialogs": (0.74, 0.18, 0.26), "dialogs": (0.94, 0.14, 0.26), "solid/dialogs": (1, 0.12, 0.26), "opaque/dialogs": (1, 0.12, 0)}
+    for pasta, (op, borda, somb) in baloes.items():
+        os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
+        with open(os.path.join(raiz, pasta, "background.svg"), "w") as f:
+            f.write(painel(op, borda, somb, r=RB, mv=4, mh=4, grosso=False, nome="Fundo dos balões"))
+    with open(os.path.join(raiz, "widgets", "plasmoidheading.svg"), "w") as f:
+        f.write(cabecalho())
+    with open(os.path.join(raiz, "widgets", "tooltip.svg"), "w") as f:
+        f.write(painel(0.97, 0.14, 0.22, r=RD, mv=4, mh=4, grosso=False, nome="Fundo das dicas"))
     meta = {
         "KPlugin": {
             "Authors": [{"Name": "Kaelix OS"}],
