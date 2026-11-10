@@ -158,5 +158,36 @@ shot "18-menu-com-balao-redondo"
 hmp key esc
 sleep 2
 
+# Central de controle do Kaelix (Meta+A), na ilha da direita. Primeiro no tema claro.
+hmp key meta_l-a
+sleep 6
+shot "19-central-de-controle-claro"
+hmp key esc
+sleep 2
+# O ajudante da central volta para o tema escuro e mostra o que leu do sistema.
+hmp key ctrl-alt-t
+sleep 8
+hmp type "/usr/libexec/kaelix/kaelix-central tema escuro"
+hmp key ret
+sleep 15
+hmp type "/usr/libexec/kaelix/kaelix-central estado"
+hmp key ret
+sleep 4
+shot "20-central-estado-lido-do-sistema"
+# Se algo do Kaelix reclamou ao carregar, aparece aqui.
+hmp type "clear"
+hmp key ret
+hmp type "journalctl --user -b | grep -i -e kaelix -e qml | tail -n 25"
+hmp key ret
+sleep 4
+shot "21-registro-das-telas-do-kaelix"
+hmp key alt-f4
+sleep 3
+hmp key meta_l-a
+sleep 6
+shot "22-central-de-controle-escuro"
+hmp key esc
+sleep 2
+
 echo "Prints em $OUT"
 ls -l "$OUT"

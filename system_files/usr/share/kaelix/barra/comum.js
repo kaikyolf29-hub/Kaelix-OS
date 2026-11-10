@@ -64,5 +64,15 @@ function porApps(painel) {
 // máquina tem: cabo no PC, Wi-Fi e bateria no notebook.
 function porBandeja(painel) {
     painel.addWidget("org.kde.plasma.systemtray");
+    porCentral(painel);
     painel.addWidget("org.kde.plasma.digitalclock");
+}
+
+// Central de controle do Kaelix (rede, som, tema, não perturbe), no atalho Meta+A.
+function porCentral(painel) {
+    if (tem("org.kaelix.central")) {
+        var central = painel.addWidget("org.kaelix.central");
+        central.currentConfigGroup = ["Shortcuts"];
+        central.writeConfig("global", "Meta+A");
+    }
 }

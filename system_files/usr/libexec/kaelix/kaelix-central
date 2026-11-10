@@ -1,0 +1,273 @@
+#!/usr/bin/bash
+# Kaelix OS: estado e ações da central de controle da barra.
+#
+#   kaelix-central estado            mostra tudo em linhas "chave=valor"
+#   kaelix-central wifi on|off
+#   kaelix-central bluetooth on|off
+#   kaelix-central nao-perturbe on|off
+#   kaelix-central tema escuro|claro
+#   kaelix-central luz-noturna on|off
+#   kaelix-central volume 0..100
+#   kaelix-central mudo
+#   kaelix-central brilho 1..100
+#   kaelix-central abrir rede|bluetooth|som|tela|configuracoes|barra
+#   kaelix-central bloquear | sair
+#
+# A central só desenha: quem lê e muda o sistema é este arquivo, que tem teste.
+# Cada parte funciona sozinha: o que a máquina não tem (Wi-Fi, Bluetooth, tela
+# com brilho, bateria) sai como "_tem=0" e a central esconde.
+set -u
+export LC_ALL=C
+
+# Pastas do sistema, trocáveis nos testes.
+SYS_BACKLIGHT="${KAELIX_SYS_BACKLIGHT:-/sys/class/backlight}"
+SYS_POWER="${KAELIX_SYS_POWER:-/sys/class/power_supply}"
+SYS_BLUETOOTH="${KAELIX_SYS_BLUETOOTH:-/sys/class/bluetooth}"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+# Nenhum comando pode travar a central: dois segundos e segue.
+curto() { timeout 2 "$@" 2>/dev/null; }
+
+# ----------------------------------------------------------------- leitura
+estado_rede() {
+  local wifi_tem=0 wifi_ligado=0 wifi_nome="" cabo_tem=0 cabo_ligado=0 tipo est con
+  if have nmcli; then
+    while IFS=: read -r tipo est con; do
+      case "$tipo" in
+        wifi)
+          wifi_tem=1
+          if [[ $est == connected* ]]; then wifi_nome="${con//\\:/:}"; fi ;;
+        ethernet)
+          cabo_tem=1
+          if [[ $est == connected* ]]; then cabo_ligado=1; fi ;;
+      esac
+    done < <(curto nmcli -t -f TYPE,STATE,CONNECTION device)
+    if [[ $wifi_tem == 1 && "$(curto nmcli radio wifi)" == enabled ]]; then wifi_ligado=1; fi
+  fi
+  echo "wifi_tem=$wifi_tem"
+  echo "wifi_ligado=$wifi_ligado"
+  echo "wifi_nome=$wifi_nome"
+  echo "cabo_tem=$cabo_tem"
+  echo "cabo_ligado=$cabo_ligado"
+}
+
+adaptador_bluetooth() {
+  local d
+  for d in "$SYS_BLUETOOTH"/hci*; do
+    if [[ -e $d ]]; then basename "$d"; return 0; fi
+  done
+  return 1
+}
+
+estado_bluetooth() {
+  local hci tem=0 ligado=0
+  if hci="$(adaptador_bluetooth)"; then
+    tem=1
+    if [[ "$(curto busctl get-property org.bluez "/org/bluez/$hci" org.bluez.Adapter1 Powered)" == "b true" ]]; then ligado=1; fi
+  fi
+  echo "bt_tem=$tem"
+  echo "bt_ligado=$ligado"
+}
+
+# "Não perturbe" do Plasma: vale enquanto a data guardada estiver no futuro.
+# O KDE guarda a data como "ano,mês,dia,hora,minuto,segundo".
+estado_nao_perturbe() {
+  local ate dnd=0 a m d h mi s
+  ate="$(curto kreadconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until)"
+  if [[ $ate =~ ^[0-9]+(,[0-9.]+){5}$ ]]; then
+    IFS=, read -r a m d h mi s <<<"$ate"
+    if [[ "$(date -d "$a-$m-$d $h:$mi:${s%%.*}" +%s 2>/dev/null || echo 0)" -gt "$(date +%s)" ]]; then dnd=1; fi
+  fi
+  echo "dnd=$dnd"
+}
+
+estado_tema() {
+  local tema escuro=1
+  tema="$(curto kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage)"
+  case "$tema" in *claro*|*light*|org.kde.breeze.desktop) escuro=0 ;; esac
+  echo "escuro=$escuro"
+}
+
+estado_luz_noturna() {
+  local n=0
+  if [[ "$(curto kreadconfig6 --file kwinrc --group NightColor --key Active)" == true ]]; then n=1; fi
+  echo "noturna=$n"
+}
+
+estado_volume() {
+  local saida tem=0 vol=0 mudo=0
+  if have wpctl && saida="$(curto wpctl get-volume @DEFAULT_AUDIO_SINK@)" && [[ $saida == Volume:* ]]; then
+    tem=1
+    vol="$(awk '{ printf "%d", $2 * 100 + 0.5 }' <<<"$saida")"
+    if [[ $saida == *MUTED* ]]; then mudo=1; fi
+  fi
+  echo "vol_tem=$tem"
+  echo "vol=$vol"
+  echo "mudo=$mudo"
+}
+
+tela_com_brilho() {
+  local d
+  for d in "$SYS_BACKLIGHT"/*; do
+    if [[ -r $d/brightness && -r $d/max_brightness ]]; then echo "$d"; return 0; fi
+  done
+  return 1
+}
+
+estado_brilho() {
+  local d tem=0 brilho=0 atual max
+  if d="$(tela_com_brilho)"; then
+    atual="$(cat "$d/brightness")"; max="$(cat "$d/max_brightness")"
+    if [[ $max =~ ^[0-9]+$ && $atual =~ ^[0-9]+$ && $max -gt 0 ]]; then
+      tem=1
+      brilho=$(( (atual * 100 + max / 2) / max ))
+    fi
+  fi
+  echo "brilho_tem=$tem"
+  echo "brilho=$brilho"
+}
+
+estado_bateria() {
+  local d tem=0 carga=0 carregando=0
+  for d in "$SYS_POWER"/BAT*; do
+    if [[ -r $d/capacity ]]; then
+      tem=1
+      carga="$(cat "$d/capacity")"
+      case "$(cat "$d/status" 2>/dev/null)" in Charging|Full) carregando=1 ;; esac
+      break
+    fi
+  done
+  echo "bateria_tem=$tem"
+  echo "bateria=$carga"
+  echo "carregando=$carregando"
+}
+
+cmd_estado() {
+  estado_rede
+  estado_bluetooth
+  estado_nao_perturbe
+  estado_tema
+  estado_luz_noturna
+  estado_volume
+  estado_brilho
+  estado_bateria
+}
+
+# ------------------------------------------------------------------- ações
+liga_desliga() { # devolve 0 para "on", 1 para "off"; qualquer outra coisa é erro
+  case "${1:-}" in
+    on|ligar) return 0 ;;
+    off|desligar) return 1 ;;
+    *) echo "use: on ou off" >&2; exit 2 ;;
+  esac
+}
+
+numero() { # numero <valor> <mínimo> <máximo>
+  local v="${1:-}"
+  if [[ ! $v =~ ^[0-9]+$ ]]; then echo "use um número de $2 a $3" >&2; exit 2; fi
+  if (( v < $2 )); then v=$2; fi
+  if (( v > $3 )); then v=$3; fi
+  echo "$v"
+}
+
+cmd_wifi() {
+  if liga_desliga "${1:-}"; then curto nmcli radio wifi on; else curto nmcli radio wifi off; fi
+}
+
+cmd_bluetooth() {
+  local hci valor=false
+  hci="$(adaptador_bluetooth)" || { echo "sem Bluetooth nesta máquina" >&2; exit 1; }
+  if liga_desliga "${1:-}"; then
+    valor=true
+    curto rfkill unblock bluetooth || true
+  fi
+  curto busctl set-property org.bluez "/org/bluez/$hci" org.bluez.Adapter1 Powered b "$valor"
+}
+
+cmd_nao_perturbe() {
+  if liga_desliga "${1:-}"; then
+    # Fica ligado até a pessoa desligar (um ano à frente).
+    curto kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --notify \
+      "$(date -d '+1 year' '+%Y,%-m,%-d,%-H,%-M,%-S')"
+  else
+    curto kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --notify --delete
+  fi
+}
+
+cmd_tema() {
+  case "${1:-}" in
+    escuro|dark) timeout 30 plasma-apply-lookandfeel -a org.kaelix.escuro.desktop >/dev/null 2>&1 ;;
+    claro|light) timeout 30 plasma-apply-lookandfeel -a org.kaelix.claro.desktop >/dev/null 2>&1 ;;
+    *) echo "use: escuro ou claro" >&2; exit 2 ;;
+  esac
+}
+
+cmd_luz_noturna() {
+  if liga_desliga "${1:-}"; then
+    # Liga na hora, como o botão de luz noturna do Windows e do Mac.
+    curto kwriteconfig6 --file kwinrc --group NightColor --key Mode --notify Constant
+    curto kwriteconfig6 --file kwinrc --group NightColor --key Active --notify true
+  else
+    curto kwriteconfig6 --file kwinrc --group NightColor --key Active --notify false
+  fi
+  curto busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure >/dev/null
+}
+
+cmd_volume() {
+  local v
+  v="$(numero "${1:-}" 0 100)" || exit 2
+  curto wpctl set-volume @DEFAULT_AUDIO_SINK@ "$v%"
+}
+
+cmd_mudo() {
+  curto wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+}
+
+cmd_brilho() {
+  local v d max alvo
+  v="$(numero "${1:-}" 1 100)" || exit 2
+  d="$(tela_com_brilho)" || { echo "esta tela não tem ajuste de brilho" >&2; exit 1; }
+  max="$(cat "$d/max_brightness")"
+  alvo=$(( (v * max + 50) / 100 ))
+  if (( alvo < 1 )); then alvo=1; fi
+  curto busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto \
+    org.freedesktop.login1.Session SetBrightness ssu backlight "$(basename "$d")" "$alvo"
+}
+
+solto() { # abre um programa sem prender a central
+  (setsid "$@" >/dev/null 2>&1 &)
+}
+
+cmd_abrir() {
+  case "${1:-}" in
+    rede)          solto kcmshell6 kcm_networkmanagement ;;
+    bluetooth)     solto kcmshell6 kcm_bluetooth ;;
+    som)           solto kcmshell6 kcm_pulseaudio ;;
+    tela)          solto kcmshell6 kcm_kscreen ;;
+    configuracoes) solto systemsettings ;;
+    barra)         solto kaelix barra ;;
+    *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;
+  esac
+}
+
+main() {
+  local cmd="${1:-estado}"
+  shift || true
+  case "$cmd" in
+    estado)        cmd_estado ;;
+    wifi)          cmd_wifi "$@" ;;
+    bluetooth)     cmd_bluetooth "$@" ;;
+    nao-perturbe)  cmd_nao_perturbe "$@" ;;
+    tema)          cmd_tema "$@" ;;
+    luz-noturna)   cmd_luz_noturna "$@" ;;
+    volume)        cmd_volume "$@" ;;
+    mudo)          cmd_mudo ;;
+    brilho)        cmd_brilho "$@" ;;
+    abrir)         cmd_abrir "$@" ;;
+    bloquear)      curto loginctl lock-session ;;
+    sair)          curto busctl --user call org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt promptAll >/dev/null ;;
+    *) echo "comando desconhecido: $cmd" >&2; exit 2 ;;
+  esac
+}
+
+main "$@"

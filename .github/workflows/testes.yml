@@ -20,3 +20,5 @@ jobs:
           shellcheck -x system_files/usr/bin/kaelix system_files/usr/libexec/kaelix/* build_files/*.sh tests/*.sh tests/vm/*.sh
       - name: Testar o comando kaelix
         run: bash tests/test_kaelix.sh
+      - name: Testar a central de controle
+        run: bash tests/test_central.sh
