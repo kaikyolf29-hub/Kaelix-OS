@@ -27,6 +27,18 @@ function engrenagem(cx, cy, dentes, rFora, rDentro, furo) {
   return `<path fill-rule="evenodd" fill="${B}" stroke="${B}" stroke-width="8" ${liso} d="M${p.join(' L')} Z M${cx + furo},${cy} a${furo},${furo} 0 1 0 ${-2 * furo},0 a${furo},${furo} 0 1 0 ${2 * furo},0 Z"/>`;
 }
 
+// Velocímetro: arco claro de fundo, arco cheio até "nivel" (0 a 1) e o ponteiro.
+function velocimetro(cx, cy, r, nivel) {
+  const a0 = Math.PI * 0.92, a1 = Math.PI * 2.08;
+  const ap = a0 + (a1 - a0) * nivel;
+  const pt = (a, raio) => `${(cx + raio * Math.cos(a)).toFixed(1)} ${(cy + raio * Math.sin(a)).toFixed(1)}`;
+  const grande = ap - a0 > Math.PI ? 1 : 0;
+  return `<path d="M${pt(a0, r)} A${r} ${r} 0 1 1 ${pt(a1, r)}" fill="none" stroke="${B}" stroke-opacity=".35" stroke-width="18" ${liso}/>` +
+    `<path d="M${pt(a0, r)} A${r} ${r} 0 ${grande} 1 ${pt(ap, r)}" fill="none" stroke="${B}" stroke-width="18" ${liso}/>` +
+    `<line x1="${cx}" y1="${cy}" x2="${pt(ap, r - 16).split(' ')[0]}" y2="${pt(ap, r - 16).split(' ')[1]}" stroke="${B}" stroke-width="12" ${liso}/>` +
+    `<circle cx="${cx}" cy="${cy}" r="15" fill="${B}"/>`;
+}
+
 const ICONES = {
   arquivos: {
     nomes: ['system-file-manager', 'org.kde.dolphin'],
@@ -40,17 +52,19 @@ const ICONES = {
       `<polyline points="80,96 120,128 80,160" fill="none" stroke="#45D0C1" stroke-width="18" ${liso}/>` +
       `<line x1="136" y1="162" x2="180" y2="162" stroke="${B}" stroke-width="18" ${liso}/>`,
   },
+  // Loja: sacola azul com a seta de baixar (o Kaiky pediu tirar o rosa, 10/11/2026).
   loja: {
     nomes: ['plasmadiscover', 'org.kde.discover'],
-    svg: base('loja', '#FF8FBF', '#DB3F86') +
-      `<path d="M104 106 v-10 a24 24 0 0 1 48 0 v10" fill="none" stroke="${B}" stroke-width="12" ${liso}/>` +
-      `<path d="M76 108 h104 l8 78 h-120 z" fill="${B}" stroke="${B}" stroke-width="10" ${liso}/>` +
-      `<path d="M128 124 v34 m-16 -14 l16 16 l16 -16" fill="none" stroke="#DB3F86" stroke-width="11" ${liso}/>`,
+    svg: base('loja', '#63D0FF', '#2867E3') +
+      `<path d="M100 104 v-12 a28 28 0 0 1 56 0 v12" fill="none" stroke="${B}" stroke-width="13" ${liso}/>` +
+      `<path d="M70 104 h116 l-6 74 a14 14 0 0 1 -14 13 h-76 a14 14 0 0 1 -14 -13 z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>` +
+      `<circle cx="100" cy="120" r="6" fill="#2B78E8" opacity=".9"/><circle cx="156" cy="120" r="6" fill="#2B78E8" opacity=".9"/>` +
+      `<path d="M128 132 v32 m-15 -13 l15 15 l15 -15" fill="none" stroke="#2B78E8" stroke-width="11" ${liso}/>`,
   },
+  // Monitor do sistema: velocímetro de desempenho (a linha de batimento lembrava coração).
   monitor: {
     nomes: ['utilities-system-monitor', 'org.kde.plasma-systemmonitor'],
-    svg: base('mon', '#62E3D5', '#1E9C90') +
-      `<polyline points="54,138 90,138 108,92 134,176 152,118 164,138 202,138" fill="none" stroke="${B}" stroke-width="15" ${liso}/>`,
+    svg: base('mon', '#62E3D5', '#1E9C90') + velocimetro(128, 150, 70, 0.70),
   },
   configuracoes: {
     nomes: ['systemsettings', 'org.kde.systemsettings', 'preferences-system'],
@@ -69,11 +83,16 @@ const ICONES = {
       `<path d="M72 104 v-22 a10 10 0 0 1 10 -10 h22 M152 72 h22 a10 10 0 0 1 10 10 v22 M184 152 v22 a10 10 0 0 1 -10 10 h-22 M104 184 h-22 a10 10 0 0 1 -10 -10 v-22" fill="none" stroke="${B}" stroke-width="14" ${liso}/>` +
       `<circle cx="128" cy="128" r="22" fill="${B}"/>`,
   },
+  // Imagens: duas fotos, a da frente com paisagem (o desenho antigo parecia um papel de parede).
   imagens: {
     nomes: ['gwenview', 'org.kde.gwenview'],
-    svg: base('img', '#39408F', '#C76F90', `<clipPath id="c-img"><rect x="16" y="16" width="224" height="224" rx="58"/></clipPath>`) +
-      `<circle cx="170" cy="96" r="24" fill="#FFC677"/>` +
-      `<g clip-path="url(#c-img)"><path d="M16 208 L92 124 L132 168 L164 138 L240 214 V240 H16 Z" fill="${B}"/></g>`,
+    svg: base('img', '#39408F', '#C76F90',
+      `<clipPath id="c-img"><rect x="-44" y="-36" width="88" height="66" rx="6"/></clipPath>` +
+      `<linearGradient id="ceu-img" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FA2FF"/><stop offset="1" stop-color="#F6B7C8"/></linearGradient>`) +
+      `<g transform="translate(116 124) rotate(-12)"><rect x="-56" y="-48" width="112" height="104" rx="12" fill="${B}" opacity=".55"/></g>` +
+      `<g transform="translate(138 132) rotate(7)"><rect x="-56" y="-48" width="112" height="104" rx="12" fill="${B}"/>` +
+      `<g clip-path="url(#c-img)"><rect x="-44" y="-36" width="88" height="66" fill="url(#ceu-img)"/><circle cx="20" cy="-14" r="10" fill="#FFC677"/>` +
+      `<path d="M-44 30 L-14 -4 L6 16 L20 4 L44 28 V30 Z" fill="#4353D6"/></g></g>`,
   },
 };
 
