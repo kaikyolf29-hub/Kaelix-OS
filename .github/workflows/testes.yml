@@ -17,6 +17,6 @@ jobs:
       - uses: actions/checkout@v5
       - name: Conferir os scripts (shellcheck)
         run: |
-          shellcheck -x system_files/usr/bin/kaelix system_files/usr/libexec/kaelix/* build_files/*.sh tests/*.sh
+          shellcheck -x system_files/usr/bin/kaelix system_files/usr/libexec/kaelix/* build_files/*.sh tests/*.sh tests/vm/*.sh
       - name: Testar o comando kaelix
         run: bash tests/test_kaelix.sh

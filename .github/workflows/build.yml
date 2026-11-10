@@ -5,7 +5,16 @@ name: Montar imagem
 on:
   push:
     branches: [main]
-    paths-ignore: ["docs/**", "**.md", "tests/**"]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "tests/**"
+      - "installer/**"
+      - ".github/workflows/iso.yml"
+      - ".github/workflows/prints.yml"
+      - ".github/workflows/publicar-estavel.yml"
+      - ".github/workflows/testes.yml"
+      - ".github/dependabot.yml"
   pull_request:
     branches: [main]
   schedule:

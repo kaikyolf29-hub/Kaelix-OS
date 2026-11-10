@@ -1,0 +1,116 @@
+# Teste automático com prints.
+#
+# Depois de cada imagem nova, monta um disco virtual com ela, liga numa máquina
+# virtual, faz o login, abre o terminal e tira prints de cada etapa.
+# Os prints ficam no ramo "prints" do repositório (pasta ultimo/) e nos Artifacts.
+name: Testar e tirar prints
+
+on:
+  workflow_run:
+    workflows: ["Montar imagem"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      variante:
+        description: "Imagem para testar"
+        type: choice
+        options: [kaelix-os, kaelix-os-nvidia]
+        default: kaelix-os
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prints
+  cancel-in-progress: false
+
+jobs:
+  vm:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Preparar nomes
+        env:
+          VARIANTE: ${{ inputs.variante || 'kaelix-os' }}
+        run: |
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${VARIANTE}:teste" >> "$GITHUB_ENV"
+
+      - name: Liberar espaço em disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune --all --force > /dev/null
+          df -h /
+
+      - name: Ligar o KVM e instalar o QEMU
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils ovmf > /dev/null
+          ls -l /dev/kvm
+
+      - name: Baixar a imagem e preparar a versão de teste
+        run: |
+          sudo podman pull "$IMAGE"
+          sudo podman tag "$IMAGE" localhost/kaelix-vm:latest
+
+      - name: Montar o disco virtual (bootc-image-builder)
+        run: |
+          mkdir -p vm-out
+          cat > vm-config.toml <<'EOF'
+          [[customizations.user]]
+          name = "kaelix"
+          password = "kaelix"
+          groups = ["wheel"]
+
+          [[customizations.filesystem]]
+          mountpoint = "/"
+          minsize = "40 GiB"
+          EOF
+          sudo podman run --rm --privileged --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v "$PWD/vm-config.toml:/config.toml:ro" \
+            -v "$PWD/vm-out:/output" \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            quay.io/centos-bootc/bootc-image-builder:latest \
+            --type qcow2 --rootfs xfs \
+            localhost/kaelix-vm:latest
+          sudo chown -R "$(id -u):$(id -g)" vm-out
+          ls -lh vm-out/qcow2/
+
+      - name: Ligar a máquina virtual e tirar os prints
+        run: bash tests/vm/run-vm.sh vm-out/qcow2/disk.qcow2 prints-out
+
+      - name: Guardar os prints (Artifacts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prints
+          path: prints-out/
+          retention-days: 30
+
+      - name: Publicar os prints no ramo "prints"
+        if: always()
+        run: |
+          [ -d prints-out ] || exit 0
+          cp -r prints-out /tmp/prints
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan prints
+          git rm -rf --quiet . || true
+          mkdir -p ultimo && cp /tmp/prints/* ultimo/
+          {
+            echo "# Prints do teste automático"
+            echo
+            echo "Imagem: \`${IMAGE}\` · commit ${GITHUB_SHA::7} · $(date -u '+%d/%m/%Y %H:%M') UTC"
+            echo
+            for f in ultimo/*.png; do echo "### $(basename "$f" .png)"; echo "![]($f)"; echo; done
+          } > README.md
+          git add README.md ultimo
+          git commit -q -m "Prints do teste automático (${GITHUB_SHA::7})"
+          git push -f origin prints
