@@ -26,6 +26,7 @@ qemu-system-x86_64 \
   -netdev user,id=net0 -device virtio-net-pci,netdev=net0 \
   -device qemu-xhci -device usb-tablet \
   -monitor unix:"$SOCK",server,nowait \
+  -qmp unix:"$SOCK.qmp",server,nowait \
   -serial file:"$OUT/serial.log" &
 QEMU_PID=$!
 trap 'kill $QEMU_PID 2>/dev/null || true' EXIT
@@ -188,7 +189,8 @@ sleep 4
 shot "21-registro-das-telas-do-kaelix"
 hmp key alt-f4
 sleep 3
-hmp key meta_l-a
+# Agora no tema escuro, abrindo com um clique no ícone da central (ilha da direita).
+hmp click 1762 1047 || echo "o clique não foi (seguindo sem ele)"
 sleep 6
 shot "22-central-de-controle-escuro"
 hmp key esc

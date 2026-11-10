@@ -74,5 +74,7 @@ function porCentral(painel) {
         var central = painel.addWidget("org.kaelix.central");
         central.currentConfigGroup = ["Shortcuts"];
         central.writeConfig("global", "Meta+A");
+        // Vale na hora, sem esperar o próximo login.
+        central.globalShortcut = "Meta+A";
     }
 }

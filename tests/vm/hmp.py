@@ -5,7 +5,11 @@ Uso:
   hmp.py <socket> shot <arquivo.png>      tira um print da tela
   hmp.py <socket> key <tecla> [...]       aperta teclas (ex.: ctrl-alt-t, ret, esc)
   hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _ |)
+  hmp.py <socket> click <x> <y> [largura altura]   clica com o mouse num ponto da tela (padrão 1920x1080)
+
+O clique vai pelo socket QMP, que fica ao lado do monitor: <socket>.qmp
 """
+import json
 import socket
 import sys
 import time
@@ -30,6 +34,34 @@ def send(sock_path, cmd):
     s.close()
 
 
+def qmp(sock_path, comandos):
+    """Manda comandos pelo QMP (o protocolo em JSON do QEMU), que aceita posição absoluta do mouse."""
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(sock_path)
+    f = s.makefile("rw")
+    f.readline()  # saudação
+    for c in [{"execute": "qmp_capabilities"}] + comandos:
+        f.write(json.dumps(c) + "\n")
+        f.flush()
+        while True:  # pula os eventos soltos até chegar a resposta deste comando
+            r = json.loads(f.readline())
+            if "return" in r or "error" in r:
+                break
+        time.sleep(0.15)
+    s.close()
+
+
+def clique(sock_path, x, y, largura=1920, altura=1080):
+    def ev(eventos):
+        return {"execute": "input-send-event", "arguments": {"events": eventos}}
+    ax = int(x * 32767 / (largura - 1))
+    ay = int(y * 32767 / (altura - 1))
+    mover = ev([{"type": "abs", "data": {"axis": "x", "value": ax}}, {"type": "abs", "data": {"axis": "y", "value": ay}}])
+    apertar = ev([{"type": "btn", "data": {"down": True, "button": "left"}}])
+    soltar = ev([{"type": "btn", "data": {"down": False, "button": "left"}}])
+    qmp(sock_path + ".qmp", [mover, mover, apertar, soltar])
+
+
 def main():
     sock_path, action, *args = sys.argv[1:]
     if action == "shot":
@@ -45,6 +77,8 @@ def main():
                 key = f"shift-{ch.lower()}" if ch.isupper() else ch
             send(sock_path, f"sendkey {key}")
             time.sleep(0.08)
+    elif action == "click":
+        clique(sock_path, *[int(a) for a in args])
     else:
         sys.exit(f"ação desconhecida: {action}")
 
