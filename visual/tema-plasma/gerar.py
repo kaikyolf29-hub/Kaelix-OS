@@ -3,8 +3,9 @@
 
 Uso: gerar.py <pasta do tema>   (ex.: system_files/usr/share/plasma/desktoptheme/Kaelix)
 
-O tema só troca o fundo dos painéis: cantos bem redondos, vidro translúcido e
-uma linha clara fina na borda. Todo o resto vem do tema padrão do KDE.
+O tema troca o fundo dos painéis (cantos bem redondos, vidro translúcido e uma
+linha clara fina na borda) e o destaque dos apps na barra (pílula redonda).
+Todo o resto vem do tema padrão do KDE.
 São três versões do mesmo desenho, que o Plasma escolhe sozinho:
   translucent/  quando a placa de vídeo faz o desfoque atrás (vidro de verdade)
   widgets/      quando não há desfoque
@@ -43,14 +44,24 @@ def fundo(opacidade, borda):
     """As nove peças do fundo (canto, lado, miolo), com a linha clara na borda."""
     f = 'class="ColorScheme-Background" fill="currentColor" opacity="%s"' % opacidade
     l = 'fill="#ffffff" opacity="%s"' % borda
-    a = 'fill="none" stroke="#ffffff" stroke-width="1" opacity="%s"' % borda
-    r, c, m = R, C, R - 0.5
+    r, c, n = R, C, R - 1
     x1, x2, y1, y2 = r, r + c, Y0 + r, Y0 + r + c
     p = []
-    p.append('<g id="topleft" transform="translate(0,%d)"><path %s d="M0,%d H%d V0 A%d,%d 0 0 0 0,%d Z"/><path %s d="M0.5,%d A%s,%s 0 0 1 %d,0.5"/></g>' % (Y0, f, r, r, r, r, r, a, r, m, m, r))
-    p.append('<g id="topright" transform="translate(%d,%d)"><path %s d="M0,0 V%d H%d A%d,%d 0 0 0 0,0 Z"/><path %s d="M0,0.5 A%s,%s 0 0 1 %s,%d"/></g>' % (x2, Y0, f, r, r, r, r, a, m, m, m, r))
-    p.append('<g id="bottomleft" transform="translate(0,%d)"><path %s d="M0,0 H%d V%d A%d,%d 0 0 1 0,0 Z"/><path %s d="M0.5,0 A%s,%s 0 0 0 %d,%s"/></g>' % (y2, f, r, r, r, r, a, m, m, r, m))
-    p.append('<g id="bottomright" transform="translate(%d,%d)"><path %s d="M0,0 H%d A%d,%d 0 0 1 0,%d Z"/><path %s d="M%s,0 A%s,%s 0 0 1 0,%s"/></g>' % (x2, y2, f, r, r, r, r, a, m, m, m, m))
+    # Cantos: um quarto de disco e, por cima, um anel fino claro (a borda).
+    # Tudo desenhado com preenchimento, sem traço: o traço faz o Plasma medir a
+    # peça maior do que ela é e aparece uma emenda no canto.
+    cantos = {
+        "topleft": (0, Y0, "M0,%d H%d V0 A%d,%d 0 0 0 0,%d Z" % (r, r, r, r, r),
+                    "M0,%d A%d,%d 0 0 1 %d,0 V1 A%d,%d 0 0 0 1,%d Z" % (r, r, r, r, n, n, r)),
+        "topright": (x2, Y0, "M0,0 V%d H%d A%d,%d 0 0 0 0,0 Z" % (r, r, r, r),
+                     "M0,0 A%d,%d 0 0 1 %d,%d H%d A%d,%d 0 0 0 0,1 Z" % (r, r, r, r, n, n, n)),
+        "bottomleft": (0, y2, "M0,0 H%d V%d A%d,%d 0 0 1 0,0 Z" % (r, r, r, r),
+                       "M%d,%d A%d,%d 0 0 1 0,0 H1 A%d,%d 0 0 0 %d,%d Z" % (r, r, r, r, n, n, r, n)),
+        "bottomright": (x2, y2, "M0,0 H%d A%d,%d 0 0 1 0,%d Z" % (r, r, r, r),
+                        "M%d,0 A%d,%d 0 0 1 0,%d V%d A%d,%d 0 0 0 %d,0 Z" % (r, r, r, r, n, n, n, n)),
+    }
+    for nome, (x, y, disco, anel) in cantos.items():
+        p.append('<g id="%s" transform="translate(%d,%d)"><rect fill="#000000" opacity="0.001" width="%d" height="%d"/><path %s d="%s"/><path %s d="%s"/></g>' % (nome, x, y, r, r, f, disco, l, anel))
     p.append('<g id="top" transform="translate(%d,%d)"><rect %s width="%d" height="%d"/><rect %s width="%d" height="1"/></g>' % (x1, Y0, f, c, r, l, c))
     p.append('<g id="bottom" transform="translate(%d,%d)"><rect %s width="%d" height="%d"/><rect %s y="%d" width="%d" height="1"/></g>' % (x1, y2, f, c, r, l, r - 1, c))
     p.append('<g id="left" transform="translate(0,%d)"><rect %s width="%d" height="%d"/><rect %s width="1" height="%d"/></g>' % (y1, f, r, c, l, c))
@@ -136,6 +147,68 @@ def painel(opacidade, borda, forca_sombra):
             + estilo + "\n" + "\n".join(pecas) + "\n</svg>\n")
 
 
+ESTILO_TAREFAS = """<defs>
+  <style type="text/css" id="current-color-scheme">
+    .ColorScheme-Text { color:#232629; }
+    .ColorScheme-Background { color:#eff0f1; }
+    .ColorScheme-ButtonFocus { color:#3daee9; }
+    .ColorScheme-PositiveText { color:#27ae60; }
+    .ColorScheme-NeutralText { color:#f67400; }
+  </style>
+</defs>"""
+
+# estado: (cor, opacidade). "normal" é o app aberto sem foco.
+ESTADOS = [
+    ("normal", "Text", 0.09),
+    ("hover", "Text", 0.17),
+    ("focus", "ButtonFocus", 0.42),
+    ("attention", "NeutralText", 0.5),
+    ("minimized", "Text", 0.04),
+    ("progress", "PositiveText", 0.34),
+]
+
+
+def tarefas():
+    """Destaque dos apps na barra: uma pílula de cantos redondos em vez do bloco quadrado."""
+    b, folga, c = 8, 2, 16          # borda da peça, respiro transparente, miolo
+    q = b - folga                   # raio do canto da pílula
+    pecas = []
+    for li, lado in enumerate(["", "north-", "west-", "east-"]):
+        for ei, (estado, cor, op) in enumerate(ESTADOS):
+            pre = lado + estado
+            x0, y0 = 4 + ei * 44, 4 + li * 44
+            f = 'class="ColorScheme-%s" fill="currentColor" opacity="%s"' % (cor, op)
+            inv = 'fill="#000000" opacity="0.001"'
+            x1, x2, y1, y2 = x0 + b, x0 + b + c, y0 + b, y0 + b + c
+
+            def peca(nome, x, y, w, h, desenho):
+                pecas.append('<g id="%s-%s" transform="translate(%d,%d)"><rect %s width="%d" height="%d"/>%s</g>' % (pre, nome, x, y, inv, w, h, desenho))
+
+            peca("topleft", x0, y0, b, b, '<path %s d="M%d,%d H%d V%d A%d,%d 0 0 0 %d,%d Z"/>' % (f, folga, b, b, folga, q, q, folga, b))
+            peca("topright", x2, y0, b, b, '<path %s d="M0,%d V%d H%d A%d,%d 0 0 0 0,%d Z"/>' % (f, folga, b, q, q, q, folga))
+            peca("bottomleft", x0, y2, b, b, '<path %s d="M%d,0 H%d V%d A%d,%d 0 0 1 %d,0 Z"/>' % (f, folga, b, q, q, q, folga))
+            peca("bottomright", x2, y2, b, b, '<path %s d="M0,0 H%d A%d,%d 0 0 1 0,%d Z"/>' % (f, q, q, q, q))
+            peca("top", x1, y0, c, b, '<rect %s y="%d" width="%d" height="%d"/>' % (f, folga, c, q))
+            peca("bottom", x1, y2, c, b, '<rect %s width="%d" height="%d"/>' % (f, c, q))
+            peca("left", x0, y1, b, c, '<rect %s x="%d" width="%d" height="%d"/>' % (f, folga, q, c))
+            peca("right", x2, y1, b, c, '<rect %s width="%d" height="%d"/>' % (f, q, c))
+            peca("center", x1, y1, c, c, '<rect %s width="%d" height="%d"/>' % (f, c, c))
+            # mesmas margens de dentro do tema do KDE, para os ícones não mudarem de tamanho
+            pecas.append('<rect id="%s-hint-top-margin" x="%d" y="%d" width="4" height="4" fill="#ff00ff"/>' % (pre, x1 + 6, y0))
+            pecas.append('<rect id="%s-hint-bottom-margin" x="%d" y="%d" width="4" height="4" fill="#ff00ff"/>' % (pre, x1 + 6, y2 + b - 4))
+            pecas.append('<rect id="%s-hint-left-margin" x="%d" y="%d" width="4" height="4" fill="#ff00ff"/>' % (pre, x0, y1 + 6))
+            pecas.append('<rect id="%s-hint-right-margin" x="%d" y="%d" width="4" height="4" fill="#ff00ff"/>' % (pre, x2 + b - 4, y1 + 6))
+    # bolinha com "+" que marca um grupo de janelas do mesmo app
+    for i, lado in enumerate(["top", "bottom", "left", "right"]):
+        x, y = 280 + i * 14, 6
+        pecas.append('<g id="group-expander-%s" transform="translate(%d,%d)"><circle class="ColorScheme-ButtonFocus" fill="currentColor" cx="5" cy="5" r="5"/>'
+                     '<path fill="#ffffff" d="M4,2 H6 V4 H8 V6 H6 V8 H4 V6 H2 V4 H4 Z"/></g>' % (lado, x, y))
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<!-- Destaque dos apps na barra do Kaelix. Gerado por visual/tema-plasma/gerar.py: não editar à mão. -->\n'
+            '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="340" height="184" viewBox="0 0 340 184">\n'
+            + ESTILO_TAREFAS + "\n" + "\n".join(pecas) + "\n</svg>\n")
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit("uso: gerar.py <pasta do tema>")
@@ -145,6 +218,8 @@ def main():
         os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
         with open(os.path.join(raiz, pasta, "panel-background.svg"), "w") as f:
             f.write(painel(op, borda, somb))
+    with open(os.path.join(raiz, "widgets", "tasks.svg"), "w") as f:
+        f.write(tarefas())
     meta = {
         "KPlugin": {
             "Authors": [{"Name": "Kaelix OS"}],
