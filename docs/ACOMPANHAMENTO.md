@@ -16,9 +16,9 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 |---|---|---|
 | ✅ | Repositório público `kaelix-os`, licença GPL-3.0 | Criado em 10/11/2026 |
 | ✅ | Plano salvo em `docs/PLANO.md` | |
-| ✅ | Chave de assinatura cosign criada | Pública em `cosign.pub`. Ver `docs/CHAVES.md` |
-| ⬜ | Chave privada e senha nos segredos do GitHub | Passo do criador |
-| ⬜ | Cópia da chave no pendrive e apagada do PC | Passo do criador |
+| ✅ | Chave de assinatura cosign criada no pendrive do criador | Pública em `cosign.pub`. Ver `docs/CHAVES.md` |
+| 🔧 | Chave privada e senha nos segredos do GitHub | Colocadas pelo criador em 10/11/2026. Provado quando a primeira imagem sair assinada |
+| ✅ | Chave guardada no pendrive (nasceu nele, nunca ficou solta no PC) | |
 | ⬜ | Verificação em duas etapas na conta do GitHub | Passo do criador |
 | 🔧 | `Containerfile` em cima do Fedora Atomic KDE (Fedora 44) | Base `ublue-os/kinoite-main` |
 | 🔧 | Steam (com Proton), GameMode e MangoHud | Pacotes RPM na imagem |

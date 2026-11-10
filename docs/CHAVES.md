@@ -10,7 +10,7 @@ se passe pelo sistema e mande uma atualização falsa.
 | **Chave pública** | [`cosign.pub`](../cosign.pub), neste repositório, e dentro do sistema em `/etc/pki/containers/kaelix-os.pub` | Sim. Ela só confere assinaturas |
 | **Chave privada** e **senha** | Só nos segredos do GitHub e numa cópia offline no pendrive | **Nunca.** Quem tem ela consegue assinar como o Kaelix |
 
-A chave foi criada em 10/11/2026 com o cosign v2.5.0 (tipo ECDSA P-256, protegida por senha).
+A chave foi criada pelo criador em 10/11/2026, no PC dele e direto no pendrive, com o cosign v2.5.0 (tipo ECDSA P-256, protegida por senha). Ela nunca passou por nenhum outro lugar além do pendrive e dos segredos do GitHub.
 
 ## Segredos do GitHub
 
