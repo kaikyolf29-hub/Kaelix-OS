@@ -317,10 +317,17 @@ cmd_nao_perturbe() {
 }
 
 cmd_tema() {
+  local perfil
   case "${1:-}" in
-    escuro|dark) timeout 30 plasma-apply-lookandfeel -a org.kaelix.escuro.desktop >/dev/null 2>&1 ;;
-    claro|light) timeout 30 plasma-apply-lookandfeel -a org.kaelix.claro.desktop >/dev/null 2>&1 ;;
+    escuro|dark) timeout 30 plasma-apply-lookandfeel -a org.kaelix.escuro.desktop >/dev/null 2>&1; perfil=Kaelix.profile ;;
+    claro|light) timeout 30 plasma-apply-lookandfeel -a org.kaelix.claro.desktop >/dev/null 2>&1; perfil=KaelixClaro.profile ;;
     *) echo "use: escuro ou claro" >&2; exit 2 ;;
+  esac
+  # O terminal acompanha o tema (vale para os terminais abertos depois). Só
+  # troca se a pessoa estiver usando um dos perfis do Kaelix.
+  case "$(curto kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile)" in
+    ""|Kaelix.profile|KaelixClaro.profile)
+      curto kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile "$perfil" ;;
   esac
 }
 

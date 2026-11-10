@@ -60,6 +60,9 @@ echo "Perfil de energia: $(rpm -q tuned-ppd power-profiles-daemon 2>/dev/null | 
 
 # Fonte Inter, a mesma do vídeo de demonstração da fusão.
 dnf5 -y install --skip-unavailable rsms-inter-fonts rsms-inter-vf-fonts
+# Fonte do terminal do Kaelix (a mesma do vídeo de demonstração).
+dnf5 -y install --skip-unavailable jetbrains-mono-fonts-all || dnf5 -y install --skip-unavailable jetbrains-mono-fonts || true
+fc-list : family | grep -i -m1 "jetbrains mono" || echo "AVISO: fonte JetBrains Mono não entrou; o terminal usa a fonte mono padrão"
 
 # Controle da placa de vídeo (ventoinha, temperatura, desempenho). O driver da
 # AMD já vem no sistema; isto faz o papel do "AMD Software" do Windows.
@@ -231,6 +234,20 @@ fi
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
 chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
+
+# Terminal do Kaelix (como no vídeo): perfil próprio com vidro, sem barra de
+# menu e sem barra de ferramentas. O tema claro troca para o perfil claro.
+kwriteconfig6 --file /etc/xdg/konsolerc --group "Desktop Entry" --key DefaultProfile Kaelix.profile
+kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --key MenuBar Disabled
+kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --group "Toolbar mainToolBar" --key Hidden true
+kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --group "Toolbar sessionToolbar" --key Hidden true
+kwriteconfig6 --file /etc/xdg/konsolerc --group KonsoleWindow --key ShowWindowTitleOnTitleBar true
+# Arquivos (Dolphin) como no vídeo: lista com nome, data, tipo e tamanho em
+# todas as pastas (o jeito vem de /etc/skel), barra de status embaixo.
+kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key GlobalViewProps true
+kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key ShowStatusBar true
+kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key ShowFullPathInTitlebar false
+chmod 0644 /etc/xdg/konsolerc /etc/xdg/dolphinrc
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
 # Ícones próprios dos apps do sistema (tema de ícones Kaelix). Fica no registro
 # qual nome de ícone cada app pede, para conferir que o nosso está cobrindo.

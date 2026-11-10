@@ -128,6 +128,11 @@ run nao-perturbe off; check "desliga o não perturbe" called "--key Until --noti
 run tema claro;  check "troca para o tema claro" called "plasma-apply-lookandfeel -a org.kaelix.claro.desktop"
 run tema escuro; check "troca para o tema escuro" called "plasma-apply-lookandfeel -a org.kaelix.escuro.desktop"
 run tema roxo;   check "tema desconhecido é recusado" test "$CODE" -eq 2
+run tema claro;  check "o terminal acompanha o tema claro" called "kwriteconfig6 --file konsolerc --group Desktop Entry --key DefaultProfile KaelixClaro.profile"
+run tema escuro; check "o terminal acompanha o tema escuro" called "kwriteconfig6 --file konsolerc --group Desktop Entry --key DefaultProfile Kaelix.profile"
+mock kreadconfig6 'case "$*" in *DefaultProfile*) echo Meu.profile ;; esac'
+run tema claro;  check "perfil de terminal da pessoa não é trocado" bash -c "! grep -qF 'DefaultProfile KaelixClaro' '$CALLS'"
+mock kreadconfig6 'exit 0'
 run luz-noturna on;  check "liga a luz noturna e avisa o sistema" bash -c "grep -qF -- '--key Active --notify true' '$CALLS' && grep -qF 'org.kde.KWin reconfigure' '$CALLS'"
 run luz-noturna off; check "desliga a luz noturna" called "--key Active --notify false"
 run volume 37;  check "ajusta o volume" called "wpctl set-volume @DEFAULT_AUDIO_SINK@ 37%"
