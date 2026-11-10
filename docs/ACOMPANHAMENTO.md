@@ -47,9 +47,9 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | ✅ | O criador aprovar o vídeo | Aprovado em 10/11/2026 |
 | ⬜ | Servir para PC e para notebook | Pedido do criador: no PC mostra a rede por cabo e esconde a bateria; no notebook mostra Wi-Fi e bateria; com os dois, mostra os dois |
 | ✅ | Tema escuro e claro, nenhum com preto puro | Cores `KaelixEscuro` e `KaelixClaro` e temas globais `org.kaelix.escuro.desktop` e `org.kaelix.claro.desktop`. Provado na máquina virtual em 10/11/2026 |
-| 🔧 | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global. Provada na máquina virtual em 10/11/2026. O vidro com cantos redondos vem do tema Plasma `Kaelix` (`visual/tema-plasma/gerar.py`); falta o print dele |
+| ✅ | Barra em três ilhas (a fusão) como padrão | Feita pelo arranjo do tema global, com cantos redondos, borda clara e destaque redondo do app aberto (tema Plasma `Kaelix`, `visual/tema-plasma/gerar.py`). Provada na máquina virtual em 10/11/2026. O desfoque de vidro só dá para ver no PC de verdade, porque a máquina virtual não tem placa de vídeo |
 | ✅ | Papel de parede próprio em pixel art | Pedido do criador: fundo bonito de verdade. Pôr do sol no lago, feito por código (`visual/papel-de-parede/gerar.py`), versão escura e clara. Provado na máquina virtual em 10/11/2026 |
-| 🔧 | Personalizar a barra | Pedido do criador. Três estilos: "Fusão" (padrão), "Mac" (barra fina no topo e doca) e "Windows" (uma barra só embaixo), em três tamanhos. Pelo menu ("Estilo da barra") ou pelo comando `kaelix barra`. Mantém os apps fixados. Falta o print da máquina virtual e entrar na central de configurações |
+| ✅ | Personalizar a barra | Pedido do criador. Três estilos: "Fusão" (padrão), "Mac" (barra fina no topo e doca) e "Windows" (uma barra só embaixo), em três tamanhos. Pelo menu ("Estilo da barra") ou pelo comando `kaelix barra`. Mantém os apps fixados. Provado na máquina virtual em 10/11/2026. Falta entrar na central de configurações |
 | 🔧 | Ícones próprios para os apps da barra | Pedido do criador: bem personalizados e bonitos. Primeira leva: Arquivos, Terminal, Loja, Monitor, Configurações, Editor de texto, Capturas e Imagens (`visual/icones/gerar.js`, tema de ícones `Kaelix`). Programas de outras marcas (Steam, navegador) ficam com o ícone deles. Provados na máquina virtual em 10/11/2026. Falta a opinião do criador |
 | ✅ | Botões de janela nas cores do Kaelix | Rosa (fechar), azul claro (minimizar), verde água (tela cheia), do lado esquerdo. Feitos em cima da moldura do KDE (`build_files/deco/`). Provados na máquina virtual em 10/11/2026 |
 | ⬜ | Dock que aumenta os ícones perto do mouse | |
@@ -68,7 +68,7 @@ esqueceu de pedir. O que entrar é avisado a ele e marcado aqui. Escolhas de gos
 
 | | Item | Observação |
 |---|---|---|
-| 🔧 | Teclado ABNT2, português do Brasil e fuso de Brasília já marcados no instalador | O sistema já nasce em português do Brasil, com o horário de Brasília (falta o print). O teclado ainda é perguntado na instalação; falta deixar o ABNT2 pré-marcado |
+| 🔧 | Teclado ABNT2, português do Brasil e fuso de Brasília já marcados no instalador | O sistema já nasce em português do Brasil, com o horário de Brasília (provado na máquina virtual em 10/11/2026). O teclado ainda é perguntado na instalação; falta deixar o ABNT2 pré-marcado |
 | 💬 | Duas telas: posição, taxa de atualização, VRR/FreeSync e HDR | O KDE já tem. Falta testar no PC do criador |
 | 🔧 | Escolha de telas com Meta+P: estender, duplicar, só a tela do PC, só a segunda tela | Pedido do criador (10/11/2026). Já vem no KDE, com o mesmo atalho do Windows. Falta dar a cara do Kaelix e provar com as duas telas dele |
 | 💬 | Controles de Xbox e PlayStation (USB e Bluetooth) | `steam-devices` já entra na imagem. Falta testar; Xbox sem fio pode precisar do `xone` |
