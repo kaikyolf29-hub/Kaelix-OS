@@ -32,6 +32,7 @@ mock systemctl 'exit 0'
 mock lspci 'echo "01:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Ellesmere [Radeon RX 470/480/570/580] [1002:67df]"'
 mock distrobox 'case "$1" in list) printf "ID | NAME | STATUS | IMAGE\nabc | ${FAKE_BOX:-nada} | Up | x\n" ;; *) exit 0 ;; esac'
 mock kdialog 'exit 0'
+mock pgrep 'exit 1'
 mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
 
 INFO="$WORK/image-info.json"
@@ -117,6 +118,12 @@ check "se a janela não abre, tenta de novo no próximo login" bash -c "[ ! -e '
 mock kdialog 'echo "\"chrome\""'
 GUI=:0 run navegador --primeira-vez
 check "com a janela, instala o que foi escolhido" bash -c "grep -qF com.google.Chrome '$CALLS' && [ -e '$WORK/state/navegador-escolhido' ]"
+mock pgrep 'exit 0'
+rm -rf "$WORK/state"
+: > "$CALLS"
+GUI=:0 run navegador --primeira-vez
+check "com a tela de boas-vindas aberta, não abre a janela nem marca" bash -c "[ ! -e '$WORK/state/navegador-escolhido' ] && ! grep -q '^kdialog' '$CALLS'"
+mock pgrep 'exit 1'
 mock kdialog 'exit 1'
 rm -rf "$WORK/state"
 GUI=:0 run navegador --primeira-vez

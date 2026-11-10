@@ -1,0 +1,10 @@
+[Desktop Entry]
+# Primeira tela da "Central de boas-vindas" com a cara do Kaelix.
+Type=Application
+Name=Welcome to Kaelix OS! A system made for gaming, creating and coding, with your own look. On the next screens you can pick the theme, the bar style and your browser.
+Name[pt_BR]=Bem-vindo ao Kaelix OS! Um sistema feito para jogar, criar e programar, com a sua cara. Nas próximas telas você escolhe o tema, o jeito da barra e o navegador.
+Name[pt]=Bem-vindo ao Kaelix OS! Um sistema feito para jogar, criar e programar, com a sua cara. Nas próximas telas você escolhe o tema, o jeito da barra e o navegador.
+Icon=file:/usr/share/pixmaps/kaelix-logo.svg
+Comment=Kaelix OS
+Comment[pt_BR]=Kaelix OS
+URL=@REPO_URL@

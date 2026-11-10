@@ -129,5 +129,19 @@ hmp key ret
 sleep 10
 shot "15-barra-de-volta-ao-padrao"
 
+# Tela de boas-vindas com a cara do Kaelix (no primeiro login de verdade ela abre sozinha).
+hmp type "clear"
+hmp key ret
+hmp type "plasma-welcome"
+hmp key ret
+sleep 12
+shot "16-boas-vindas-1"
+# Avança as telas com a seta para a direita; as do Kaelix ficam perto do fim.
+for n in 2 3 4 5 6 7 8; do
+  hmp key right
+  sleep 3
+  shot "16-boas-vindas-$n"
+done
+
 echo "Prints em $OUT"
 ls -l "$OUT"

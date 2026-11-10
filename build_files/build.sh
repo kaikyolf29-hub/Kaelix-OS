@@ -160,6 +160,8 @@ for tema in org.kaelix.escuro.desktop org.kaelix.claro.desktop; do
   cat /usr/share/kaelix/barra/comum.js /usr/share/kaelix/barra/fusao.js /usr/share/kaelix/barra/papel-de-parede.js \
     > "/usr/share/plasma/look-and-feel/$tema/contents/layouts/org.kde.plasma.desktop-layout.js"
 done
+# Tela de boas-vindas do primeiro uso com a cara do Kaelix (endereço do projeto).
+sed -i "s|@REPO_URL@|${REPO_URL}|" /usr/share/plasma/plasma-welcome/intro-customization.desktop
 # Tema Plasma do Kaelix: ilhas de vidro com cantos redondos (o resto vem do KDE).
 kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Kaelix
 chmod 0644 /etc/xdg/plasmarc

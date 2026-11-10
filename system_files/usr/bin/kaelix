@@ -317,6 +317,12 @@ cmd_browser() {
         return 0
       fi
       sleep "${KAELIX_FIRST_DELAY:-12}"
+      # Se a tela de boas-vindas do Kaelix está aberta, a escolha é feita nela.
+      # Sem marcar nada: se a pessoa fechar sem escolher, pergunto no próximo login.
+      if pgrep -x plasma-welcome >/dev/null 2>&1; then
+        say "A tela de boas-vindas está aberta; a escolha do navegador fica com ela." "The welcome screen is open; the browser choice is made there."
+        return 0
+      fi
     fi
 
     if [[ $has_gui == 1 ]]; then

@@ -55,7 +55,7 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | ⬜ | Dock que aumenta os ícones perto do mouse | |
 | ⬜ | Central de controle no canto direito | Rede, Bluetooth, modo escuro, som, brilho, perfil de energia |
 | ✅ | Busca de apps e arquivos no canto esquerdo | Pílula "Buscar" na ilha da esquerda (`org.kaelix.busca`), abre a busca do sistema. Provada na máquina virtual em 10/11/2026 |
-| ⬜ | Assistente de primeiro uso em português e com a cara do Kaelix | Hoje abre o do KDE (Plasma Setup), em inglês, e depois a "Welcome Center" do KDE |
+| 🔧 | Assistente de primeiro uso em português e com a cara do Kaelix | A tela de boas-vindas ganhou o logo, o texto do Kaelix e três telas próprias (tema e barra, navegador, comando `kaelix`); aguardando o print da VM. Falta o assistente de criar a conta (Plasma Setup), que ainda é o do KDE |
 | ✅ | Logo do Kaelix | O criador escolheu o caminho "Asas" e aprovou a versão refinada em 10/11/2026: um K com três penas, branco em fundo índigo escuro. Fonte em `visual/logo/`. Já é o botão do menu e o logo do sistema (provado na máquina virtual). Falta levar para a tela de boot e para o instalador |
 | ⬜ | Apps próprios: configurações, gerenciador de tarefas, terminal | |
 
