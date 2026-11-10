@@ -61,10 +61,14 @@ jobs:
           # Setup) para a pessoa criar a conta. No teste a conta já vem pronta,
           # então marcamos o assistente como feito para cair direto no login.
           # A tela de boas-vindas do KDE também fica de fora, para os prints
-          # mostrarem a área de trabalho.
+          # mostrarem a área de trabalho. Entram também apps de bandeja de
+          # verdade, para provar os ícones perto do relógio.
           {
             echo "FROM $IMAGE"
             echo "RUN touch /etc/plasma-setup-done && printf '[General]\\nShouldShow=false\\nLastSeenVersion=9.0.0\\n' > /etc/xdg/plasma-welcomerc"
+            # Apps de bandeja de verdade para o teste da bandeja (só na imagem de teste).
+            echo "RUN dnf5 -y install --skip-unavailable copyq udiskie libnotify && dnf5 clean all"
+            echo "COPY tests/vm/teste-bandeja.sh /usr/bin/kaelix-teste-bandeja"
           } > Containerfile.vm
           cat Containerfile.vm
           sudo podman build -t localhost/kaelix-vm:latest -f Containerfile.vm .

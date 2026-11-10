@@ -60,26 +60,66 @@ function porApps(painel) {
     return apps;
 }
 
-// Rede, som, o resto da bandeja e o relógio. A bandeja mostra sozinha o que a
-// máquina tem: cabo no PC, Wi-Fi e bateria no notebook.
+// Ilha da direita, como no vídeo da fusão: ícones dos apps em segundo plano
+// (com a setinha "mostrar mais"), a pílula de rede, Bluetooth, som e bateria
+// (central de controle), a hora com a data e o sino.
 function porBandeja(painel) {
-    painel.addWidget("org.kde.plasma.systemtray");
+    var bandeja = painel.addWidget("org.kde.plasma.systemtray");
+    arrumarBandeja(bandeja);
     porCentral(painel);
     porRelogio(painel);
 }
 
-// Relógio discreto, como no Windows 11: hora em cima e data embaixo, em letra
-// de 11 pontos, centralizados na ilha. O padrão do KDE estica o texto até
-// encher a altura da barra e fica grande demais na ilha.
+// Bandeja como no Windows: aparecem os ícones dos apps que estão rodando
+// (Discord, Steam, OBS...), com menu no botão direito. Rede, som, Bluetooth e
+// bateria já estão na pílula da central; as outras peças do KDE (área de
+// transferência, discos, impressoras...) ficam guardadas na setinha
+// "mostrar mais", que também abre com Meta+B, como no Windows.
+function arrumarBandeja(bandeja) {
+    var alvo = bandeja;
+    // Até o Plasma 6.3 a bandeja guardava as peças num contêiner à parte.
+    bandeja.currentConfigGroup = [];
+    var antigo = bandeja.readConfig("SystrayContainmentId");
+    if (antigo) {
+        var interno = desktopById(antigo);
+        if (interno) {
+            alvo = interno;
+        }
+    }
+    var guardados = [];
+    for (var i = 0; i < knownWidgetTypes.length; i++) {
+        guardados.push(knownWidgetTypes[i]);
+    }
+    alvo.currentConfigGroup = ["General"];
+    alvo.writeConfig("hiddenItems", guardados);
+    alvo.writeConfig("shownItems", []);
+    alvo.writeConfig("iconSize", 0);        // 16 px, do tamanho dos ícones da pílula
+    alvo.writeConfig("iconSpacing", 2);
+    bandeja.currentConfigGroup = ["Shortcuts"];
+    bandeja.writeConfig("global", "Meta+B");
+    bandeja.globalShortcut = "Meta+B";
+    print("kaelix: bandeja com " + guardados.length + " peças do KDE na setinha (contêiner " + (antigo ? "antigo " + antigo : "novo") + ")\n");
+}
+
+// Relógio do Kaelix: hora em negrito, data embaixo e o sino; um clique abre as
+// notificações e o calendário (Meta+N, como no Windows). Se ele faltar, entra o
+// relógio do KDE, discreto como no Windows 11.
 function porRelogio(painel) {
+    if (tem("org.kaelix.relogio")) {
+        var nosso = painel.addWidget("org.kaelix.relogio");
+        nosso.currentConfigGroup = ["Shortcuts"];
+        nosso.writeConfig("global", "Meta+N");
+        nosso.globalShortcut = "Meta+N";
+        return nosso;
+    }
     var relogio = painel.addWidget("org.kde.plasma.digitalclock");
     relogio.currentConfigGroup = ["Appearance"];
     relogio.writeConfig("showDate", true);
     relogio.writeConfig("dateFormat", "shortDate");
     relogio.writeConfig("dateDisplayFormat", 2);      // data embaixo da hora
     relogio.writeConfig("autoFontAndSize", false);
-    relogio.writeConfig("fontSize", 11);
-    relogio.writeConfig("fontWeight", 500);           // médio; a escala do Qt 6 vai de 100 a 900
+    relogio.writeConfig("fontSize", 10);
+    relogio.writeConfig("fontWeight", 600);
     return relogio;
 }
 

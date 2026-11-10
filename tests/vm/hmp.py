@@ -6,6 +6,7 @@ Uso:
   hmp.py <socket> key <tecla> [...]       aperta teclas (ex.: ctrl-alt-t, ret, esc)
   hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _ |)
   hmp.py <socket> click <x> <y> [largura altura]   clica com o mouse num ponto da tela (padrão 1920x1080)
+  hmp.py <socket> rclick <x> <y> [largura altura]  o mesmo, com o botão direito
 
 O clique vai pelo socket QMP, que fica ao lado do monitor: <socket>.qmp
 """
@@ -51,14 +52,14 @@ def qmp(sock_path, comandos):
     s.close()
 
 
-def clique(sock_path, x, y, largura=1920, altura=1080):
+def clique(sock_path, x, y, largura=1920, altura=1080, botao="left"):
     def ev(eventos):
         return {"execute": "input-send-event", "arguments": {"events": eventos}}
     ax = int(x * 32767 / (largura - 1))
     ay = int(y * 32767 / (altura - 1))
     mover = ev([{"type": "abs", "data": {"axis": "x", "value": ax}}, {"type": "abs", "data": {"axis": "y", "value": ay}}])
-    apertar = ev([{"type": "btn", "data": {"down": True, "button": "left"}}])
-    soltar = ev([{"type": "btn", "data": {"down": False, "button": "left"}}])
+    apertar = ev([{"type": "btn", "data": {"down": True, "button": botao}}])
+    soltar = ev([{"type": "btn", "data": {"down": False, "button": botao}}])
     qmp(sock_path + ".qmp", [mover, mover, apertar, soltar])
 
 
@@ -79,6 +80,8 @@ def main():
             time.sleep(0.08)
     elif action == "click":
         clique(sock_path, *[int(a) for a in args])
+    elif action == "rclick":
+        clique(sock_path, *[int(a) for a in args], botao="right")
     else:
         sys.exit(f"ação desconhecida: {action}")
 

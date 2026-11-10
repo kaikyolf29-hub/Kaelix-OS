@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # Kaelix OS: estado e ações da central de controle da barra.
 #
-#   kaelix-central estado            mostra tudo em linhas "chave=valor"
+#   kaelix-central estado [nao-perturbe]   mostra tudo (ou só uma parte) em linhas "chave=valor"
 #   kaelix-central wifi on|off
 #   kaelix-central bluetooth on|off
 #   kaelix-central nao-perturbe on|off
@@ -30,7 +30,7 @@ curto() { timeout 2 "$@" 2>/dev/null; }
 
 # ----------------------------------------------------------------- leitura
 estado_rede() {
-  local wifi_tem=0 wifi_ligado=0 wifi_nome="" cabo_tem=0 cabo_ligado=0 tipo est con
+  local wifi_tem=0 wifi_ligado=0 wifi_nome="" wifi_sinal=0 cabo_tem=0 cabo_ligado=0 tipo est con uso sinal
   if have nmcli; then
     while IFS=: read -r tipo est con; do
       case "$tipo" in
@@ -43,10 +43,17 @@ estado_rede() {
       esac
     done < <(curto nmcli -t -f TYPE,STATE,CONNECTION device)
     if [[ $wifi_tem == 1 && "$(curto nmcli radio wifi)" == enabled ]]; then wifi_ligado=1; fi
+    # Força do sinal da rede em uso (0 a 100), para o ícone mostrar os risquinhos.
+    if [[ -n $wifi_nome ]]; then
+      while IFS=: read -r uso sinal; do
+        if [[ $uso == "*" && $sinal =~ ^[0-9]+$ ]]; then wifi_sinal=$sinal; break; fi
+      done < <(curto nmcli -t -f IN-USE,SIGNAL device wifi list --rescan no)
+    fi
   fi
   echo "wifi_tem=$wifi_tem"
   echo "wifi_ligado=$wifi_ligado"
   echo "wifi_nome=$wifi_nome"
+  echo "wifi_sinal=$wifi_sinal"
   echo "cabo_tem=$cabo_tem"
   echo "cabo_ligado=$cabo_ligado"
 }
@@ -143,6 +150,13 @@ estado_bateria() {
 }
 
 cmd_estado() {
+  # "estado nao-perturbe" lê só o não perturbe: o sino do relógio pergunta isso
+  # de tempos em tempos e não precisa acordar a rede e o som.
+  case "${1:-}" in
+    "") ;;
+    nao-perturbe) estado_nao_perturbe; return 0 ;;
+    *) echo "parte do estado desconhecida: $1" >&2; exit 2 ;;
+  esac
   estado_rede
   estado_bluetooth
   estado_nao_perturbe
@@ -254,7 +268,7 @@ main() {
   local cmd="${1:-estado}"
   shift || true
   case "$cmd" in
-    estado)        cmd_estado ;;
+    estado)        cmd_estado "$@" ;;
     wifi)          cmd_wifi "$@" ;;
     bluetooth)     cmd_bluetooth "$@" ;;
     nao-perturbe)  cmd_nao_perturbe "$@" ;;

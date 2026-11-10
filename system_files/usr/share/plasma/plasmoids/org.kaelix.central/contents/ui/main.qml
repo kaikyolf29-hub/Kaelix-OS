@@ -72,7 +72,6 @@ PlasmoidItem {
 
     Plasmoid.icon: "configure"
     toolTipMainText: t("Central de controle", "Control center")
-    toolTipSubText: t("Rede, som, tema e mais", "Network, sound, theme and more")
 
     P5Support.DataSource {
         id: comando
@@ -88,25 +87,63 @@ PlasmoidItem {
         }
     }
 
-    // Com o balão aberto, confere o sistema de tempos em tempos.
+    // Confere o sistema de tempos em tempos: a pílula da barra mostra rede, som
+    // e bateria, e precisa acompanhar quando eles mudam.
     Timer {
-        interval: 3000
+        interval: raiz.expanded ? 2000 : 5000
         repeat: true
-        running: raiz.expanded
-        triggeredOnStart: true
+        running: true
         onTriggered: raiz.atualizar()
     }
 
     Component.onCompleted: atualizar()
 
-    // Ícone na barra do mesmo tamanho dos ícones da bandeja (22 px), com a
-    // pílula clara ao passar o mouse e enquanto o balão está aberto.
+    // Ícone da rede: cabo, Wi-Fi com a força do sinal, Wi-Fi desligado ou sem rede.
+    readonly property string iconeRede: {
+        if (sim("cabo_ligado")) {
+            return "kaelix-rede-cabo-symbolic";
+        }
+        if (sim("wifi_tem") && !sim("wifi_ligado")) {
+            return "kaelix-wifi-desligado-symbolic";
+        }
+        if (texto("wifi_nome").length > 0) {
+            var sinal = numero("wifi_sinal");
+            return "kaelix-wifi-" + (sinal === 0 || sinal >= 70 ? 3 : sinal >= 40 ? 2 : 1) + "-symbolic";
+        }
+        return estado["cabo_tem"] === undefined ? "kaelix-rede-cabo-symbolic" : "kaelix-rede-desconectada-symbolic";
+    }
+    readonly property string iconeSom: {
+        if (!sim("vol_tem") || sim("mudo")) {
+            return "kaelix-volume-mudo-symbolic";
+        }
+        var v = numero("vol");
+        return v === 0 ? "kaelix-volume-0-symbolic" : v < 50 ? "kaelix-volume-1-symbolic" : "kaelix-volume-2-symbolic";
+    }
+    readonly property string resumoRede: sim("cabo_ligado") ? t("Rede cabeada conectada", "Wired network connected")
+        : texto("wifi_nome").length > 0 ? "Wi-Fi: " + texto("wifi_nome")
+        : sim("wifi_tem") && !sim("wifi_ligado") ? t("Wi-Fi desligado", "Wi-Fi off")
+        : t("Sem conexão", "Not connected")
+
+    toolTipSubText: {
+        var partes = [resumoRede];
+        if (sim("vol_tem")) {
+            partes.push(sim("mudo") ? t("Som mudo", "Sound muted") : t("Som ", "Sound ") + numero("vol") + "%");
+        }
+        if (sim("bateria_tem")) {
+            partes.push(t("Bateria ", "Battery ") + numero("bateria") + "%" + (sim("carregando") ? t(", carregando", ", charging") : ""));
+        }
+        return partes.join("\n");
+    }
+
+    // Na barra: uma pílula com rede, Bluetooth, som e bateria, como no vídeo da
+    // fusão e no Windows 11. Um clique abre a central.
     compactRepresentation: MouseArea {
         id: compacta
 
-        readonly property int icone: Kirigami.Units.iconSizes.smallMedium
+        readonly property int icone: Kirigami.Units.iconSizes.small
+        readonly property int folga: Math.round(Kirigami.Units.gridUnit * 0.6)
 
-        Layout.minimumWidth: icone + Kirigami.Units.smallSpacing * 2
+        Layout.minimumWidth: pilula.width + 2
         Layout.preferredWidth: Layout.minimumWidth
         Layout.maximumWidth: Layout.minimumWidth
         Layout.fillHeight: true
@@ -115,24 +152,60 @@ PlasmoidItem {
         Accessible.role: Accessible.Button
         Accessible.name: raiz.t("Central de controle", "Control center")
         onClicked: raiz.expanded = !raiz.expanded
+        onContainsMouseChanged: if (containsMouse) raiz.atualizar()
         Keys.onReturnPressed: raiz.expanded = !raiz.expanded
         Keys.onSpacePressed: raiz.expanded = !raiz.expanded
 
         Rectangle {
+            id: pilula
+
+            readonly property color base: raiz.expanded ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+
             anchors.centerIn: parent
-            width: compacta.icone + Kirigami.Units.smallSpacing * 2
-            height: width
-            radius: 6
-            color: raiz.expanded ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
-            opacity: raiz.expanded ? 0.42 : (compacta.containsMouse || compacta.activeFocus ? 0.17 : 0)
+            height: Math.min(compacta.height - 2, Math.round(Kirigami.Units.gridUnit * 2))
+            width: icones.implicitWidth + compacta.folga * 2
+            radius: Math.round(height * 0.3)
+            color: Qt.rgba(base.r, base.g, base.b,
+                           raiz.expanded ? 0.42 : (compacta.containsMouse || compacta.activeFocus ? 0.17 : 0.09))
+            Behavior on color {
+                ColorAnimation { duration: Kirigami.Units.shortDuration }
+            }
         }
 
-        Kirigami.Icon {
-            anchors.centerIn: parent
-            width: compacta.icone
-            height: compacta.icone
-            source: "configure"
-            active: compacta.containsMouse
+        Row {
+            id: icones
+            anchors.centerIn: pilula
+            spacing: compacta.folga
+
+            Kirigami.Icon {
+                width: compacta.icone
+                height: compacta.icone
+                source: raiz.iconeRede
+                isMask: true
+                color: Kirigami.Theme.textColor
+            }
+            Kirigami.Icon {
+                visible: raiz.sim("bt_tem") && raiz.sim("bt_ligado")
+                width: compacta.icone
+                height: compacta.icone
+                source: "kaelix-bluetooth-symbolic"
+                isMask: true
+                color: Kirigami.Theme.textColor
+            }
+            Kirigami.Icon {
+                width: compacta.icone
+                height: compacta.icone
+                source: raiz.iconeSom
+                isMask: true
+                color: Kirigami.Theme.textColor
+                opacity: raiz.sim("vol_tem") ? 1 : 0.5
+            }
+            Bateria {
+                visible: raiz.sim("bateria_tem")
+                height: compacta.icone
+                nivel: raiz.numero("bateria")
+                carregando: raiz.sim("carregando")
+            }
         }
     }
 

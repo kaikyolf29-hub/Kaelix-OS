@@ -196,10 +196,46 @@ sleep 4
 shot "21-registro-das-telas-do-kaelix"
 hmp key alt-f4
 sleep 3
-# Agora no tema escuro, abrindo com um clique no ícone da central (ilha da direita).
-hmp click 1762 1047 || echo "o clique não foi (seguindo sem ele)"
+# Agora no tema escuro, abrindo com um clique na pílula da central (ilha da direita).
+hmp click 1726 1046 || echo "o clique não foi (seguindo sem ele)"
 sleep 6
 shot "22-central-de-controle-escuro"
+hmp key esc
+sleep 2
+
+# Bandeja como no Windows: apps de bandeja de verdade (CopyQ e udiskie, cada um
+# de um jeito: protocolo novo, AppIndicator e XEmbed) e o que a bandeja registrou.
+hmp key ctrl-alt-t
+sleep 8
+hmp type "kaelix-teste-bandeja"
+hmp key ret
+sleep 16
+shot "24-bandeja-o-que-registrou"
+hmp key alt-f4
+sleep 4
+shot "25-bandeja-com-apps"
+# Área "mostrar mais" (a setinha), pelo atalho do Windows: Meta+B.
+hmp key meta_l-b
+sleep 4
+shot "26-bandeja-mostrar-mais"
+hmp key esc
+sleep 2
+# Botão direito no ícone do app mais perto da setinha: o menu do app.
+hmp rclick 1640 1046 || echo "o clique não foi (seguindo sem ele)"
+sleep 3
+shot "27-bandeja-menu-do-botao-direito"
+hmp key esc
+sleep 2
+# Clique simples no mesmo ícone: abre o app.
+hmp click 1640 1046 || echo "o clique não foi (seguindo sem ele)"
+sleep 4
+shot "28-bandeja-clique-abre-o-app"
+hmp key esc
+sleep 2
+# Relógio: notificações (com a de teste) e calendário juntos, pelo Meta+N.
+hmp key meta_l-n
+sleep 4
+shot "29-relogio-notificacoes-e-calendario"
 hmp key esc
 sleep 2
 

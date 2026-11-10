@@ -57,7 +57,7 @@ check "não perturbe desligado" linha "dnd=0"
 check "luz noturna desligada" linha "noturna=0"
 
 echo "notebook: Wi-Fi, Bluetooth, brilho e bateria"
-mock nmcli 'case "$*" in *device*) printf "wifi:connected:Casa\\\\:5G\nethernet:unavailable:\n" ;; *radio*) echo enabled ;; esac'
+mock nmcli 'case "$*" in *"wifi list"*) printf " :40\n*:78\n" ;; *device*) printf "wifi:connected:Casa\\\\:5G\nethernet:unavailable:\n" ;; *radio*) echo enabled ;; esac'
 mkdir -p "$WORK/backlight/intel_backlight" "$WORK/power/BAT0" "$WORK/bluetooth/hci0"
 echo 600 > "$WORK/backlight/intel_backlight/brightness"; echo 1200 > "$WORK/backlight/intel_backlight/max_brightness"
 echo 82 > "$WORK/power/BAT0/capacity"; echo Charging > "$WORK/power/BAT0/status"
@@ -65,6 +65,7 @@ mock busctl 'case "$*" in *get-property*) echo "b true" ;; esac'
 mock wpctl 'case "$1" in get-volume) echo "Volume: 0.75 [MUTED]" ;; *) exit 0 ;; esac'
 run estado
 check "Wi-Fi ligado com o nome da rede" bash -c "grep -qx wifi_tem=1 <<<\"\$0\" && grep -qx wifi_ligado=1 <<<\"\$0\" && grep -qx 'wifi_nome=Casa:5G' <<<\"\$0\"" "$OUT"
+check "força do sinal do Wi-Fi conectado" linha "wifi_sinal=78"
 check "cabo existe mas está solto" bash -c "grep -qx cabo_tem=1 <<<\"\$0\" && grep -qx cabo_ligado=0 <<<\"\$0\"" "$OUT"
 check "Bluetooth ligado" bash -c "grep -qx bt_tem=1 <<<\"\$0\" && grep -qx bt_ligado=1 <<<\"\$0\"" "$OUT"
 check "brilho em 50" bash -c "grep -qx brilho_tem=1 <<<\"\$0\" && grep -qx brilho=50 <<<\"\$0\"" "$OUT"
@@ -75,6 +76,7 @@ echo "Wi-Fi desligado no botão"
 mock nmcli 'case "$*" in *device*) printf "wifi:unavailable:\n" ;; *radio*) echo disabled ;; esac'
 run estado
 check "Wi-Fi existe mas está desligado" bash -c "grep -qx wifi_tem=1 <<<\"\$0\" && grep -qx wifi_ligado=0 <<<\"\$0\" && grep -qx wifi_nome= <<<\"\$0\"" "$OUT"
+check "sem Wi-Fi conectado, sinal zero" linha "wifi_sinal=0"
 
 echo "tema, não perturbe e luz noturna"
 mock kreadconfig6 'case "$*" in *LookAndFeelPackage*) echo org.kaelix.claro.desktop ;; *DoNotDisturb*) echo "2999,1,2,3,4,5" ;; *NightColor*) echo true ;; esac'
@@ -85,6 +87,8 @@ check "luz noturna ligada" linha "noturna=1"
 mock kreadconfig6 'case "$*" in *DoNotDisturb*) echo "2001,1,2,3,4,5.5" ;; esac'
 run estado
 check "não perturbe com data vencida conta como desligado" linha "dnd=0"
+run estado nao-perturbe
+check "estado só do não perturbe (para o sino do relógio)" test "$OUT" = "dnd=0"
 mock kreadconfig6 'exit 0'
 
 echo "máquina sem nada (nenhum programa responde)"
@@ -128,6 +132,7 @@ run bloquear;  check "bloqueia a tela" called "loginctl lock-session"
 run sair;      check "abre a tela de desligar" called "org.kde.LogoutPrompt promptAll"
 run abrir nada; check "abrir algo desconhecido é recusado" test "$CODE" -eq 2
 run dancar; check "comando desconhecido sai com código 2" test "$CODE" -eq 2
+run estado tudo; check "parte do estado desconhecida sai com código 2" test "$CODE" -eq 2
 
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"

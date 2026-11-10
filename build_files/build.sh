@@ -37,6 +37,24 @@ dnf5 -y install \
 
 dnf5 -y install --skip-unavailable gamemode.i686 mangohud.i686
 
+# Bandeja do sistema (perto do relógio), como no Windows. O KDE já mostra os
+# ícones dos apps pelo protocolo novo (StatusNotifierItem). Aqui entram as
+# bibliotecas que os apps usam para chegar nele (libayatana-appindicator e a
+# antiga libappindicator, com os menus do botão direito) e a ponte para apps
+# antigos que usam o XEmbed (xembedsniproxy).
+dnf5 -y install --skip-unavailable \
+  libayatana-appindicator-gtk3 libappindicator-gtk3 libdbusmenu-gtk3 xembedsniproxy
+rpm -q libayatana-appindicator-gtk3 libappindicator-gtk3 libdbusmenu-gtk3 || true
+if command -v xembedsniproxy >/dev/null; then
+  echo "Ponte XEmbed: $(command -v xembedsniproxy) ($(rpm -qf "$(command -v xembedsniproxy)"))"
+  ls /usr/lib/systemd/user /etc/xdg/autostart 2>/dev/null | grep -i xembed || true
+else
+  echo "AVISO: xembedsniproxy não está na imagem; apps antigos (XEmbed) não vão aparecer na bandeja." >&2
+fi
+
+# Fonte Inter, a mesma do vídeo de demonstração da fusão.
+dnf5 -y install --skip-unavailable rsms-inter-fonts rsms-inter-vf-fonts
+
 # Controle da placa de vídeo (ventoinha, temperatura, desempenho). O driver da
 # AMD já vem no sistema; isto faz o papel do "AMD Software" do Windows.
 # Preferimos o LACT; se o Fedora não tiver, entra o CoreCtrl.
@@ -151,6 +169,14 @@ for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kde
     kwriteconfig6 --file "$f" --group KDE --key LookAndFeelPackage org.kaelix.escuro.desktop
     kwriteconfig6 --file "$f" --group General --key ColorScheme KaelixEscuro
     kwriteconfig6 --file "$f" --group Icons --key Theme Kaelix
+    # Letra do sistema: Inter, como no vídeo da fusão (se a fonte entrou).
+    if fc-list : family | grep -qx "Inter"; then
+      kwriteconfig6 --file "$f" --group General --key font "Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
+      kwriteconfig6 --file "$f" --group General --key menuFont "Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
+      kwriteconfig6 --file "$f" --group General --key toolBarFont "Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
+      kwriteconfig6 --file "$f" --group General --key smallestReadableFont "Inter,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
+      kwriteconfig6 --file "$f" --group WM --key activeFont "Inter,10,-1,5,600,0,0,0,0,0,0,0,0,0,0,1"
+    fi
   fi
 done
 # A barra padrão (fusão) dos temas globais é montada a partir dos mesmos arquivos

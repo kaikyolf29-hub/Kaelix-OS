@@ -4,7 +4,7 @@ Comment=Ícones do Kaelix OS, tema escuro
 Inherits=breeze-dark,hicolor
 Example=system-file-manager
 FollowsColorScheme=true
-Directories=apps/scalable
+Directories=apps/scalable,status/symbolic
 
 [apps/scalable]
 Size=48
@@ -12,3 +12,10 @@ MinSize=16
 MaxSize=512
 Type=Scalable
 Context=Applications
+
+[status/symbolic]
+Size=16
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=Status
