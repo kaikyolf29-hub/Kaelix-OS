@@ -114,6 +114,6 @@ systemctl enable kaelix-flatpak-setup.service
 # ---------------------------------------------------------------------------
 log "Limpando"
 dnf5 clean all
-rm -rf /var/lib/dnf
+rm -rf /var/lib/dnf /run/dnf /run/setrans
 
 log "Imagem ${IMAGE_NAME} (${IMAGE_VARIANT}) montada"

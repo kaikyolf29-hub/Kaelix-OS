@@ -92,7 +92,6 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "$TOKEN" | sudo podman login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
-          echo "$TOKEN" | podman login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
 
       - name: Publicar no canal teste
         if: github.event_name != 'pull_request'
