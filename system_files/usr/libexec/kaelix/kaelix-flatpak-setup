@@ -11,7 +11,9 @@ flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/
 # A loja de apps mostra o Flathub completo, em vez do repositório reduzido do Fedora.
 flatpak remote-modify --system --enable flathub || true
 for r in fedora fedora-testing; do
-  flatpak remotes --system --columns=name | grep -qx "$r" && flatpak remote-modify --system --disable "$r" || true
+  if flatpak remotes --system --columns=name | grep -qx "$r"; then
+    flatpak remote-modify --system --disable "$r" || true
+  fi
 done
 
 want="$(sha256sum "$LIST" | cut -d' ' -f1)"
