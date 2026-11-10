@@ -302,11 +302,31 @@ cmd_browser() {
   if [[ $first == 1 && -e $stamp ]]; then return 0; fi
 
   if [[ -z $choice ]]; then
-    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
+    local has_gui=0
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then has_gui=1; fi
+
+    if [[ $first == 1 ]]; then
+      # No primeiro login a pergunta só vale com a janela. Se a área de trabalho
+      # ainda não está pronta, sai sem marcar nada e tenta de novo no próximo login.
+      if [[ $has_gui == 0 ]]; then
+        warn "Área de trabalho ainda não está pronta; pergunto no próximo login." "Desktop is not ready yet; will ask on next login."
+        return 0
+      fi
+      sleep "${KAELIX_FIRST_DELAY:-12}"
+    fi
+
+    if [[ $has_gui == 1 ]]; then
+      local rc=0
       choice="$(kdialog --title "Kaelix OS" --checklist \
         "$(t "Qual navegador você quer instalar? Pode escolher os dois." "Which browser do you want to install? You can pick both.")" \
-        chrome "Google Chrome" off brave "Brave" off 2>/dev/null | tr -d '"')" || choice="none"
-      [[ -n $choice ]] || choice="none"
+        chrome "Google Chrome" off brave "Brave" off | tr -d '"'; exit "${PIPESTATUS[0]}")" || rc=$?
+      # 0 = OK, 1 = Cancelar. Qualquer outro número é a janela que não abriu.
+      if [[ $rc -gt 1 ]]; then
+        warn "A janela de escolha não abriu (kdialog saiu com $rc)." "The chooser window did not open (kdialog exited with $rc)."
+        if [[ $first == 1 ]]; then return 0; fi
+        return 1
+      fi
+      if [[ $rc -eq 1 || -z $choice ]]; then choice="none"; fi
     else
       say "Qual navegador você quer instalar?" "Which browser do you want to install?"
       say "  1) Google Chrome   2) Brave   3) $(t "Os dois" "Both")   4) $(t "Nenhum" "None")" \

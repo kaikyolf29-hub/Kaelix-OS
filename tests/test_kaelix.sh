@@ -39,7 +39,7 @@ echo '{"image-name":"kaelix-os","image-variant":"main","image-registry":"ghcr.io
 run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
   OUT="$(PATH="$MOCK:$PATH" KAELIX_IMAGE_INFO="$INFO" KAELIX_STATE_DIR="$WORK/state" \
-         KAELIX_LANG="${L:-pt}" KAELIX_YES=1 DISPLAY='' WAYLAND_DISPLAY='' \
+         KAELIX_LANG="${L:-pt}" KAELIX_YES=1 KAELIX_FIRST_DELAY=0 DISPLAY="${GUI:-}" WAYLAND_DISPLAY='' \
          bash "$KAELIX" "$@" 2>&1 </dev/null)"
   CODE=$?
 }
@@ -105,6 +105,22 @@ check "primeira vez não pergunta de novo depois de escolher" bash -c "! grep -q
 rm -rf "$WORK/state"
 run browser both
 check "os dois instala Chrome e Brave" bash -c "grep -qF com.google.Chrome '$CALLS' && grep -qF com.brave.Browser '$CALLS'"
+
+echo "navegador no primeiro login"
+rm -rf "$WORK/state"
+run navegador --primeira-vez
+check "sem área de trabalho, não marca como escolhido" bash -c "[ ! -e '$WORK/state/navegador-escolhido' ]"
+mock kdialog 'exit 2'
+GUI=:0 run navegador --primeira-vez
+check "se a janela não abre, tenta de novo no próximo login" bash -c "[ ! -e '$WORK/state/navegador-escolhido' ] && ! grep -qF 'flatpak install' '$CALLS'"
+mock kdialog 'echo "\"chrome\""'
+GUI=:0 run navegador --primeira-vez
+check "com a janela, instala o que foi escolhido" bash -c "grep -qF com.google.Chrome '$CALLS' && [ -e '$WORK/state/navegador-escolhido' ]"
+mock kdialog 'exit 1'
+rm -rf "$WORK/state"
+GUI=:0 run navegador --primeira-vez
+check "cancelar não pergunta de novo" bash -c "[ -e '$WORK/state/navegador-escolhido' ] && ! grep -qF 'flatpak install' '$CALLS'"
+mock kdialog 'exit 0'
 
 echo "versao"
 run versao

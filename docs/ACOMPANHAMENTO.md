@@ -31,7 +31,7 @@ Cada item do plano vira uma linha aqui. Um item só ganha ✅ quando está **fei
 | 🔧 | Variante NVIDIA | `ghcr.io/kaikyolf29-hub/kaelix-os-nvidia:teste` montada e assinada. Falta testar numa placa NVIDIA |
 | 🔧 | ISO de instalação | Montada pelo fluxo `Montar ISO` (instalador de rede, 1,2 GB, AMD e NVIDIA). Falta instalar de verdade |
 | 🔧 | Publicar como Release | Fluxo `Publicar versão estável`. Só roda quando o criador manda |
-| ✅ | Comandos `kaelix atualizar`, `voltar`, `drivers`, `seguranca` (e `navegador`, `versao`) | 26 testes automáticos passando |
+| ✅ | Comandos `kaelix atualizar`, `voltar`, `drivers`, `seguranca` (e `navegador`, `versao`) | 30 testes automáticos passando |
 | ✅ | Imagens públicas no ghcr.io | Já ficaram públicas sozinhas (herdaram do repositório) |
 | ✅ | Testar na máquina virtual | Automático no GitHub (fluxo `Testar e tirar prints`): liga, entra na área de trabalho, abre o terminal e roda `kaelix`. Prints no ramo `prints` |
 | ⬜ | Instalar numa máquina de teste pelo criador | Combinado: só com o sistema completo, perto do fim. `docs/COMO-TESTAR.md` |
