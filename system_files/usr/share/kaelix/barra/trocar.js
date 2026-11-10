@@ -1,4 +1,5 @@
-// Antes de trocar de estilo: guarda os apps que a pessoa fixou e tira as barras atuais.
+// Antes de trocar de estilo: lê os apps que a pessoa fixou e tira as barras atuais.
+// Roda sozinho, antes do arranjo novo (veja cmd_bar em /usr/bin/kaelix).
 
 // O Plasma pode devolver a lista como texto ("a,b,c") ou como lista. Aqui vira sempre lista limpa.
 function kaelixLista(valor) {
@@ -34,6 +35,18 @@ for (var a = 0; a < kaelixAntigos.length; a++) {
     }
 }
 print("kaelix: " + kaelixFixados.length + " apps fixados mantidos, " + kaelixAntigos.length + " barras antigas\n");
+// O comando "kaelix barra" lê estas linhas: os apps fixados vão para a barra
+// nova, e o atalho das peças antigas (Meta+A, Alt+F1...) é solto antes, senão
+// a peça nova não consegue pegar o mesmo atalho.
+for (var f = 0; f < kaelixFixados.length; f++) {
+    print("kaelix-fixado: " + kaelixFixados[f] + "\n");
+}
+for (var b = 0; b < kaelixAntigos.length; b++) {
+    var pecas = kaelixAntigos[b].widgetIds;
+    for (var q = 0; q < pecas.length; q++) {
+        print("kaelix-peca-velha: " + pecas[q] + "\n");
+    }
+}
 for (var r = 0; r < kaelixAntigos.length; r++) {
     kaelixAntigos[r].remove();
 }

@@ -203,6 +203,12 @@ done
 # Para o registro da montagem: o que a tela de login lê.
 ls -la /etc/plasmalogin.conf* /usr/lib/plasmalogin* /usr/share/plasmalogin* 2>/dev/null || true
 cat /etc/plasmalogin.conf
+# Atalhos do Kaelix como no Windows: Meta+A abre a central, Meta+N as
+# notificações e o calendário, Meta+B a setinha da bandeja. No KDE o Meta+A
+# trocava de "atividade" e não deixava a central pegar o atalho.
+kwriteconfig6 --file /etc/xdg/kglobalshortcutsrc --group plasmashell --key "next activity" "none,Meta+A,Percorrer as atividades"
+chmod 0644 /etc/xdg/kglobalshortcutsrc
+grep -i -e "meta+a" -e "meta+n" -e "meta+b" /etc/xdg/kglobalshortcutsrc || true
 # Tema Plasma do Kaelix: ilhas de vidro com cantos redondos (o resto vem do KDE).
 kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Kaelix
 chmod 0644 /etc/xdg/plasmarc

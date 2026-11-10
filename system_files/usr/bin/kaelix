@@ -427,6 +427,18 @@ bar_saved() { # bar_saved <chave> <padrão>
   printf '%s' "${v:-$2}"
 }
 
+# Manda um roteiro para a área de trabalho (Plasma) e devolve a resposta.
+bar_script() {
+  busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$1"
+}
+
+# A resposta vem como  s "linha 1\nlinha 2"; aqui vira linhas de verdade.
+bar_reply_lines() {
+  local r="$1"
+  r="${r#s \"}"; r="${r%\"}"
+  printf '%b\n' "$r"
+}
+
 cmd_bar() {
   local style="" size="" details=0 arg
   while [[ $# -gt 0 ]]; do
@@ -486,16 +498,38 @@ cmd_bar() {
   done
   need busctl
 
-  local script
-  script="$(cat "$BAR_DIR/trocar.js"; printf 'var kaelixEscala = %s;\n' "$scale"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
   step "Trocando a barra para o estilo $style, tamanho $size" "Switching the bar to style $style, size $size"
-  local reply
-  if ! reply="$(busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$script")"; then
+  # 1) Tira as barras atuais. A área de trabalho responde com os apps fixados e
+  #    as peças antigas.
+  local reply1 reply2 linha fixados="" id
+  if ! reply1="$(bar_script "$(cat "$BAR_DIR/trocar.js")")"; then
+    fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Kaelix." \
+         "Could not reach the desktop. Run this command inside the Kaelix session."
+  fi
+  # 2) Solta o atalho das peças antigas (Meta+A, Alt+F1, Meta+B, Meta+N), senão
+  #    as peças novas não conseguem pegar os mesmos atalhos.
+  while IFS= read -r linha; do
+    case "$linha" in
+      "kaelix-fixado: "*)
+        linha="${linha#kaelix-fixado: }"; linha="${linha//\\/}"; linha="${linha//\"/}"
+        fixados+="${fixados:+,}\"$linha\"" ;;
+      "kaelix-peca-velha: "*)
+        id="${linha#kaelix-peca-velha: }"
+        if [[ $id =~ ^[0-9]+$ ]]; then
+          busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel \
+            unregister ss plasmashell "activate widget $id" >/dev/null 2>&1 || true
+        fi ;;
+    esac
+  done < <(bar_reply_lines "$reply1")
+  # 3) Monta o estilo novo com os apps que a pessoa tinha fixado.
+  local script
+  script="$(printf 'var kaelixFixados = [%s];\nvar kaelixEscala = %s;\n' "$fixados" "$scale"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
+  if ! reply2="$(bar_script "$script")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Kaelix." \
          "Could not reach the desktop. Run this command inside the Kaelix session."
   fi
   # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
-  if [[ $details == 1 ]]; then printf '%b\n' "$reply"; fi
+  if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
   mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\n' "$style" "$size" > "$STATE_DIR/barra"
   ok "Barra trocada. Os apps que você fixou foram mantidos." "Bar changed. The apps you pinned were kept."
   tip "Para voltar ao padrão: kaelix barra fusao --tamanho media" "To go back to the default: kaelix bar fusao --size media"

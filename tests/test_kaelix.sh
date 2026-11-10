@@ -187,6 +187,15 @@ run barra linux
 check "estilo desconhecido é recusado" test "$CODE" -ne 0
 run barra --tamanho enorme
 check "tamanho desconhecido é recusado" test "$CODE" -ne 0
+# A área de trabalho responde à primeira parte (tirar as barras) com os apps
+# fixados e as peças antigas, que têm atalho (Meta+A, Alt+F1, Meta+B, Meta+N).
+mock busctl 'case "$*" in *kaelixAntigos*) echo "s \"kaelix-fixado: applications:steam.desktop\\nkaelix-fixado: preferred://browser\\nkaelix-peca-velha: 24\\nkaelix-peca-velha: 31\\n\"" ;; *) echo "s \"kaelix: resposta da area de trabalho\"" ;; esac; exit "${FAKE_BUSCTL_RC:-0}"'
+run barra mac
+check "solta o atalho das peças antigas" bash -c "grep -qF 'unregister ss plasmashell activate widget 24' '$CALLS' && grep -qF 'unregister ss plasmashell activate widget 31' '$CALLS'"
+check "solta os atalhos antes de montar a barra nova" bash -c "[ \"\$(grep -n 'unregister' '$CALLS' | head -n1 | cut -d: -f1)\" -lt \"\$(grep -n 'topo.location' '$CALLS' | head -n1 | cut -d: -f1)\" ]"
+check "a barra nova recebe os apps que a pessoa fixou" called 'var kaelixFixados = ["applications:steam.desktop","preferred://browser"];'
+mock busctl 'echo "s \"kaelix: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
+run barra fusao --tamanho media
 FAKE_BUSCTL_RC=1 run barra mac
 check "sem área de trabalho avisa e não guarda" bash -c "grep -qF 'Não consegui falar' <<<\"\$0\" && grep -qF 'estilo=fusao' '$WORK/state/barra'" "$OUT"
 
