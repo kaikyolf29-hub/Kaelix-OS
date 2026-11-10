@@ -6,3 +6,4 @@ senha*.txt
 # Arquivos gerados
 *.iso
 out/
+docs/visual/frames/

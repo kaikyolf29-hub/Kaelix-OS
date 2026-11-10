@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Kaelix OS: demonstração do visual</title>
+<style>
+html,body{margin:0;height:100%;background:#1B2038;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0}
+#stage{position:absolute;left:0;top:0;width:1440px;height:900px;overflow:hidden;transform-origin:0 0;background:var(--bg);color:var(--fg);font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.35}
+#stage *{box-sizing:border-box}
+#wall{position:absolute;left:0;top:0;width:1440px;height:900px;display:block}
+.glass{backdrop-filter:blur(30px) saturate(170%);border:1px solid var(--edge)}
+.win{position:absolute;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;backdrop-filter:blur(30px) saturate(150%);border:1px solid var(--edge);box-shadow:0 28px 70px var(--shadow);will-change:transform,opacity}
+.tbar{display:flex;align-items:flex-end;gap:16px;flex-shrink:0;padding:0 14px;background:var(--tint1)}
+.wb{display:flex;gap:8px;align-items:center;align-self:center}
+.wb span{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.tab{padding:8px 16px;border-radius:9px 9px 0 0;background:var(--tint2);font-weight:500}
+.tab2{padding:8px 16px;color:var(--muted)}
+.muted{color:var(--muted)}.fg2{color:var(--fg2)}
+.field{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:8px;background:var(--field);border:1px solid var(--line)}
+.side{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px}
+.side svg{stroke:var(--iconacc)}
+.sidehead{padding:2px 10px 6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 130px 130px 80px;gap:12px;align-items:center;padding:9px 18px}
+.row>span:first-child{display:flex;align-items:center;gap:10px}
+.island{position:absolute;display:flex;align-items:center;background:var(--glass);box-shadow:0 18px 44px var(--shadow2);will-change:transform,opacity}
+.panel{position:absolute;background:var(--panel);backdrop-filter:blur(34px) saturate(170%);border:1px solid var(--edge);box-shadow:0 24px 60px var(--shadow2);will-change:transform,opacity}
+.tile{height:72px;padding:12px;border-radius:16px;display:flex;align-items:center;gap:10px;text-align:left}
+.tile.on{background:#5468E8;color:#fff}
+.tile.off{background:var(--tint2)}
+.tile b{font-weight:600;display:block}.tile small{font-size:12px;display:block}
+.card{padding:12px 14px;border-radius:16px;background:var(--tint2);display:flex;flex-direction:column;gap:10px}
+.track{flex:1;height:8px;border-radius:4px;background:var(--tint3);position:relative}
+.fill{height:8px;border-radius:4px;background:var(--slider)}
+.knob{position:absolute;top:-5px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(20,24,60,.35)}
+.dk{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dk button{width:48px;height:48px;border-radius:14px;color:#fff;display:flex;align-items:center;justify-content:center}
+.dk button svg{width:26px;height:26px}
+.dk i{width:5px;height:5px;border-radius:50%;background:var(--fg);opacity:0}
+#tip{position:absolute;z-index:31;padding:4px 10px;border-radius:8px;white-space:nowrap;font-size:12px;font-weight:500;background:var(--tip);border:1px solid var(--edge);transform:translate(-50%,-100%);opacity:0}
+#caption{position:absolute;z-index:40;left:50%;top:24px;transform:translateX(-50%);padding:10px 20px;border-radius:999px;font-size:16px;font-weight:500;white-space:nowrap;background:var(--panel);backdrop-filter:blur(30px) saturate(170%);border:1px solid var(--edge);box-shadow:0 14px 36px var(--shadow2);opacity:0}
+#cursor{position:absolute;z-index:50;left:0;top:0;width:22px;height:30px;opacity:0;will-change:transform}
+#ripple{position:absolute;z-index:49;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:2px solid #F2B45A;opacity:0}
+.full{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#1F2444;color:#F1F3FA}
+.kmark{width:104px;height:104px;border-radius:30px;background:#F2B45A;color:#2A2140;font-weight:700;font-size:54px;display:flex;align-items:center;justify-content:center;box-shadow:0 24px 60px rgba(10,12,30,.45)}
+.lrow{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:12px}
+.lrow .ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.lrow b{font-weight:600;display:block}.lrow small{font-size:12px;color:var(--muted);display:block}
+#term pre{margin:0;flex:1;min-height:0;padding:14px 18px;font-family:'JetBrains Mono','DejaVu Sans Mono','Liberation Mono',monospace;font-size:12.5px;line-height:1.7;white-space:pre}
+.pr{color:var(--prompt)}.ok{color:var(--cmd)}
+.caret{display:inline-block;width:8px;height:15px;vertical-align:-2px;background:var(--fg)}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<svg id="wall" viewBox="0 0 1440 900" aria-hidden="true">
+<rect width="1440" height="900" fill="var(--bg)"></rect>
+<circle id="sun" cx="1040" cy="410" r="150" fill="var(--sun)"></circle>
+<path class="dune" d="M0 420 C 240 300, 480 320, 720 430 S 1200 560, 1440 400 V1100 H0 Z" fill="var(--d1)"></path>
+<path class="dune" d="M0 560 C 300 440, 560 520, 820 580 S 1260 640, 1440 520 V1100 H0 Z" fill="var(--d2)"></path>
+<path class="dune" d="M0 700 C 260 600, 620 660, 900 720 S 1300 760, 1440 680 V1100 H0 Z" fill="var(--d3)"></path>
+<path class="dune" d="M0 820 C 320 760, 700 800, 1000 840 S 1340 860, 1440 820 V1100 H0 Z" fill="var(--d4)"></path>
+</svg>
+
+<!-- Arquivos -->
+<div id="files" class="win" style="left:64px;top:84px;width:820px;height:480px;background:var(--win);z-index:10">
+<div class="tbar" style="height:44px">
+<div class="wb">
+<span style="background:#F0609E"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#4A1230" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></span>
+<span style="background:#8FA2FF"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#1E2A66" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 5h5"/></svg></span>
+<span style="background:#45D0C1"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#0B4740" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5V3h3.5M7 3.5V7H3.5"/></svg></span>
+</div>
+<div style="display:flex;gap:4px;align-items:flex-end"><div class="tab">Downloads</div><div class="tab2">Documentos</div><div class="tab2" style="padding:8px 10px;font-size:15px;line-height:1">+</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;height:46px;flex-shrink:0;padding:0 14px;background:var(--tint2)">
+<div style="display:flex;gap:2px" class="fg2">
+<span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg></span>
+<span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></svg></span>
+<span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></svg></span>
+</div>
+<div class="field" style="flex:1;min-width:0"><span class="muted">Este computador</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="muted"><path d="M9.5 6l6 6-6 6"/></svg><span style="font-weight:500">Downloads</span></div>
+<div class="field muted" style="width:190px;padding:0 10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Buscar em Downloads</span></div>
+</div>
+<div style="flex:1;min-height:0;display:flex">
+<div style="width:196px;flex-shrink:0;padding:14px 10px;display:flex;flex-direction:column;gap:2px;background:var(--tint0);border-right:1px solid var(--line)">
+<div class="sidehead">Acesso rápido</div>
+<div class="side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/></svg><span>Área de trabalho</span></div>
+<div class="side" style="background:var(--selside);font-weight:500"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 11l4.5 4.5 4.5-4.5M5 19.5h14"/></svg><span>Downloads</span></div>
+<div class="side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5z"/><path d="M14 3.5v4h4"/></svg><span>Documentos</span></div>
+<div class="side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4.5 17l4.5-4 3.5 3 3-2.5 4 3.5"/></svg><span>Imagens</span></div>
+<div class="side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M10.5 9.5v5l4-2.5z"/></svg><span>Vídeos</span></div>
+<div class="sidehead" style="padding-top:14px">Este computador</div>
+<div class="side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="stroke:var(--prompt)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M7 14.5h2"/></svg><span>Kaelix (SSD)</span></div>
+<div class="side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="stroke:var(--muted)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6" width="17" height="12" rx="2.5"/><path d="M7 14.5h2"/></svg><span>Windows (C:)</span></div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div class="row muted" style="padding:10px 18px;font-size:12px;border-bottom:1px solid var(--line)"><span>Nome</span><span>Modificado</span><span>Tipo</span><span>Tamanho</span></div>
+<div class="row"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="#5468E8" stroke="#8FA2FF" stroke-width="1.4" stroke-linejoin="round"><path d="M3 7.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Capturas de tela</span><span class="muted">hoje, 22:10</span><span class="muted">Pasta</span><span></span></div>
+<div class="row" style="background:var(--sel)"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="stroke:var(--prompt)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/></svg>kaelix-os-teste-amd.iso</span><span class="fg2">hoje, 23:30</span><span class="fg2">Imagem de disco</span><span class="fg2">1,2 GB</span></div>
+<div class="row"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="fg2"><path d="M7 3.5h7l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5z"/><path d="M14 3.5v4h4M8.5 12.5h7M8.5 16h5"/></svg>plano-kaelix.md</span><span class="muted">ontem, 21:04</span><span class="muted">Texto</span><span class="muted">18 KB</span></div>
+<div class="row"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F0609E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M10.5 9.5v5l4-2.5z"/></svg>gravacao-obs.mkv</span><span class="muted">08/11/2026</span><span class="muted">Vídeo</span><span class="muted">412 MB</span></div>
+<div class="row"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="stroke:var(--cmd)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4.5 17l4.5-4 3.5 3 3-2.5 4 3.5"/></svg>papel-de-parede.png</span><span class="muted">07/11/2026</span><span class="muted">Imagem</span><span class="muted">3,1 MB</span></div>
+<div class="muted" style="margin-top:auto;padding:8px 18px;font-size:12px;border-top:1px solid var(--line)">5 itens, 1 selecionado (1,2 GB)</div>
+</div>
+</div>
+</div>
+
+<!-- Terminal -->
+<div id="term" class="win" style="left:500px;top:430px;width:540px;height:290px;background:var(--term);z-index:11">
+<div class="tbar" style="height:40px">
+<div class="wb">
+<span style="background:#F0609E"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#4A1230" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></span>
+<span id="minbtn" style="background:#8FA2FF"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#1E2A66" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 5h5"/></svg></span>
+<span style="background:#45D0C1"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#0B4740" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5V3h3.5M7 3.5V7H3.5"/></svg></span>
+</div>
+<div style="display:flex;gap:4px;align-items:flex-end"><div class="tab" style="padding:7px 14px">Terminal do Kaelix</div><div class="tab2" style="padding:7px 10px;font-size:15px;line-height:1">+</div></div>
+</div>
+<pre id="termout"></pre>
+</div>
+
+<!-- Central de controle -->
+<div id="cc" class="panel" style="right:14px;bottom:88px;width:340px;padding:14px;border-radius:22px;display:flex;flex-direction:column;gap:12px;z-index:20;transform-origin:85% 100%">
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+<div class="tile on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="5" rx="1.2"/><path d="M12 8v4M5 16v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><rect x="2.5" y="16" width="5" height="5" rx="1.2"/><rect x="16.5" y="16" width="5" height="5" rx="1.2"/></svg><span><b>Rede por cabo</b><small>Conectada</small></span></div>
+<div class="tile on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0"/><path d="M5.5 12.5a9.5 9.5 0 0 1 13 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.2" r="1" fill="currentColor"/></svg><span><b>Wi-Fi</b><small>Casa 5G</small></span></div>
+<div class="tile on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 4V3l5 4L7 17"/></svg><span><b>Bluetooth</b><small>Ligado</small></span></div>
+<div class="tile" id="darktile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg><span><b>Modo escuro</b><small id="darklbl">Ligado</small></span></div>
+</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between"><b style="font-weight:600">Som</b><span class="fg2" id="volnum">62%</span></div>
+<div style="display:flex;align-items:center;gap:10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg><div class="track" id="voltrack"><div class="fill" id="volfill" style="width:62%"></div><div class="knob" id="volknob" style="left:62%"></div></div></div>
+</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between"><b style="font-weight:600">Brilho</b><span class="fg2">80%</span></div>
+<div style="display:flex;align-items:center;gap:10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg><div class="track"><div class="fill" style="width:80%"></div><div class="knob" style="left:80%"></div></div></div>
+</div>
+<div class="card">
+<b style="font-weight:600">Perfil de energia</b>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:3px;border-radius:10px;background:var(--seg)">
+<span class="fg2" style="padding:7px 0;border-radius:8px;font-size:12px;text-align:center">Economia</span>
+<span style="padding:7px 0;border-radius:8px;font-size:12px;font-weight:600;text-align:center;background:var(--segon);color:#1B2038">Equilibrado</span>
+<span class="fg2" style="padding:7px 0;border-radius:8px;font-size:12px;text-align:center">Desempenho</span>
+</div>
+</div>
+</div>
+
+<!-- Busca -->
+<div id="launch" class="panel" style="left:14px;bottom:88px;width:400px;padding:14px;border-radius:22px;display:flex;flex-direction:column;gap:4px;z-index:20;transform-origin:20% 100%">
+<div class="sidehead" id="lhead" style="padding:4px 10px 8px">Recentes</div>
+<div id="lrows"></div>
+<div class="muted" style="padding:10px 10px 2px;font-size:12px;border-top:1px solid var(--line);margin-top:6px">Enter abre. Esc fecha.</div>
+</div>
+
+<!-- Ilha esquerda -->
+<div id="islL" class="island glass" style="left:14px;bottom:22px;height:56px;gap:8px;padding:0 8px;border-radius:20px;z-index:30">
+<span style="width:40px;height:40px;border-radius:12px;background:#F2B45A;color:#2A2140;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center">K</span>
+<div id="search" class="fg2" style="width:230px;height:40px;display:flex;align-items:center;gap:9px;padding:0 14px;border-radius:12px;background:var(--tint2b)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span id="searchtxt">Buscar apps e arquivos</span></div>
+</div>
+
+<!-- Dock -->
+<div id="dock" class="island glass" style="left:50%;transform:translateX(-50%);bottom:14px;align-items:flex-end;gap:10px;padding:9px 12px 6px;border-radius:24px;z-index:30">
+<div class="dk" data-n="Arquivos"><button style="background:#5468E8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button><i></i></div>
+<div class="dk" data-n="Navegador"><button style="background:#F2B45A;color:#2A2140"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.2-3.8-8.5s1.2-6.1 3.8-8.5z"/></svg></button><i></i></div>
+<div class="dk" data-n="Terminal do Kaelix"><button style="background:#343B63;border:1px solid rgba(255,255,255,.18)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l4 4-4 4"/><path d="M12 16h7"/></svg></button><i></i></div>
+<div class="dk" data-n="Jogos"><button style="background:#7C6BE6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8h9a4.5 4.5 0 0 1 4.4 5.4l-.6 3a2.6 2.6 0 0 1-4.5 1.2L14 15.5h-4l-1.8 2.1a2.6 2.6 0 0 1-4.5-1.2l-.6-3A4.5 4.5 0 0 1 7.5 8z"/><path d="M8 10.8v3M6.5 12.3h3"/><circle cx="16" cy="12.3" r="1" fill="currentColor" stroke="none"/></svg></button><i></i></div>
+<div class="dk" data-n="Editor de código"><button style="background:#2F9FB0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5"/><path d="M15 7l5 5-5 5"/></svg></button><i></i></div>
+<div class="dk" data-n="Loja de apps"><button style="background:#4C7FE0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 11a2 2 0 0 1-2 1.8H8A2 2 0 0 1 6 19z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg></button><i></i></div>
+<div class="dk" data-n="Gerenciador de tarefas"><button style="background:#3E9C7A"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12 2.5-6h5"/></svg></button><i></i></div>
+<div class="dk" data-n="Configurações"><button style="background:#6B7399"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h8M18 7h2M4 12h2M12 12h8M4 17h10"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg></button><i></i></div>
+</div>
+<div id="tip"></div>
+
+<!-- Ilha direita -->
+<div id="islR" class="island glass" style="right:14px;bottom:22px;height:56px;gap:12px;padding:0 12px 0 8px;border-radius:20px;z-index:30">
+<div id="tray" style="height:40px;padding:0 12px;border-radius:12px;display:flex;align-items:center;gap:12px;position:relative"><div id="trayhl" style="position:absolute;inset:0;border-radius:12px;background:var(--tint3);opacity:0"></div>
+<svg style="position:relative" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="5" rx="1.2"/><path d="M12 8v4M5 16v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><rect x="2.5" y="16" width="5" height="5" rx="1.2"/><rect x="16.5" y="16" width="5" height="5" rx="1.2"/></svg>
+<svg style="position:relative" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 4V3l5 4L7 17"/></svg>
+<svg style="position:relative" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;line-height:1.3"><span style="font-weight:600">23:50</span><span class="fg2" style="font-size:12px">seg. 9 de nov.</span></div>
+<span style="width:30px;height:40px;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 21h4"/></svg></span>
+</div>
+
+<div id="caption"></div>
+<div id="ripple"></div>
+<svg id="cursor" viewBox="0 0 22 30"><path d="M2 2v22l5.6-5.2 3.8 8.6 3.4-1.5-3.8-8.5H19z" fill="#FFFFFF" stroke="#1B2038" stroke-width="1.6" stroke-linejoin="round"/></svg>
+
+<div id="splash" class="full"><div class="kmark">K</div><div style="font-size:40px;font-weight:600;letter-spacing:-.01em">Kaelix OS</div><div style="font-size:17px;color:#D5DAEE">Demonstração do visual</div></div>
+<div id="endcard" class="full" style="opacity:0;display:none"><div class="kmark">K</div><div style="font-size:40px;font-weight:600;letter-spacing:-.01em">Kaelix OS</div><div style="font-size:18px;color:#F1F3FA">Fusão: três ilhas de vidro embaixo, tema escuro e claro.</div><div style="font-size:15px;color:#B9C0DA">Demonstração feita fora do sistema. O próximo passo é montar isso no Kaelix de verdade.</div></div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>
