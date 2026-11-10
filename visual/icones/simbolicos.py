@@ -10,7 +10,9 @@ Uso: python3 visual/icones/simbolicos.py
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[2]
-DESTINO = RAIZ / "system_files/usr/share/icons/Kaelix/status/symbolic"
+# Os dois temas de ícones (escuro e claro) levam os mesmos desenhos: o Plasma
+# pinta cada um com a cor do texto do tema.
+DESTINOS = [RAIZ / f"system_files/usr/share/icons/{tema}/status/symbolic" for tema in ("Kaelix", "Kaelix-claro")]
 
 # Traço de 1,9 px numa grade de 24, pontas redondas, como na demonstração.
 CABECA = (
@@ -95,10 +97,11 @@ for nivel in range(4):
 
 
 def main():
-    DESTINO.mkdir(parents=True, exist_ok=True)
-    for nome, conteudo in ICONES.items():
-        (DESTINO / f"{nome}-symbolic.svg").write_text(conteudo, encoding="utf-8")
-    print(f"{len(ICONES)} ícones em {DESTINO.relative_to(RAIZ)}")
+    for destino in DESTINOS:
+        destino.mkdir(parents=True, exist_ok=True)
+        for nome, conteudo in ICONES.items():
+            (destino / f"{nome}-symbolic.svg").write_text(conteudo, encoding="utf-8")
+        print(f"{len(ICONES)} ícones em {destino.relative_to(RAIZ)}")
 
 
 if __name__ == "__main__":

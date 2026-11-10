@@ -15,8 +15,8 @@ Page {
     }
 
     heading: t("Deixe o Kaelix com a sua cara", "Make Kaelix yours")
-    description: t("Escolha o tema e o jeito da barra. Dá para trocar depois, quando quiser: procure por \"Estilo da barra\" no menu.",
-                   "Pick the theme and the bar style. You can change them later: look for \"Bar Style\" in the menu.")
+    description: t("Escolha o tema e o jeito da barra. Dá para trocar depois, quando quiser, nos Ajustes do Kaelix (a engrenagem na barra), junto com a cor do vidro e o papel de parede.",
+                   "Pick the theme and the bar style. You can change them later in Kaelix Settings (the gear in the bar), along with the glass color and the wallpaper.")
 
     ColumnLayout {
         anchors.centerIn: parent

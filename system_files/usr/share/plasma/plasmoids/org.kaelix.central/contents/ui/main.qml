@@ -15,7 +15,10 @@ import org.kde.plasma.plasmoid
 PlasmoidItem {
     id: raiz
 
-    readonly property bool pt: Qt.locale().name.indexOf("pt") === 0
+    // Português quando o sistema está em português. O ajudante também diz o
+    // idioma (lê o plasma-localerc), porque o programa pode abrir sem ele no ambiente.
+    readonly property bool pt: estado.idioma !== undefined ? estado.idioma === "pt"
+        : (Qt.locale().name.indexOf("pt") === 0 || Qt.locale().uiLanguages.join(",").indexOf("pt") === 0)
     function t(portugues, ingles) {
         return pt ? portugues : ingles;
     }
@@ -292,6 +295,12 @@ PlasmoidItem {
                     onAcionado: raiz.alternar("noturna", "luz-noturna")
                 }
                 Botao {
+                    // Quando sobra um bloco sozinho na última linha (PC sem Wi-Fi e
+                    // sem Bluetooth), ele ocupa a linha inteira em vez de deixar um buraco.
+                    readonly property int acima: (raiz.sim("wifi_tem") ? 1 : 0)
+                        + ((raiz.sim("cabo_ligado") || !raiz.sim("wifi_tem")) ? 1 : 0)
+                        + (raiz.sim("bt_tem") ? 1 : 0) + 3
+                    Layout.columnSpan: acima % 2 === 0 ? 2 : 1
                     icone: "kaelix-barra-symbolic"
                     titulo: raiz.t("Estilo da barra", "Bar style")
                     detalhe: raiz.texto("barra") === "mac" ? "Mac" : raiz.texto("barra") === "windows" ? "Windows" : raiz.t("Fusão", "Fusion")

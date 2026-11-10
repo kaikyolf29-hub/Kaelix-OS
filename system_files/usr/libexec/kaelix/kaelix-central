@@ -26,6 +26,10 @@
 # Cada parte funciona sozinha: o que a máquina não tem (Wi-Fi, Bluetooth, tela
 # com brilho, bateria) sai como "_tem=0" e a central esconde.
 set -u
+# As respostas dos programas (nmcli, wpctl...) são lidas em inglês, então o
+# ajudante roda com LC_ALL=C. O idioma da pessoa fica guardado para os apps que
+# ele abre (Ajustes, telas do KDE) saírem em português.
+LC_ALL_PESSOA="${LC_ALL-}"
 export LC_ALL=C
 
 # Pastas do sistema, trocáveis nos testes.
@@ -258,6 +262,23 @@ estado_papel() {
   echo "papel_animado_peca=$peca"
 }
 
+# Idioma da pessoa (pt ou en), para os Ajustes e a central falarem a mesma
+# língua do sistema mesmo quando o programa abre sem o idioma no ambiente.
+estado_idioma() {
+  local primeiro="${LANGUAGE:-}" f
+  primeiro="${primeiro%%:*}"
+  local l="${KAELIX_LANG:-${LC_ALL_PESSOA:-${LC_MESSAGES:-$primeiro}}}"
+  [[ -n $l ]] || l="${LANG:-}"
+  if [[ -z $l || $l == C* || $l == POSIX ]]; then
+    for f in "$CONFIG_DIR/plasma-localerc" /etc/xdg/plasma-localerc; do
+      [[ -r $f ]] || continue
+      l="$(sed -n 's/^LANGUAGE=//p; s/^LANG=//p' "$f" | head -n1)"
+      [[ -n $l ]] && break
+    done
+  fi
+  case "$l" in pt*) echo "idioma=pt" ;; *) echo "idioma=en" ;; esac
+}
+
 cmd_estado() {
   # "estado nao-perturbe" lê só o não perturbe: o sino do relógio pergunta isso
   # de tempos em tempos e não precisa acordar a rede e o som.
@@ -266,6 +287,7 @@ cmd_estado() {
     nao-perturbe) estado_nao_perturbe; return 0 ;;
     *) echo "parte do estado desconhecida: $1" >&2; exit 2 ;;
   esac
+  estado_idioma
   estado_rede
   estado_bluetooth
   estado_nao_perturbe
@@ -409,8 +431,11 @@ cmd_perfil() {
   curto busctl set-property $bus ActiveProfile s "$alvo"
 }
 
-solto() { # abre um programa sem prender a central
-  (setsid "$@" >/dev/null 2>&1 &)
+solto() { # abre um programa sem prender a central, no idioma da pessoa
+  (
+    if [[ -n $LC_ALL_PESSOA ]]; then export LC_ALL="$LC_ALL_PESSOA"; else unset LC_ALL; fi
+    setsid "$@" >/dev/null 2>&1 &
+  )
 }
 
 cmd_pagina_pedida() {

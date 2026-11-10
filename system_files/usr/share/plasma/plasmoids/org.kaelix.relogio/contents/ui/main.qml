@@ -17,7 +17,7 @@ import org.kde.plasma.plasmoid
 PlasmoidItem {
     id: raiz
 
-    readonly property bool pt: Qt.locale().name.indexOf("pt") === 0
+    readonly property bool pt: Qt.locale().name.indexOf("pt") === 0 || Qt.locale().uiLanguages.join(",").indexOf("pt") === 0
     function t(portugues, ingles) {
         return pt ? portugues : ingles;
     }

@@ -81,6 +81,13 @@ shot "04d-menu"
 hmp key esc
 sleep 2
 
+# Central de controle pelo atalho Meta+A, na conta nova (antes de trocar a barra).
+hmp key meta_l-a
+sleep 6
+shot "04e-central-pelo-atalho"
+hmp key esc
+sleep 2
+
 hmp key ctrl-alt-t
 sleep 15
 shot "05-terminal"

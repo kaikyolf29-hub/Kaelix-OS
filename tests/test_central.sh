@@ -208,6 +208,13 @@ check "abre o Waywallen" bash -c "sleep 0.3; grep -qF 'flatpak run org.waywallen
 run abrir ajustes
 check "abre os Ajustes do Kaelix" bash -c "sleep 0.3; grep -qF 'plasmawindowed org.kaelix.ajustes' '$CALLS'"
 run pagina-pedida; check "sem pedido não diz página" test -z "$OUT"
+# Os apps que a central abre saem no idioma da pessoa, não no LC_ALL=C do ajudante.
+mock plasmawindowed 'echo "plasmawindowed LC_ALL=${LC_ALL-nenhum}" >> "'"$CALLS"'"'
+LC_ALL="" run abrir ajustes
+check "app aberto não herda o LC_ALL=C do ajudante" bash -c "sleep 0.3; grep -qF 'plasmawindowed LC_ALL=nenhum' '$CALLS'"
+LC_ALL=C.UTF-8 run abrir ajustes
+check "app aberto recebe o LC_ALL da pessoa" bash -c "sleep 0.3; grep -qF 'plasmawindowed LC_ALL=C.UTF-8' '$CALLS'"
+mock plasmawindowed 'exit 0'
 run abrir ajustes barra
 run pagina-pedida; check "abrir ajustes barra pede a página da barra" linha "pagina=barra"
 run pagina-pedida; check "o pedido vale uma vez só" test -z "$OUT"
@@ -219,6 +226,18 @@ run abrir kcm "kcm_x; rm -rf /"; check "nome de tela estranho é recusado" test 
 run abrir nada; check "abrir algo desconhecido é recusado" test "$CODE" -eq 2
 run dancar; check "comando desconhecido sai com código 2" test "$CODE" -eq 2
 run estado tudo; check "parte do estado desconhecida sai com código 2" test "$CODE" -eq 2
+
+echo "Idioma (para os Ajustes e a central)"
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=pt_BR.UTF-8 run estado
+check "LANG em português dá idioma=pt" linha "idioma=pt"
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=en_US.UTF-8 run estado
+check "LANG em inglês dá idioma=en" linha "idioma=en"
+mkdir -p "$WORK/config"; printf '[Translations]\nLANGUAGE=pt_BR:pt:en_US\n' > "$WORK/config/plasma-localerc"
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=C run estado
+check "sem idioma no ambiente, lê o plasma-localerc" linha "idioma=pt"
+rm -f "$WORK/config/plasma-localerc"
+LC_ALL="" LC_MESSAGES="" LANGUAGE="pt_BR:pt" KAELIX_LANG="" LANG=en_US.UTF-8 run estado
+check "LANGUAGE vale mais que o LANG" linha "idioma=pt"
 
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"

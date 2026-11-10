@@ -16,7 +16,10 @@ import org.kde.plasma.plasmoid
 PlasmoidItem {
     id: ajustes
 
-    readonly property bool pt: Qt.locale().name.indexOf("pt") === 0
+    // Português quando o sistema está em português. O ajudante também diz o
+    // idioma (lê o plasma-localerc), porque o programa pode abrir sem ele no ambiente.
+    readonly property bool pt: estado.idioma !== undefined ? estado.idioma === "pt"
+        : (Qt.locale().name.indexOf("pt") === 0 || Qt.locale().uiLanguages.join(",").indexOf("pt") === 0)
     function t(portugues, ingles) {
         return pt ? portugues : ingles;
     }
