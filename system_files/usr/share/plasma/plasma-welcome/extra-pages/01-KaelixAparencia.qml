@@ -14,7 +14,7 @@ Page {
         return pt ? portugues : ingles;
     }
 
-    title: t("Deixe o Kaelix com a sua cara", "Make Kaelix yours")
+    heading: t("Deixe o Kaelix com a sua cara", "Make Kaelix yours")
     description: t("Escolha o tema e o jeito da barra. Dá para trocar depois, quando quiser: procure por \"Estilo da barra\" no menu.",
                    "Pick the theme and the bar style. You can change them later: look for \"Bar Style\" in the menu.")
 

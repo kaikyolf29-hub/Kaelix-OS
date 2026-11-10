@@ -33,7 +33,7 @@ Page {
         }
     }
 
-    title: t("Escolha o seu navegador", "Pick your browser")
+    heading: t("Escolha o seu navegador", "Pick your browser")
     description: t("O Firefox já vem instalado. Se preferir, instale o Google Chrome, o Brave ou os dois.",
                    "Firefox is already installed. If you prefer, install Google Chrome, Brave or both.")
 
