@@ -153,6 +153,13 @@ for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kde
     kwriteconfig6 --file "$f" --group Icons --key Theme Kaelix
   fi
 done
+# A barra padrão (fusão) dos temas globais é montada a partir dos mesmos arquivos
+# que o comando "kaelix barra" usa, para existir uma fonte só.
+for tema in org.kaelix.escuro.desktop org.kaelix.claro.desktop; do
+  mkdir -p "/usr/share/plasma/look-and-feel/$tema/contents/layouts"
+  cat /usr/share/kaelix/barra/comum.js /usr/share/kaelix/barra/fusao.js /usr/share/kaelix/barra/papel-de-parede.js \
+    > "/usr/share/plasma/look-and-feel/$tema/contents/layouts/org.kde.plasma.desktop-layout.js"
+done
 # Tema Plasma do Kaelix: ilhas de vidro com cantos redondos (o resto vem do KDE).
 kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Kaelix
 chmod 0644 /etc/xdg/plasmarc

@@ -6,6 +6,7 @@ set -uo pipefail
 IMAGE_INFO="${KAELIX_IMAGE_INFO:-/usr/share/kaelix/image-info.json}"
 STATE_DIR="${KAELIX_STATE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/kaelix}"
 FLATHUB_URL="https://dl.flathub.org/repo/flathub.flatpakrepo"
+BAR_DIR="${KAELIX_BAR_DIR:-/usr/share/kaelix/barra}"
 KALI_NAME="${KAELIX_KALI_NAME:-kali}"
 KALI_IMAGE="docker.io/kalilinux/kali-rolling:latest"
 
@@ -87,6 +88,7 @@ $(t "Uso" "Usage"): kaelix <$(t "comando" "command")>
   ${C_BOLD}drivers${C_OFF}               $(t "Mostra a placa de vídeo e confere o driver" "Shows the graphics card and checks the driver")
   ${C_BOLD}seguranca${C_OFF} | security   $(t "Abre o contêiner do Kali (cria na primeira vez)" "Opens the Kali container (creates it the first time)")
   ${C_BOLD}navegador${C_OFF} | browser    $(t "Instala o Google Chrome, o Brave ou os dois" "Installs Google Chrome, Brave or both")
+  ${C_BOLD}barra${C_OFF}     | bar        $(t "Troca o estilo da barra: fusao, mac ou windows" "Changes the bar style: fusao, mac or windows")
   ${C_BOLD}versao${C_OFF}    | version    $(t "Mostra a versão do Kaelix OS" "Shows the Kaelix OS version")
   ${C_BOLD}ajuda${C_OFF}     | help       $(t "Mostra esta ajuda" "Shows this help")
 
@@ -95,6 +97,8 @@ $(t "Exemplos" "Examples"):
   kaelix atualizar --reiniciar   $(t "(atualiza e já reinicia)" "(updates and reboots right away)")
   kaelix drivers --trocar        $(t "(troca para a imagem certa da sua placa)" "(switches to the right image for your card)")
   kaelix seguranca remover       $(t "(apaga o contêiner do Kali)" "(deletes the Kali container)")
+  kaelix barra windows           $(t "(uma barra só embaixo, como no Windows)" "(a single bar at the bottom, like Windows)")
+  kaelix barra --tamanho grande  $(t "(barra maior; também pequena e media)" "(bigger bar; also pequena and media)")
 EOF
 }
 
@@ -360,6 +364,85 @@ cmd_browser() {
 
 # ---------------------------------------------------------------------------
 # versao / version
+# ---------------------------------------------------------------------------
+# Estilo da barra: fusao (três ilhas embaixo), mac (barra no topo e doca) ou
+# windows (uma barra só embaixo). Guarda a escolha para trocar só o tamanho depois.
+bar_saved() { # bar_saved <chave> <padrão>
+  local v=""
+  [[ -r $STATE_DIR/barra ]] && v="$(sed -n "s/^$1=//p" "$STATE_DIR/barra" | head -n1)"
+  printf '%s' "${v:-$2}"
+}
+
+cmd_bar() {
+  local style="" size="" arg
+  while [[ $# -gt 0 ]]; do
+    arg="$1"; shift
+    case "$arg" in
+      fusao|fusão|fusion)   style=fusao ;;
+      mac)                  style=mac ;;
+      windows|win)          style=windows ;;
+      --tamanho|--size)     size="${1:-}"; shift || true ;;
+      --tamanho=*|--size=*) size="${arg#*=}" ;;
+      *) fail "Estilo desconhecido: $arg. Use fusao, mac ou windows." "Unknown style: $arg. Use fusao, mac or windows." ;;
+    esac
+  done
+  case "$size" in
+    "") ;;
+    pequena|pequeno|small)     size=pequena ;;
+    media|média|medio|medium)  size=media ;;
+    grande|large|big)          size=grande ;;
+    *) fail "Tamanho desconhecido: $size. Use pequena, media ou grande." "Unknown size: $size. Use pequena, media or grande." ;;
+  esac
+
+  local cur_style cur_size
+  cur_style="$(bar_saved estilo fusao)"
+  cur_size="$(bar_saved tamanho media)"
+
+  if [[ -z $style && -z $size ]]; then
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
+      local on_f=off on_m=off on_w=off on_p=off on_d=off on_g=off
+      case "$cur_style" in mac) on_m=on ;; windows) on_w=on ;; *) on_f=on ;; esac
+      case "$cur_size" in pequena) on_p=on ;; grande) on_g=on ;; *) on_d=on ;; esac
+      style="$(kdialog --title "Kaelix OS" --radiolist "$(t "Como você quer a barra?" "How do you want the bar?")" \
+        fusao   "$(t "Fusão: três ilhas flutuantes embaixo" "Fusion: three floating islands at the bottom")" "$on_f" \
+        mac     "$(t "Mac: barra fina no topo e doca embaixo" "Mac: thin bar on top and a dock at the bottom")" "$on_m" \
+        windows "$(t "Windows: uma barra só embaixo" "Windows: a single bar at the bottom")" "$on_w" | tr -d '"')" || return 0
+      size="$(kdialog --title "Kaelix OS" --radiolist "$(t "Qual o tamanho da barra?" "How big should the bar be?")" \
+        pequena "$(t "Pequena" "Small")" "$on_p" \
+        media   "$(t "Média" "Medium")" "$on_d" \
+        grande  "$(t "Grande" "Large")" "$on_g" | tr -d '"')" || return 0
+      [[ -z $style ]] && return 0
+    else
+      say "Estilo atual da barra: $cur_style, tamanho $cur_size." "Current bar style: $cur_style, size $cur_size."
+      say "Para trocar: kaelix barra <fusao|mac|windows> [--tamanho pequena|media|grande]" \
+          "To change: kaelix bar <fusao|mac|windows> [--size pequena|media|grande]"
+      return 0
+    fi
+  fi
+  style="${style:-$cur_style}"
+  size="${size:-$cur_size}"
+
+  local scale
+  case "$size" in pequena) scale=2.25 ;; grande) scale=3.25 ;; *) scale=2.75 ;; esac
+
+  local f
+  for f in trocar.js comum.js "$style.js"; do
+    [[ -r $BAR_DIR/$f ]] || fail "Não achei o arquivo do estilo: $BAR_DIR/$f" "Style file not found: $BAR_DIR/$f"
+  done
+  need busctl
+
+  local script
+  script="$(cat "$BAR_DIR/trocar.js"; printf 'var kaelixEscala = %s;\n' "$scale"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
+  step "Trocando a barra para o estilo $style, tamanho $size" "Switching the bar to style $style, size $size"
+  if ! busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$script" >/dev/null; then
+    fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Kaelix." \
+         "Could not reach the desktop. Run this command inside the Kaelix session."
+  fi
+  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\n' "$style" "$size" > "$STATE_DIR/barra"
+  ok "Barra trocada. Os apps que você fixou foram mantidos." "Bar changed. The apps you pinned were kept."
+  tip "Para voltar ao padrão: kaelix barra fusao --tamanho media" "To go back to the default: kaelix bar fusao --size media"
+}
+
 cmd_version() {
   local ref
   printf '%sKaelix OS%s\n' "$C_BOLD" "$C_OFF"
@@ -383,6 +466,7 @@ main() {
     drivers|driver)                    cmd_drivers "$@" ;;
     seguranca|segurança|security|kali) cmd_security "$@" ;;
     navegador|browser)                 cmd_browser "$@" ;;
+    barra|bar|dock)                    cmd_bar "$@" ;;
     versao|versão|version|--version)   cmd_version ;;
     ajuda|help|-h|--help)              cmd_help ;;
     *)

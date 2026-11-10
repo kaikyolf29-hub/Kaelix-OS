@@ -32,13 +32,14 @@ mock systemctl 'exit 0'
 mock lspci 'echo "01:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Ellesmere [Radeon RX 470/480/570/580] [1002:67df]"'
 mock distrobox 'case "$1" in list) printf "ID | NAME | STATUS | IMAGE\nabc | ${FAKE_BOX:-nada} | Up | x\n" ;; *) exit 0 ;; esac'
 mock kdialog 'exit 0'
+mock busctl 'exit "${FAKE_BUSCTL_RC:-0}"'
 
 INFO="$WORK/image-info.json"
 echo '{"image-name":"kaelix-os","image-variant":"main","image-registry":"ghcr.io/dono","build-id":"20261110.1","fedora-version":"44"}' > "$INFO"
 
 run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
-  OUT="$(PATH="$MOCK:$PATH" KAELIX_IMAGE_INFO="$INFO" KAELIX_STATE_DIR="$WORK/state" \
+  OUT="$(PATH="$MOCK:$PATH" KAELIX_IMAGE_INFO="$INFO" KAELIX_STATE_DIR="$WORK/state" KAELIX_BAR_DIR="$ROOT/system_files/usr/share/kaelix/barra" \
          KAELIX_LANG="${L:-pt}" KAELIX_YES=1 KAELIX_FIRST_DELAY=0 DISPLAY="${GUI:-}" WAYLAND_DISPLAY='' \
          bash "$KAELIX" "$@" 2>&1 </dev/null)"
   CODE=$?
@@ -121,6 +122,7 @@ rm -rf "$WORK/state"
 GUI=:0 run navegador --primeira-vez
 check "cancelar não pergunta de novo" bash -c "[ -e '$WORK/state/navegador-escolhido' ] && ! grep -qF 'flatpak install' '$CALLS'"
 mock kdialog 'exit 0'
+mock busctl 'exit "${FAKE_BUSCTL_RC:-0}"'
 
 echo "versao"
 run versao
@@ -132,6 +134,32 @@ check "ver a versão não pede senha" bash -c "! grep -q '^sudo' '$CALLS'"
 mock rpm-ostree 'echo "{\"deployments\":[{\"booted\":true,\"container-image-reference\":\"ostree-image-signed:docker://ghcr.io/dono/kaelix-os:teste\"}]}"'
 run versao
 check "mostra a imagem em uso sem o prefixo" bash -c "grep -qF 'ghcr.io/dono/kaelix-os:teste' <<<\"\$0\" && ! grep -qF 'ostree-image-signed' <<<\"\$0\"" "$OUT"
+
+echo "barra"
+run barra
+check "sem escolha mostra o estilo atual" has "Estilo atual da barra: fusao, tamanho media"
+check "sem escolha não mexe na barra" bash -c "! grep -q '^busctl' '$CALLS'"
+run barra windows
+check "troca para o estilo windows pela área de trabalho" called "busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s"
+check "manda o arranjo do estilo windows" called 'barra.lengthMode = "fill"'
+check "guarda os apps fixados antes de trocar" called "kaelixFixados"
+check "avisa que trocou" has "Barra trocada"
+run barra
+check "lembra o estilo escolhido" has "Estilo atual da barra: windows, tamanho media"
+run barra --tamanho grande
+check "trocar só o tamanho mantém o estilo" called 'barra.lengthMode = "fill"'
+check "tamanho grande usa a escala maior" called "var kaelixEscala = 3.25;"
+run bar mac --size=pequena
+check "estilo mac põe a barra no topo" called 'topo.location = "top"'
+check "tamanho pequeno usa a escala menor" called "var kaelixEscala = 2.25;"
+run barra fusao --tamanho media
+check "estilo fusão volta com as três ilhas" called 'var direita = ilha("right");'
+run barra linux
+check "estilo desconhecido é recusado" test "$CODE" -ne 0
+run barra --tamanho enorme
+check "tamanho desconhecido é recusado" test "$CODE" -ne 0
+FAKE_BUSCTL_RC=1 run barra mac
+check "sem área de trabalho avisa e não guarda" bash -c "grep -qF 'Não consegui falar' <<<\"\$0\" && grep -qF 'estilo=fusao' '$WORK/state/barra'" "$OUT"
 
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"

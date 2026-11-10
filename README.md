@@ -26,6 +26,7 @@ Para jogar, programar, estudar cibersegurança e usar no dia a dia.
 | `kaelix drivers` | `kaelix drivers` | Mostra a placa de vídeo e confere o driver |
 | `kaelix seguranca` | `kaelix security` | Abre o contêiner do Kali |
 | `kaelix navegador` | `kaelix browser` | Instala o Chrome, o Brave ou os dois |
+| `kaelix barra` | `kaelix bar` | Troca o estilo da barra (fusão, mac ou windows) e o tamanho |
 | `kaelix versao` | `kaelix version` | Mostra a versão |
 | `kaelix ajuda` | `kaelix help` | Ajuda |
 

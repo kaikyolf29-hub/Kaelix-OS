@@ -109,5 +109,25 @@ hmp key alt-f4
 sleep 3
 shot "11-tema-claro-area-de-trabalho"
 
+# Estilos da barra (personalização): windows, mac, fusão grande e de volta ao padrão.
+hmp key ctrl-alt-t
+sleep 8
+hmp type "kaelix barra windows"
+hmp key ret
+sleep 10
+shot "12-barra-estilo-windows"
+hmp type "kaelix barra mac"
+hmp key ret
+sleep 10
+shot "13-barra-estilo-mac"
+hmp type "kaelix barra fusao --tamanho grande"
+hmp key ret
+sleep 10
+shot "14-barra-fusao-grande"
+hmp type "kaelix barra fusao --tamanho media"
+hmp key ret
+sleep 10
+shot "15-barra-de-volta-ao-padrao"
+
 echo "Prints em $OUT"
 ls -l "$OUT"
