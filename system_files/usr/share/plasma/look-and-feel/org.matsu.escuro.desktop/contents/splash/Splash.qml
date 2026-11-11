@@ -1,5 +1,5 @@
 // Matsu OS: tela que aparece depois da senha, enquanto a área de trabalho carrega.
-// Fundo quase preto do logo, o pinheiro no meio e três pontos pulsando.
+// Fundo quase preto, o logo (o bonsai rosa no ensō) no meio e três pontos pulsando.
 import QtQuick
 
 Rectangle {

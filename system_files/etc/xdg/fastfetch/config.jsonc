@@ -1,12 +1,14 @@
-// Matsu OS: o fastfetch com o pinheiro do Matsu (em pixel art, como o papel de
-// parede) e os nomes em português. Quem quiser outro jeito cria o seu em
+// Matsu OS: o fastfetch com o logo do Matsu (o bonsai no ensō, em letras de
+// bloco feitas por visual/logo/gerar.py) e os nomes em português. Quem quiser outro jeito cria o seu em
 // ~/.config/fastfetch/config.jsonc.
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
     "type": "file",
     "source": "/usr/share/matsu/fastfetch/logo.txt",
-    "color": { "1": "97" },
+    // Rosa do logo: $1 o anel, $2 as folhas, $3 o tronco. Tons do meio, que
+    // aparecem bem no terminal escuro e no claro.
+    "color": { "1": "38;2;222;132;178", "2": "38;2;244;164;206", "3": "38;2;196;124;162" },
     "padding": { "top": 1, "left": 1, "right": 3 }
   },
   "display": {
@@ -19,7 +21,7 @@
     "separator",
     { "type": "os", "key": "Sistema", "format": "{pretty-name}" },
     // Só o nome do modelo (a versão costuma vir com texto de fábrica), e no máximo
-    // 36 letras com "…" no fim, para caber ao lado do pinheiro sem quebrar a linha.
+    // 36 letras com "…" no fim, para caber ao lado do logo sem quebrar a linha.
     { "type": "host", "key": "Computador", "format": "{name:-36}" },
     { "type": "kernel", "key": "Kernel" },
     { "type": "uptime", "key": "Ligado há" },

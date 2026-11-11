@@ -1,7 +1,8 @@
 # Matsu 27 OS
 
 Sistema operacional gratuito e público, feito em cima do Fedora Atomic com KDE Plasma.
-O nome vem do pinheiro japonês (matsu, 松), que é o logo. Uma edição por ano: só o número
+O nome vem do pinheiro japonês (matsu, 松); o logo é um bonsai rosa dentro do ensō, o
+círculo de pincel zen. Uma edição por ano: só o número
 muda (27 = edição 2027), e ele fica no arquivo [`EDICAO`](EDICAO). Até 11/11/2026 o
 sistema se chamava Kaelix OS.
 Para jogar, programar, estudar cibersegurança e usar no dia a dia.

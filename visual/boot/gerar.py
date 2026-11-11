@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tela de boot do Matsu (tema do Plymouth "matsu").
 
-É a mesma cara da tela que aparece depois da senha: o fundo quase preto do
-logo, o pinheiro no meio, o nome "Matsu 27 OS" embaixo e três pontos pulsando
+É a mesma cara da tela que aparece depois da senha: o fundo quase preto, o
+logo (o bonsai rosa no ensō) no meio, o nome "Matsu 27 OS" embaixo e três pontos pulsando
 (rosa, lilás e verde água). Assim, ligar o PC, entrar e carregar parecem uma
 coisa só. O número da edição vem do arquivo EDICAO, na raiz do repositório.
 
@@ -201,8 +201,8 @@ def tema():
     return f"""[Plymouth Theme]
 Name=Matsu
 Name[pt_BR]=Matsu
-Description={NOME} boot screen: the Japanese pine on near black with three pulsing dots.
-Description[pt_BR]=Tela de boot do {NOME}: o pinheiro japonês no fundo quase preto, com três pontos pulsando.
+Description={NOME} boot screen: the pink bonsai logo on near black with three pulsing dots.
+Description[pt_BR]=Tela de boot do {NOME}: o bonsai rosa do logo no fundo quase preto, com três pontos pulsando.
 ModuleName=two-step
 
 [two-step]

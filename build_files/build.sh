@@ -127,7 +127,7 @@ grep -q '^VARIANT_ID=' /usr/lib/os-release || echo 'VARIANT_ID=matsu' >> /usr/li
 grep -q '^VARIANT=' /usr/lib/os-release || echo "VARIANT=\"Edição ${ANO}\"" >> /usr/lib/os-release
 # Sem /etc/hostname, o computador se chama "matsu" (antes aparecia "fedora").
 echo 'DEFAULT_HOSTNAME=matsu' >> /usr/lib/os-release
-# Logo do Matsu (o pinheiro) como logo do sistema, por exemplo em "Sobre este sistema".
+# Logo do Matsu (o bonsai no ensō) como logo do sistema, por exemplo em "Sobre este sistema".
 if grep -q '^LOGO=' /usr/lib/os-release; then
   sed -i 's/^LOGO=.*/LOGO=matsu-logo/' /usr/lib/os-release
 else
@@ -360,7 +360,7 @@ kwriteconfig6 --file /etc/xdg/kwinrc --group Plugins --key matsu-telasEnabled tr
 
 # ---------------------------------------------------------------------------
 log "Tela de boot do Matsu"
-# Tema próprio do Plymouth (visual/boot/gerar.py): o pinheiro do Matsu no fundo
+# Tema próprio do Plymouth (visual/boot/gerar.py): o logo do Matsu no fundo
 # quase preto com três pontos pulsando, igual à tela que aparece depois da senha.
 # Os ícones do teclado e do Caps Lock da senha do disco vêm do tema do Fedora.
 for f in keyboard.png keymap-render.png capslock.png; do

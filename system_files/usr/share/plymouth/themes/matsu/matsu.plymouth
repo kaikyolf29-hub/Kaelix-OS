@@ -1,8 +1,8 @@
 [Plymouth Theme]
 Name=Matsu
 Name[pt_BR]=Matsu
-Description=Matsu 27 OS boot screen: the Japanese pine on near black with three pulsing dots.
-Description[pt_BR]=Tela de boot do Matsu 27 OS: o pinheiro japonês no fundo quase preto, com três pontos pulsando.
+Description=Matsu 27 OS boot screen: the pink bonsai logo on near black with three pulsing dots.
+Description[pt_BR]=Tela de boot do Matsu 27 OS: o bonsai rosa do logo no fundo quase preto, com três pontos pulsando.
 ModuleName=two-step
 
 [two-step]
