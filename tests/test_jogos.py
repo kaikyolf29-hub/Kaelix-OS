@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testes do ajudante da Central de jogos (system_files/usr/share/kaelix/jogos/ajudante.py).
+"""Testes do ajudante da Central de jogos (system_files/usr/share/matsu/jogos/ajudante.py).
 
 Monta uma Steam de mentira (bibliotecas, jogos, horas jogadas e capas nos dois
 jeitos de pasta da Steam) e um /proc de mentira com um jogo aberto.
@@ -15,7 +15,7 @@ from pathlib import Path
 from unittest import mock
 
 RAIZ = Path(__file__).resolve().parents[1]
-AJUDANTE = RAIZ / "system_files/usr/share/kaelix/jogos/ajudante.py"
+AJUDANTE = RAIZ / "system_files/usr/share/matsu/jogos/ajudante.py"
 
 
 def carregar(env):
@@ -159,13 +159,13 @@ class Mundo:
             "HOME": str(self.raiz / "casa"),
             "XDG_CONFIG_HOME": str(self.raiz / "casa/.config"),
             "XDG_CACHE_HOME": str(self.raiz / "casa/.cache"),
-            "KAELIX_STEAM": f"{self.steam}",
-            "KAELIX_PROC": str(self.proc),
-            "KAELIX_SYS": str(self.sys),
-            "KAELIX_UID": str(self.uid),
-            "KAELIX_JOGOS_ESTADO": str(self.raiz / "estado"),
-            "KAELIX_FONTE_HUD": "/fontes/Inter-SemiBold.otf",
-            "KAELIX_LANG": "pt_BR.UTF-8",
+            "MATSU_STEAM": f"{self.steam}",
+            "MATSU_PROC": str(self.proc),
+            "MATSU_SYS": str(self.sys),
+            "MATSU_UID": str(self.uid),
+            "MATSU_JOGOS_ESTADO": str(self.raiz / "estado"),
+            "MATSU_FONTE_HUD": "/fontes/Inter-SemiBold.otf",
+            "MATSU_LANG": "pt_BR.UTF-8",
         }
 
 
@@ -210,7 +210,7 @@ class Steam(Base):
         self.assertNotIn("capa", stardew)
 
     def test_sem_steam(self):
-        with mock.patch.dict(os.environ, {"KAELIX_STEAM": str(self.mundo.raiz / "nada")}):
+        with mock.patch.dict(os.environ, {"MATSU_STEAM": str(self.mundo.raiz / "nada")}):
             with mock.patch.object(self.a.shutil, "which", return_value=None):
                 self.assertEqual(self.a.biblioteca(), {"steam": False, "jogos": []})
 
@@ -254,7 +254,7 @@ class Sobreposicao(Base):
                          "font_file=/fontes/Inter-SemiBold.otf", "toggle_hud=Shift_R+F12"):
             self.assertIn(esperado, linhas)
         self.assertNotIn("ram", linhas)
-        self.assertTrue(any(l.startswith("blacklist=") and "kaelix-janela" in l for l in linhas))
+        self.assertTrue(any(l.startswith("blacklist=") and "matsu-janela" in l for l in linhas))
         # Ordem do jogo: FPS antes de GPU, GPU antes de CPU.
         self.assertLess(linhas.index("fps"), linhas.index("gpu_stats"))
         self.assertLess(linhas.index("gpu_stats"), linhas.index("cpu_stats"))

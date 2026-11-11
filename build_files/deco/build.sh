@@ -1,9 +1,9 @@
 #!/usr/bin/bash
-# Kaelix OS — compila os botões de janela do Kaelix.
+# Matsu OS — compila os botões de janela do Matsu.
 #
 # A moldura das janelas é a do Breeze (KDE). Aqui baixamos o código dela, na
 # mesma versão que está na imagem, colocamos o desenho dos nossos botões
-# (kaelix-botoes.inc) e compilamos só essa peça. O resultado fica em /out e a
+# (matsu-botoes.inc) e compilamos só essa peça. O resultado fica em /out e a
 # etapa final da imagem copia para o lugar.
 set -euo pipefail
 
@@ -34,7 +34,7 @@ log "Baixando o código do Breeze $versao"
 git clone --depth 1 --branch "v${versao}" https://invent.kde.org/plasma/breeze.git /tmp/breeze \
   || git clone --depth 1 --branch "v${versao}" https://github.com/KDE/breeze.git /tmp/breeze
 
-log "Colocando os botões do Kaelix"
+log "Colocando os botões do Matsu"
 alvo=/tmp/breeze/kdecoration/breezebutton.cpp
 # O desenho entra logo depois desta linha da função que pinta o botão. Se o
 # Breeze mudar e a linha sumir, a montagem para aqui para a gente perceber.
@@ -42,8 +42,8 @@ if [[ "$(grep -c '^    painter->translate(1, 1);$' "$alvo")" -ne 1 ]]; then
   echo "ERRO: o código do Breeze mudou; revise build_files/deco." >&2
   exit 1
 fi
-sed -i '/^    painter->translate(1, 1);$/r '"${HERE}/kaelix-botoes.inc" "$alvo"
-grep -q 'Kaelix OS: botões de janela' "$alvo"
+sed -i '/^    painter->translate(1, 1);$/r '"${HERE}/matsu-botoes.inc" "$alvo"
+grep -q 'Matsu OS: botões de janela' "$alvo"
 # A animação dos símbolos (aparecem com o mouse em cima) usa estas peças do Qt.
 sed -i -e '1i #include <QEasingCurve>' -e '1i #include <QPolygonF>' -e '1i #include <QTimer>' "$alvo"
 
@@ -57,12 +57,12 @@ pronto="$(find /tmp/breeze-build -name 'org.kde.breeze.so' | head -n1)"
 [[ -n $pronto ]]
 install -Dm0755 "$pronto" /out/org.kde.breeze.so
 echo "$destino" > /out/destino
-log "Botões do Kaelix compilados: $(stat -c %s /out/org.kde.breeze.so) bytes"
+log "Botões do Matsu compilados: $(stat -c %s /out/org.kde.breeze.so) bytes"
 
-# Janela dos apps do Kaelix feitos em QML (ver janela/main.cpp).
-log "Compilando a kaelix-janela"
+# Janela dos apps do Matsu feitos em QML (ver janela/main.cpp).
+log "Compilando a matsu-janela"
 dnf5 -y install qt6-qtbase-devel qt6-qtdeclarative-devel kf6-kwindowsystem-devel
-cmake -S "${HERE}/janela" -B /tmp/janela-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DKAELIX_EXIGIR_KWS=ON
+cmake -S "${HERE}/janela" -B /tmp/janela-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DMATSU_EXIGIR_KWS=ON
 cmake --build /tmp/janela-build
-install -Dm0755 /tmp/janela-build/kaelix-janela /out/kaelix-janela
-log "kaelix-janela compilada: $(stat -c %s /out/kaelix-janela) bytes"
+install -Dm0755 /tmp/janela-build/matsu-janela /out/matsu-janela
+log "matsu-janela compilada: $(stat -c %s /out/matsu-janela) bytes"

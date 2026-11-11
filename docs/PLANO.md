@@ -1,10 +1,12 @@
-# Plano do Kaelix OS
+# Plano do Matsu OS
+
+> **11/11/2026:** o sistema mudou de nome. O Kaelix OS agora é o **Matsu 27 OS** (logo do pinheiro japonês). Os registros antigos abaixo já aparecem com o nome novo.
 
 Escrito em 09/11/2026. Este plano é de um **projeto separado do Valkode**. Ele vai morar num **repositório novo, público e gratuito**, numa outra conta do GitHub do criador. Foi escrito para ser entendido do zero, por qualquer conta ou IA.
 
-**Para a IA que receber este arquivo:** leia tudo antes de começar. Crie o repositório `kaelix-os` e salve este plano nele como `docs/PLANO.md`. Comece pela Etapa 1 da seção 5, seguindo a seção 6 (completar o que o criador não lembrou) e a seção 7 (regras). Fale com o criador em português do Brasil, de forma simples.
+**Para a IA que receber este arquivo:** leia tudo antes de começar. Crie o repositório `matsu-os` e salve este plano nele como `docs/PLANO.md`. Comece pela Etapa 1 da seção 5, seguindo a seção 6 (completar o que o criador não lembrou) e a seção 7 (regras). Fale com o criador em português do Brasil, de forma simples.
 
-Nome escolhido pelo criador em 09/11/2026: **Kaelix OS** (ele já usou esse nome num canal dele). Nos comandos e arquivos técnicos ele aparece em minúsculas: `kaelix`. Falta conferir a marca no INPI (ver a seção 4).
+Nome escolhido pelo criador em 09/11/2026: **Matsu OS** (ele já usou esse nome num canal dele). Nos comandos e arquivos técnicos ele aparece em minúsculas: `matsu`. Falta conferir a marca no INPI (ver a seção 4).
 
 ## 1. O que é
 
@@ -36,7 +38,7 @@ Um sistema operacional **do criador**, construído em cima de uma base Linux que
 
 ### Base: Fedora Atomic (imagem própria com bootc)
 
-O sistema é descrito num arquivo (`Containerfile`) dentro do repositório. A cada mudança, o GitHub monta sozinho a imagem do sistema inteiro, assina e publica no registro do próprio GitHub (`ghcr.io/<usuario>/kaelix-os`). As máquinas de quem usa se atualizam a partir **dessa imagem**.
+O sistema é descrito num arquivo (`Containerfile`) dentro do repositório. A cada mudança, o GitHub monta sozinho a imagem do sistema inteiro, assina e publica no registro do próprio GitHub (`ghcr.io/<usuario>/matsu-os`). As máquinas de quem usa se atualizam a partir **dessa imagem**.
 
 Por que essa base:
 
@@ -66,23 +68,23 @@ Os programas criados pelo criador (central de configurações, monitor de desemp
 
 | Parte | Inspiração | Como fica |
 |---|---|---|
-| Barra de cima | Mac | **Barra fina no topo, no estilo da barra de menus do Mac**, de vidro. À esquerda, a logo do Kaelix e o nome do app aberto. À direita, Wi-Fi, Bluetooth, som, bateria, data e hora, e o botão da **central de controle**, um painel de vidro com Wi-Fi, som, brilho, modo escuro, perfis de energia e "não perturbe" |
+| Barra de cima | Mac | **Barra fina no topo, no estilo da barra de menus do Mac**, de vidro. À esquerda, a logo do Matsu e o nome do app aberto. À direita, Wi-Fi, Bluetooth, som, bateria, data e hora, e o botão da **central de controle**, um painel de vidro com Wi-Fi, som, brilho, modo escuro, perfis de energia e "não perturbe" |
 | Barra de baixo (apps) | Mac | **Dock no estilo do Mac**: flutuante e de vidro, com os apps no centro, ícones que crescem ao passar o mouse e um ponto embaixo dos apps abertos. No começo do Dock fica o botão que abre a lista de todos os apps |
-| Botões da janela | Mac | Três botões redondos no canto (fechar, minimizar e tela cheia), no estilo dos "semáforos" do Mac, mas com **cores próprias do Kaelix**, não o vermelho, o amarelo e o verde da Apple. O símbolo aparece ao passar o mouse |
+| Botões da janela | Mac | Três botões redondos no canto (fechar, minimizar e tela cheia), no estilo dos "semáforos" do Mac, mas com **cores próprias do Matsu**, não o vermelho, o amarelo e o verde da Apple. O símbolo aparece ao passar o mouse |
 | Vidro (transparência) | Mac | Barra de cima, Dock, menus, central de controle e central de configurações com efeito de **vidro fosco**: translúcido, desfocando o que está atrás, com um tom cinza e uma borda de luz suave, como nos Macs mais novos |
 | Pastas e arquivos | Windows | Gerenciador de arquivos com painel lateral (Este computador, Downloads, Documentos, discos), abas e caminho no topo |
 | Configurações | Mac | Central de configurações própria: lista à esquerda com ícones, conteúdo limpo à direita e busca no topo |
 | Desempenho (CPU, RAM, placa de vídeo, disco, rede) | Windows | **Gerenciador de tarefas próprio**, organizado como o do Windows: a aba Desempenho com uma lista à esquerda (processador, memória, placa de vídeo, discos, rede) e, à direita, o gráfico grande da peça escolhida, com nome, uso, temperatura e velocidade. Abas de processos e de apps que iniciam com o sistema. Abre com Ctrl+Shift+Esc |
-| Terminal | Próprio | **Terminal do Kaelix**: app próprio, bonito, de vidro, com abas, divisão de tela, temas claro e escuro e a fonte e as cores do Kaelix. O comando `kaelix` aparece ali com ajuda clara. No estilo dos terminais modernos, sem cara de sistema antigo |
+| Terminal | Próprio | **Terminal do Matsu**: app próprio, bonito, de vidro, com abas, divisão de tela, temas claro e escuro e a fonte e as cores do Matsu. O comando `matsu` aparece ali com ajuda clara. No estilo dos terminais modernos, sem cara de sistema antigo |
 | Apps abrindo e fechando | Mac | Animação suave que sai do ícone na barra e volta para ele ao minimizar, com cantos arredondados |
 | Janelas | Mistura | Cantos arredondados, sombra leve e barra de título integrada |
 | Fundo e cores | Do criador | Tema claro e escuro, **nunca preto puro** (o monitor do criador escurece demais o preto) |
 
 ### Acabamento premium (nível de sistema vendido)
 
-O Kaelix é gratuito, mas precisa **parecer um sistema pago**, bonito e polido em cada detalhe:
+O Matsu é gratuito, mas precisa **parecer um sistema pago**, bonito e polido em cada detalhe:
 
-- **Do ligar ao desligar, tudo com a cara do Kaelix:** tela de boot animada, tela de login de vidro com o fundo do sistema, tela de bloqueio e tela de desligar.
+- **Do ligar ao desligar, tudo com a cara do Matsu:** tela de boot animada, tela de login de vidro com o fundo do sistema, tela de bloqueio e tela de desligar.
 - **Uma fonte só**, moderna e bem legível, em todo o sistema, e ícones de um mesmo estilo (sem misturar ícones de pacotes diferentes).
 - **Animações suaves**, sem travar, mesmo na RX 580 do criador. Se o vidro pesar numa placa fraca, ele fica mais simples sozinho.
 - **Sons próprios**, discretos: ligar, notificação e erro.
@@ -94,21 +96,21 @@ O Kaelix é gratuito, mas precisa **parecer um sistema pago**, bonito e polido e
 
 - **O sistema inteiro funciona nos dois idiomas**, português do Brasil e inglês, escolhidos no primeiro boot e trocados na central de configurações: telas, apps próprios, instalador, site e notas de versão.
 - **No terminal, os comandos de programação continuam em inglês**, como no mundo todo (`git`, `python`, `npm`, `ls`, `cd`). Não traduzir nada disso: é o que o criador vai estudar, e o que ele aprender vale em qualquer computador.
-- **Os comandos do Kaelix aceitam os dois idiomas:**
+- **Os comandos do Matsu aceitam os dois idiomas:**
 
 | Português | Inglês |
 |---|---|
-| `kaelix atualizar` | `kaelix update` |
-| `kaelix voltar` | `kaelix rollback` |
-| `kaelix drivers` | `kaelix drivers` |
-| `kaelix seguranca` | `kaelix security` |
-| `kaelix ajuda` | `kaelix help` |
+| `matsu atualizar` | `matsu update` |
+| `matsu voltar` | `matsu rollback` |
+| `matsu drivers` | `matsu drivers` |
+| `matsu seguranca` | `matsu security` |
+| `matsu ajuda` | `matsu help` |
 
 ### Terminal opcional, mas ótimo para estudar
 
-- **Tudo o que uma pessoa comum precisa dá para fazer sem terminal:** instalar apps pela loja, atualizar, drivers, configurações, Wi-Fi e jogos. Quem nunca abrir o terminal usa o Kaelix normalmente.
-- **Para quem quer aprender (o caso do criador)**, o terminal do Kaelix ajuda a estudar:
-  - `kaelix explica <comando>` mostra, em português ou inglês, o que o comando faz, com exemplos simples (por exemplo, `kaelix explica git commit`);
+- **Tudo o que uma pessoa comum precisa dá para fazer sem terminal:** instalar apps pela loja, atualizar, drivers, configurações, Wi-Fi e jogos. Quem nunca abrir o terminal usa o Matsu normalmente.
+- **Para quem quer aprender (o caso do criador)**, o terminal do Matsu ajuda a estudar:
+  - `matsu explica <comando>` mostra, em português ou inglês, o que o comando faz, com exemplos simples (por exemplo, `matsu explica git commit`);
   - um **modo aprendiz** opcional que, quando liga, mostra embaixo do comando digitado uma linha curta explicando o que aconteceu;
   - **trilhas de estudo** prontas, acessadas pelo terminal: básico do terminal, Git e GitHub, Python e segurança (no contêiner do Kali);
   - autocompletar e sugestão de comandos enquanto digita;
@@ -127,7 +129,7 @@ O Kaelix é gratuito, mas precisa **parecer um sistema pago**, bonito e polido e
   - Git, Python, Node e compiladores;
   - VS Code (ou uma versão aberta dele);
   - **Distrobox**, para criar ambientes de outras distros sem sujar o sistema.
-- **Cibersegurança:** um **contêiner do Kali pronto via Distrobox**, criado pelo comando `kaelix seguranca`. As ferramentas do Kali rodam dentro dele, e o sistema principal continua limpo e estável.
+- **Cibersegurança:** um **contêiner do Kali pronto via Distrobox**, criado pelo comando `matsu seguranca`. As ferramentas do Kali rodam dentro dele, e o sistema principal continua limpo e estável.
 - **Vídeo:** Kdenlive e OBS Studio, instalados como estão, sem misturar o código deles em nada.
 - **Loja de apps:** Flathub ativado, para instalar programas com um clique.
 
@@ -143,7 +145,7 @@ O assistente do primeiro boot explica isso e oferece o jeito legítimo: **jogar 
 
 - **AMD e Intel:** já vêm no sistema.
 - **NVIDIA:** a imagem tem uma variante com o driver oficial já incluído. A pessoa escolhe a imagem certa no download, e o atualizador troca de variante se ela mudar de placa.
-- **Comando** `kaelix drivers`: verifica e instala o que falta. Também aparece na central de configurações.
+- **Comando** `matsu drivers`: verifica e instala o que falta. Também aparece na central de configurações.
 - **Não hospedar driver baixado de site nenhum.** O que entra vem dos repositórios oficiais e passa pela imagem assinada.
 
 ### Atualizações e canais
@@ -151,8 +153,8 @@ O assistente do primeiro boot explica isso e oferece o jeito legítimo: **jogar 
 - `estavel`: o que quem usa recebe. Só sai depois de testado.
 - `teste`: o criador e quem quiser ajudar testam antes.
 - Cada versão estável vira um **Release no GitHub**, com notas e a imagem de instalação (ISO) para baixar.
-- Para atualizar: o comando `kaelix atualizar` ou o botão na central de configurações.
-- Se der problema: `kaelix voltar` (ou o menu de boot) volta à versão anterior.
+- Para atualizar: o comando `matsu atualizar` ou o botão na central de configurações.
+- Se der problema: `matsu voltar` (ou o menu de boot) volta à versão anterior.
 
 ## 3. Como o criador vai testar
 
@@ -166,7 +168,7 @@ O PC do criador tem uma RX 580 (AMD, com driver já incluído). A variante NVIDI
 
 ## 4. O nome
 
-**Escolhido: Kaelix OS.**
+**Escolhido: Matsu OS.**
 
 "Cobalt OS" foi descartado em 09/11/2026, porque já existem:
 
@@ -178,7 +180,7 @@ O nome também vai ser o da **empresa do criador**, então precisa estar livre c
 
 | Nome | Ideia | Observação |
 |---|---|---|
-| **Kaelix OS** ✔ escolhido | Som forte, parecido com o de Valkode; o criador já usou num canal | Existem empresas "Kalix" e "Kelix" (nomes parecidos, outras áreas) |
+| **Matsu OS** ✔ escolhido | Som forte, parecido com o de Valkode; o criador já usou num canal | Existem empresas "Kalix" e "Kelix" (nomes parecidos, outras áreas) |
 | Nyxar OS | Nyx, a deusa da noite: escuro, hacker | Existe uma empresa espacial chamada "Nyxara" |
 | Zyrkon OS | Zircão, um mineral | Nada encontrado com essa grafia |
 | ~~Korvex OS~~ | | Descartado: soa igual a **Corvex**, empresa de nuvem listada na bolsa americana |
@@ -193,10 +195,10 @@ Antes de divulgar o nome:
 Onde o nome aparece:
 
 - tela de boot, instalador, "Sobre este computador" e página do projeto;
-- arquivo de instalação (ISO): `kaelix-os-1.0-amd.iso` e `kaelix-os-1.0-nvidia.iso`;
-- imagem de atualização: `ghcr.io/<usuario>/kaelix-os`;
-- comando do terminal: `kaelix` (por exemplo, `kaelix atualizar`);
-- repositório: `kaelix-os`.
+- arquivo de instalação (ISO): `matsu-os-1.0-amd.iso` e `matsu-os-1.0-nvidia.iso`;
+- imagem de atualização: `ghcr.io/<usuario>/matsu-os`;
+- comando do terminal: `matsu` (por exemplo, `matsu atualizar`);
+- repositório: `matsu-os`.
 
 A logo só entra depois de aprovada pelo criador.
 
@@ -206,7 +208,7 @@ Cada etapa termina em algo que funciona e vira episódios no canal do criador.
 
 ### Etapa 1: Fundação (o sistema já é dele)
 
-- Criar o repositório público `kaelix-os`, com licença aberta (GPL-3.0 ou MIT nos arquivos próprios).
+- Criar o repositório público `matsu-os`, com licença aberta (GPL-3.0 ou MIT nos arquivos próprios).
 - Escrever o `Containerfile` em cima do Fedora Atomic KDE, com:
   - Steam, Heroic, Lutris, GameMode e MangoHud;
   - Flathub;
@@ -214,7 +216,7 @@ Cada etapa termina em algo que funciona e vira episódios no canal do criador.
   - as ferramentas de programação, o Distrobox e o comando do contêiner Kali.
 - Configurar o GitHub Actions para montar a imagem, **assinar com cosign** e publicar em `ghcr.io`, montando também a variante NVIDIA.
 - Gerar a ISO de instalação e publicar como Release.
-- Criar os comandos `kaelix atualizar`, `kaelix voltar`, `kaelix drivers` e `kaelix seguranca`.
+- Criar os comandos `matsu atualizar`, `matsu voltar`, `matsu drivers` e `matsu seguranca`.
 - Testar na máquina virtual e depois no SSD, em dual boot.
 - **Pronto quando:** o criador instala a partir da ISO dele, joga um jogo da Steam e recebe uma atualização assinada vinda do GitHub dele.
 
@@ -223,7 +225,7 @@ Cada etapa termina em algo que funciona e vira episódios no canal do criador.
 - Tema próprio do KDE (claro e escuro, nunca preto puro), com:
   - a barra de cima no estilo do Mac (Wi-Fi, som, bateria, hora e central de controle);
   - o Dock embaixo com os apps, de vidro;
-  - os botões da janela redondos, com cores próprias do Kaelix;
+  - os botões da janela redondos, com cores próprias do Matsu;
   - efeito de vidro fosco nos painéis e menus;
   - animações no estilo do Mac;
   - cantos arredondados;
@@ -231,14 +233,14 @@ Cada etapa termina em algo que funciona e vira episódios no canal do criador.
 - Gerenciador de arquivos configurado no estilo das pastas do Windows.
 - **Central de configurações própria** (estilo Mac), como pacote RPM do repositório dele.
 - **Gerenciador de tarefas próprio** (organização do Windows): CPU, RAM, placa de vídeo, disco e rede.
-- **Terminal do Kaelix**, como app próprio.
+- **Terminal do Matsu**, como app próprio.
 - **Assistente do primeiro boot**, que pergunta ou mostra:
   - o idioma;
   - o navegador;
   - a variante de driver;
   - o aviso sobre jogos com antitrapaça e o atalho para jogos pela nuvem;
   - se a pessoa quer as ferramentas de segurança.
-- Logo do Kaelix OS desenhada e aprovada pelo criador.
+- Logo do Matsu OS desenhada e aprovada pelo criador.
 - Antes de começar esta etapa, **mostrar ao criador uma demonstração em vídeo do visual**, fora do sistema, para ele aprovar.
 - **Pronto quando:** o sistema é reconhecível como dele à primeira vista e tudo do primeiro boot funciona.
 

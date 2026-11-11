@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testes do ajudante do Gerenciador de tarefas (system_files/usr/share/kaelix/tarefas/ajudante.py).
+"""Testes do ajudante do Gerenciador de tarefas (system_files/usr/share/matsu/tarefas/ajudante.py).
 
 Usa um /proc e um /sys de mentira, montados numa pasta temporária, e no fim
 uma leitura de verdade do computador onde o teste roda.
@@ -17,7 +17,7 @@ import unittest
 from unittest import mock
 from pathlib import Path
 
-AJUDANTE = Path(__file__).resolve().parents[1] / "system_files/usr/share/kaelix/tarefas/ajudante.py"
+AJUDANTE = Path(__file__).resolve().parents[1] / "system_files/usr/share/matsu/tarefas/ajudante.py"
 
 
 def carregar(env):
@@ -139,9 +139,9 @@ class MundoFalso:
                  f"cpu1 {self.ticks_total // 4} 0 0 {self.ticks_total // 4} 0 0 0 0 0 0\nprocs_running 1\n")
 
     def env(self):
-        return {"KAELIX_PROC": str(self.proc), "KAELIX_SYS": str(self.sys), "KAELIX_PCI_IDS": str(self.raiz / "pci.ids"),
-                "KAELIX_UID": str(os.getuid()), "XDG_DATA_HOME": str(self.dados), "XDG_DATA_DIRS": str(self.dados),
-                "KAELIX_LANG": "pt_BR.UTF-8", "HOME": str(self.raiz / "casa")}
+        return {"MATSU_PROC": str(self.proc), "MATSU_SYS": str(self.sys), "MATSU_PCI_IDS": str(self.raiz / "pci.ids"),
+                "MATSU_UID": str(os.getuid()), "XDG_DATA_HOME": str(self.dados), "XDG_DATA_DIRS": str(self.dados),
+                "MATSU_LANG": "pt_BR.UTF-8", "HOME": str(self.raiz / "casa")}
 
 
 class Nomes(unittest.TestCase):
@@ -275,7 +275,7 @@ class Inicializacao(unittest.TestCase):
             escrever(sistema / "xembed.desktop", "[Desktop Entry]\nType=Application\nName=Peça\nX-KDE-autostart-phase=1\n")
             escrever(sistema / "gnome-only.desktop", "[Desktop Entry]\nType=Application\nName=G\nOnlyShowIn=GNOME;\n")
             escrever(usuario / "steam.desktop", "[Desktop Entry]\nType=Application\nName=Steam\nIcon=steam\n")
-            env = {"XDG_CONFIG_DIRS": str(raiz / "etc"), "XDG_CONFIG_HOME": str(raiz / "config"), "KAELIX_LANG": "pt_BR"}
+            env = {"XDG_CONFIG_DIRS": str(raiz / "etc"), "XDG_CONFIG_HOME": str(raiz / "config"), "MATSU_LANG": "pt_BR"}
             a = carregar(env)
             os.environ.update(env)
             try:

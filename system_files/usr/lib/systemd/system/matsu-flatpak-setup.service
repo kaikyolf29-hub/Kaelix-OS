@@ -1,0 +1,15 @@
+[Unit]
+Description=Matsu OS: Flathub e apps que já vêm com o sistema
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/matsu/matsu-flatpak-setup
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

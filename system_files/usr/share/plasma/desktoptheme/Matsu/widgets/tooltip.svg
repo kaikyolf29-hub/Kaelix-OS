@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fundo das dicas do Matsu. Gerado por usr/share/matsu/vidro/gerar.py: não editar à mão. -->
+<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="180" viewBox="0 0 280 180">
+<defs>
+  <style type="text/css" id="current-color-scheme">
+    .ColorScheme-Text { color:#232629; stop-color:#232629; }
+    .ColorScheme-Background { color:#eff0f1; stop-color:#eff0f1; }
+  </style>
+  <linearGradient id="s-cima" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.026"/><stop offset="0.75" stop-color="#000" stop-opacity="0.088"/><stop offset="1" stop-color="#000" stop-opacity="0.22"/></linearGradient>
+  <linearGradient id="s-baixo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.026"/><stop offset="0.75" stop-color="#000" stop-opacity="0.088"/><stop offset="1" stop-color="#000" stop-opacity="0.22"/></linearGradient>
+  <linearGradient id="s-esq" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.026"/><stop offset="0.75" stop-color="#000" stop-opacity="0.088"/><stop offset="1" stop-color="#000" stop-opacity="0.22"/></linearGradient>
+  <linearGradient id="s-dir" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.45" stop-color="#000" stop-opacity="0.026"/><stop offset="0.75" stop-color="#000" stop-opacity="0.088"/><stop offset="1" stop-color="#000" stop-opacity="0.22"/></linearGradient>
+  <radialGradient id="s-tl" cx="1" cy="1" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.4444" stop-color="#000" stop-opacity="0"/><stop offset="0.4445" stop-color="#000" stop-opacity="0.22"/><stop offset="0.5833" stop-color="#000" stop-opacity="0.088"/><stop offset="0.75" stop-color="#000" stop-opacity="0.026"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="s-tr" cx="0" cy="1" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.4444" stop-color="#000" stop-opacity="0"/><stop offset="0.4445" stop-color="#000" stop-opacity="0.22"/><stop offset="0.5833" stop-color="#000" stop-opacity="0.088"/><stop offset="0.75" stop-color="#000" stop-opacity="0.026"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="s-bl" cx="1" cy="0" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.4444" stop-color="#000" stop-opacity="0"/><stop offset="0.4445" stop-color="#000" stop-opacity="0.22"/><stop offset="0.5833" stop-color="#000" stop-opacity="0.088"/><stop offset="0.75" stop-color="#000" stop-opacity="0.026"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="s-br" cx="0" cy="0" r="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.4444" stop-color="#000" stop-opacity="0"/><stop offset="0.4445" stop-color="#000" stop-opacity="0.22"/><stop offset="0.5833" stop-color="#000" stop-opacity="0.088"/><stop offset="0.75" stop-color="#000" stop-opacity="0.026"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+</defs>
+<g id="topleft" transform="translate(0,10)"><rect fill="#000000" opacity="0.001" width="8" height="8"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.97" d="M0,8 H8 V0 A8,8 0 0 0 0,8 Z"/><path fill="#ffffff" opacity="0.14" d="M0,8 A8,8 0 0 1 8,0 V1 A7,7 0 0 0 1,8 Z"/></g>
+<g id="topright" transform="translate(40,10)"><rect fill="#000000" opacity="0.001" width="8" height="8"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.97" d="M0,0 V8 H8 A8,8 0 0 0 0,0 Z"/><path fill="#ffffff" opacity="0.14" d="M0,0 A8,8 0 0 1 8,8 H7 A7,7 0 0 0 0,1 Z"/></g>
+<g id="bottomleft" transform="translate(0,50)"><rect fill="#000000" opacity="0.001" width="8" height="8"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.97" d="M0,0 H8 V8 A8,8 0 0 1 0,0 Z"/><path fill="#ffffff" opacity="0.14" d="M8,8 A8,8 0 0 1 0,0 H1 A7,7 0 0 0 8,7 Z"/></g>
+<g id="bottomright" transform="translate(40,50)"><rect fill="#000000" opacity="0.001" width="8" height="8"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.97" d="M0,0 H8 A8,8 0 0 1 0,8 Z"/><path fill="#ffffff" opacity="0.14" d="M8,0 A8,8 0 0 1 0,8 V7 A7,7 0 0 0 7,0 Z"/></g>
+<g id="top" transform="translate(8,10)"><rect class="ColorScheme-Background" fill="currentColor" opacity="0.97" width="32" height="8"/><rect fill="#ffffff" opacity="0.14" width="32" height="1"/></g>
+<g id="bottom" transform="translate(8,50)"><rect class="ColorScheme-Background" fill="currentColor" opacity="0.97" width="32" height="8"/><rect fill="#ffffff" opacity="0.14" y="7" width="32" height="1"/></g>
+<g id="left" transform="translate(0,18)"><rect class="ColorScheme-Background" fill="currentColor" opacity="0.97" width="8" height="32"/><rect fill="#ffffff" opacity="0.14" width="1" height="32"/></g>
+<g id="right" transform="translate(40,18)"><rect class="ColorScheme-Background" fill="currentColor" opacity="0.97" width="8" height="32"/><rect fill="#ffffff" opacity="0.14" x="7" width="1" height="32"/></g>
+<g id="center" transform="translate(8,18)"><rect class="ColorScheme-Background" fill="currentColor" opacity="0.97" width="32" height="32"/></g>
+<rect id="hint-tile-center" width="5" height="5" fill="#ff6600"/>
+<rect id="hint-top-margin" x="16" y="10" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-bottom-margin" x="16" y="54" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-left-margin" x="0" y="26" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-right-margin" x="44" y="26" width="4" height="4" fill="#ff00ff"/>
+<rect id="hint-top-inset" x="24" y="10" width="4" height="0.00000001" fill="#00ff00"/>
+<rect id="hint-bottom-inset" x="24" y="58" width="4" height="0.00000001" fill="#00ff00"/>
+<rect id="hint-left-inset" x="0" y="34" width="0.00000001" height="4" fill="#00ff00"/>
+<rect id="hint-right-inset" x="48" y="34" width="0.00000001" height="4" fill="#00ff00"/>
+<rect id="shadow-topleft" x="80" y="0" width="18" height="18" fill="url(#s-tl)"/>
+<rect id="shadow-topright" x="130" y="0" width="18" height="18" fill="url(#s-tr)"/>
+<rect id="shadow-bottomleft" x="80" y="50" width="18" height="18" fill="url(#s-bl)"/>
+<rect id="shadow-bottomright" x="130" y="50" width="18" height="18" fill="url(#s-br)"/>
+<g id="shadow-top"><rect x="98" y="0" width="32" height="10" fill="url(#s-cima)"/><rect fill="#000000" opacity="0.001" x="98" y="10" width="32" height="8"/></g>
+<g id="shadow-bottom"><rect fill="#000000" opacity="0.001" x="98" y="50" width="32" height="8"/><rect x="98" y="58" width="32" height="10" fill="url(#s-baixo)"/></g>
+<g id="shadow-left"><rect x="80" y="18" width="10" height="32" fill="url(#s-esq)"/><rect fill="#000000" opacity="0.001" x="90" y="18" width="8" height="32"/></g>
+<g id="shadow-right"><rect fill="#000000" opacity="0.001" x="130" y="18" width="8" height="32"/><rect x="138" y="18" width="10" height="32" fill="url(#s-dir)"/></g>
+<rect id="shadow-center" fill="#000000" opacity="0.001" x="98" y="18" width="32" height="32"/>
+<rect id="shadow-hint-top-margin" x="106" y="0" width="2" height="10" fill="#ff00ff"/>
+<rect id="shadow-hint-bottom-margin" x="106" y="58" width="2" height="10" fill="#ff00ff"/>
+<rect id="shadow-hint-left-margin" x="80" y="26" width="10" height="2" fill="#ff00ff"/>
+<rect id="shadow-hint-right-margin" x="138" y="26" width="10" height="2" fill="#ff00ff"/>
+<rect id="shadow-hint-top-inset" x="114" y="0" width="2" height="10" fill="#00ff00"/>
+<rect id="shadow-hint-bottom-inset" x="114" y="58" width="2" height="10" fill="#00ff00"/>
+<rect id="shadow-hint-left-inset" x="80" y="34" width="10" height="2" fill="#00ff00"/>
+<rect id="shadow-hint-right-inset" x="138" y="34" width="10" height="2" fill="#00ff00"/>
+<path id="mask-topleft" d="M200,18 H208 V10 A8,8 0 0 0 200,18 Z"/>
+<path id="mask-topright" d="M240,10 V18 H248 A8,8 0 0 0 240,10 Z"/>
+<path id="mask-bottomleft" d="M200,50 H208 V58 A8,8 0 0 1 200,50 Z"/>
+<path id="mask-bottomright" d="M240,50 H248 A8,8 0 0 1 240,58 Z"/>
+<rect id="mask-top" x="208" y="10" width="32" height="8"/>
+<rect id="mask-bottom" x="208" y="50" width="32" height="8"/>
+<rect id="mask-left" x="200" y="18" width="8" height="32"/>
+<rect id="mask-right" x="240" y="18" width="8" height="32"/>
+<rect id="mask-center" x="208" y="18" width="32" height="32"/>
+</svg>

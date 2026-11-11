@@ -1,0 +1,546 @@
+#!/usr/bin/bash
+# Matsu OS: estado e ações da central de controle da barra.
+#
+#   matsu-central estado [nao-perturbe]   mostra tudo (ou só uma parte) em linhas "chave=valor"
+#   matsu-central wifi on|off
+#   matsu-central bluetooth on|off
+#   matsu-central nao-perturbe on|off
+#   matsu-central tema escuro|claro
+#   matsu-central luz-noturna on|off
+#   matsu-central volume 0..100
+#   matsu-central mudo
+#   matsu-central brilho 1..100
+#   matsu-central perfil economia|equilibrado|desempenho
+#   matsu-central abrir rede|bluetooth|som|tela|luz-noturna|energia|notificacoes|sobre|ajustes|atualizar|configuracoes|barra
+#   matsu-central abrir kcm kcm_<nome>             (qualquer tela de ajustes do KDE)
+#   matsu-central bloquear | sair
+#
+# Usados pelos Ajustes do Matsu (a janela de ajustes, como a do Mac):
+#   matsu-central vidro <cor> mais|normal|menos     (chama "matsu vidro")
+#   matsu-central barra fusao|mac|windows pequena|media|grande [sim|nao]   (chama "matsu barra"; sim = esconder sozinha)
+#   matsu-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
+#   matsu-central papel <pasta ou imagem>|escolher|animado
+#   matsu-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
+#
+# A central só desenha: quem lê e muda o sistema é este arquivo, que tem teste.
+# Cada parte funciona sozinha: o que a máquina não tem (Wi-Fi, Bluetooth, tela
+# com brilho, bateria) sai como "_tem=0" e a central esconde.
+set -u
+# As respostas dos programas (nmcli, wpctl...) são lidas em inglês, então o
+# ajudante roda com LC_ALL=C. O idioma da pessoa fica guardado para os apps que
+# ele abre (Ajustes, telas do KDE) saírem em português.
+LC_ALL_PESSOA="${LC_ALL-}"
+export LC_ALL=C
+
+# Pastas do sistema, trocáveis nos testes.
+SYS_BACKLIGHT="${MATSU_SYS_BACKLIGHT:-/sys/class/backlight}"
+SYS_POWER="${MATSU_SYS_POWER:-/sys/class/power_supply}"
+SYS_BLUETOOTH="${MATSU_SYS_BLUETOOTH:-/sys/class/bluetooth}"
+# Onde o comando "matsu" guarda as escolhas da pessoa (estilo da barra, vidro).
+STATE_DIR="${MATSU_STATE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/matsu}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+MATSU_BIN="${MATSU_BIN:-matsu}"
+# Pastas dos papéis de parede: primeiro os da pessoa, depois os do sistema.
+WALL_DIRS="${MATSU_WALL_DIRS:-${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers:/usr/share/wallpapers}"
+# Papel de parede animado: o app Waywallen (Flatpak) e a peça dele no KDE.
+WAYWALLEN_ID=org.waywallen.waywallen
+FLATPAK_DIRS="${MATSU_FLATPAK_DIRS:-/var/lib/flatpak/app:${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/app}"
+PLASMA_WALL_DIRS="${MATSU_PLASMA_WALL_DIRS:-/usr/share/plasma/wallpapers:${XDG_DATA_HOME:-$HOME/.local/share}/plasma/wallpapers}"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+# Nenhum comando pode travar a central: dois segundos e segue.
+curto() { timeout 2 "$@" 2>/dev/null; }
+
+# ----------------------------------------------------------------- leitura
+estado_rede() {
+  local wifi_tem=0 wifi_ligado=0 wifi_nome="" wifi_sinal=0 cabo_tem=0 cabo_ligado=0 tipo est con uso sinal
+  if have nmcli; then
+    while IFS=: read -r tipo est con; do
+      case "$tipo" in
+        wifi)
+          wifi_tem=1
+          if [[ $est == connected* ]]; then wifi_nome="${con//\\:/:}"; fi ;;
+        ethernet)
+          cabo_tem=1
+          if [[ $est == connected* ]]; then cabo_ligado=1; fi ;;
+      esac
+    done < <(curto nmcli -t -f TYPE,STATE,CONNECTION device)
+    if [[ $wifi_tem == 1 && "$(curto nmcli radio wifi)" == enabled ]]; then wifi_ligado=1; fi
+    # Força do sinal da rede em uso (0 a 100), para o ícone mostrar os risquinhos.
+    if [[ -n $wifi_nome ]]; then
+      while IFS=: read -r uso sinal; do
+        if [[ $uso == "*" && $sinal =~ ^[0-9]+$ ]]; then wifi_sinal=$sinal; break; fi
+      done < <(curto nmcli -t -f IN-USE,SIGNAL device wifi list --rescan no)
+    fi
+  fi
+  echo "wifi_tem=$wifi_tem"
+  echo "wifi_ligado=$wifi_ligado"
+  echo "wifi_nome=$wifi_nome"
+  echo "wifi_sinal=$wifi_sinal"
+  echo "cabo_tem=$cabo_tem"
+  echo "cabo_ligado=$cabo_ligado"
+}
+
+adaptador_bluetooth() {
+  local d
+  for d in "$SYS_BLUETOOTH"/hci*; do
+    if [[ -e $d ]]; then basename "$d"; return 0; fi
+  done
+  return 1
+}
+
+estado_bluetooth() {
+  local hci tem=0 ligado=0
+  if hci="$(adaptador_bluetooth)"; then
+    tem=1
+    if [[ "$(curto busctl get-property org.bluez "/org/bluez/$hci" org.bluez.Adapter1 Powered)" == "b true" ]]; then ligado=1; fi
+  fi
+  echo "bt_tem=$tem"
+  echo "bt_ligado=$ligado"
+}
+
+# "Não perturbe" do Plasma: vale enquanto a data guardada estiver no futuro.
+# O KDE guarda a data como "ano,mês,dia,hora,minuto,segundo".
+estado_nao_perturbe() {
+  local ate dnd=0 a m d h mi s
+  ate="$(curto kreadconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until)"
+  if [[ $ate =~ ^[0-9]+(,[0-9.]+){5}$ ]]; then
+    IFS=, read -r a m d h mi s <<<"$ate"
+    if [[ "$(date -d "$a-$m-$d $h:$mi:${s%%.*}" +%s 2>/dev/null || echo 0)" -gt "$(date +%s)" ]]; then dnd=1; fi
+  fi
+  echo "dnd=$dnd"
+}
+
+estado_tema() {
+  local tema escuro=1
+  tema="$(curto kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage)"
+  case "$tema" in *claro*|*light*|org.kde.breeze.desktop) escuro=0 ;; esac
+  echo "escuro=$escuro"
+}
+
+estado_luz_noturna() {
+  local n=0
+  if [[ "$(curto kreadconfig6 --file kwinrc --group NightColor --key Active)" == true ]]; then n=1; fi
+  echo "noturna=$n"
+}
+
+estado_volume() {
+  local saida tem=0 vol=0 mudo=0
+  if have wpctl && saida="$(curto wpctl get-volume @DEFAULT_AUDIO_SINK@)" && [[ $saida == Volume:* ]]; then
+    tem=1
+    vol="$(awk '{ printf "%d", $2 * 100 + 0.5 }' <<<"$saida")"
+    if [[ $saida == *MUTED* ]]; then mudo=1; fi
+  fi
+  echo "vol_tem=$tem"
+  echo "vol=$vol"
+  echo "mudo=$mudo"
+}
+
+tela_com_brilho() {
+  local d
+  for d in "$SYS_BACKLIGHT"/*; do
+    if [[ -r $d/brightness && -r $d/max_brightness ]]; then echo "$d"; return 0; fi
+  done
+  return 1
+}
+
+estado_brilho() {
+  local d tem=0 brilho=0 atual max
+  if d="$(tela_com_brilho)"; then
+    atual="$(cat "$d/brightness")"; max="$(cat "$d/max_brightness")"
+    if [[ $max =~ ^[0-9]+$ && $atual =~ ^[0-9]+$ && $max -gt 0 ]]; then
+      tem=1
+      brilho=$(( (atual * 100 + max / 2) / max ))
+    fi
+  fi
+  echo "brilho_tem=$tem"
+  echo "brilho=$brilho"
+}
+
+estado_bateria() {
+  local d tem=0 carga=0 carregando=0
+  for d in "$SYS_POWER"/BAT*; do
+    if [[ -r $d/capacity ]]; then
+      tem=1
+      carga="$(cat "$d/capacity")"
+      case "$(cat "$d/status" 2>/dev/null)" in Charging|Full) carregando=1 ;; esac
+      break
+    fi
+  done
+  echo "bateria_tem=$tem"
+  echo "bateria=$carga"
+  echo "carregando=$carregando"
+}
+
+# Perfil de energia (economia, equilibrado, desempenho). O serviço tem dois
+# nomes: o novo (UPower) e o antigo (net.hadess); usa o que responder.
+PERFIL_NOVO="org.freedesktop.UPower.PowerProfiles /org/freedesktop/UPower/PowerProfiles org.freedesktop.UPower.PowerProfiles"
+PERFIL_ANTIGO="net.hadess.PowerProfiles /net/hadess/PowerProfiles net.hadess.PowerProfiles"
+perfil_bus() {
+  local s
+  for s in "$PERFIL_NOVO" "$PERFIL_ANTIGO"; do
+    # shellcheck disable=SC2086  # o endereço são três palavras de propósito
+    if [[ -n "$(curto busctl get-property $s ActiveProfile)" ]]; then echo "$s"; return 0; fi
+  done
+  return 1
+}
+
+estado_perfil() {
+  local bus atual="" tem=0 desempenho=0
+  if bus="$(perfil_bus)"; then
+    # shellcheck disable=SC2086
+    atual="$(curto busctl get-property $bus ActiveProfile | sed -n 's/^s "\(.*\)"$/\1/p')"
+    if [[ -n $atual ]]; then tem=1; fi
+    # shellcheck disable=SC2086
+    if curto busctl get-property $bus Profiles | grep -qF '"performance"'; then desempenho=1; fi
+  fi
+  echo "perfil_tem=$tem"
+  echo "perfil=$atual"
+  echo "perfil_desempenho=$desempenho"
+}
+
+escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "matsu"
+  [[ -r $STATE_DIR/$1 ]] && sed -n "s/^$2=//p" "$STATE_DIR/$1" | head -n1
+}
+
+estado_barra() {
+  local estilo tamanho esconder=0 busca menu
+  estilo="$(escolha barra estilo)"
+  tamanho="$(escolha barra tamanho)"
+  case "$estilo" in mac|windows) ;; *) estilo=fusao ;; esac
+  case "$tamanho" in pequena|grande) ;; *) tamanho=media ;; esac
+  [[ "$(escolha barra esconder)" == sim ]] && esconder=1
+  busca="$(escolha barra busca)"
+  menu="$(escolha barra menu)"
+  case "$busca" in meio|nao) ;; *) busca=esquerda ;; esac
+  [[ $menu == meio ]] || menu=esquerda
+  echo "barra=$estilo"
+  echo "barra_tamanho=$tamanho"
+  echo "barra_esconder=$esconder"
+  echo "barra_busca=$busca"
+  echo "barra_menu=$menu"
+}
+
+estado_vidro() {
+  local cor nivel
+  cor="$(escolha vidro cor)"
+  nivel="$(escolha vidro transparencia)"
+  case "$nivel" in mais|menos) ;; *) nivel=normal ;; esac
+  echo "vidro_cor=${cor:-padrao}"
+  echo "vidro_transparencia=$nivel"
+}
+
+# Id da peça do Waywallen no KDE (vazio se não estiver instalada).
+peca_animada() {
+  local d f
+  local IFS=:
+  for d in $PLASMA_WALL_DIRS; do
+    for f in "$d"/*/metadata.json; do
+      [[ -r $f ]] || continue
+      if grep -qi waywallen "$f"; then
+        basename "$(dirname "$f")"
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
+# Papel de parede da área de trabalho (o da primeira tela), sem "file://" e sem
+# a barra do fim, e se o papel animado está pronto para usar.
+estado_papel() {
+  local papel="" tipo="" animado=0 peca d
+  local cfg="$CONFIG_DIR/plasma-org.kde.plasma.desktop-appletsrc"
+  if [[ -r $cfg ]]; then
+    papel="$(sed -n 's/^Image=//p' "$cfg" | head -n1)"
+    tipo="$(sed -n 's/^wallpaperplugin=//p' "$cfg" | head -n1)"
+  fi
+  papel="${papel#file://}"
+  papel="${papel%/}"
+  peca="$(peca_animada)" || peca=""
+  local IFS=:
+  for d in $FLATPAK_DIRS; do
+    if [[ -d $d/$WAYWALLEN_ID ]]; then animado=1; break; fi
+  done
+  echo "papel=$papel"
+  echo "papel_tipo=${tipo:-org.kde.image}"
+  echo "papel_animado_tem=$animado"
+  echo "papel_animado_peca=$peca"
+}
+
+# Idioma da pessoa (pt ou en), para os Ajustes e a central falarem a mesma
+# língua do sistema mesmo quando o programa abre sem o idioma no ambiente.
+estado_idioma() {
+  local primeiro="${LANGUAGE:-}" f
+  primeiro="${primeiro%%:*}"
+  local l="${MATSU_LANG:-${LC_ALL_PESSOA:-${LC_MESSAGES:-$primeiro}}}"
+  [[ -n $l ]] || l="${LANG:-}"
+  if [[ -z $l || $l == C* || $l == POSIX ]]; then
+    for f in "$CONFIG_DIR/plasma-localerc" /etc/xdg/plasma-localerc; do
+      [[ -r $f ]] || continue
+      l="$(sed -n 's/^LANGUAGE=//p; s/^LANG=//p' "$f" | head -n1)"
+      [[ -n $l ]] && break
+    done
+  fi
+  case "$l" in pt*) echo "idioma=pt" ;; *) echo "idioma=en" ;; esac
+}
+
+cmd_estado() {
+  # "estado nao-perturbe" lê só o não perturbe: o sino do relógio pergunta isso
+  # de tempos em tempos e não precisa acordar a rede e o som. "estado idioma"
+  # é para o menu, que só precisa saber se fala português.
+  case "${1:-}" in
+    "") ;;
+    nao-perturbe) estado_nao_perturbe; return 0 ;;
+    idioma) estado_idioma; return 0 ;;
+    *) echo "parte do estado desconhecida: $1" >&2; exit 2 ;;
+  esac
+  estado_idioma
+  estado_rede
+  estado_bluetooth
+  estado_nao_perturbe
+  estado_tema
+  estado_luz_noturna
+  estado_volume
+  estado_brilho
+  estado_bateria
+  estado_perfil
+  estado_barra
+  estado_vidro
+  estado_papel
+}
+
+# Os papéis de parede instalados, um por linha: papel|pasta|nome|miniatura
+cmd_papeis() {
+  local pasta d nome mini f
+  local IFS=:
+  for pasta in $WALL_DIRS; do
+    [[ -d $pasta ]] || continue
+    for d in "$pasta"/*/; do
+      d="${d%/}"
+      [[ -d $d/contents/images || -d $d/contents/images_dark ]] || continue
+      nome=""
+      if have jq && [[ -r $d/metadata.json ]]; then
+        nome="$(jq -r '.KPlugin.Name // empty' "$d/metadata.json" 2>/dev/null)"
+      fi
+      [[ -n $nome ]] || nome="${d##*/}"
+      # Miniatura: a do pacote; se não tiver, a menor imagem dele.
+      mini=""
+      for f in "$d"/contents/screenshot.{png,jpg,webp}; do
+        if [[ -r $f ]]; then mini="$f"; break; fi
+      done
+      if [[ -z $mini ]]; then
+        mini="$(find "$d/contents/images" "$d/contents/images_dark" -maxdepth 1 -type f 2>/dev/null \
+                | awk -F/ '{ split($NF, m, "x"); print m[1] + 0 "\t" $0 }' | sort -n | head -n1 | cut -f2)"
+      fi
+      printf 'papel|%s|%s|%s\n' "$d" "$nome" "$mini"
+    done
+  done
+}
+
+# ------------------------------------------------------------------- ações
+liga_desliga() { # devolve 0 para "on", 1 para "off"; qualquer outra coisa é erro
+  case "${1:-}" in
+    on|ligar) return 0 ;;
+    off|desligar) return 1 ;;
+    *) echo "use: on ou off" >&2; exit 2 ;;
+  esac
+}
+
+numero() { # numero <valor> <mínimo> <máximo>
+  local v="${1:-}"
+  if [[ ! $v =~ ^[0-9]+$ ]]; then echo "use um número de $2 a $3" >&2; exit 2; fi
+  if (( v < $2 )); then v=$2; fi
+  if (( v > $3 )); then v=$3; fi
+  echo "$v"
+}
+
+cmd_wifi() {
+  if liga_desliga "${1:-}"; then curto nmcli radio wifi on; else curto nmcli radio wifi off; fi
+}
+
+cmd_bluetooth() {
+  local hci valor=false
+  hci="$(adaptador_bluetooth)" || { echo "sem Bluetooth nesta máquina" >&2; exit 1; }
+  if liga_desliga "${1:-}"; then
+    valor=true
+    curto rfkill unblock bluetooth || true
+  fi
+  curto busctl set-property org.bluez "/org/bluez/$hci" org.bluez.Adapter1 Powered b "$valor"
+}
+
+cmd_nao_perturbe() {
+  if liga_desliga "${1:-}"; then
+    # Fica ligado até a pessoa desligar (um ano à frente).
+    curto kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --notify \
+      "$(date -d '+1 year' '+%Y,%-m,%-d,%-H,%-M,%-S')"
+  else
+    curto kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --notify --delete
+  fi
+}
+
+cmd_tema() {
+  local perfil
+  case "${1:-}" in
+    escuro|dark) timeout 30 plasma-apply-lookandfeel -a org.matsu.escuro.desktop >/dev/null 2>&1; perfil=Matsu.profile ;;
+    claro|light) timeout 30 plasma-apply-lookandfeel -a org.matsu.claro.desktop >/dev/null 2>&1; perfil=MatsuClaro.profile ;;
+    *) echo "use: escuro ou claro" >&2; exit 2 ;;
+  esac
+  # O terminal acompanha o tema (vale para os terminais abertos depois). Só
+  # troca se a pessoa estiver usando um dos perfis do Matsu.
+  case "$(curto kreadconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile)" in
+    ""|Matsu.profile|MatsuClaro.profile)
+      curto kwriteconfig6 --file konsolerc --group "Desktop Entry" --key DefaultProfile "$perfil" ;;
+  esac
+}
+
+cmd_luz_noturna() {
+  if liga_desliga "${1:-}"; then
+    # Liga na hora, como o botão de luz noturna do Windows e do Mac.
+    curto kwriteconfig6 --file kwinrc --group NightColor --key Mode --notify Constant
+    curto kwriteconfig6 --file kwinrc --group NightColor --key Active --notify true
+  else
+    curto kwriteconfig6 --file kwinrc --group NightColor --key Active --notify false
+  fi
+  curto busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure >/dev/null
+}
+
+cmd_volume() {
+  local v
+  v="$(numero "${1:-}" 0 100)" || exit 2
+  curto wpctl set-volume @DEFAULT_AUDIO_SINK@ "$v%"
+}
+
+cmd_mudo() {
+  curto wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+}
+
+cmd_brilho() {
+  local v d max alvo
+  v="$(numero "${1:-}" 1 100)" || exit 2
+  d="$(tela_com_brilho)" || { echo "esta tela não tem ajuste de brilho" >&2; exit 1; }
+  max="$(cat "$d/max_brightness")"
+  alvo=$(( (v * max + 50) / 100 ))
+  if (( alvo < 1 )); then alvo=1; fi
+  curto busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto \
+    org.freedesktop.login1.Session SetBrightness ssu backlight "$(basename "$d")" "$alvo"
+}
+
+cmd_perfil() {
+  local alvo bus
+  case "${1:-}" in
+    economia|power-saver)    alvo=power-saver ;;
+    equilibrado|balanced)    alvo=balanced ;;
+    desempenho|performance)  alvo=performance ;;
+    *) echo "use: economia, equilibrado ou desempenho" >&2; exit 2 ;;
+  esac
+  bus="$(perfil_bus)" || { echo "este sistema não tem perfil de energia" >&2; exit 1; }
+  # shellcheck disable=SC2086
+  curto busctl set-property $bus ActiveProfile s "$alvo"
+}
+
+solto() { # abre um programa sem prender a central, no idioma da pessoa
+  (
+    if [[ -n $LC_ALL_PESSOA ]]; then export LC_ALL="$LC_ALL_PESSOA"; else unset LC_ALL; fi
+    setsid "$@" >/dev/null 2>&1 &
+  )
+}
+
+cmd_pagina_pedida() {
+  [[ -r $STATE_DIR/ajustes-pagina ]] || return 0
+  echo "pagina=$(head -n1 "$STATE_DIR/ajustes-pagina")"
+  rm -f "$STATE_DIR/ajustes-pagina"
+}
+
+cmd_vidro() {
+  local cor="${1:-}" nivel="${2:-normal}"
+  [[ -n $cor ]] || { echo "use: vidro <cor> mais|normal|menos" >&2; exit 2; }
+  timeout 60 "$MATSU_BIN" vidro "$cor" --transparencia "$nivel" >/dev/null 2>&1
+}
+
+cmd_barra() {
+  local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}" busca="${4:-}" menu="${5:-}"
+  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao] [esquerda|meio|nao] [esquerda|meio]" >&2; exit 2 ;; esac
+  timeout 60 "$MATSU_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} \
+    ${busca:+--busca "$busca"} ${menu:+--menu "$menu"} >/dev/null 2>&1
+}
+
+# Usa o papel animado (a peça do Waywallen) em todas as telas.
+papel_animado() {
+  local peca
+  peca="$(peca_animada)" || { echo "a peça do papel animado não está instalada" >&2; exit 1; }
+  curto busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s \
+    "var d = desktops(); for (var i = 0; i < d.length; i++) { d[i].wallpaperPlugin = \"$peca\"; }" >/dev/null
+}
+
+cmd_papel() {
+  local alvo="${1:-}"
+  if [[ $alvo == animado ]]; then
+    papel_animado
+    return
+  fi
+  if [[ $alvo == escolher ]]; then
+    have kdialog || exit 1
+    alvo="$(kdialog --title "Matsu" --getopenfilename "$HOME" "image/png image/jpeg image/webp image/avif" 2>/dev/null)" || exit 0
+  fi
+  [[ -n $alvo && -e $alvo ]] || { echo "use: papel <pasta ou imagem>|escolher" >&2; exit 2; }
+  timeout 20 plasma-apply-wallpaperimage "$alvo" >/dev/null 2>&1
+}
+
+cmd_abrir() {
+  case "${1:-}" in
+    rede)          solto kcmshell6 kcm_networkmanagement ;;
+    bluetooth)     solto kcmshell6 kcm_bluetooth ;;
+    som)           solto kcmshell6 kcm_pulseaudio ;;
+    tela)          solto kcmshell6 kcm_kscreen ;;
+    luz-noturna)   solto kcmshell6 kcm_nightlight ;;
+    energia)       solto kcmshell6 kcm_powerdevilprofilesconfig ;;
+    notificacoes)  solto kcmshell6 kcm_notifications ;;
+    sobre)         solto kinfocenter ;;
+    papel-animado) solto flatpak run "$WAYWALLEN_ID" ;;
+    ajustes)
+      # "abrir ajustes barra" abre direto na página da barra: os Ajustes leem o
+      # pedido com "pagina-pedida" (vale também se a janela já estiver aberta).
+      if [[ ${2:-} =~ ^[a-z]+$ ]]; then mkdir -p "$STATE_DIR" && echo "$2" > "$STATE_DIR/ajustes-pagina"; fi
+      solto plasmawindowed org.matsu.ajustes ;;
+    atualizar)     solto konsole --hold -e matsu atualizar ;;
+    kcm)
+      # Qualquer tela de ajustes do KDE, pelo nome (kcm_keyboard, kcm_users...).
+      [[ ${2:-} =~ ^kcm_[a-z0-9_]+$ ]] || { echo "use: abrir kcm kcm_<nome>" >&2; exit 2; }
+      solto kcmshell6 "$2" ;;
+    configuracoes) solto systemsettings ;;
+    # Pelo .desktop (kstart --application), para o app ganhar a unidade própria
+    # dele e aparecer com o nome certo na barra e no próprio gerenciador.
+    tarefas)       solto kstart --application org.matsu.tarefas ;;
+    barra)         solto matsu barra ;;
+    *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;
+  esac
+}
+
+main() {
+  local cmd="${1:-estado}"
+  shift || true
+  case "$cmd" in
+    estado)        cmd_estado "$@" ;;
+    wifi)          cmd_wifi "$@" ;;
+    bluetooth)     cmd_bluetooth "$@" ;;
+    nao-perturbe)  cmd_nao_perturbe "$@" ;;
+    tema)          cmd_tema "$@" ;;
+    luz-noturna)   cmd_luz_noturna "$@" ;;
+    volume)        cmd_volume "$@" ;;
+    mudo)          cmd_mudo ;;
+    brilho)        cmd_brilho "$@" ;;
+    perfil)        cmd_perfil "$@" ;;
+    vidro)         cmd_vidro "$@" ;;
+    barra)         cmd_barra "$@" ;;
+    papeis)        cmd_papeis ;;
+    pagina-pedida) cmd_pagina_pedida ;;
+    papel)         cmd_papel "$@" ;;
+    abrir)         cmd_abrir "$@" ;;
+    bloquear)      curto loginctl lock-session ;;
+    sair)          curto busctl --user call org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt promptAll >/dev/null ;;
+    *) echo "comando desconhecido: $cmd" >&2; exit 2 ;;
+  esac
+}
+
+main "$@"

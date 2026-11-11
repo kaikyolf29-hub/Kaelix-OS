@@ -1,0 +1,38 @@
+// Matsu OS: o fastfetch com o pinheiro do Matsu (em pixel art, como o papel de
+// parede) e os nomes em português. Quem quiser outro jeito cria o seu em
+// ~/.config/fastfetch/config.jsonc.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "/usr/share/matsu/fastfetch/logo.txt",
+    "color": { "1": "97" },
+    "padding": { "top": 1, "left": 1, "right": 3 }
+  },
+  "display": {
+    "separator": "  ",
+    "color": { "keys": "95", "title": "97" },
+    "key": { "width": 18 }
+  },
+  "modules": [
+    "title",
+    "separator",
+    { "type": "os", "key": "Sistema", "format": "{pretty-name}" },
+    { "type": "host", "key": "Computador" },
+    { "type": "kernel", "key": "Kernel" },
+    { "type": "uptime", "key": "Ligado há" },
+    { "type": "packages", "key": "Pacotes" },
+    { "type": "shell", "key": "Shell" },
+    { "type": "display", "key": "Tela" },
+    { "type": "de", "key": "Área de trabalho" },
+    { "type": "terminal", "key": "Terminal" },
+    { "type": "cpu", "key": "Processador" },
+    { "type": "gpu", "key": "Placa de vídeo" },
+    { "type": "memory", "key": "Memória" },
+    { "type": "disk", "key": "Disco", "folders": "/var" },
+    { "type": "localip", "key": "Rede" },
+    { "type": "locale", "key": "Idioma" },
+    "break",
+    "colors"
+  ]
+}

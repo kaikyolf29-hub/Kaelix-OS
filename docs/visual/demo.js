@@ -57,7 +57,7 @@ function ctr(el) {
 const dks = $$('.dk');
 const IC = {"folder": "<path d=\"M3 7.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/>", "term": "<path d=\"M5 8l4 4-4 4\"/><path d=\"M12 16h7\"/>", "doc": "<path d=\"M7 3.5h7l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5z\"/><path d=\"M14 3.5v4h4\"/>", "game": "<path d=\"M7.5 8h9a4.5 4.5 0 0 1 4.4 5.4l-.6 3a2.6 2.6 0 0 1-4.5 1.2L14 15.5h-4l-1.8 2.1a2.6 2.6 0 0 1-4.5-1.2l-.6-3A4.5 4.5 0 0 1 7.5 8z\"/><path d=\"M8 10.8v3M6.5 12.3h3\"/>", "pulse": "<path d=\"M3 12h4l2.5-6 4 12 2.5-6h5\"/>"};
 const RECENT = [
-  ['#5468E8', 'Arquivos', 'App', 'folder'], ['#343B63', 'Terminal do Kaelix', 'App', 'term'], ['#6B7399', 'plano-kaelix.md', 'Texto em Downloads', 'doc'],
+  ['#5468E8', 'Arquivos', 'App', 'folder'], ['#343B63', 'Terminal do Matsu', 'App', 'term'], ['#6B7399', 'plano-matsu.md', 'Texto em Downloads', 'doc'],
 ];
 const RESULTS = [
   ['#7C6BE6', 'Jogos', 'App: Steam, Heroic e Lutris num lugar só', 'game'], ['#3E9C7A', 'Modo jogo', 'Configurações: mais desempenho ao jogar', 'pulse'], ['#5468E8', 'jogos-salvos', 'Pasta em Documentos', 'folder'],
@@ -93,7 +93,7 @@ function build() {
   CAPS = [
     [2.9, 4.6, 'Demonstração do visual. Ainda não é o sistema rodando.'],
     [4.9, 8.6, 'Os ícones do Dock crescem quando o mouse passa'],
-    [8.9, 15.2, 'As janelas abrem a partir do Dock, com vidro e os botões do Kaelix'],
+    [8.9, 15.2, 'As janelas abrem a partir do Dock, com vidro e os botões do Matsu'],
     [15.5, 19.2, 'Minimizar guarda a janela no Dock'],
     [19.5, 23.5, 'Rede, som e brilho ficam no canto direito, perto do relógio'],
     [23.8, 30.4, 'Tema escuro e tema claro. Nenhum dos dois usa preto puro'],
@@ -110,9 +110,9 @@ function cursorAt(t) {
 }
 
 /* ---------- terminal ---------- */
-const CMD = 'kaelix atualizar';
+const CMD = 'matsu atualizar';
 function termHTML(t) {
-  const pr = '<span class="pr">kaiky@kaelix</span> <span class="muted">~</span> $ ';
+  const pr = '<span class="pr">kaiky@matsu</span> <span class="muted">~</span> $ ';
   const n = Math.round(clamp((t - 10.3) / 1.3) * CMD.length);
   const blink = (Math.floor(t * 2) % 2 === 0) ? '<span class="caret"></span>' : '<span class="caret" style="opacity:0"></span>';
   let h = pr + CMD.slice(0, n) + (t < 11.8 ? (t > 10.3 && t < 11.6 ? '<span class="caret"></span>' : blink) : '') + '\n';

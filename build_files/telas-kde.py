@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dá a cara do Kaelix às telas de login, de bloqueio e de sair do KDE.
+"""Dá a cara do Matsu às telas de login, de bloqueio e de sair do KDE.
 
 Essas telas vêm prontas dentro dos programas do KDE, mas usam peças que ficam
 em arquivos (relógio, foto da pessoa e botões redondos). Este script troca só
@@ -25,7 +25,7 @@ TROCAS = {
     "Clock.qml": [
         ("font.weight: Font.DemiBold", "font.weight: Font.Bold"),
     ],
-    # Foto da pessoa num círculo da cor de destaque (o anil do Kaelix, ou a cor
+    # Foto da pessoa num círculo da cor de destaque (o anil do Matsu, ou a cor
     # do vidro que a pessoa escolheu), que aparece quando não há foto, e
     # o nome em negrito.
     "UserDelegate.qml": [

@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ],
+        "Category": "",
+        "Description": "Visual do Matsu OS no tema claro",
+        "Id": "org.matsu.claro.desktop",
+        "License": "GPL-3.0",
+        "Name": "Matsu Claro",
+        "Version": "0.1",
+        "Website": "https://github.com/kaikyolf29-hub/Kaelix-OS"
+    },
+    "X-Plasma-APIVersion": "2"
+}

@@ -1,0 +1,22 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.matsu.ajustes",
+        "Name": "Matsu Settings",
+        "Name[pt_BR]": "Ajustes do Matsu",
+        "Name[pt]": "Ajustes do Matsu",
+        "Description": "Appearance, glass color, bar, wallpaper and displays in one window, like the Mac settings",
+        "Description[pt_BR]": "Aparência, cor do vidro, barra, papel de parede e telas numa janela só, como os Ajustes do Mac",
+        "Description[pt]": "Aparência, cor do vidro, barra, papel de parede e telas numa janela só, como os Ajustes do Mac",
+        "Icon": "matsu-configuracoes",
+        "Category": "System Information",
+        "License": "MIT",
+        "Version": "1.0",
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Matsu OS - primeiro login
+Name[en]=Matsu OS - first login
+Comment=Escolher o navegador (Chrome ou Brave)
+Comment[en]=Choose the browser (Chrome or Brave)
+Exec=/usr/bin/matsu navegador --primeira-vez
+Icon=system-run
+NoDisplay=true
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

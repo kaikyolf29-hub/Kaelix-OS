@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Name=Matsu Settings
+Name[pt_BR]=Ajustes do Matsu
+Name[pt]=Ajustes do Matsu
+GenericName=Settings
+GenericName[pt_BR]=Ajustes
+GenericName[pt]=Ajustes
+Comment=Appearance, glass color, bar, wallpaper and displays, like the Mac settings
+Comment[pt_BR]=Aparência, cor do vidro, barra, papel de parede e telas, como os Ajustes do Mac
+Comment[pt]=Aparência, cor do vidro, barra, papel de parede e telas, como os Ajustes do Mac
+Exec=plasmawindowed org.matsu.ajustes
+Icon=matsu-configuracoes
+Terminal=false
+Categories=Settings;DesktopSettings;Qt;KDE;
+Keywords=ajustes;configurações;preferências;settings;tema;cor;vidro;barra;dock;papel de parede;wallpaper;telas;
+# A janela é do plasmawindowed: assim a barra mostra o ícone e o nome dos Ajustes.
+StartupWMClass=org.kde.plasmawindowed

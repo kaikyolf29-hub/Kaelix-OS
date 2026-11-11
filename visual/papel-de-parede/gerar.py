@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera o papel de parede do Kaelix OS em pixel art.
+"""Gera o papel de parede do Matsu OS em pixel art.
 
 Desenha um pôr do sol num lago, em 640x360, e amplia 6 vezes (3840x2160) sem
 borrar. Tudo é feito por código, com sorteio fixo: rodar de novo dá a mesma imagem.

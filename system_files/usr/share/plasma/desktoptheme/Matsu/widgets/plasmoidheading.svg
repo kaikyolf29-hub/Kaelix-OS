@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Faixas dos balões do Matsu. Gerado por usr/share/matsu/vidro/gerar.py: não editar à mão. -->
+<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="150" height="80" viewBox="0 0 150 80">
+<defs>
+  <style type="text/css" id="current-color-scheme">
+    .ColorScheme-Text { color:#232629; }
+    .ColorScheme-Background { color:#eff0f1; }
+    .ColorScheme-ButtonFocus { color:#3daee9; }
+    .ColorScheme-PositiveText { color:#27ae60; }
+    .ColorScheme-NeutralText { color:#f67400; }
+  </style>
+</defs>
+<rect id="hint-stretch-borders" x="0" y="0" width="5" height="5" opacity="0.6"/>
+<g id="header-topleft" transform="translate(10,10)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.75" d="M0,12 H12 V0 A12,12 0 0 0 0,12 Z"/></g>
+<g id="header-topright" transform="translate(54,10)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.75" d="M0,0 V12 H12 A12,12 0 0 0 0,0 Z"/></g>
+<g id="header-top" transform="translate(22,10)"><rect fill="#000000" opacity="0.001" width="32" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="32" height="12"/></g>
+<g id="header-bottomleft" transform="translate(10,54)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="12"/><rect class="ColorScheme-Text" fill="currentColor" opacity="0.14" y="11" width="12" height="1"/></g>
+<g id="header-bottomright" transform="translate(54,54)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="12"/><rect class="ColorScheme-Text" fill="currentColor" opacity="0.14" y="11" width="12" height="1"/></g>
+<g id="header-bottom" transform="translate(22,54)"><rect fill="#000000" opacity="0.001" width="32" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="32" height="12"/><rect class="ColorScheme-Text" fill="currentColor" opacity="0.14" y="11" width="32" height="1"/></g>
+<g id="header-left" transform="translate(10,22)"><rect fill="#000000" opacity="0.001" width="12" height="32"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="32"/></g>
+<g id="header-right" transform="translate(54,22)"><rect fill="#000000" opacity="0.001" width="12" height="32"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="32"/></g>
+<g id="header-center" transform="translate(22,22)"><rect fill="#000000" opacity="0.001" width="32" height="32"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="32" height="32"/></g>
+<g id="footer-topleft" transform="translate(80,10)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="12"/><rect class="ColorScheme-Text" fill="currentColor" opacity="0.14" y="0" width="12" height="1"/></g>
+<g id="footer-topright" transform="translate(124,10)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="12"/><rect class="ColorScheme-Text" fill="currentColor" opacity="0.14" y="0" width="12" height="1"/></g>
+<g id="footer-top" transform="translate(92,10)"><rect fill="#000000" opacity="0.001" width="32" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="32" height="12"/><rect class="ColorScheme-Text" fill="currentColor" opacity="0.14" y="0" width="32" height="1"/></g>
+<g id="footer-bottomleft" transform="translate(80,54)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.75" d="M0,0 H12 V12 A12,12 0 0 1 0,0 Z"/></g>
+<g id="footer-bottomright" transform="translate(124,54)"><rect fill="#000000" opacity="0.001" width="12" height="12"/><path class="ColorScheme-Background" fill="currentColor" opacity="0.75" d="M0,0 H12 A12,12 0 0 1 0,12 Z"/></g>
+<g id="footer-bottom" transform="translate(92,54)"><rect fill="#000000" opacity="0.001" width="32" height="12"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="32" height="12"/></g>
+<g id="footer-left" transform="translate(80,22)"><rect fill="#000000" opacity="0.001" width="12" height="32"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="32"/></g>
+<g id="footer-right" transform="translate(124,22)"><rect fill="#000000" opacity="0.001" width="12" height="32"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="12" height="32"/></g>
+<g id="footer-center" transform="translate(92,22)"><rect fill="#000000" opacity="0.001" width="32" height="32"/><rect class="ColorScheme-Background" fill="currentColor" opacity="0.75" width="32" height="32"/></g>
+<rect id="hint-top-margin" x="30" y="10" width="4" height="6" fill="#ff00ff"/>
+<rect id="hint-bottom-margin" x="30" y="60" width="4" height="6" fill="#ff00ff"/>
+<rect id="hint-left-margin" x="10" y="30" width="6" height="4" fill="#ff00ff"/>
+<rect id="hint-right-margin" x="60" y="30" width="6" height="4" fill="#ff00ff"/>
+</svg>

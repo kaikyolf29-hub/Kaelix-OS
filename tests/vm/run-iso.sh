@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-# Liga a ISO de instalação do Kaelix numa máquina virtual (QEMU com KVM) e tira
-# prints do menu de boot e do instalador, para conferir a cara do Kaelix, o
+# Liga a ISO de instalação do Matsu numa máquina virtual (QEMU com KVM) e tira
+# prints do menu de boot e do instalador, para conferir a cara do Matsu, o
 # português, o teclado ABNT2 e o horário de Brasília já marcados.
 # Não instala nada: só abre o instalador e olha.
 #
@@ -10,8 +10,8 @@ set -euo pipefail
 ISO="$1"
 OUT="$2"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SOCK="$(mktemp -u /tmp/kaelix-iso-hmp.XXXX)"
-DISK="$(mktemp -u /tmp/kaelix-iso-disco.XXXX).qcow2"
+SOCK="$(mktemp -u /tmp/matsu-iso-hmp.XXXX)"
+DISK="$(mktemp -u /tmp/matsu-iso-disco.XXXX).qcow2"
 mkdir -p "$OUT"
 
 hmp()  { python3 "$HERE/hmp.py" "$SOCK" "$@"; }

@@ -1,4 +1,4 @@
-# Publica uma versão estável do Kaelix OS.
+# Publica uma versão estável do Matsu OS.
 #
 # Só roda quando o criador manda, pela aba Actions, escrevendo PUBLICAR.
 # Pega a imagem do canal "teste" (já assinada), coloca no canal "estavel"
@@ -54,7 +54,7 @@ jobs:
         run: |
           REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
           echo "$TOKEN" | skopeo login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
-          for IMG in kaelix-os kaelix-os-nvidia; do
+          for IMG in matsu-os matsu-os-nvidia; do
             # Só promove imagem com assinatura válida.
             cosign verify --key cosign.pub "${REGISTRY}/${IMG}:teste" > /dev/null
             for TAG in estavel "${VERSAO}"; do
@@ -71,7 +71,7 @@ jobs:
           VERSAO: ${{ inputs.versao }}
           NOTAS: ${{ inputs.notas }}
         run: |
-          gh release create "$TAG" --target "$GITHUB_SHA" --title "Kaelix OS ${VERSAO}" --notes "$NOTAS"
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "Matsu OS ${VERSAO}" --notes "$NOTAS"
 
   iso:
     needs: promover

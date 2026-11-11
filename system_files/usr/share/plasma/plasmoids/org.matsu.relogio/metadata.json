@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.matsu.relogio",
+        "Name": "Relógio do Matsu",
+        "Description": "Hora e data na barra, com as notificações e o calendário num balão só",
+        "Icon": "preferences-system-time",
+        "Category": "Date and Time",
+        "License": "GPL-3.0",
+        "Version": "1.0",
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

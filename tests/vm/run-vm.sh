@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Liga o disco do Kaelix numa máquina virtual (QEMU com KVM), faz o login,
+# Liga o disco do Matsu numa máquina virtual (QEMU com KVM), faz o login,
 # abre o terminal e tira prints de cada etapa.
 #
 # Uso: run-vm.sh <disco.qcow2> <pasta-dos-prints>
@@ -8,8 +8,8 @@ set -euo pipefail
 DISK="$1"
 OUT="$2"
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SOCK="$(mktemp -u /tmp/kaelix-hmp.XXXX)"
-USER_PASS="kaelix"
+SOCK="$(mktemp -u /tmp/matsu-hmp.XXXX)"
+USER_PASS="matsu"
 mkdir -p "$OUT"
 
 hmp()  { python3 "$HERE/hmp.py" "$SOCK" "$@"; }
@@ -33,7 +33,7 @@ trap 'kill $QEMU_PID 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 30); do [[ -S $SOCK ]] && break; sleep 1; done
 
-# Tela de boot do Kaelix (Plymouth): aparece por poucos segundos, então tira
+# Tela de boot do Matsu (Plymouth): aparece por poucos segundos, então tira
 # um print a cada 2 segundos no começo.
 for i in 1 2 3 4 5 6 7 8; do
   sleep 2
@@ -54,7 +54,7 @@ hmp type "$USER_PASS"
 sleep 2
 shot "02a-login-com-senha"
 hmp key ret
-# Tela de carregamento do Kaelix (aparece por poucos segundos depois da senha).
+# Tela de carregamento do Matsu (aparece por poucos segundos depois da senha).
 for i in 1 2 3; do
   sleep 3
   shot "02b-carregando-$i"
@@ -76,7 +76,7 @@ shot "04c-arquivos"
 hmp key alt-f4
 sleep 2
 
-# Menu do Kaelix (tecla Meta), no jeito do vídeo. Depois digita uma busca,
+# Menu do Matsu (tecla Meta), no jeito do vídeo. Depois digita uma busca,
 # como no vídeo ("term"), e fecha com Esc (o primeiro limpa, o segundo fecha).
 hmp key meta_l
 sleep 5
@@ -114,28 +114,28 @@ hmp mover 960 600 || true
 sleep 1
 hmp key meta_l-pgup
 sleep 2
-hmp type "kaelix ajuda"
+hmp type "matsu ajuda"
 hmp key ret
 sleep 5
-shot "06-kaelix-ajuda"
+shot "06-matsu-ajuda"
 hmp type "clear"
 hmp key ret
-hmp type "kaelix versao"
+hmp type "matsu versao"
 hmp key ret
 sleep 3
 hmp type "fastfetch"
 hmp key ret
 sleep 8
-shot "07-kaelix-versao-fastfetch"
+shot "07-matsu-versao-fastfetch"
 
 # A pergunta do navegador, aberta à mão, e o registro do primeiro login.
 hmp type "clear"
 hmp key ret
-hmp type "journalctl --user -b | grep -i kaelix | tail -n 12"
+hmp type "journalctl --user -b | grep -i matsu | tail -n 12"
 hmp key ret
 sleep 4
 shot "08-registro-do-primeiro-login"
-hmp type "kaelix navegador"
+hmp type "matsu navegador"
 hmp key ret
 sleep 8
 shot "09-escolha-do-navegador"
@@ -145,7 +145,7 @@ sleep 2
 # Tema claro.
 hmp type "clear"
 hmp key ret
-hmp type "plasma-apply-lookandfeel -a org.kaelix.claro.desktop"
+hmp type "plasma-apply-lookandfeel -a org.matsu.claro.desktop"
 hmp key ret
 sleep 15
 shot "10-tema-claro"
@@ -157,40 +157,40 @@ shot "11-tema-claro-area-de-trabalho"
 # meio, e de volta ao padrão.
 hmp key ctrl-alt-t
 sleep 8
-hmp type "kaelix barra windows --detalhes"
+hmp type "matsu barra windows --detalhes"
 hmp key ret
 sleep 10
 shot "12-barra-estilo-windows"
-hmp type "kaelix barra mac --detalhes"
+hmp type "matsu barra mac --detalhes"
 hmp key ret
 sleep 10
 shot "13-barra-estilo-mac"
-hmp type "kaelix barra fusao --tamanho grande --detalhes"
+hmp type "matsu barra fusao --tamanho grande --detalhes"
 hmp key ret
 sleep 10
 shot "14-barra-fusao-grande"
 # A busca dentro da ilha do meio, e depois o menu também no meio (Windows 11).
-hmp type "kaelix barra fusao --tamanho media --busca meio"
+hmp type "matsu barra fusao --tamanho media --busca meio"
 hmp key ret
 sleep 10
 shot "14b-barra-busca-no-meio"
-hmp type "kaelix barra --menu meio"
+hmp type "matsu barra --menu meio"
 hmp key ret
 sleep 10
 shot "14c-barra-menu-e-busca-no-meio"
-hmp type "kaelix barra fusao --tamanho media --busca esquerda --menu esquerda"
+hmp type "matsu barra fusao --tamanho media --busca esquerda --menu esquerda"
 hmp key ret
 sleep 10
 shot "15-barra-de-volta-ao-padrao"
 
-# Tela de boas-vindas com a cara do Kaelix (no primeiro login de verdade ela abre sozinha).
+# Tela de boas-vindas com a cara do Matsu (no primeiro login de verdade ela abre sozinha).
 hmp type "clear"
 hmp key ret
 hmp type "plasma-welcome"
 hmp key ret
 sleep 12
 shot "16-boas-vindas-1"
-# Avança as telas com a seta para a direita; as do Kaelix ficam perto do fim.
+# Avança as telas com a seta para a direita; as do Matsu ficam perto do fim.
 for n in 2 3 4 5 6 7 8; do
   hmp key right
   sleep 3
@@ -199,20 +199,20 @@ done
 hmp key alt-f4
 sleep 3
 
-# Escolha de telas do Meta+P (estender, duplicar, só uma tela), com o balão do Kaelix.
+# Escolha de telas do Meta+P (estender, duplicar, só uma tela), com o balão do Matsu.
 hmp key meta_l-p
 sleep 5
 shot "17-escolha-de-telas"
 hmp key esc
 sleep 2
-# Menu de novo, agora que os balões têm o canto redondo do Kaelix.
+# Menu de novo, agora que os balões têm o canto redondo do Matsu.
 hmp key meta_l
 sleep 5
 shot "18-menu-com-balao-redondo"
 hmp key esc
 sleep 2
 
-# Central de controle do Kaelix (Meta+A), na ilha da direita. Primeiro no tema claro.
+# Central de controle do Matsu (Meta+A), na ilha da direita. Primeiro no tema claro.
 hmp key meta_l-a
 sleep 6
 shot "19-central-de-controle-claro"
@@ -221,10 +221,10 @@ sleep 2
 # O ajudante da central volta para o tema escuro e mostra o que leu do sistema.
 hmp key ctrl-alt-t
 sleep 8
-hmp type "/usr/libexec/kaelix/kaelix-central tema escuro"
+hmp type "/usr/libexec/matsu/matsu-central tema escuro"
 hmp key ret
 sleep 15
-hmp type "/usr/libexec/kaelix/kaelix-central estado"
+hmp type "/usr/libexec/matsu/matsu-central estado"
 hmp key ret
 sleep 4
 shot "20-central-estado-lido-do-sistema"
@@ -235,13 +235,13 @@ hmp type "grep -i -e meta.a -e meta.n -e meta.b -e widget .config/kglobalshortcu
 hmp key ret
 sleep 3
 shot "20b-atalho-da-central"
-# Se algo do Kaelix reclamou ao carregar, aparece aqui.
+# Se algo do Matsu reclamou ao carregar, aparece aqui.
 hmp type "clear"
 hmp key ret
-hmp type "journalctl --user -b | grep -i -e kaelix -e qml | tail -n 25"
+hmp type "journalctl --user -b | grep -i -e matsu -e qml | tail -n 25"
 hmp key ret
 sleep 4
-shot "21-registro-das-telas-do-kaelix"
+shot "21-registro-das-telas-do-matsu"
 hmp key alt-f4
 sleep 3
 # Agora no tema escuro, abrindo com um clique na pílula da central (ilha da direita).
@@ -255,7 +255,7 @@ sleep 2
 # de um jeito: protocolo novo, AppIndicator e XEmbed) e o que a bandeja registrou.
 hmp key ctrl-alt-t
 sleep 8
-hmp type "kaelix-teste-bandeja"
+hmp type "matsu-teste-bandeja"
 hmp key ret
 sleep 16
 shot "24-bandeja-o-que-registrou"
@@ -287,11 +287,11 @@ shot "29-relogio-notificacoes-e-calendario"
 hmp key esc
 sleep 2
 
-# Ajustes do Kaelix (como os Ajustes do Mac): o ajudante passa pelas páginas a
+# Ajustes do Matsu (como os Ajustes do Mac): o ajudante passa pelas páginas a
 # cada 8 segundos e no fim deixa o vidro roxo e mais transparente.
 hmp key ctrl-alt-t
 sleep 8
-hmp type "kaelix-teste-ajustes"
+hmp type "matsu-teste-ajustes"
 hmp key ret
 sleep 7
 for pagina in aparencia barra papel telas sobre; do
@@ -310,7 +310,7 @@ sleep 2
 hmp key alt-f4
 sleep 2
 
-# Gerenciador de tarefas do Kaelix (Ctrl+Shift+Esc), de vidro: Processos,
+# Gerenciador de tarefas do Matsu (Ctrl+Shift+Esc), de vidro: Processos,
 # Desempenho (Ctrl+2) e Inicialização (Ctrl+3). Com ele aberto, o mouse passa
 # em cima do ícone do meio da barra para mostrar o balão com o nome.
 hmp key ctrl-shift-esc
@@ -345,7 +345,7 @@ sleep 2
 # Steam), Gráficos (Ctrl+3), Sobreposição (Ctrl+4) e Placa de vídeo (Ctrl+5).
 hmp key ctrl-alt-t
 sleep 8
-hmp type "setsid -f /usr/libexec/kaelix/kaelix-janela org.kaelix.jogos /usr/share/kaelix/jogos/Main.qml; exit"
+hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml; exit"
 hmp key ret
 sleep 10
 shot "36-jogos-inicio"
@@ -361,9 +361,9 @@ shot "36d-jogos-placa"
 hmp key alt-f4
 sleep 2
 
-# Tela de bloqueio (Meta+L), com o papel de parede do Kaelix. Depois digita a
+# Tela de bloqueio (Meta+L), com o papel de parede do Matsu. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
-# desbloquear continua funcionando com as peças do Kaelix.
+# desbloquear continua funcionando com as peças do Matsu.
 hmp key meta_l-l
 sleep 8
 shot "23-tela-de-bloqueio"

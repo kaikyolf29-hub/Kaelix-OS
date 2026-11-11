@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Kaelix OS — script que monta a imagem (roda dentro do Containerfile).
+# Matsu OS — script que monta a imagem (roda dentro do Containerfile).
 # Cada parte está separada e comentada para ficar fácil de entender e mudar.
 set -euo pipefail
 
@@ -18,15 +18,15 @@ if ! grep -q "BEGIN PUBLIC KEY" "${CTX}/cosign.pub"; then
 fi
 
 # ---------------------------------------------------------------------------
-log "Copiando os arquivos próprios do Kaelix para o sistema"
+log "Copiando os arquivos próprios do Matsu para o sistema"
 cp -a "${CTX}/system_files/." /
-chmod 0755 /usr/bin/kaelix /usr/libexec/kaelix/*
+chmod 0755 /usr/bin/matsu /usr/libexec/matsu/*
 
 # ---------------------------------------------------------------------------
 log "Instalando pacotes"
 # Jogos: GameMode (desempenho) e MangoHud (números na tela), 64 e 32 bits.
 # Programação: compiladores, Node, Python e Distrobox.
-# Utilidades usadas pelo comando kaelix: jq, pciutils e kdialog.
+# Utilidades usadas pelo comando matsu: jq, pciutils e kdialog.
 dnf5 -y install \
   gamemode mangohud \
   distrobox podman \
@@ -60,7 +60,7 @@ echo "Perfil de energia: $(rpm -q tuned-ppd power-profiles-daemon 2>/dev/null | 
 
 # Fonte Inter, a mesma do vídeo de demonstração da fusão.
 dnf5 -y install --skip-unavailable rsms-inter-fonts rsms-inter-vf-fonts
-# Fonte do terminal do Kaelix (a mesma do vídeo de demonstração).
+# Fonte do terminal do Matsu (a mesma do vídeo de demonstração).
 dnf5 -y install --skip-unavailable jetbrains-mono-fonts-all || dnf5 -y install --skip-unavailable jetbrains-mono-fonts || true
 fc-list : family | grep -i -m1 "jetbrains mono" || echo "AVISO: fonte JetBrains Mono não entrou; o terminal usa a fonte mono padrão"
 
@@ -69,13 +69,13 @@ fc-list : family | grep -i -m1 "jetbrains mono" || echo "AVISO: fonte JetBrains 
 # Preferimos o LACT; se o Fedora não tiver, entra o CoreCtrl.
 if dnf5 -y install lact; then
   systemctl enable lactd.service || true
-  echo "lact" > /tmp/kaelix-gpu-tool
+  echo "lact" > /tmp/matsu-gpu-tool
 else
   dnf5 -y install --skip-unavailable corectrl
-  echo "corectrl" > /tmp/kaelix-gpu-tool
+  echo "corectrl" > /tmp/matsu-gpu-tool
 fi
-echo "Controle da placa de vídeo: $(cat /tmp/kaelix-gpu-tool)"
-rm -f /tmp/kaelix-gpu-tool
+echo "Controle da placa de vídeo: $(cat /tmp/matsu-gpu-tool)"
+rm -f /tmp/matsu-gpu-tool
 
 # Steam (com Proton) vem do repositório oficial "rpmfusion-nonfree-steam",
 # o mesmo que o Fedora oferece. Ele só é ligado durante a instalação.
@@ -98,55 +98,77 @@ dnf5 -y install code
 sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/vscode.repo
 
 # ---------------------------------------------------------------------------
-log "Colocando o nome Kaelix OS no sistema"
+log "Colocando o nome Matsu 27 OS no sistema"
+# Uma edição por ano: só o número muda (arquivo EDICAO na raiz do repositório;
+# 27 = edição 2027, 28 = edição 2028...).
+EDICAO="$(tr -dc '0-9' < "${CTX}/EDICAO")"
+[[ -n $EDICAO ]] || { echo "ERRO: o arquivo EDICAO está vazio" >&2; exit 1; }
+ANO="20${EDICAO}"
+NOME="Matsu ${EDICAO} OS"
 OWNER="${IMAGE_REGISTRY#*/}"
-REPO_URL="https://github.com/${OWNER}/kaelix-os"
-# O ID continua "fedora" para não quebrar programas que conferem a base.
+REPO_URL="https://github.com/${OWNER}/Kaelix-OS"
+# O nome do Fedora não aparece para a pessoa: o sistema se apresenta como
+# Matsu em tudo (Sobre, menu de boot, terminal, nome do computador). O ID e o
+# VERSION_ID continuam os do Fedora, porque programas como o dnf e o toolbox
+# conferem a base por eles.
 sed -i \
-  -e 's/^NAME=.*/NAME="Kaelix OS"/' \
-  -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"Kaelix OS (base Fedora ${FEDORA_VERSION})\"/" \
-  -e 's/^VARIANT=.*/VARIANT="Kaelix OS"/' \
-  -e 's/^VARIANT_ID=.*/VARIANT_ID=kaelix/' \
+  -e 's/^NAME=.*/NAME="Matsu OS"/' \
+  -e "s/^VERSION=.*/VERSION=\"${EDICAO} (Edição ${ANO})\"/" \
+  -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${NOME}\"/" \
+  -e "s/^VARIANT=.*/VARIANT=\"Edição ${ANO}\"/" \
+  -e 's/^VARIANT_ID=.*/VARIANT_ID=matsu/' \
   -e "s|^HOME_URL=.*|HOME_URL=\"${REPO_URL}\"|" \
+  -e "s|^DOCUMENTATION_URL=.*|DOCUMENTATION_URL=\"${REPO_URL}\"|" \
+  -e "s|^SUPPORT_URL=.*|SUPPORT_URL=\"${REPO_URL}/issues\"|" \
   -e "s|^BUG_REPORT_URL=.*|BUG_REPORT_URL=\"${REPO_URL}/issues\"|" \
+  -e '/^DEFAULT_HOSTNAME=/d' \
   /usr/lib/os-release
-grep -q '^VARIANT_ID=' /usr/lib/os-release || echo 'VARIANT_ID=kaelix' >> /usr/lib/os-release
-# Logo do Kaelix (o "Asas") como logo do sistema, por exemplo em "Sobre este sistema".
+grep -q '^VARIANT_ID=' /usr/lib/os-release || echo 'VARIANT_ID=matsu' >> /usr/lib/os-release
+grep -q '^VARIANT=' /usr/lib/os-release || echo "VARIANT=\"Edição ${ANO}\"" >> /usr/lib/os-release
+# Sem /etc/hostname, o computador se chama "matsu" (antes aparecia "fedora").
+echo 'DEFAULT_HOSTNAME=matsu' >> /usr/lib/os-release
+# Logo do Matsu (o pinheiro) como logo do sistema, por exemplo em "Sobre este sistema".
 if grep -q '^LOGO=' /usr/lib/os-release; then
-  sed -i 's/^LOGO=.*/LOGO=kaelix-logo/' /usr/lib/os-release
+  sed -i 's/^LOGO=.*/LOGO=matsu-logo/' /usr/lib/os-release
 else
-  echo 'LOGO=kaelix-logo' >> /usr/lib/os-release
+  echo 'LOGO=matsu-logo' >> /usr/lib/os-release
 fi
+# Os textos do sistema que mostram o nome com o ano usam @EDICAO@ e @ANO@.
+# (A tela de login em texto, Ctrl+Alt+F3, já mostra o PRETTY_NAME pelo \S do /etc/issue.)
+{ grep -rlZ -e '@EDICAO@' -e '@ANO@' /usr/share/matsu /usr/share/plasma /usr/share/applications \
+    /usr/share/plymouth /etc/xdg 2>/dev/null || true; } | xargs -0 -r sed -i -e "s/@EDICAO@/${EDICAO}/g" -e "s/@ANO@/${ANO}/g"
+echo "Nome no sistema: $(grep -E '^(NAME|PRETTY_NAME|VERSION|VARIANT|DEFAULT_HOSTNAME)=' /usr/lib/os-release | tr '\n' ' ')"
 
-mkdir -p /usr/share/kaelix
+mkdir -p /usr/share/matsu
 jq -n \
   --arg name "${IMAGE_NAME}" \
   --arg variant "${IMAGE_VARIANT}" \
   --arg registry "${IMAGE_REGISTRY}" \
   --arg build "${BUILD_ID}" \
   --arg fedora "${FEDORA_VERSION}" \
+  --arg edicao "${EDICAO}" \
   '{"image-name":$name, "image-variant":$variant, "image-registry":$registry,
-    "build-id":$build, "fedora-version":$fedora}' \
-  > /usr/share/kaelix/image-info.json
+    "build-id":$build, "fedora-version":$fedora, "edicao":$edicao}' \
+  > /usr/share/matsu/image-info.json
 
 # ---------------------------------------------------------------------------
 log "Configurando a verificação de assinatura das atualizações"
-# A máquina só aceita imagens do Kaelix assinadas com a chave do criador.
-install -Dm0644 "${CTX}/cosign.pub" /etc/pki/containers/kaelix-os.pub
+# A máquina só aceita imagens do Matsu assinadas com a chave do criador.
+install -Dm0644 "${CTX}/cosign.pub" /etc/pki/containers/matsu-os.pub
 
-for img in kaelix-os kaelix-os-nvidia; do
+for img in matsu-os matsu-os-nvidia; do
   tmp=$(mktemp)
   jq --arg scope "${IMAGE_REGISTRY}/${img}" \
     '.transports.docker[$scope] = [{
         "type": "sigstoreSigned",
-        "keyPath": "/etc/pki/containers/kaelix-os.pub",
+        "keyPath": "/etc/pki/containers/matsu-os.pub",
         "signedIdentity": {"type": "matchRepository"}
      }]' /etc/containers/policy.json > "${tmp}"
   install -m0644 "${tmp}" /etc/containers/policy.json
   rm -f "${tmp}"
 done
 
-cat > /etc/containers/registries.d/kaelix-os.yaml <<EOF
+cat > /etc/containers/registries.d/matsu-os.yaml <<EOF
 docker:
   ${IMAGE_REGISTRY}:
     use-sigstore-attachments: true
@@ -156,7 +178,7 @@ EOF
 log "Português do Brasil como padrão"
 # O sistema já nasce em português, com data, moeda e horário do Brasil. Quem
 # preferir outro idioma troca na instalação ou nas configurações. O teclado
-# vem do instalador, que já deixa o ABNT2 marcado (installer/kaelix.ks.in).
+# vem do instalador, que já deixa o ABNT2 marcado (installer/matsu.ks.in).
 dnf5 -y install --skip-unavailable glibc-langpack-pt langpacks-core-pt_BR || true
 echo 'LANG=pt_BR.UTF-8' > /etc/locale.conf
 cat > /etc/xdg/plasma-localerc <<'EOF'
@@ -169,15 +191,15 @@ EOF
 ln -sfn ../usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 
 # ---------------------------------------------------------------------------
-log "Deixando o visual do Kaelix como padrão"
+log "Deixando o visual do Matsu como padrão"
 # O tema global (cores sem preto puro, papel de parede em pixel art e a barra em
 # três ilhas) fica em /usr/share/plasma/look-and-feel. Aqui ele vira o padrão
 # para toda conta nova. A pessoa pode trocar depois nas configurações.
 for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals; do
   if [[ $f == /etc/xdg/kdeglobals || -e $f ]]; then
-    kwriteconfig6 --file "$f" --group KDE --key LookAndFeelPackage org.kaelix.escuro.desktop
-    kwriteconfig6 --file "$f" --group General --key ColorScheme KaelixEscuro
-    kwriteconfig6 --file "$f" --group Icons --key Theme Kaelix
+    kwriteconfig6 --file "$f" --group KDE --key LookAndFeelPackage org.matsu.escuro.desktop
+    kwriteconfig6 --file "$f" --group General --key ColorScheme MatsuEscuro
+    kwriteconfig6 --file "$f" --group Icons --key Theme Matsu
     # Letra do sistema: Inter, como no vídeo da fusão (se a fonte entrou).
     if fc-list : family | grep -qx "Inter"; then
       kwriteconfig6 --file "$f" --group General --key font "Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
@@ -189,10 +211,10 @@ for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kde
   fi
 done
 # A barra padrão (fusão) dos temas globais é montada a partir dos mesmos arquivos
-# que o comando "kaelix barra" usa, para existir uma fonte só.
-for tema in org.kaelix.escuro.desktop org.kaelix.claro.desktop; do
+# que o comando "matsu barra" usa, para existir uma fonte só.
+for tema in org.matsu.escuro.desktop org.matsu.claro.desktop; do
   mkdir -p "/usr/share/plasma/look-and-feel/$tema/contents/layouts"
-  cat /usr/share/kaelix/barra/comum.js /usr/share/kaelix/barra/fusao.js /usr/share/kaelix/barra/papel-de-parede.js \
+  cat /usr/share/matsu/barra/comum.js /usr/share/matsu/barra/fusao.js /usr/share/matsu/barra/papel-de-parede.js \
     > "/usr/share/plasma/look-and-feel/$tema/contents/layouts/org.kde.plasma.desktop-layout.js"
 done
 # Papel de parede animado: a peça do KDE do Waywallen, que mostra na área de
@@ -210,65 +232,65 @@ if [[ -n $ww_url ]] && curl -fsSL --retry 3 -o /tmp/waywallen-kde.zip "$ww_url";
 else
   echo "AVISO: não deu para baixar a peça do KDE do Waywallen; o papel animado fica para depois"
 fi
-# Tela de boas-vindas do primeiro uso com a cara do Kaelix (endereço do projeto).
+# Tela de boas-vindas do primeiro uso com a cara do Matsu (endereço do projeto).
 sed -i "s|@REPO_URL@|${REPO_URL}|" /usr/share/plasma/plasma-welcome/intro-customization.desktop
-# Tela de carregamento depois da senha: o emblema do Kaelix no lugar do logo do KDE.
+# Tela de carregamento depois da senha: o emblema do Matsu no lugar do logo do KDE.
 kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Engine KSplashQML
-kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Theme org.kaelix.escuro.desktop
+kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Theme org.matsu.escuro.desktop
 chmod 0644 /etc/xdg/ksplashrc
-# Tela de login e tela de bloqueio com o papel de parede do Kaelix.
+# Tela de login e tela de bloqueio com o papel de parede do Matsu.
 for f in /etc/plasmalogin.conf /etc/xdg/kscreenlockerrc; do
   for chave in Image PreviewImage; do
     kwriteconfig6 --file "$f" --group Greeter --group Wallpaper --group org.kde.image --group General \
-      --key "$chave" "file:///usr/share/wallpapers/Kaelix"
+      --key "$chave" "file:///usr/share/wallpapers/Matsu"
   done
   chmod 0644 "$f"
 done
 # Para o registro da montagem: o que a tela de login lê.
 ls -la /etc/plasmalogin.conf* /usr/lib/plasmalogin* /usr/share/plasmalogin* 2>/dev/null || true
 cat /etc/plasmalogin.conf
-# Atalhos do Kaelix como no Windows: Meta+A abre a central, Meta+N as
+# Atalhos do Matsu como no Windows: Meta+A abre a central, Meta+N as
 # notificações e o calendário, Meta+B a setinha da bandeja. No KDE o Meta+A
 # trocava de "atividade" e não deixava a central pegar o atalho. O "Meta+A"
 # não pode aparecer em nenhuma das duas partes da linha (a usada e a padrão):
 # com "none,Meta+A" o KDE acabou devolvendo o Meta+A para as atividades.
-# Contas antigas são arrumadas no login por plasma-workspace/env/kaelix-atalhos.sh.
+# Contas antigas são arrumadas no login por plasma-workspace/env/matsu-atalhos.sh.
 kwriteconfig6 --file /etc/xdg/kglobalshortcutsrc --group plasmashell --key "next activity" "none,none,Percorrer as atividades"
 chmod 0644 /etc/xdg/kglobalshortcutsrc
 grep -i -e "meta+a" -e "meta+n" -e "meta+b" /etc/xdg/kglobalshortcutsrc || true
-# Tema Plasma do Kaelix: ilhas de vidro com cantos redondos (o resto vem do KDE).
-kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Kaelix
+# Tema Plasma do Matsu: ilhas de vidro com cantos redondos (o resto vem do KDE).
+kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Matsu
 chmod 0644 /etc/xdg/plasmarc
-# Botões de janela do Kaelix (bolinhas rosa, azul e verde água), compilados na
+# Botões de janela do Matsu (bolinhas rosa, azul e verde água), compilados na
 # etapa "deco" do Containerfile. Entram no lugar da moldura padrão.
 if [[ -s /deco/org.kde.breeze.so && -s /deco/destino ]]; then
   install -m0755 /deco/org.kde.breeze.so "$(cat /deco/destino)"
-  echo "Botões de janela do Kaelix instalados em $(cat /deco/destino)"
+  echo "Botões de janela do Matsu instalados em $(cat /deco/destino)"
 else
-  echo "ERRO: os botões de janela do Kaelix não foram compilados." >&2
+  echo "ERRO: os botões de janela do Matsu não foram compilados." >&2
   exit 1
 fi
-# Janela dos apps do Kaelix feitos em QML (Gerenciador de tarefas), também
+# Janela dos apps do Matsu feitos em QML (Gerenciador de tarefas), também
 # compilada na etapa "deco". Ela dá a cada app a identidade do seu .desktop,
 # para a barra mostrar o ícone e o nome certos.
-if [[ -s /deco/kaelix-janela ]]; then
-  install -Dm0755 /deco/kaelix-janela /usr/libexec/kaelix/kaelix-janela
-  echo "kaelix-janela instalada"
+if [[ -s /deco/matsu-janela ]]; then
+  install -Dm0755 /deco/matsu-janela /usr/libexec/matsu/matsu-janela
+  echo "matsu-janela instalada"
 else
-  echo "ERRO: a kaelix-janela não foi compilada." >&2
+  echo "ERRO: a matsu-janela não foi compilada." >&2
   exit 1
 fi
-python3 -c "import ast,sys; ast.parse(open('/usr/share/kaelix/tarefas/ajudante.py').read())"
+python3 -c "import ast,sys; ast.parse(open('/usr/share/matsu/tarefas/ajudante.py').read())"
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
-# Alt+Tab como no Windows 11: as janelas em miniatura lado a lado, no vidro do Kaelix.
+# Alt+Tab como no Windows 11: as janelas em miniatura lado a lado, no vidro do Matsu.
 kwriteconfig6 --file /etc/xdg/kwinrc --group TabBox --key LayoutName thumbnail_grid
 chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
 
-# Terminal do Kaelix (como no vídeo): perfil próprio com vidro, sem barra de
+# Terminal do Matsu (como no vídeo): perfil próprio com vidro, sem barra de
 # menu e sem barra de ferramentas. O tema claro troca para o perfil claro.
-kwriteconfig6 --file /etc/xdg/konsolerc --group "Desktop Entry" --key DefaultProfile Kaelix.profile
+kwriteconfig6 --file /etc/xdg/konsolerc --group "Desktop Entry" --key DefaultProfile Matsu.profile
 kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --key MenuBar Disabled
 kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --group "Toolbar mainToolBar" --key Hidden true
 kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --group "Toolbar sessionToolbar" --key Hidden true
@@ -280,34 +302,34 @@ kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key ShowStatusBar true
 kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key ShowFullPathInTitlebar false
 chmod 0644 /etc/xdg/konsolerc /etc/xdg/dolphinrc
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
-# Ícones próprios dos apps do sistema (tema de ícones Kaelix). Fica no registro
+# Ícones próprios dos apps do sistema (tema de ícones Matsu). Fica no registro
 # qual nome de ícone cada app pede, para conferir que o nosso está cobrindo.
 grep -H '^Icon=' /usr/share/applications/org.kde.{dolphin,konsole,discover,plasma-systemmonitor,kwrite,kate,spectacle,gwenview}.desktop \
   /usr/share/applications/{systemsettings,kdesystemsettings}.desktop 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
-log "Ligando os serviços do Kaelix"
+log "Ligando os serviços do Matsu"
 # Flathub e os apps Flatpak que já vêm (Heroic, Lutris, OBS, Kdenlive...).
-systemctl enable kaelix-flatpak-setup.service
+systemctl enable matsu-flatpak-setup.service
 # Central de jogos: o ajudante que liga o perfil gráfico e a sobreposição
 # quando um jogo abre (e desfaz tudo quando ele fecha), na sessão de cada pessoa.
-systemctl --global enable kaelix-jogos.service
-chmod 0755 /usr/libexec/kaelix/kaelix-jogos-placa
+systemctl --global enable matsu-jogos.service
+chmod 0755 /usr/libexec/matsu/matsu-jogos-placa
 
 # ---------------------------------------------------------------------------
-log "Tela de boot do Kaelix"
-# Tema próprio do Plymouth (visual/boot/gerar.py): o emblema Asas no fundo
-# índigo com três pontos pulsando, igual à tela que aparece depois da senha.
+log "Tela de boot do Matsu"
+# Tema próprio do Plymouth (visual/boot/gerar.py): o pinheiro do Matsu no fundo
+# quase preto com três pontos pulsando, igual à tela que aparece depois da senha.
 # Os ícones do teclado e do Caps Lock da senha do disco vêm do tema do Fedora.
 for f in keyboard.png keymap-render.png capslock.png; do
   if [[ -f /usr/share/plymouth/themes/spinner/$f ]]; then
-    cp "/usr/share/plymouth/themes/spinner/$f" /usr/share/plymouth/themes/kaelix/
+    cp "/usr/share/plymouth/themes/spinner/$f" /usr/share/plymouth/themes/matsu/
   fi
 done
 mkdir -p /etc/plymouth
 printf '%s\n' \
-  "# Kaelix OS: tela de boot própria. O resto vem de /usr/share/plymouth/plymouthd.defaults." \
-  "[Daemon]" "Theme=kaelix" > /etc/plymouth/plymouthd.conf
+  "# Matsu OS: tela de boot própria. O resto vem de /usr/share/plymouth/plymouthd.defaults." \
+  "[Daemon]" "Theme=matsu" > /etc/plymouth/plymouthd.conf
 # A tela de boot mora dentro do initramfs, então ele é refeito aqui com o tema
 # novo (do mesmo jeito que o Bazzite e o Bluefin fazem).
 for kdir in /usr/lib/modules/*/; do
@@ -316,11 +338,11 @@ for kdir in /usr/lib/modules/*/; do
   DRACUT_NO_XATTR=1 dracut --no-hostonly --kver "$kver" --reproducible --zstd --add ostree \
     -f "${kdir}initramfs.img"
   chmod 0600 "${kdir}initramfs.img"
-  echo "initramfs $kver: $(lsinitrd "${kdir}initramfs.img" 2>/dev/null | grep -c 'plymouth/themes/kaelix/' || true) arquivos do tema kaelix"
+  echo "initramfs $kver: $(lsinitrd "${kdir}initramfs.img" 2>/dev/null | grep -c 'plymouth/themes/matsu/' || true) arquivos do tema matsu"
 done
 
 # ---------------------------------------------------------------------------
-log "Telas de login, bloqueio e sair com a cara do Kaelix"
+log "Telas de login, bloqueio e sair com a cara do Matsu"
 # Essas telas vêm prontas dentro dos programas do KDE; o script troca só o
 # desenho das peças que elas dividem (relógio, foto da pessoa e botões).
 python3 "$CTX/build_files/telas-kde.py"

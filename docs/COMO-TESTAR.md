@@ -1,4 +1,4 @@
-# Como testar o Kaelix OS
+# Como testar o Matsu OS
 
 Primeiro numa **máquina virtual**, para nenhum erro tocar no PC de verdade. Depois no **SSD separado**, em dual boot.
 
@@ -6,7 +6,7 @@ Primeiro numa **máquina virtual**, para nenhum erro tocar no PC de verdade. Dep
 
 1. No repositório, abra a aba **Actions**.
 2. Escolha **Montar ISO** → **Run workflow** → canal `teste` → **Run workflow**.
-3. Quando terminar (uns 15 minutos), abra a execução e baixe `kaelix-os-teste-...-amd.iso` em **Artifacts**.
+3. Quando terminar (uns 15 minutos), abra a execução e baixe `matsu-os-teste-...-amd.iso` em **Artifacts**.
    Ela vem dentro de um `.zip`: extraia antes de usar.
 
 A ISO é um instalador de rede (cerca de 1 GB). **Precisa de internet durante a instalação**, porque ela baixa
@@ -33,10 +33,10 @@ Jogos ficam para o teste no SSD.
 
 - [ ] Instala e liga até a área de trabalho.
 - [ ] Aparece a pergunta do navegador no primeiro login.
-- [ ] `kaelix versao` mostra a imagem `kaelix-os:teste`.
-- [ ] `kaelix atualizar` termina sem erro (e liga a verificação de assinatura).
+- [ ] `matsu versao` mostra a imagem `matsu-os:teste`.
+- [ ] `matsu atualizar` termina sem erro (e liga a verificação de assinatura).
 - [ ] Steam, Heroic, Lutris, OBS e Kdenlive aparecem no menu (os Flatpak podem levar alguns minutos depois do primeiro boot).
-- [ ] `kaelix seguranca` cria o contêiner do Kali.
+- [ ] `matsu seguranca` cria o contêiner do Kali.
 
 ## 3. No SSD NVMe, em dual boot com o Windows
 
@@ -51,15 +51,15 @@ Antes de instalar:
 
 - [ ] Liga pelo menu de boot e o Windows continua aparecendo lá.
 - [ ] As duas telas funcionam, na taxa de atualização certa.
-- [ ] A RX 580 aparece em `kaelix drivers` com o driver `amdgpu`.
+- [ ] A RX 580 aparece em `matsu drivers` com o driver `amdgpu`.
 - [ ] Um jogo da Steam abre e roda.
-- [ ] Recebe uma atualização assinada com `kaelix atualizar`.
+- [ ] Recebe uma atualização assinada com `matsu atualizar`.
 - [ ] O relógio fica certo ao voltar para o Windows (ver a lista de acompanhamento).
 
 ### Bandeja perto do relógio (como no Windows)
 
 Os ícones dos apps que ficam rodando em segundo plano aparecem na ilha da
-direita, à esquerda da pílula de rede e som. O Kaelix é KDE, então isso já vem
+direita, à esquerda da pílula de rede e som. O Matsu é KDE, então isso já vem
 pronto, sem instalar extensão. Para conferir no PC:
 
 1. Abra a Steam e o Discord (instale pela Loja, se quiser) e feche a janela
@@ -73,7 +73,7 @@ pronto, sem instalar extensão. Para conferir no PC:
 - [ ] No tema claro (central de controle, botão "Modo escuro") os ícones continuam
       fáceis de ver.
 - [ ] Um app antigo também aparece. Os apps antigos usam um jeito velho de bandeja
-      (XEmbed), que o Kaelix converte sozinho para o novo. Exemplo: um programa do
+      (XEmbed), que o Matsu converte sozinho para o novo. Exemplo: um programa do
       Windows aberto pelo Wine ou pelo Proton que fica na bandeja.
 
 Se um ícone não aparecer, estes comandos no terminal mostram o que a bandeja

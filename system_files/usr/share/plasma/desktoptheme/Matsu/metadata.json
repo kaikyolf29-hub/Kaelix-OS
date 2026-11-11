@@ -1,0 +1,17 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ],
+        "Category": "",
+        "Description": "Ilhas de vidro com cantos redondos, a cara do Matsu OS",
+        "EnabledByDefault": true,
+        "Id": "Matsu",
+        "License": "MIT",
+        "Name": "Matsu",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "5.0"
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-# Teste da bandeja na VM (só entra na imagem de teste, como kaelix-teste-bandeja).
+# Teste da bandeja na VM (só entra na imagem de teste, como matsu-teste-bandeja).
 # Abre apps de bandeja de verdade, um de cada jeito que os apps usam:
 #   CopyQ    Qt, protocolo novo (StatusNotifierItem), o mesmo do Discord e da Steam
 #   udiskie  GTK com a libayatana-appindicator (AppIndicator)
@@ -24,4 +24,4 @@ rpm -q libayatana-appindicator-gtk3 libappindicator-gtk3 | sed 's/^/   /'
 echo "== Apps abertos:"
 pgrep -a -f 'copyq|udiskie' | grep -v pgrep | sed 's/^/   /'
 
-notify-send -a "Kaelix" -i kaelix-menu "Teste da central de notificações" "Esta notificação aparece no balão do relógio (Meta+N)."
+notify-send -a "Matsu" -i matsu-menu "Teste da central de notificações" "Esta notificação aparece no balão do relógio (Meta+N)."

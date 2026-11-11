@@ -1,7 +1,7 @@
-# Monta a ISO de instalação do Kaelix OS.
+# Monta a ISO de instalação do Matsu OS.
 #
 # É um instalador de rede (cerca de 1 GB): ele usa o instalador oficial do Fedora
-# e baixa a imagem assinada do Kaelix direto do ghcr.io durante a instalação.
+# e baixa a imagem assinada do Matsu direto do ghcr.io durante a instalação.
 # Assim a pessoa sempre instala a versão mais nova do canal escolhido.
 #
 # Rodado à mão: gera a ISO do canal escolhido e deixa para baixar na página do fluxo.
@@ -41,9 +41,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: kaelix-os
+          - image: matsu-os
             suffix: amd
-          - image: kaelix-os-nvidia
+          - image: matsu-os-nvidia
             suffix: nvidia
     steps:
       - uses: actions/checkout@v5
@@ -56,11 +56,13 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           echo "IMAGE_REF=ghcr.io/${OWNER}/${{ matrix.image }}:${CANAL}" >> "$GITHUB_ENV"
           if [ -n "$RELEASE_TAG" ]; then
-            NAME="kaelix-os-${RELEASE_TAG#v}-${{ matrix.suffix }}.iso"
+            NAME="matsu-os-${RELEASE_TAG#v}-${{ matrix.suffix }}.iso"
           else
-            NAME="kaelix-os-${CANAL}-$(date -u +%Y%m%d)-${{ matrix.suffix }}.iso"
+            NAME="matsu-os-${CANAL}-$(date -u +%Y%m%d)-${{ matrix.suffix }}.iso"
           fi
           echo "ISO_NAME=${NAME}" >> "$GITHUB_ENV"
+          # O nome com a edição do ano (arquivo EDICAO: 27 = "Matsu 27 OS").
+          echo "NOME_SISTEMA=Matsu $(tr -dc '0-9' < EDICAO) OS" >> "$GITHUB_ENV"
 
       - name: Baixar e conferir o instalador de rede do Fedora
         run: |
@@ -80,20 +82,20 @@ jobs:
 
       - name: Escrever o kickstart
         run: |
-          sed "s|@IMAGE_REF@|${IMAGE_REF}|g" installer/kaelix.ks.in > kaelix.ks
-          cat kaelix.ks
+          sed "s|@IMAGE_REF@|${IMAGE_REF}|g" installer/matsu.ks.in > matsu.ks
+          cat matsu.ks
 
-      - name: Montar a cara do Kaelix no instalador
+      - name: Montar a cara do Matsu no instalador
         env:
           CANAL: ${{ inputs.canal }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           # As imagens e o estilo vêm de installer/marca (visual/instalador/gerar.py).
-          # O .buildstamp troca o nome "Fedora" por "Kaelix OS" nas telas do instalador.
+          # O .buildstamp troca o nome "Fedora" por "Matsu 27 OS" nas telas do instalador.
           VERSAO="${RELEASE_TAG#v}"
           [ -n "$VERSAO" ] || VERSAO="$CANAL"
           rm -rf marca && cp -a installer/marca marca
-          printf '%s\n' "[Main]" "Product=Kaelix OS" "Version=${VERSAO}" "IsFinal=True" \
+          printf '%s\n' "[Main]" "Product=${NOME_SISTEMA}" "Version=${VERSAO}" "IsFinal=True" \
             "BugURL=https://github.com/${GITHUB_REPOSITORY}/issues" "Variant=Everything" > marca/.buildstamp
           cat marca/.buildstamp
           (cd marca && find . -print | cpio --quiet -o -H newc | gzip -9) > updates.img
@@ -102,15 +104,15 @@ jobs:
       - name: Montar a ISO
         run: |
           mkdir -p out
-          # O menu de boot da ISO ganha o nome do Kaelix, em português e sem
+          # O menu de boot da ISO ganha o nome do Matsu, em português e sem
           # acento (nem todo PC mostra acento nessa tela).
           cat > mkiso.sh <<EOF
           set -euo pipefail
           dnf -y install lorax xorriso isomd5sum > /dev/null
-          mkksiso --ks /work/kaelix.ks --updates /work/updates.img \\
-            -R 'Test this media & install Fedora ${FEDORA_VERSION}' 'Conferir o pendrive e instalar o Kaelix OS' \\
-            -R 'Install Fedora ${FEDORA_VERSION} in basic graphics mode' 'Instalar o Kaelix OS em modo simples' \\
-            -R 'Install Fedora ${FEDORA_VERSION}' 'Instalar o Kaelix OS' \\
+          mkksiso --ks /work/matsu.ks --updates /work/updates.img \\
+            -R 'Test this media & install Fedora ${FEDORA_VERSION}' 'Conferir o pendrive e instalar o ${NOME_SISTEMA}' \\
+            -R 'Install Fedora ${FEDORA_VERSION} in basic graphics mode' 'Instalar o ${NOME_SISTEMA} em modo simples' \\
+            -R 'Install Fedora ${FEDORA_VERSION}' 'Instalar o ${NOME_SISTEMA}' \\
             -R 'Rescue a Fedora system' 'Consertar um sistema instalado' \\
             -R 'Troubleshooting' 'Se algo der errado' \\
             /work/netinst.iso /work/out/${ISO_NAME}

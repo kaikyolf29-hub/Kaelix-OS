@@ -1,6 +1,6 @@
-// Kaelix OS — abre um app do Kaelix feito em QML numa janela própria.
+// Matsu OS — abre um app do Matsu feito em QML numa janela própria.
 //
-// Uso: kaelix-janela <id do app> <arquivo .qml> [argumentos para o app]
+// Uso: matsu-janela <id do app> <arquivo .qml> [argumentos para o app]
 //
 // O id é o nome do arquivo .desktop do app, sem o ".desktop". Ele vira a
 // identidade da janela (o "app_id" no Wayland): é por ela que a barra, o
@@ -11,15 +11,15 @@
 // Se o app já estiver aberto, a janela que existe vem para a frente (como no
 // Windows, quando se abre o Gerenciador de tarefas de novo).
 //
-// O QML recebe o objeto "kaelix" para rodar os ajudantes do app:
-//   kaelix.iniciar(chave, [programa, args...])  fica rodando; cada linha da
+// O QML recebe o objeto "matsu" para rodar os ajudantes do app:
+//   matsu.iniciar(chave, [programa, args...])  fica rodando; cada linha da
 //                                               saída chega no sinal linha(chave, texto)
-//   kaelix.rodar(chave, [programa, args...])    roda uma vez; o fim chega no sinal
+//   matsu.rodar(chave, [programa, args...])    roda uma vez; o fim chega no sinal
 //                                               pronto(chave, saida, codigo)
-//   kaelix.soltar([programa, args...])          abre um programa solto, que continua
+//   matsu.soltar([programa, args...])          abre um programa solto, que continua
 //                                               aberto mesmo se o app fechar
-//   kaelix.argumentos                           os argumentos extras da linha de comando
-//   kaelix.ativarVidro(janela, raio)            janela de vidro: desfoca o que está atrás
+//   matsu.argumentos                           os argumentos extras da linha de comando
+//   matsu.ativarVidro(janela, raio)            janela de vidro: desfoca o que está atrás
 //                                               (efeito Desfoque do KWin), com cantos
 //                                               redondos e sombra; devolve se o desfoque existe
 //   sinal pedido(argumentos)                    o app foi aberto de novo com outros argumentos
@@ -222,21 +222,21 @@ static bool temDesfoque()
 #endif
 }
 
-class Kaelix : public QObject
+class Matsu : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList argumentos READ argumentos CONSTANT)
     Q_PROPERTY(QString appId READ appId CONSTANT)
 
 public:
-    Kaelix(const QString &appId, const QStringList &argumentos, QObject *pai = nullptr)
+    Matsu(const QString &appId, const QStringList &argumentos, QObject *pai = nullptr)
         : QObject(pai)
         , m_appId(appId)
         , m_argumentos(argumentos)
     {
     }
 
-    ~Kaelix() override
+    ~Matsu() override
     {
         for (QProcess *p : std::as_const(m_vigias)) {
             p->disconnect(this);
@@ -382,7 +382,7 @@ static void trazer(QQuickWindow *janela, const QByteArray &ficha)
 int main(int argc, char *argv[])
 {
     if (argc < 3) {
-        std::fprintf(stderr, "uso: kaelix-janela <id do app> <arquivo .qml> [argumentos]\n");
+        std::fprintf(stderr, "uso: matsu-janela <id do app> <arquivo .qml> [argumentos]\n");
         return 2;
     }
 
@@ -400,7 +400,7 @@ int main(int argc, char *argv[])
 
     // Já está aberto? Manda a ficha de ativação e os argumentos para ele e sai.
     const QString pasta = qEnvironmentVariable("XDG_RUNTIME_DIR", QDir::tempPath());
-    const QString canal = pasta + QStringLiteral("/kaelix-janela-") + id;
+    const QString canal = pasta + QStringLiteral("/matsu-janela-") + id;
     {
         QLocalSocket outro;
         outro.connectToServer(canal);
@@ -423,12 +423,12 @@ int main(int argc, char *argv[])
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     }
-    // Janelas com transparência (o vidro dos apps do Kaelix).
+    // Janelas com transparência (o vidro dos apps do Matsu).
     QQuickWindow::setDefaultAlphaBuffer(true);
 
-    Kaelix kaelix(id, extras);
+    Matsu matsu(id, extras);
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty(QStringLiteral("kaelix"), &kaelix);
+    engine.rootContext()->setContextProperty(QStringLiteral("matsu"), &matsu);
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
@@ -443,9 +443,9 @@ int main(int argc, char *argv[])
     }
     QPointer<QQuickWindow> janela = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
 
-    QObject::connect(&servidor, &QLocalServer::newConnection, &app, [&servidor, &kaelix, janela]() {
+    QObject::connect(&servidor, &QLocalServer::newConnection, &app, [&servidor, &matsu, janela]() {
         while (QLocalSocket *c = servidor.nextPendingConnection()) {
-            QObject::connect(c, &QLocalSocket::disconnected, c, [c, &kaelix, janela]() {
+            QObject::connect(c, &QLocalSocket::disconnected, c, [c, &matsu, janela]() {
                 const QList<QByteArray> linhas = c->readAll().split('\n');
                 const QByteArray ficha = linhas.value(0).trimmed();
                 QStringList args;
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
                 }
                 trazer(janela, ficha);
                 if (!args.isEmpty()) {
-                    Q_EMIT kaelix.pedido(args);
+                    Q_EMIT matsu.pedido(args);
                 }
                 c->deleteLater();
             });

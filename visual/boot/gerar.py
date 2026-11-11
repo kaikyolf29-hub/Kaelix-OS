@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Tela de boot do Kaelix (tema do Plymouth "kaelix").
+"""Tela de boot do Matsu (tema do Plymouth "matsu").
 
-É a mesma cara da tela que aparece depois da senha: fundo índigo do logo, o
-emblema Asas no meio, o nome "Kaelix OS" embaixo e três pontos pulsando (rosa,
-azul e verde água). Assim, ligar o PC, entrar e carregar parecem uma coisa só.
+É a mesma cara da tela que aparece depois da senha: o fundo quase preto do
+logo, o pinheiro no meio, o nome "Matsu 27 OS" embaixo e três pontos pulsando
+(rosa, lilás e verde água). Assim, ligar o PC, entrar e carregar parecem uma
+coisa só. O número da edição vem do arquivo EDICAO, na raiz do repositório.
 
 Usa o módulo "two-step" do Plymouth (o mesmo dos temas do Fedora), que já
 cuida da senha do disco criptografado e da tela de atualização.
@@ -26,13 +27,15 @@ from PySide6.QtGui import (  # noqa: E402
 from PySide6.QtSvg import QSvgRenderer  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parents[2]
-EMBLEMA = RAIZ / "visual/logo/kaelix-emblema-claro.svg"
-SAIDA = RAIZ / "system_files/usr/share/plymouth/themes/kaelix"
+EMBLEMA = RAIZ / "visual/logo/matsu-emblema-claro.svg"
+SAIDA = RAIZ / "system_files/usr/share/plymouth/themes/matsu"
 
-FUNDO = "#12152B"
-TEXTO = "#F4F6FF"
-DESTAQUE = "#5468E8"
-PONTOS = ["#F0609E", "#8FA2FF", "#45D0C1"]
+EDICAO = (RAIZ / "EDICAO").read_text().strip()
+NOME = f"Matsu {EDICAO} OS"
+FUNDO = "#141517"
+TEXTO = "#F4F5F7"
+DESTAQUE = "#D9DBE0"
+PONTOS = ["#F0609E", "#B18CF5", "#45D0C1"]
 
 # Medidas da tela de carregamento depois da senha (Splash.qml) numa tela
 # 1920x1080, para as duas ficarem iguais.
@@ -77,7 +80,7 @@ def fonte_nome():
 
 
 class Medidas:
-    """Onde cada coisa fica dentro do quadro do Kaelix.
+    """Onde cada coisa fica dentro do quadro do Matsu.
 
     A marca d'água (emblema e nome) e os quadros dos pontos têm o mesmo tamanho e
     ficam os dois no meio da tela. Assim os pontos ficam sempre na mesma distância
@@ -88,7 +91,7 @@ class Medidas:
     def __init__(self):
         fm = QFontMetricsF(fonte_nome())
         self.alt_nome = math.ceil(fm.height())
-        self.larg = max(LADO, math.ceil(fm.horizontalAdvance("Kaelix OS"))) + 24
+        self.larg = max(LADO, math.ceil(fm.horizontalAdvance(NOME))) + 24
         resto = LADO + NOME_ESPACO + self.alt_nome + PONTOS_ESPACO + PONTO
         # meio do emblema = A/2 - (folga + resto)/2 + folga + LADO/2 = A/2 - DESCE
         self.folga = round(resto - LADO - 2 * DESCE)
@@ -106,7 +109,7 @@ def marca(m):
     cor = QColor(TEXTO)
     cor.setAlphaF(0.92)
     p.setPen(cor)
-    p.drawText(QRectF(0, m.topo_nome, m.larg, m.alt_nome), Qt.AlignHCenter | Qt.AlignTop, "Kaelix OS")
+    p.drawText(QRectF(0, m.topo_nome, m.larg, m.alt_nome), Qt.AlignHCenter | Qt.AlignTop, NOME)
     p.end()
     return im
 
@@ -196,16 +199,16 @@ def tema():
     # senha e a barra de progresso das atualizações ficam onde estariam os pontos,
     # com folga para não encostar no nome numa tela pequena (1366x768).
     return f"""[Plymouth Theme]
-Name=Kaelix
-Name[pt_BR]=Kaelix
-Description=Kaelix OS boot screen: the Wings emblem on indigo with three pulsing dots.
-Description[pt_BR]=Tela de boot do Kaelix OS: o emblema Asas no fundo índigo, com três pontos pulsando.
+Name=Matsu
+Name[pt_BR]=Matsu
+Description={NOME} boot screen: the Japanese pine on near black with three pulsing dots.
+Description[pt_BR]=Tela de boot do {NOME}: o pinheiro japonês no fundo quase preto, com três pontos pulsando.
 ModuleName=two-step
 
 [two-step]
 Font=Inter 12
 TitleFont=Inter Light 30
-ImageDir=/usr/share/plymouth/themes/kaelix
+ImageDir=/usr/share/plymouth/themes/matsu
 DialogHorizontalAlignment=.5
 DialogVerticalAlignment=.72
 TitleHorizontalAlignment=.5
@@ -280,7 +283,7 @@ def main():
     campo_senha().save(str(SAIDA / "entry.png"))
     bolinha().save(str(SAIDA / "bullet.png"))
     cadeado().save(str(SAIDA / "lock.png"))
-    (SAIDA / "kaelix.plymouth").write_text(tema(), encoding="utf-8")
+    (SAIDA / "matsu.plymouth").write_text(tema(), encoding="utf-8")
     print(f"Tema do Plymouth em {SAIDA.relative_to(RAIZ)}: marca {im.width()}x{im.height()}, {QUADROS} quadros dos pontos")
 
 

@@ -5,7 +5,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CENTRAL="$ROOT/system_files/usr/libexec/kaelix/kaelix-central"
+CENTRAL="$ROOT/system_files/usr/libexec/matsu/matsu-central"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 MOCK="$WORK/bin"; mkdir -p "$MOCK"
@@ -20,10 +20,10 @@ mock() { # mock <nome> <corpo>
 
 run() { # run <args...>  -> saída em $OUT, código em $CODE
   : > "$CALLS"
-  OUT="$(PATH="$MOCK:$PATH" KAELIX_SYS_BACKLIGHT="$WORK/backlight" KAELIX_SYS_POWER="$WORK/power" \
-         KAELIX_SYS_BLUETOOTH="$WORK/bluetooth" KAELIX_STATE_DIR="$WORK/state" \
-         XDG_CONFIG_HOME="$WORK/config" KAELIX_WALL_DIRS="$WORK/papeis-meus:$WORK/papeis" KAELIX_BIN="$MOCK/kaelix" \
-         KAELIX_FLATPAK_DIRS="$WORK/flatpak" KAELIX_PLASMA_WALL_DIRS="$WORK/pecas" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
+  OUT="$(PATH="$MOCK:$PATH" MATSU_SYS_BACKLIGHT="$WORK/backlight" MATSU_SYS_POWER="$WORK/power" \
+         MATSU_SYS_BLUETOOTH="$WORK/bluetooth" MATSU_STATE_DIR="$WORK/state" \
+         XDG_CONFIG_HOME="$WORK/config" MATSU_WALL_DIRS="$WORK/papeis-meus:$WORK/papeis" MATSU_BIN="$MOCK/matsu" \
+         MATSU_FLATPAK_DIRS="$WORK/flatpak" MATSU_PLASMA_WALL_DIRS="$WORK/pecas" bash "$CENTRAL" "$@" 2>&1 </dev/null)"
   CODE=$?
 }
 
@@ -91,7 +91,7 @@ check "mostra o estilo da barra que a pessoa escolheu" linha "barra=mac"
 rm -rf "$WORK/state"
 
 echo "tema, não perturbe e luz noturna"
-mock kreadconfig6 'case "$*" in *LookAndFeelPackage*) echo org.kaelix.claro.desktop ;; *DoNotDisturb*) echo "2999,1,2,3,4,5" ;; *NightColor*) echo true ;; esac'
+mock kreadconfig6 'case "$*" in *LookAndFeelPackage*) echo org.matsu.claro.desktop ;; *DoNotDisturb*) echo "2999,1,2,3,4,5" ;; *NightColor*) echo true ;; esac'
 run estado
 check "tema claro" linha "escuro=0"
 check "não perturbe ligado enquanto a data está no futuro" linha "dnd=1"
@@ -126,13 +126,13 @@ check "destrava o Bluetooth antes de ligar" called "rfkill unblock bluetooth"
 run bluetooth off; check "desliga o Bluetooth" called "Powered b false"
 run nao-perturbe on;  check "liga o não perturbe com data no formato do KDE" bash -c "grep -Eq 'kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --notify [0-9]{4},[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$' '$CALLS'"
 run nao-perturbe off; check "desliga o não perturbe" called "--key Until --notify --delete"
-run tema claro;  check "troca para o tema claro" called "plasma-apply-lookandfeel -a org.kaelix.claro.desktop"
-run tema escuro; check "troca para o tema escuro" called "plasma-apply-lookandfeel -a org.kaelix.escuro.desktop"
+run tema claro;  check "troca para o tema claro" called "plasma-apply-lookandfeel -a org.matsu.claro.desktop"
+run tema escuro; check "troca para o tema escuro" called "plasma-apply-lookandfeel -a org.matsu.escuro.desktop"
 run tema roxo;   check "tema desconhecido é recusado" test "$CODE" -eq 2
-run tema claro;  check "o terminal acompanha o tema claro" called "kwriteconfig6 --file konsolerc --group Desktop Entry --key DefaultProfile KaelixClaro.profile"
-run tema escuro; check "o terminal acompanha o tema escuro" called "kwriteconfig6 --file konsolerc --group Desktop Entry --key DefaultProfile Kaelix.profile"
+run tema claro;  check "o terminal acompanha o tema claro" called "kwriteconfig6 --file konsolerc --group Desktop Entry --key DefaultProfile MatsuClaro.profile"
+run tema escuro; check "o terminal acompanha o tema escuro" called "kwriteconfig6 --file konsolerc --group Desktop Entry --key DefaultProfile Matsu.profile"
 mock kreadconfig6 'case "$*" in *DefaultProfile*) echo Meu.profile ;; esac'
-run tema claro;  check "perfil de terminal da pessoa não é trocado" bash -c "! grep -qF 'DefaultProfile KaelixClaro' '$CALLS'"
+run tema claro;  check "perfil de terminal da pessoa não é trocado" bash -c "! grep -qF 'DefaultProfile MatsuClaro' '$CALLS'"
 mock kreadconfig6 'exit 0'
 run luz-noturna on;  check "liga a luz noturna e avisa o sistema" bash -c "grep -qF -- '--key Active --notify true' '$CALLS' && grep -qF 'org.kde.KWin reconfigure' '$CALLS'"
 run luz-noturna off; check "desliga a luz noturna" called "--key Active --notify false"
@@ -155,8 +155,8 @@ mock busctl 'exit 0'
 run perfil desempenho; check "sem perfil de energia, avisa" test "$CODE" -eq 1
 run bloquear;  check "bloqueia a tela" called "loginctl lock-session"
 run sair;      check "abre a tela de desligar" called "org.kde.LogoutPrompt promptAll"
-echo "ajustes do Kaelix"
-mock kaelix 'exit 0'
+echo "ajustes do Matsu"
+mock matsu 'exit 0'
 mock plasma-apply-wallpaperimage 'exit 0'
 mock plasmawindowed 'exit 0'
 rm -rf "$WORK/state"
@@ -165,7 +165,7 @@ check "sem escolha, barra média e vidro padrão" bash -c "grep -qx 'barra_taman
 mkdir -p "$WORK/state" "$WORK/config"
 printf 'estilo=mac\ntamanho=grande\nesconder=sim\n' > "$WORK/state/barra"
 printf 'cor=roxo\ntransparencia=mais\n' > "$WORK/state/vidro"
-printf '[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///usr/share/wallpapers/Kaelix/\n' > "$WORK/config/plasma-org.kde.plasma.desktop-appletsrc"
+printf '[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///usr/share/wallpapers/Matsu/\n' > "$WORK/config/plasma-org.kde.plasma.desktop-appletsrc"
 run estado
 check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\" && grep -qx 'barra_esconder=1' <<<\"\$0\"" "$OUT"
 printf 'estilo=fusao\ntamanho=media\nesconder=nao\nbusca=meio\nmenu=meio\n' > "$WORK/state/barra"
@@ -175,23 +175,23 @@ printf 'estilo=fusao\nbusca=;rm\n' > "$WORK/state/barra"
 run estado
 check "busca guardada estranha vira o padrão" linha "barra_busca=esquerda"
 check "lê a cor e a transparência do vidro" bash -c "grep -qx 'vidro_cor=roxo' <<<\"\$0\" && grep -qx 'vidro_transparencia=mais' <<<\"\$0\"" "$OUT"
-check "lê o papel de parede sem file:// e sem a barra do fim" bash -c "grep -qx 'papel=/usr/share/wallpapers/Kaelix' <<<\"\$0\"" "$OUT"
+check "lê o papel de parede sem file:// e sem a barra do fim" bash -c "grep -qx 'papel=/usr/share/wallpapers/Matsu' <<<\"\$0\"" "$OUT"
 run vidro azul menos
-check "vidro chama o comando kaelix" called "kaelix vidro azul --transparencia menos"
+check "vidro chama o comando matsu" called "matsu vidro azul --transparencia menos"
 run vidro; check "vidro sem cor é recusado" test "$CODE" -eq 2
 run barra windows pequena
-check "barra chama o comando kaelix" called "kaelix barra windows --tamanho pequena"
+check "barra chama o comando matsu" called "matsu barra windows --tamanho pequena"
 run barra mac media sim
-check "barra pode pedir para se esconder sozinha" called "kaelix barra mac --tamanho media --esconder sim"
+check "barra pode pedir para se esconder sozinha" called "matsu barra mac --tamanho media --esconder sim"
 run barra fusao media nao meio esquerda
-check "barra pode levar a busca para a ilha do meio" called "kaelix barra fusao --tamanho media --esconder nao --busca meio --menu esquerda"
+check "barra pode levar a busca para a ilha do meio" called "matsu barra fusao --tamanho media --esconder nao --busca meio --menu esquerda"
 run barra linux; check "barra desconhecida é recusada" test "$CODE" -eq 2
-mkdir -p "$WORK/papeis/Kaelix/contents/images" "$WORK/papeis/Kaelix/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
-touch "$WORK/papeis/Kaelix/contents/images/3840x2160.png" "$WORK/papeis/Kaelix/contents/screenshot.png"
+mkdir -p "$WORK/papeis/Matsu/contents/images" "$WORK/papeis/Matsu/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
+touch "$WORK/papeis/Matsu/contents/images/3840x2160.png" "$WORK/papeis/Matsu/contents/screenshot.png"
 touch "$WORK/papeis/Nuvens/contents/images/3840x2160.jpg" "$WORK/papeis/Nuvens/contents/images/1280x720.jpg" "$WORK/papeis/Nuvens/contents/images/640x480.jpg"
-echo '{"KPlugin":{"Name":"Kaelix Pixel"}}' > "$WORK/papeis/Kaelix/metadata.json"
+echo '{"KPlugin":{"Name":"Matsu Pixel"}}' > "$WORK/papeis/Matsu/metadata.json"
 run papeis
-check "lista os papéis com nome e miniatura do pacote" has "papel|$WORK/papeis/Kaelix|Kaelix Pixel|$WORK/papeis/Kaelix/contents/screenshot.png"
+check "lista os papéis com nome e miniatura do pacote" has "papel|$WORK/papeis/Matsu|Matsu Pixel|$WORK/papeis/Matsu/contents/screenshot.png"
 check "sem miniatura usa a menor imagem" has "papel|$WORK/papeis/Nuvens|Nuvens|$WORK/papeis/Nuvens/contents/images/640x480.jpg"
 check "pasta sem imagens fica de fora" bash -c "! grep -qF vazio <<<\"\$0\"" "$OUT"
 run papel "$WORK/papeis/Nuvens"
@@ -214,7 +214,7 @@ mock flatpak 'exit 0'
 run abrir papel-animado
 check "abre o Waywallen" bash -c "sleep 0.3; grep -qF 'flatpak run org.waywallen.waywallen' '$CALLS'"
 run abrir ajustes
-check "abre os Ajustes do Kaelix" bash -c "sleep 0.3; grep -qF 'plasmawindowed org.kaelix.ajustes' '$CALLS'"
+check "abre os Ajustes do Matsu" bash -c "sleep 0.3; grep -qF 'plasmawindowed org.matsu.ajustes' '$CALLS'"
 run pagina-pedida; check "sem pedido não diz página" test -z "$OUT"
 # Os apps que a central abre saem no idioma da pessoa, não no LC_ALL=C do ajudante.
 mock plasmawindowed 'echo "plasmawindowed LC_ALL=${LC_ALL-nenhum}" >> "'"$CALLS"'"'
@@ -229,7 +229,7 @@ run pagina-pedida; check "o pedido vale uma vez só" test -z "$OUT"
 
 mock kstart 'exit 0'
 run abrir tarefas
-check "abre o Gerenciador de tarefas pelo .desktop" bash -c "sleep 0.3; grep -qF 'kstart --application org.kaelix.tarefas' '$CALLS'"
+check "abre o Gerenciador de tarefas pelo .desktop" bash -c "sleep 0.3; grep -qF 'kstart --application org.matsu.tarefas' '$CALLS'"
 
 mock kcmshell6 'exit 0'
 run abrir kcm kcm_keyboard
@@ -240,17 +240,17 @@ run dancar; check "comando desconhecido sai com código 2" test "$CODE" -eq 2
 run estado tudo; check "parte do estado desconhecida sai com código 2" test "$CODE" -eq 2
 
 echo "Idioma (para os Ajustes e a central)"
-LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=pt_BR.UTF-8 run estado
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" MATSU_LANG="" LANG=pt_BR.UTF-8 run estado
 check "LANG em português dá idioma=pt" linha "idioma=pt"
-LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=en_US.UTF-8 run estado
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" MATSU_LANG="" LANG=en_US.UTF-8 run estado
 check "LANG em inglês dá idioma=en" linha "idioma=en"
 mkdir -p "$WORK/config"; printf '[Translations]\nLANGUAGE=pt_BR:pt:en_US\n' > "$WORK/config/plasma-localerc"
-LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=C run estado
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" MATSU_LANG="" LANG=C run estado
 check "sem idioma no ambiente, lê o plasma-localerc" linha "idioma=pt"
 rm -f "$WORK/config/plasma-localerc"
-LC_ALL="" LC_MESSAGES="" LANGUAGE="pt_BR:pt" KAELIX_LANG="" LANG=en_US.UTF-8 run estado
+LC_ALL="" LC_MESSAGES="" LANGUAGE="pt_BR:pt" MATSU_LANG="" LANG=en_US.UTF-8 run estado
 check "LANGUAGE vale mais que o LANG" linha "idioma=pt"
-LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=pt_BR.UTF-8 run estado idioma
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" MATSU_LANG="" LANG=pt_BR.UTF-8 run estado idioma
 check "o menu pergunta só o idioma" test "$OUT" = "idioma=pt"
 
 echo

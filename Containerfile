@@ -1,7 +1,7 @@
-# Kaelix OS — imagem do sistema
+# Matsu OS — imagem do sistema
 #
 # Este arquivo descreve o sistema inteiro. O GitHub Actions monta a imagem a
-# partir dele, assina com cosign e publica em ghcr.io/<usuario>/kaelix-os.
+# partir dele, assina com cosign e publica em ghcr.io/<usuario>/matsu-os.
 #
 # Base: Fedora Atomic KDE (Kinoite) já com codecs, mantido pelo Universal Blue.
 #   - variante "main"   (AMD e Intel): ghcr.io/ublue-os/kinoite-main
@@ -16,8 +16,10 @@ FROM scratch AS ctx
 COPY build_files /build_files
 COPY system_files /system_files
 COPY cosign.pub /cosign.pub
+# O número da edição do ano (27 = edição 2027): o nome do sistema é "Matsu 27 OS".
+COPY EDICAO /EDICAO
 
-# Etapa que compila os botões de janela do Kaelix. Usa a mesma base da imagem,
+# Etapa que compila os botões de janela do Matsu. Usa a mesma base da imagem,
 # para a versão do KDE ser exatamente a mesma. Só o arquivo pronto (/out) vai
 # para a imagem final; os compiladores ficam de fora.
 FROM ${BASE_IMAGE}:${FEDORA_VERSION} AS deco
@@ -29,7 +31,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 
 FROM ${BASE_IMAGE}:${FEDORA_VERSION}
 
-ARG IMAGE_NAME=kaelix-os
+ARG IMAGE_NAME=matsu-os
 ARG IMAGE_VARIANT=main
 ARG IMAGE_REGISTRY=ghcr.io/kaikyolf29-hub
 ARG BUILD_ID=local
@@ -50,7 +52,7 @@ RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
 # Confere se a imagem segue as regras de uma imagem bootc válida.
 RUN bootc container lint
 
-LABEL org.opencontainers.image.title="Kaelix OS" \
-      org.opencontainers.image.description="Sistema operacional Kaelix OS, baseado em Fedora Atomic KDE" \
+LABEL org.opencontainers.image.title="Matsu OS" \
+      org.opencontainers.image.description="Sistema operacional Matsu OS, baseado em Fedora Atomic KDE" \
       org.opencontainers.image.licenses="GPL-3.0-only" \
       containers.bootc="1"

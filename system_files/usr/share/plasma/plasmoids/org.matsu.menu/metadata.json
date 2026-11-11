@@ -1,0 +1,23 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.matsu.menu",
+        "Name": "Matsu Menu",
+        "Name[pt_BR]": "Menu do Matsu",
+        "Description": "Apps, files and settings, with search, in the Matsu style",
+        "Description[pt_BR]": "Apps, arquivos e ajustes, com busca, no jeito do Matsu",
+        "Icon": "matsu-menu",
+        "Category": "Application Launchers",
+        "License": "MIT",
+        "Version": "1.0",
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.launchermenu"
+    ]
+}

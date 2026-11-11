@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ],
+        "Id": "Matsu",
+        "License": "GPL-3.0",
+        "Name": "Matsu: pôr do sol no lago",
+        "Name[en]": "Matsu: lake sunset"
+    }
+}

@@ -1,0 +1,43 @@
+[Desktop Entry]
+Type=Application
+Name=Game Center
+Name[pt_BR]=Central de jogos
+Name[pt]=Central de jogos
+GenericName=Game Center
+GenericName[pt_BR]=Central de jogos
+GenericName[pt]=Central de jogos
+Comment=Your games, graphics profiles, in-game overlay and graphics card, like the AMD Software
+Comment[pt_BR]=Seus jogos, perfis gráficos, sobreposição no jogo e placa de vídeo, como o AMD Software
+Comment[pt]=Os seus jogos, perfis gráficos, sobreposição no jogo e placa gráfica, como o AMD Software
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.jogos): assim a barra mostra o ícone e o nome certos.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml
+Icon=org.matsu.jogos
+Terminal=false
+Categories=Game;Settings;HardwareSettings;Qt;KDE;
+Keywords=jogos;games;steam;fps;sobreposição;overlay;mangohud;modo jogo;gamemode;placa de vídeo;gpu;driver;amd;nvidia;radeon;desempenho;performance;perfil;gráficos;graphics;
+StartupNotify=true
+StartupWMClass=org.matsu.jogos
+SingleMainWindow=true
+Actions=Jogos;Sobreposicao;Placa;
+
+[Desktop Action Jogos]
+Name=My games
+Name[pt_BR]=Meus jogos
+Name[pt]=Os meus jogos
+Icon=matsu-jogos-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml jogos
+
+[Desktop Action Sobreposicao]
+Name=In-game overlay
+Name[pt_BR]=Sobreposição no jogo
+Name[pt]=Sobreposição no jogo
+Icon=matsu-sobreposicao-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml sobreposicao
+
+[Desktop Action Placa]
+Name=Graphics card
+Name[pt_BR]=Placa de vídeo
+Name[pt]=Placa gráfica
+Icon=matsu-placa-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml placa

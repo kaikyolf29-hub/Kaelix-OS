@@ -1,0 +1,38 @@
+[Desktop Entry]
+Type=Application
+Name=Task Manager
+Name[pt_BR]=Gerenciador de tarefas
+Name[pt]=Gestor de tarefas
+GenericName=Task Manager
+GenericName[pt_BR]=Gerenciador de tarefas
+GenericName[pt]=Gestor de tarefas
+Comment=Apps, processes and performance of your computer, like the Windows Task Manager
+Comment[pt_BR]=Apps, processos e desempenho do computador, como o Gerenciador de Tarefas do Windows
+Comment[pt]=Apps, processos e desempenho do computador, como o Gestor de Tarefas do Windows
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.tarefas): assim a barra mostra o ícone e o nome certos.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.tarefas /usr/share/matsu/tarefas/Main.qml
+Icon=org.matsu.tarefas
+Terminal=false
+Categories=System;Monitor;Qt;KDE;
+Keywords=gerenciador;tarefas;processos;desempenho;cpu;memória;ram;disco;rede;placa de vídeo;gpu;inicialização;finalizar;task;manager;processes;performance;startup;
+StartupNotify=true
+StartupWMClass=org.matsu.tarefas
+SingleMainWindow=true
+# Ctrl+Shift+Esc, como no Windows (o KDE lê este atalho pela cópia em /usr/share/kglobalaccel).
+X-KDE-Shortcuts=Ctrl+Shift+Esc
+Actions=Desempenho;Inicializacao;
+
+[Desktop Action Desempenho]
+Name=Performance
+Name[pt_BR]=Desempenho
+Name[pt]=Desempenho
+Icon=matsu-desempenho-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.tarefas /usr/share/matsu/tarefas/Main.qml desempenho
+
+[Desktop Action Inicializacao]
+Name=Startup apps
+Name[pt_BR]=Inicialização
+Name[pt]=Arranque
+Icon=matsu-inicializacao-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.tarefas /usr/share/matsu/tarefas/Main.qml inicializacao

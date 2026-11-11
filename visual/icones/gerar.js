@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Gera os ícones próprios do Kaelix (apps do sistema) como SVG.
+// Gera os ícones próprios do Matsu (apps do sistema) como SVG.
 // Uso: node gerar.js <pasta de saída>
-// Estilo: quadrado arredondado com degradê da paleta do Kaelix e desenho claro,
+// Estilo: quadrado arredondado com degradê da paleta do Matsu e desenho claro,
 // de traço grosso e cantos arredondados, para ler bem até em 22 px na barra.
 const fs = require('fs');
 const path = require('path');
 
-const B = '#F4F6FF';                       // branco do Kaelix (nunca branco puro)
+const B = '#F4F6FF';                       // branco do Matsu (nunca branco puro)
 const liso = `stroke-linejoin="round" stroke-linecap="round"`;
 
 function base(id, c1, c2, extra = '') {
@@ -69,7 +69,7 @@ const ICONES = {
   // Gerenciador de tarefas: o gráfico de desempenho subindo, num anil mais fundo
   // que o dos Arquivos.
   tarefas: {
-    nomes: ['org.kaelix.tarefas'],
+    nomes: ['org.matsu.tarefas'],
     svg: base('tar', '#6F7CFF', '#2E35B0') +
       `<path d="M62 170 L98 128 L126 150 L162 96 L194 122 V190 H62 Z" fill="${B}" opacity=".26"/>` +
       `<path d="M62 170 L98 128 L126 150 L162 96 L194 122" fill="none" stroke="${B}" stroke-width="15" ${liso}/>` +
@@ -77,9 +77,9 @@ const ICONES = {
       `<circle cx="162" cy="96" r="13" fill="#45D0C1" stroke="${B}" stroke-width="6"/>`,
   },
   // Central de jogos: controle claro sobre o degradê rosa e roxo das bolinhas do
-  // Kaelix, com a cruz em roxo e os botões nas cores de fechar e tela cheia.
+  // Matsu, com a cruz em roxo e os botões nas cores de fechar e tela cheia.
   jogos: {
-    nomes: ['org.kaelix.jogos'],
+    nomes: ['org.matsu.jogos'],
     svg: base('jog', '#FF7DB5', '#7A45E0') +
       `<path d="M88 88 h80 a42 42 0 0 1 41 34 l10 50 a24 24 0 0 1 -42 19 l-17 -20 h-64 l-17 20 a24 24 0 0 1 -42 -19 l10 -50 a42 42 0 0 1 41 -34 z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>` +
       `<path d="M94 116 v34 M77 133 h34" fill="none" stroke="#7A45E0" stroke-width="12" ${liso}/>` +
@@ -114,7 +114,7 @@ const ICONES = {
       `<g clip-path="url(#c-img)"><rect x="-44" y="-36" width="88" height="66" fill="url(#ceu-img)"/><circle cx="20" cy="-14" r="10" fill="#FFC677"/>` +
       `<path d="M-44 30 L-14 -4 L6 16 L20 4 L44 28 V30 Z" fill="#4353D6"/></g></g>`,
   },
-  // Lixeira do Kaelix (vazia e cheia), no fim dos apps da barra, como a do Mac.
+  // Lixeira do Matsu (vazia e cheia), no fim dos apps da barra, como a do Mac.
   lixeira: {
     nomes: ['user-trash', 'trashcan_empty'],
     svg: base('lix', '#9AA6D6', '#4C5690') + lata(false),
@@ -144,7 +144,7 @@ if (!saida) { console.error('uso: node gerar.js <pasta de saída>'); process.exi
 fs.mkdirSync(saida, { recursive: true });
 for (const [nome, ic] of Object.entries(ICONES)) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">${ic.svg}</svg>\n`;
-  const principal = `kaelix-${nome}.svg`;
+  const principal = `matsu-${nome}.svg`;
   fs.writeFileSync(path.join(saida, principal), svg);
   for (const n of ic.nomes) {
     const alvo = path.join(saida, `${n}.svg`);

@@ -1,4 +1,4 @@
-# Monta a imagem do Kaelix OS, assina com cosign e publica no canal "teste".
+# Monta a imagem do Matsu OS, assina com cosign e publica no canal "teste".
 # O canal "estavel" só muda pelo fluxo "Publicar versão estável", que o criador roda à mão.
 name: Montar imagem
 
@@ -42,10 +42,10 @@ jobs:
       matrix:
         include:
           - variant: main
-            image: kaelix-os
+            image: matsu-os
             base: ghcr.io/ublue-os/kinoite-main
           - variant: nvidia
-            image: kaelix-os-nvidia
+            image: matsu-os-nvidia
             base: ghcr.io/ublue-os/kinoite-nvidia
     steps:
       - uses: actions/checkout@v5

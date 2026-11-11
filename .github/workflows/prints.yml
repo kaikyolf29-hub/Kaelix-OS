@@ -15,11 +15,12 @@ on:
       variante:
         description: "Imagem para testar"
         type: choice
-        options: [kaelix-os, kaelix-os-nvidia]
-        default: kaelix-os
+        options: [matsu-os, matsu-os-nvidia]
+        default: matsu-os
 
 permissions:
   contents: write
+  packages: read
 
 concurrency:
   group: prints
@@ -35,7 +36,7 @@ jobs:
 
       - name: Preparar nomes
         env:
-          VARIANTE: ${{ inputs.variante || 'kaelix-os' }}
+          VARIANTE: ${{ inputs.variante || 'matsu-os' }}
         run: |
           echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${VARIANTE}:teste" >> "$GITHUB_ENV"
 
@@ -55,7 +56,12 @@ jobs:
           ls -l /dev/kvm
 
       - name: Baixar a imagem e preparar a versão de teste
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Entra no ghcr.io com o token do próprio fluxo: assim baixa a imagem
+          # mesmo que o pacote ainda esteja privado (o nome novo, matsu-os).
+          echo "$TOKEN" | sudo podman login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           sudo podman pull "$IMAGE"
           # A imagem de verdade abre o assistente de primeiro uso do KDE (Plasma
           # Setup) para a pessoa criar a conta. No teste a conta já vem pronta,
@@ -68,23 +74,23 @@ jobs:
             echo "RUN touch /etc/plasma-setup-done && printf '[General]\\nShouldShow=false\\nLastSeenVersion=9.0.0\\n' > /etc/xdg/plasma-welcomerc"
             # Apps de bandeja de verdade para o teste da bandeja (só na imagem de teste).
             echo "RUN dnf5 -y install --skip-unavailable copyq udiskie libnotify && dnf5 clean all"
-            echo "COPY tests/vm/teste-bandeja.sh /usr/bin/kaelix-teste-bandeja"
-            echo "COPY tests/vm/teste-ajustes.sh /usr/bin/kaelix-teste-ajustes"
+            echo "COPY tests/vm/teste-bandeja.sh /usr/bin/matsu-teste-bandeja"
+            echo "COPY tests/vm/teste-ajustes.sh /usr/bin/matsu-teste-ajustes"
             # A máquina virtual manda as mensagens também para a porta serial
             # (console=ttyS0), e com isso o Plymouth mostra só texto. Este ajuste,
-            # só no teste, faz ele mostrar a tela de boot do Kaelix como no PC.
+            # só no teste, faz ele mostrar a tela de boot do Matsu como no PC.
             echo "RUN printf 'kargs = [\"plymouth.ignore-serial-consoles\"]\\n' > /usr/lib/bootc/kargs.d/90-teste-vm.toml"
           } > Containerfile.vm
           cat Containerfile.vm
-          sudo podman build -t localhost/kaelix-vm:latest -f Containerfile.vm .
+          sudo podman build -t localhost/matsu-vm:latest -f Containerfile.vm .
 
       - name: Montar o disco virtual (bootc-image-builder)
         run: |
           mkdir -p vm-out
           cat > vm-config.toml <<'EOF'
           [[customizations.user]]
-          name = "kaelix"
-          password = "kaelix"
+          name = "matsu"
+          password = "matsu"
           groups = ["wheel"]
 
           [[customizations.filesystem]]
@@ -98,7 +104,7 @@ jobs:
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type qcow2 --rootfs xfs \
-            localhost/kaelix-vm:latest
+            localhost/matsu-vm:latest
           sudo chown -R "$(id -u):$(id -g)" vm-out
           ls -lh vm-out/qcow2/
 
