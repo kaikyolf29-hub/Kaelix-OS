@@ -28,3 +28,16 @@ jobs:
         run: python3 tests/test_tarefas.py
       - name: Testar o ajudante da Central de jogos
         run: python3 tests/test_jogos.py
+
+  # Inventário dos ícones da imagem publicada (só quando o commit pede, com
+  # "[inventario]" na mensagem): os apps do menu e as páginas das Configurações,
+  # com o ícone de cada um e de qual tema ele vem.
+  inventario:
+    if: contains(github.event.head_commit.message, '[inventario]')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Apps e ícones da imagem
+        run: |
+          docker run --rm -v "$PWD/tests/vm/inventario.sh:/inventario.sh:ro" \
+            ghcr.io/kaikyolf29-hub/matsu-os:teste bash /inventario.sh
