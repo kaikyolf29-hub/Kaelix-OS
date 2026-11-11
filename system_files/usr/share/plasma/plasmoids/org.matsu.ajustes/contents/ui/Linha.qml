@@ -66,7 +66,7 @@ MouseArea {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: linha.nome
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
             }
             PlasmaComponents.Label {
                 Layout.fillWidth: true

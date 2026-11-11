@@ -22,6 +22,11 @@
 #   matsu-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
 #   matsu-central papel <pasta ou imagem>|escolher|animado
 #   matsu-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
+#   matsu-central apps-barra                        os apps fixados na barra: fixado|app|nome|ícone|atalho
+#   matsu-central apps-instalados                   todos os apps para escolher: app|app|nome|ícone
+#   matsu-central fixar <app> | tirar <app>         põe ou tira um app da barra (também usado pelo menu)
+#   matsu-central ordem <app,app,...>               a ordem nova dos apps fixados
+#   matsu-central fixados-padrao                    volta aos apps fixados do começo
 #
 # A central só desenha: quem lê e muda o sistema é este arquivo, que tem teste.
 # Cada parte funciona sozinha: o que a máquina não tem (Wi-Fi, Bluetooth, tela
@@ -472,6 +477,28 @@ cmd_barra() {
     ${busca:+--busca "$busca"} ${menu:+--menu "$menu"} ${telas:+--telas "$telas"} ${abertos:+--abertos "$abertos"} >/dev/null 2>&1
 }
 
+# Apps fixados na barra (chama "matsu barra apps|fixar|tirar|ordem"). Os nomes
+# dos apps saem na língua da pessoa, não no C deste ajudante.
+matsu_na_lingua() {
+  local idioma
+  idioma="$(estado_idioma)"
+  MATSU_LANG="${idioma#idioma=}" timeout 30 "$MATSU_BIN" "$@" 2>/dev/null
+}
+
+cmd_apps_barra()      { matsu_na_lingua barra apps --lista; }
+cmd_apps_instalados() { matsu_na_lingua barra apps --instalados; }
+
+cmd_fixar() { # fixar|tirar <app>
+  local verbo="$1" app="${2:-}"
+  [[ -n $app ]] || { echo "use: $verbo <app>" >&2; exit 2; }
+  matsu_na_lingua barra "$verbo" "$app" >/dev/null
+}
+
+cmd_ordem() {
+  [[ -n ${1:-} ]] || { echo "use: ordem <app,app,...>" >&2; exit 2; }
+  matsu_na_lingua barra ordem "$1" >/dev/null
+}
+
 # Usa o papel animado (a peça do Waywallen) em todas as telas.
 papel_animado() {
   local peca
@@ -508,7 +535,8 @@ cmd_abrir() {
     ajustes)
       # "abrir ajustes barra" abre direto na página da barra: os Ajustes leem o
       # pedido com "pagina-pedida" (vale também se a janela já estiver aberta).
-      if [[ ${2:-} =~ ^[a-z]+$ ]]; then mkdir -p "$STATE_DIR" && echo "$2" > "$STATE_DIR/ajustes-pagina"; fi
+      # "barra-apps" abre a página da barra já nos apps fixados.
+      if [[ ${2:-} =~ ^[a-z]+(-[a-z]+)?$ ]]; then mkdir -p "$STATE_DIR" && echo "$2" > "$STATE_DIR/ajustes-pagina"; fi
       solto plasmawindowed org.matsu.ajustes ;;
     atualizar)
       # No terminal do Matsu (ou no Konsole, se ele faltar), que fica aberto no fim.
@@ -548,6 +576,11 @@ main() {
     barra)         cmd_barra "$@" ;;
     papeis)        cmd_papeis ;;
     pagina-pedida) cmd_pagina_pedida ;;
+    apps-barra)      cmd_apps_barra ;;
+    apps-instalados) cmd_apps_instalados ;;
+    fixar|tirar)     cmd_fixar "$cmd" "$@" ;;
+    ordem)           cmd_ordem "$@" ;;
+    fixados-padrao)  matsu_na_lingua barra apps --padrao >/dev/null ;;
     papel)         cmd_papel "$@" ;;
     abrir)         cmd_abrir "$@" ;;
     bloquear)      curto loginctl lock-session ;;

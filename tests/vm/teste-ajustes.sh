@@ -6,7 +6,7 @@ C=/usr/libexec/matsu/matsu-central
 # Para o registro: o idioma que o terminal tem e o que os Ajustes recebem.
 echo "terminal: LANG=${LANG:-} LC_ALL=${LC_ALL:-} LC_MESSAGES=${LC_MESSAGES:-} LC_NUMERIC=${LC_NUMERIC:-} LANGUAGE=${LANGUAGE:-}"
 "$C" estado | grep '^idioma='
-for pagina in aparencia barra papel telas sobre; do
+for pagina in aparencia barra barra-apps papel telas sobre; do
   "$C" abrir ajustes "$pagina"
   sleep 8
 done

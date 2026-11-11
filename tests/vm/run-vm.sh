@@ -206,6 +206,11 @@ hmp type "matsu barra fusao --tamanho media --busca esquerda --menu esquerda"
 hmp key ret
 sleep 10
 shot "15-barra-de-volta-ao-padrao"
+# Apps fixados: põe a Central de jogos na barra e mostra a lista.
+hmp type "clear; matsu barra fixar jogos; matsu barra apps"
+hmp key ret
+sleep 8
+shot "15b-barra-app-fixado"
 
 # Tela de boas-vindas com a cara do Matsu (no primeiro login de verdade ela abre sozinha).
 hmp type "clear"
@@ -319,7 +324,7 @@ sleep 8
 hmp type "matsu-teste-ajustes"
 hmp key ret
 sleep 7
-for pagina in aparencia barra papel telas sobre; do
+for pagina in aparencia barra barra-apps papel telas sobre; do
   shot "30-ajustes-$pagina"
   sleep 8
 done

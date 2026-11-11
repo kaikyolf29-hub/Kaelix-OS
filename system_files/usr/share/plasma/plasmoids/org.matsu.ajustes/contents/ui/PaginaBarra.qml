@@ -1,7 +1,9 @@
 // Barra e doca: o estilo da barra (fusão, Mac ou Windows), o tamanho, onde
-// ficam a busca e o menu, se a barra se esconde sozinha e, com mais de uma
+// ficam a busca e o menu, se a barra se esconde sozinha, os apps fixados nela
+// (tirar, mudar a ordem e pôr outros) e, com mais de uma
 // tela, se a barra aparece em todas e onde ficam os apps abertos (como no Windows).
 import QtQuick
+import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
@@ -19,6 +21,32 @@ ColumnLayout {
     readonly property bool todasAsTelas: ajustes.texto("barra_telas") !== "principal"
     readonly property string abertos: ajustes.texto("barra_abertos") || "tela"
     readonly property int telas: Qt.application.screens.length
+
+    // "abrir ajustes barra-apps" (o menu, o botão direito no logo): rola até os
+    // apps fixados, depois que a página terminou de montar.
+    function mostrarApps() {
+        var y = grupoApps.mapToItem(corpo, 0, 0).y - Kirigami.Units.gridUnit;
+        rolagem.contentY = Math.max(0, Math.min(y, rolagem.contentHeight - rolagem.height));
+        ajustes.secao = "";
+    }
+    Timer {
+        id: esperaMontar
+        interval: 250
+        onTriggered: pagina.mostrarApps()
+    }
+    Connections {
+        target: ajustes
+        function onSecaoChanged() {
+            if (ajustes.secao === "apps") {
+                esperaMontar.restart();
+            }
+        }
+    }
+    Component.onCompleted: {
+        if (ajustes.secao === "apps") {
+            esperaMontar.restart();
+        }
+    }
 
     function trocar(estilo, tamanho, esconde, busca, menu, todas, abertos) {
         var b = busca !== undefined ? busca : pagina.busca;
@@ -145,6 +173,164 @@ ColumnLayout {
                 onToggled: pagina.trocar(pagina.estilo, pagina.tamanho, checked)
                 Accessible.name: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
             }
+        }
+    }
+
+    // Apps fixados na barra, como no Windows e no Mac: tirar, mudar a ordem e pôr
+    // outros. São os mesmos na barra de todas as telas.
+    Grupo {
+        id: grupoApps
+
+        property bool escolhendo: false
+        property string filtro: ""
+
+        titulo: ajustes.t("Apps na barra", "Apps on the bar")
+        nota: ajustes.t("A ordem da lista é a ordem da barra. Também dá para fixar pelo botão direito num app do menu.",
+                        "The list order is the bar order. You can also pin from the right-click menu on an app in the menu.")
+
+        Component.onCompleted: ajustes.lerFixadosDaBarra()
+
+        Repeater {
+            model: ajustes.fixados
+            AppFixado {
+                required property var modelData
+                required property int index
+                primeira: index === 0
+                ultima: index === ajustes.fixados.length - 1
+                nome: modelData.nome
+                icone: modelData.icone
+                detalhe: modelData.app === "preferred://browser" ? ajustes.t("O navegador padrão", "The default browser")
+                       : modelData.app === "preferred://filemanager" ? ajustes.t("O app de arquivos padrão", "The default file manager") : ""
+                onSubir: ajustes.moverFixado(index, -1)
+                onDescer: ajustes.moverFixado(index, 1)
+                onTirar: ajustes.tirarFixado(modelData.app)
+            }
+        }
+
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            Layout.margins: Math.round(Kirigami.Units.gridUnit * 0.8)
+            visible: ajustes.fixados.length === 0
+            text: ajustes.t("Nenhum app fixado. Os apps abertos aparecem na barra mesmo assim.",
+                            "No pinned apps. Open apps still show up on the bar.")
+            wrapMode: Text.WordWrap
+            opacity: 0.65
+        }
+
+        // Os botões de baixo: pôr outro app e voltar aos apps do começo.
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            Layout.rightMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            Layout.topMargin: Kirigami.Units.smallSpacing
+            Layout.bottomMargin: Math.round(Kirigami.Units.gridUnit * 0.5)
+            spacing: Kirigami.Units.smallSpacing
+
+            PlasmaComponents.Button {
+                icon.name: grupoApps.escolhendo ? "go-up-symbolic" : "list-add-symbolic"
+                text: grupoApps.escolhendo ? ajustes.t("Fechar a lista de apps", "Close the app list") : ajustes.t("Adicionar app…", "Add app…")
+                onClicked: {
+                    grupoApps.escolhendo = !grupoApps.escolhendo;
+                    if (grupoApps.escolhendo) {
+                        busca.text = "";
+                        ajustes.fazer("apps-instalados");
+                        busca.forceActiveFocus();
+                    }
+                }
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+            PlasmaComponents.ToolButton {
+                icon.name: "edit-undo-symbolic"
+                text: ajustes.t("Voltar ao começo", "Reset")
+                QQC2.ToolTip.text: ajustes.t("Volta aos apps que a barra tinha no começo", "Goes back to the apps the bar started with")
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                onClicked: ajustes.fixadosPadrao()
+            }
+        }
+
+        // A escolha do app novo: a busca e a grade de apps que ainda não estão na barra.
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            Layout.rightMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            Layout.bottomMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            visible: grupoApps.escolhendo
+            spacing: Kirigami.Units.smallSpacing
+
+            PlasmaComponents.TextField {
+                id: busca
+                Layout.fillWidth: true
+                placeholderText: ajustes.t("Buscar um app", "Search for an app")
+                onTextChanged: grupoApps.filtro = ajustes.simples(text)
+                Keys.onEscapePressed: grupoApps.escolhendo = false
+                Keys.onReturnPressed: {
+                    if (grade.count > 0) {
+                        grupoApps.fixar(grade.model[0]);
+                    }
+                }
+                Keys.onDownPressed: grade.forceActiveFocus()
+                Accessible.name: ajustes.t("Buscar um app para fixar", "Search for an app to pin")
+            }
+
+            GridView {
+                id: grade
+
+                readonly property int colunas: Math.max(3, Math.floor(width / (Kirigami.Units.gridUnit * 5.6)))
+
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.round(Kirigami.Units.gridUnit * 10.4)
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                cellWidth: Math.floor(width / colunas)
+                cellHeight: Math.round(Kirigami.Units.gridUnit * 5.2)
+                keyNavigationEnabled: true
+                QQC2.ScrollBar.vertical: QQC2.ScrollBar {}
+                model: {
+                    var ja = {};
+                    for (var i = 0; i < ajustes.fixados.length; i++) {
+                        ja[ajustes.fixados[i].app] = true;
+                        ja["applications:" + ajustes.fixados[i].desk] = true;
+                    }
+                    var lista = [];
+                    for (var j = 0; j < ajustes.instalados.length; j++) {
+                        var a = ajustes.instalados[j];
+                        if (ja[a.app]) {
+                            continue;
+                        }
+                        if (grupoApps.filtro.length > 0 && ajustes.simples(a.nome).indexOf(grupoApps.filtro) === -1
+                                && a.app.toLowerCase().indexOf(grupoApps.filtro) === -1) {
+                            continue;
+                        }
+                        lista.push(a);
+                    }
+                    return lista;
+                }
+                delegate: BlocoApp {
+                    required property var modelData
+                    width: grade.cellWidth
+                    height: grade.cellHeight
+                    nome: modelData.nome
+                    icone: modelData.icone
+                    onEscolhido: grupoApps.fixar(modelData)
+                }
+
+                PlasmaComponents.Label {
+                    anchors.centerIn: parent
+                    visible: grade.count === 0
+                    text: ajustes.instalados.length === 0 ? ajustes.t("Carregando os apps…", "Loading apps…")
+                                                          : ajustes.t("Nenhum app encontrado.", "No apps found.")
+                    opacity: 0.6
+                }
+            }
+        }
+
+        function fixar(app) {
+            ajustes.fixarApp(app);
+            busca.text = "";
+            grupoApps.escolhendo = false;
         }
     }
 

@@ -27,8 +27,21 @@ PlasmoidItem {
     readonly property string ajudante: "/usr/libexec/matsu/matsu-central"
     property var estado: ({})
     property var papeis: []
+    // Apps fixados na barra ({app, nome, icone, desk}) e todos os apps para escolher.
+    property var fixados: []
+    property var instalados: []
+    // Mudanças nos fixados ainda indo para a barra: enquanto houver, a lista da
+    // tela não é trocada pela lida da barra (evita piscar a ordem velha).
+    property int fixadosPendentes: 0
+    // Cada leitura dos fixados tem o seu número (o "#n" no fim é comentário para
+    // o shell), e uma leitura que começou antes da última mudança é jogada fora.
+    property int leituras: 0
+    property var inicioLeitura: ({})
+    property double ultimaMudanca: 0
     property string versao: ""
     property string pagina: "aparencia"
+    // Uma parte da página para mostrar ao abrir ("apps": os apps da barra).
+    property string secao: ""
     property string busca: ""
 
     function texto(chave) {
@@ -66,6 +79,72 @@ PlasmoidItem {
             }
         }
         papeis = lista;
+    }
+
+    // Lê os apps fixados: "fixado|app|nome|ícone|atalho".
+    function lerFixados(saida) {
+        if (fixadosPendentes > 0) {
+            return;
+        }
+        var lista = [];
+        var linhas = String(saida || "").split("\n");
+        for (var i = 0; i < linhas.length; i++) {
+            var partes = linhas[i].split("|");
+            if (partes.length >= 4 && partes[0] === "fixado") {
+                lista.push({ app: partes[1], nome: partes[2], icone: partes[3], desk: partes[4] || "" });
+            }
+        }
+        fixados = lista;
+    }
+
+    // Lê todos os apps que dá para fixar: "app|app|nome|ícone".
+    function lerInstalados(saida) {
+        var lista = [];
+        var linhas = String(saida || "").split("\n");
+        for (var i = 0; i < linhas.length; i++) {
+            var partes = linhas[i].split("|");
+            if (partes.length >= 4 && partes[0] === "app") {
+                lista.push({ app: partes[1], nome: partes[2], icone: partes[3], desk: partes[1].replace("applications:", "") });
+            }
+        }
+        instalados = lista;
+    }
+
+    // As mudanças nos fixados aparecem na hora e depois vão para a barra.
+    function mudarFixados(lista, argumentos) {
+        fixados = lista;
+        fixadosPendentes += 1;
+        fazer(argumentos);
+    }
+    function moverFixado(indice, passo) {
+        var destino = indice + passo;
+        if (destino < 0 || destino >= fixados.length) {
+            return;
+        }
+        var lista = fixados.slice();
+        var app = lista.splice(indice, 1)[0];
+        lista.splice(destino, 0, app);
+        var ordem = [];
+        for (var i = 0; i < lista.length; i++) {
+            ordem.push(lista[i].app);
+        }
+        mudarFixados(lista, "ordem " + aspas(ordem.join(",")));
+    }
+    function tirarFixado(app) {
+        mudarFixados(fixados.filter(function (x) { return x.app !== app; }), "tirar " + aspas(app));
+    }
+    function fixarApp(item) {
+        mudarFixados(fixados.concat([item]), "fixar " + aspas(item.app));
+    }
+    function fixadosPadrao() {
+        fixadosPendentes += 1;
+        fazer("fixados-padrao");
+    }
+    function lerFixadosDaBarra() {
+        leituras += 1;
+        var fonte = ajudante + " apps-barra #" + leituras;
+        inicioLeitura[fonte] = Date.now();
+        comando.connectSource(fonte);
     }
 
     // Mostra a mudança na hora, sem esperar o sistema responder.
@@ -163,10 +242,27 @@ PlasmoidItem {
             } else if (fonte === ajustes.ajudante + " pagina-pedida") {
                 var pedido = String(dados["stdout"] || "").trim();
                 if (pedido.indexOf("pagina=") === 0) {
-                    ajustes.pagina = pedido.substring(7);
+                    var pedida = pedido.substring(7);
+                    if (pedida === "barra-apps") {
+                        ajustes.secao = "apps";
+                        pedida = "barra";
+                    }
+                    ajustes.pagina = pedida;
                 }
             } else if (fonte === "matsu versao") {
                 ajustes.versao = String(dados["stdout"] || "").trim();
+            } else if (fonte.indexOf(ajustes.ajudante + " apps-barra") === 0) {
+                var comecou = ajustes.inicioLeitura[fonte] || 0;
+                delete ajustes.inicioLeitura[fonte];
+                if (comecou >= ajustes.ultimaMudanca) {
+                    ajustes.lerFixados(dados["stdout"]);
+                }
+            } else if (fonte === ajustes.ajudante + " apps-instalados") {
+                ajustes.lerInstalados(dados["stdout"]);
+            } else if (/^\S+ (fixar|tirar|ordem|fixados-padrao)( |$)/.test(fonte)) {
+                ajustes.fixadosPendentes = Math.max(0, ajustes.fixadosPendentes - 1);
+                ajustes.ultimaMudanca = Date.now();
+                ajustes.lerFixadosDaBarra();
             } else {
                 ajustes.atualizar();
                 if (fonte.indexOf(ajustes.ajudante + " papel") === 0) {
@@ -185,6 +281,10 @@ PlasmoidItem {
         onTriggered: {
             ajustes.atualizar();
             comando.connectSource(ajustes.ajudante + " pagina-pedida");
+            // Os fixados também mudam por fora (botão direito no menu ou na barra).
+            if (ajustes.pagina === "barra" && ajustes.fixadosPendentes === 0) {
+                ajustes.lerFixadosDaBarra();
+            }
         }
     }
 

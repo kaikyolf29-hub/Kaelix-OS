@@ -107,6 +107,8 @@ $(t "Exemplos" "Examples"):
   matsu barra --menu meio       $(t "(o menu também vai para o meio, como no Windows 11)" "(the menu moves to the middle too, like Windows 11)")
   matsu barra --telas principal $(t "(com várias telas, a barra só na principal; o padrão é todas)" "(with several screens, the bar only on the main one; default is todas)")
   matsu barra --abertos todas   $(t "(cada app aberto aparece em todas as barras; também tela e principal)" "(each open app shows on every bar; also tela and principal)")
+  matsu barra apps              $(t "(mostra os apps fixados na barra)" "(shows the apps pinned to the bar)")
+  matsu barra fixar kate        $(t "(põe um app na barra; tirar tira, ordem muda a ordem)" "(pins an app to the bar; unpin removes it, order reorders)")
   matsu vidro roxo --transparencia mais  $(t "(vidro roxo e mais transparente)" "(purple, more transparent glass)")
 EOF
 }
@@ -485,7 +487,279 @@ bar_new_screens() { # bar_new_screens <estilo> <tamanho> <esconder> <busca> <men
   return 0
 }
 
+# ---------------------------------------------------------------------------
+# Apps fixados na barra (os mesmos em todas as telas): ver, fixar, tirar e pôr
+# em ordem. "matsu barra apps", "matsu barra fixar kate", "matsu barra tirar
+# steam", "matsu barra ordem arquivos,navegador,steam", "matsu barra apps --padrao".
+# Os Ajustes do Matsu e o menu usam as mesmas coisas pelo matsu-central.
+
+# As pastas dos atalhos de apps (.desktop), da mais forte para a mais fraca: um
+# atalho da pessoa vale mais que o do sistema com o mesmo nome.
+app_dirs() {
+  local d IFS=:
+  if [[ -n ${MATSU_APPS_DIRS:-} ]]; then
+    for d in $MATSU_APPS_DIRS; do printf '%s\n' "$d"; done
+    return
+  fi
+  printf '%s\n' "${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+  for d in ${XDG_DATA_DIRS:-/usr/local/share:/usr/share}; do printf '%s\n' "$d/applications"; done
+  printf '%s\n' "${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/exports/share/applications" \
+    /var/lib/flatpak/exports/share/applications
+}
+
+app_files() {
+  local d f
+  local -A visto=()
+  while IFS= read -r d; do
+    [[ -d $d ]] || continue
+    for f in "$d"/*.desktop; do
+      [[ -f $f && -z ${visto[${f##*/}]:-} ]] || continue
+      visto[${f##*/}]=1
+      printf '%s\n' "$f"
+    done
+  done < <(app_dirs | awk '!visto[$0]++')
+}
+
+# Uma linha por app: arquivo|id|nome|ícone|aparece (1 ou 0). O nome vem em
+# português quando o app tem tradução. "Aparece" é o que o menu mostraria.
+app_table() {
+  local files=() pt=0
+  mapfile -t files < <(app_files)
+  (( ${#files[@]} )) || return 0
+  [[ $LANG_UI == pt ]] && pt=1
+  awk -v pt="$pt" '
+    function flush() {
+      if (arq == "") return
+      nome = (pt && nptbr != "") ? nptbr : ((pt && npt != "") ? npt : n)
+      vis = (tipo == "Application" && nodisp != "true" && hidden != "true" && nome != "") ? 1 : 0
+      if (only != "" && only !~ /(^|;)KDE(;|$)/) vis = 0
+      if (notin ~ /(^|;)KDE(;|$)/) vis = 0
+      id = arq; sub(/.*\//, "", id)
+      gsub(/\|/, "/", nome)
+      print arq "|" id "|" nome "|" icone "|" vis
+    }
+    FNR == 1 { flush(); arq = FILENAME; sec = ""; n = npt = nptbr = icone = tipo = nodisp = hidden = only = notin = "" }
+    /^\[/ { sec = $0; next }
+    sec != "[Desktop Entry]" { next }
+    {
+      i = index($0, "="); if (!i) next
+      k = substr($0, 1, i - 1); v = substr($0, i + 1)
+      sub(/[ \t]+$/, "", k); sub(/^[ \t]+/, "", v)
+      if (k == "Name") n = v
+      else if (k == "Name[pt_BR]") nptbr = v
+      else if (k == "Name[pt]") npt = v
+      else if (k == "Icon") icone = v
+      else if (k == "Type") tipo = v
+      else if (k == "NoDisplay") nodisp = tolower(v)
+      else if (k == "Hidden") hidden = tolower(v)
+      else if (k == "OnlyShowIn") only = v
+      else if (k == "NotShowIn") notin = v
+    }
+    END { flush() }
+  ' "${files[@]}"
+}
+
+# O app padrão do sistema para "navegador" e "arquivos" (a barra guarda esses
+# dois como preferred://browser e preferred://filemanager).
+default_app() { # default_app browser|filemanager
+  local id=""
+  if [[ $1 == browser ]]; then
+    command -v xdg-settings >/dev/null 2>&1 && id="$(timeout 3 xdg-settings get default-web-browser 2>/dev/null)"
+    if [[ -z $id ]] && command -v kreadconfig6 >/dev/null 2>&1; then
+      id="$(kreadconfig6 --file kdeglobals --group General --key BrowserApplication 2>/dev/null)"
+    fi
+  else
+    command -v xdg-mime >/dev/null 2>&1 && id="$(timeout 3 xdg-mime query default inode/directory 2>/dev/null)"
+  fi
+  id="${id%%$'\n'*}"; id="${id#\!}"
+  [[ $id == *.desktop ]] && printf '%s\n' "$id"
+  return 0
+}
+
+# O atalho (.desktop) que um app da barra abre: applications:x.desktop -> x.desktop
+pin_desktop() { # pin_desktop <app>
+  case "$1" in
+    preferred://browser)     default_app browser ;;
+    preferred://filemanager) default_app filemanager ;;
+    applications:*)          printf '%s\n' "${1#applications:}" ;;
+    file://*)                printf '%s\n' "${1##*/}" ;;
+  esac
+}
+
+# Nome e ícone de um app da barra, para mostrar: nome|ícone|atalho
+pin_label() { # pin_label <app> <tabela de app_table>
+  local app="$1" desk nome="" icone=""
+  desk="$(pin_desktop "$app")"
+  if [[ -n $desk ]]; then
+    IFS='|' read -r _ _ nome icone _ < <(awk -F'|' -v d="$desk" '$2 == d { print; exit }' <<<"$2")
+  fi
+  if [[ -z $nome ]]; then
+    case "$app" in
+      preferred://browser)     nome="$(t "Navegador" "Browser")"; icone="${icone:-internet-web-browser}" ;;
+      preferred://filemanager) nome="$(t "Arquivos" "Files")"; icone="${icone:-system-file-manager}" ;;
+      *) nome="${desk%.desktop}"; nome="${nome:-$app}"; nome="${nome##*.}"; icone="${icone:-application-x-executable}" ;;
+    esac
+  fi
+  printf '%s|%s|%s\n' "$nome" "${icone:-application-x-executable}" "$desk"
+}
+
+# Acha o app que a pessoa digitou (nome do arquivo, nome do app ou um pedaço)
+# e devolve como a barra guarda: applications:x.desktop.
+app_resolve() { # app_resolve <texto> <tabela>
+  local q="$1" ql achado=""
+  case "$q" in
+    applications:*|preferred://*|file://*) printf '%s\n' "$q"; return 0 ;;
+  esac
+  ql="${q,,}"
+  case "$ql" in
+    navegador|browser|internet)                   echo "preferred://browser"; return 0 ;;
+    arquivos|files|gerenciador-de-arquivos|filemanager) echo "preferred://filemanager"; return 0 ;;
+  esac
+  if [[ $q == /*.desktop && -f $q ]]; then printf 'file://%s\n' "$q"; return 0; fi
+  ql="${ql%.desktop}"
+  achado="$(awk -F'|' -v q="$ql" '
+    { id = tolower($2); sub(/\.desktop$/, "", id); nome = tolower($3); m = split(id, p, ".") }
+    id == q                         { print $2; exit }
+    $5 == 1 && nome == q            { if (!a) a = $2 }
+    $5 == 1 && p[m] == q            { if (!b) b = $2 }
+    $5 == 1 && (index(id, q) || index(nome, q)) { if (!c) c = $2 }
+    END { if (a) print a; else if (b) print b; else if (c) print c }' <<<"$2" | head -n1)"
+  [[ -n $achado ]] || return 1
+  printf 'applications:%s\n' "$achado"
+}
+
+# Acha, entre os apps fixados, o que a pessoa digitou (para tirar ou pôr em
+# ordem). Vale o nome do app, o arquivo ou o app padrão (firefox = navegador).
+pin_match() { # pin_match <texto> <fixados> <tabela>
+  local q="$1" fixados="$2" tabela="$3" alvo desk app ql
+  ql="${q,,}"
+  alvo="$(app_resolve "$q" "$tabela")" || alvo=""
+  [[ -n $alvo ]] && desk="$(pin_desktop "$alvo")" || desk=""
+  while IFS= read -r app; do
+    [[ -n $app ]] || continue
+    if [[ $app == "$alvo" || ( -n $desk && "$(pin_desktop "$app")" == "$desk" ) ]]; then
+      printf '%s\n' "$app"; return 0
+    fi
+  done <<<"$fixados"
+  while IFS= read -r app; do
+    [[ -n $app ]] || continue
+    if [[ ${app,,} == *"$ql"* || "$(pin_label "$app" "$tabela" | cut -d'|' -f1 | tr '[:upper:]' '[:lower:]')" == *"$ql"* ]]; then
+      printf '%s\n' "$app"; return 0
+    fi
+  done <<<"$fixados"
+  return 1
+}
+
+# Manda a ação para a barra e devolve os apps fixados depois dela, um por linha.
+bar_pins() { # bar_pins <ler|fixar|tirar|ordem|padrao> [apps...]
+  local acao="$1" lista="" a f reply linhas
+  shift
+  for a in "$@"; do
+    a="${a//\\/\\\\}"; a="${a//\"/\\\"}"
+    lista+="${lista:+,}\"$a\""
+  done
+  for f in comum.js fixados.js; do
+    [[ -r $BAR_DIR/$f ]] || fail "Não achei o arquivo da barra: $BAR_DIR/$f" "Bar file not found: $BAR_DIR/$f"
+  done
+  need busctl
+  reply="$(bar_script "$(printf 'var matsuAcao = "%s";\nvar matsuApps = [%s];\n' "$acao" "$lista"
+                         cat "$BAR_DIR/comum.js" "$BAR_DIR/fixados.js")")" \
+    || fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Matsu." \
+            "Could not reach the desktop. Run this command inside the Matsu session."
+  linhas="$(bar_reply_lines "$reply")"
+  if grep -q '^matsu-fixados: sem-barra' <<<"$linhas"; then
+    fail "A barra de agora não tem lugar para apps fixados. Troque o estilo com: matsu barra fusao" \
+         "The current bar has no place for pinned apps. Change the style with: matsu bar fusao"
+  fi
+  grep -q '^matsu-fixados: pronto' <<<"$linhas" \
+    || fail "A área de trabalho não respondeu direito. Tente de novo." "The desktop did not answer properly. Try again."
+  sed -n 's/^matsu-fixado: //p' <<<"$linhas"
+}
+
+cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
+  local verbo="$1" modo=pessoa tabela fixados a app n=0 nome icone desk
+  local -a apps=()
+  shift
+  tabela="$(app_table)"
+  case "$verbo" in
+    apps|fixados|pinned)
+      case "${1:-}" in
+        "") fixados="$(bar_pins ler)" ;;
+        --lista|--list) modo=lista; fixados="$(bar_pins ler)" ;;
+        --instalados|--installed)
+          awk -F'|' '$5 == 1 { print "app|applications:" $2 "|" $3 "|" $4 }' <<<"$tabela" | sort -f -t'|' -k3,3
+          return 0 ;;
+        --padrao|--padrão|--default)
+          fixados="$(bar_pins padrao)"
+          ok "A barra voltou aos apps do começo." "The bar is back to the starting apps." ;;
+        *) fail "Opção desconhecida: $1. Use --lista, --instalados ou --padrao." "Unknown option: $1. Use --list, --installed or --default." ;;
+      esac ;;
+    fixar|pin)
+      [[ $# -gt 0 ]] || fail "Diga qual app fixar. Exemplo: matsu barra fixar kate" "Say which app to pin. Example: matsu bar pin kate"
+      for a in "$@"; do
+        app="$(app_resolve "$a" "$tabela")" || fail "Não achei o app \"$a\"." "Could not find the app \"$a\"."
+        apps+=("$app")
+      done
+      fixados="$(bar_pins fixar "${apps[@]}")"
+      for app in "${apps[@]}"; do
+        ok "$(pin_label "$app" "$tabela" | cut -d'|' -f1) está na barra." "$(pin_label "$app" "$tabela" | cut -d'|' -f1) is on the bar."
+      done ;;
+    tirar|unpin|desafixar|remover)
+      [[ $# -gt 0 ]] || fail "Diga qual app tirar. Exemplo: matsu barra tirar steam" "Say which app to unpin. Example: matsu bar unpin steam"
+      fixados="$(bar_pins ler)"
+      for a in "$@"; do
+        app="$(pin_match "$a" "$fixados" "$tabela")" || fail "\"$a\" não está fixado na barra." "\"$a\" is not pinned to the bar."
+        apps+=("$app")
+      done
+      fixados="$(bar_pins tirar "${apps[@]}")"
+      for app in "${apps[@]}"; do
+        ok "$(pin_label "$app" "$tabela" | cut -d'|' -f1) saiu da barra." "$(pin_label "$app" "$tabela" | cut -d'|' -f1) left the bar."
+      done ;;
+    ordem|order)
+      [[ $# -gt 0 ]] || fail "Diga a ordem. Exemplo: matsu barra ordem arquivos,navegador,steam" "Say the order. Example: matsu bar order files,browser,steam"
+      fixados="$(bar_pins ler)"
+      # Aceita "a,b,c" ou "a b c" (e nomes com espaço entre vírgulas).
+      local junto
+      local -a pedidos=()
+      junto="$(IFS=,; printf '%s' "$*")"
+      IFS=',' read -r -a pedidos <<<"$junto"
+      for a in "${pedidos[@]}"; do
+        a="${a#"${a%%[![:space:]]*}"}"; a="${a%"${a##*[![:space:]]}"}"
+        [[ -n $a ]] || continue
+        app="$(pin_match "$a" "$fixados" "$tabela")" || fail "\"$a\" não está fixado na barra." "\"$a\" is not pinned to the bar."
+        apps+=("$app")
+      done
+      fixados="$(bar_pins ordem "${apps[@]}")"
+      ok "Ordem trocada." "Order changed." ;;
+  esac
+  if [[ $modo == lista ]]; then
+    while IFS= read -r app; do
+      [[ -n $app ]] || continue
+      IFS='|' read -r nome icone desk < <(pin_label "$app" "$tabela")
+      printf 'fixado|%s|%s|%s|%s\n' "$app" "$nome" "$icone" "$desk"
+    done <<<"$fixados"
+    return 0
+  fi
+  say "Apps fixados na barra:" "Apps pinned to the bar:"
+  while IFS= read -r app; do
+    [[ -n $app ]] || continue
+    n=$((n + 1))
+    IFS='|' read -r nome icone desk < <(pin_label "$app" "$tabela")
+    case "$app" in
+      preferred://browser)     nome+=" $(t "(navegador padrão)" "(default browser)")" ;;
+      preferred://filemanager) nome+=" $(t "(arquivos padrão)" "(default file manager)")" ;;
+    esac
+    printf '  %2d. %s\n' "$n" "$nome"
+  done <<<"$fixados"
+  (( n )) || say "  (nenhum)" "  (none)"
+  tip "Para fixar outro: matsu barra fixar <app>. Para tirar: matsu barra tirar <app>." \
+      "To pin another: matsu bar pin <app>. To unpin: matsu bar unpin <app>."
+}
+
 cmd_bar() {
+  case "${1:-}" in
+    apps|fixados|pinned|fixar|pin|tirar|unpin|desafixar|remover|ordem|order) cmd_bar_apps "$@"; return ;;
+  esac
   local style="" size="" hide="" busca="" menu="" telas="" abertos="" details=0 novas=0 arg
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift

@@ -395,5 +395,83 @@ check "sem o serviço de atalhos, sai sem erro" test "$CODE" -eq 0
 check "a garantia roda no começo de cada sessão do KDE" grep -qx 'Exec=/usr/libexec/matsu/matsu-atalhos' "$ROOT/system_files/etc/xdg/autostart/matsu-atalhos.desktop"
 
 echo
+echo "apps fixados na barra"
+# Atalhos de apps de mentira: um da pessoa (vale mais), um escondido e um só do GNOME.
+APPS="$WORK/apps"; mkdir -p "$APPS/sistema" "$APPS/pessoa"
+app_falso() { # app_falso <pasta> <arquivo> <linhas...>
+  local pasta="$1" arq="$2"; shift 2
+  { echo "[Desktop Entry]"; echo "Type=Application"; printf '%s\n' "$@"; echo "[Desktop Action nova]"; echo "Name=Nova janela"; } > "$APPS/$pasta/$arq"
+}
+app_falso sistema steam.desktop "Name=Steam" "Icon=steam"
+app_falso pessoa steam.desktop "Name=Steam da pessoa" "Icon=steam"
+app_falso sistema org.kde.kate.desktop "Name=Kate" "Icon=kate"
+app_falso sistema firefox.desktop "Name=Firefox" "Name[pt_BR]=Navegador Firefox" "Icon=firefox"
+app_falso sistema org.kde.dolphin.desktop "Name=Dolphin" "Icon=system-file-manager"
+app_falso sistema escondido.desktop "Name=Escondido" "NoDisplay=true"
+app_falso sistema gnome-only.desktop "Name=SoGnome" "OnlyShowIn=GNOME;"
+export MATSU_APPS_DIRS="$APPS/pessoa:$APPS/sistema"
+# A área de trabalho falsa responde com os apps de FAKE_FIXADOS (ou "sem-barra").
+cat > "$MOCK/busctl" <<EOF
+#!/usr/bin/bash
+echo "busctl \$*" >> "$CALLS"
+if [[ \${FAKE_RESPOSTA:-} == sem-barra ]]; then echo 's "matsu-fixados: sem-barra\\n"'; exit 0; fi
+r=""
+for a in \${FAKE_FIXADOS:-}; do r+="matsu-fixado: \$a\\\\n"; done
+echo "s \"\${r}matsu-fixados: pronto\\\\n\""
+EOF
+chmod +x "$MOCK/busctl"
+mock xdg-settings 'case "$1" in get) echo "${FAKE_NAVEGADOR:-}" ;; esac; exit 0'
+export FAKE_FIXADOS="preferred://browser applications:steam.desktop" FAKE_NAVEGADOR=firefox.desktop
+run barra apps
+check "lista os apps fixados com o nome de verdade" has "Navegador Firefox (navegador padrão)"
+check "o atalho da pessoa vale mais que o do sistema" has "Steam da pessoa"
+check "lê os fixados pela área de trabalho" called 'var matsuAcao = "ler";'
+run barra apps --lista
+check "lista para os Ajustes: fixado|app|nome|ícone|atalho" has "fixado|preferred://browser|Navegador Firefox|firefox|firefox.desktop"
+run barra fixar kate
+check "fixar acha o app pelo fim do nome do arquivo" called 'var matsuApps = ["applications:org.kde.kate.desktop"];'
+check "fixar avisa que o app está na barra" has "Kate está na barra"
+run barra fixar "navegador firefox"
+check "fixar acha o app pelo nome traduzido" called 'var matsuApps = ["applications:firefox.desktop"];'
+run barra fixar sognome
+check "não fixa app que não aparece no KDE" bash -c '[[ $1 != 0 ]] && grep -q "Não achei o app" <<<"$2"' _ "$CODE" "$OUT"
+run barra fixar naoexiste
+check "app que não existe dá erro claro" bash -c '[[ $1 != 0 ]] && grep -q "Não achei o app \"naoexiste\"" <<<"$2"' _ "$CODE" "$OUT"
+run barra tirar firefox
+check "tirar o navegador padrão pelo nome dele" called 'var matsuApps = ["preferred://browser"];'
+check "tirar manda a ação certa" called 'var matsuAcao = "tirar";'
+run barra tirar kate
+check "tirar um app que não está fixado avisa" bash -c '[[ $1 != 0 ]] && grep -q "não está fixado" <<<"$2"' _ "$CODE" "$OUT"
+run barra ordem steam,navegador
+check "ordem manda a lista na ordem pedida" called 'var matsuApps = ["applications:steam.desktop","preferred://browser"];'
+run barra ordem steam navegador
+check "ordem também aceita os apps separados por espaço" called 'var matsuApps = ["applications:steam.desktop","preferred://browser"];'
+run barra apps --instalados
+check "lista de apps para escolher com nome e ícone" has "app|applications:firefox.desktop|Navegador Firefox|firefox"
+check "a lista não mostra app escondido nem só do GNOME" bash -c '! grep -q -e escondido -e gnome-only <<<"$1"' _ "$OUT"
+check "a lista vem em ordem de nome" test "$(cut -d'|' -f3 <<<"$OUT" | tr '\n' ',')" = "Dolphin,Kate,Navegador Firefox,Steam da pessoa,"
+FAKE_RESPOSTA=sem-barra run barra apps
+check "sem lugar para apps na barra, explica" has "não tem lugar para apps fixados"
+run barra apps --padrao
+check "voltar aos apps do começo" called 'var matsuAcao = "padrao";'
+# Os Ajustes e o menu pedem pelo matsu-central, na língua da pessoa.
+cat > "$WORK/matsu-falso" <<EOF
+#!/usr/bin/bash
+echo "MATSU_LANG=\$MATSU_LANG \$*" >> "$WORK/matsu-falso.log"
+EOF
+chmod +x "$WORK/matsu-falso"
+: > "$WORK/matsu-falso.log"
+env -i HOME="$WORK" PATH="$PATH" LANGUAGE=pt_BR MATSU_BIN="$WORK/matsu-falso" bash "$ROOT/system_files/usr/libexec/matsu/matsu-central" apps-barra
+env -i HOME="$WORK" PATH="$PATH" LANGUAGE=pt_BR MATSU_BIN="$WORK/matsu-falso" bash "$ROOT/system_files/usr/libexec/matsu/matsu-central" fixar "applications:org.kde.kate.desktop"
+env -i HOME="$WORK" PATH="$PATH" LANGUAGE=pt_BR MATSU_BIN="$WORK/matsu-falso" bash "$ROOT/system_files/usr/libexec/matsu/matsu-central" ordem "preferred://browser,applications:steam.desktop"
+OUT="$(cat "$WORK/matsu-falso.log")"
+check "a central pede os fixados em português" has "MATSU_LANG=pt barra apps --lista"
+check "a central fixa o app que o menu mandou" has "barra fixar applications:org.kde.kate.desktop"
+check "a central manda a ordem nova" has "barra ordem preferred://browser,applications:steam.desktop"
+unset MATSU_APPS_DIRS FAKE_FIXADOS FAKE_NAVEGADOR
+mock busctl 'echo "s \"matsu: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
+mock xdg-settings 'exit 0'
+
+echo
 echo "Resultado: $PASS passaram, $FAILN falharam"
 [[ $FAILN -eq 0 ]]

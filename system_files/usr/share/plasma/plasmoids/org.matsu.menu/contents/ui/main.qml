@@ -2,6 +2,7 @@
 // cima, os recentes (numa conta nova, os fixados), todos os apps e, embaixo, a
 // pessoa, os Ajustes do Matsu, bloquear e desligar. Na fusão e no estilo
 // windows o botão do logo vem com a pílula "Buscar apps e arquivos" ao lado.
+// O botão direito num app fixa ou tira o app da barra.
 //
 // Abre com a tecla Meta (o metadata diz que este é o menu do sistema) e com
 // Alt+F1. Os apps, os recentes e a busca vêm das mesmas peças do menu do KDE.
@@ -12,6 +13,7 @@ import org.kde.coreaddons as KCoreAddons
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.extras as PlasmaExtras
 import org.kde.plasma.plasma5support as P5Support
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.kicker as Kicker
@@ -103,12 +105,96 @@ PlasmoidItem {
                 if (achado) {
                     raiz.idioma = achado[1];
                 }
+            } else if (fonte === raiz.ajudante + " apps-barra") {
+                raiz.lerBarra(dados["stdout"]);
+            } else if (/^\S+ (fixar|tirar) /.test(fonte)) {
+                raiz.fazer("apps-barra");
             }
         }
     }
 
     function fazer(argumentos) {
         comando.connectSource(ajudante + " " + argumentos);
+    }
+
+    // Põe entre aspas simples para o shell.
+    function aspas(s) {
+        return "'" + String(s).replace(/'/g, "'\\''") + "'";
+    }
+
+    // Os apps fixados na barra, pelo atalho (.desktop) que cada um abre:
+    // "firefox.desktop" -> "preferred://browser", como a barra guarda.
+    property var naBarra: ({})
+    function lerBarra(saida) {
+        var mapa = {};
+        var linhas = String(saida || "").split("\n");
+        for (var i = 0; i < linhas.length; i++) {
+            var partes = linhas[i].split("|");
+            if (partes.length >= 5 && partes[0] === "fixado" && partes[4].length > 0) {
+                mapa[partes[4]] = partes[1];
+            }
+        }
+        naBarra = mapa;
+    }
+
+    // O atalho (.desktop) de um item do menu, ou vazio se não for um app.
+    function atalhoDe(favoriteId, url) {
+        var f = favoriteId ? String(favoriteId) : "";
+        if (f.indexOf("applications:") === 0) {
+            f = f.substring(13);
+        }
+        if (/\.desktop$/.test(f) && f.indexOf("/") === -1) {
+            return f;
+        }
+        var u = url ? String(url) : "";
+        if (/\.desktop$/.test(u)) {
+            return u.substring(u.lastIndexOf("/") + 1);
+        }
+        return "";
+    }
+
+    // O app do menu de botão direito aberto agora.
+    property string appDoMenu: ""
+    readonly property bool appDoMenuNaBarra: naBarra[appDoMenu] !== undefined
+    function menuDoApp(item, favoriteId, url, x, y) {
+        var atalho = atalhoDe(favoriteId, url);
+        if (atalho === "") {
+            return;
+        }
+        appDoMenu = atalho;
+        contexto.visualParent = item;
+        contexto.open(x, y);
+    }
+
+    PlasmaExtras.Menu {
+        id: contexto
+
+        PlasmaExtras.MenuItem {
+            text: raiz.t("Fixar na barra", "Pin to the bar")
+            icon: "window-pin"
+            visible: !raiz.appDoMenuNaBarra
+            onClicked: raiz.fazer("fixar " + raiz.aspas("applications:" + raiz.appDoMenu))
+        }
+        PlasmaExtras.MenuItem {
+            text: raiz.t("Tirar da barra", "Unpin from the bar")
+            icon: "window-unpin"
+            visible: raiz.appDoMenuNaBarra
+            onClicked: raiz.fazer("tirar " + raiz.aspas(raiz.naBarra[raiz.appDoMenu]))
+        }
+        PlasmaExtras.MenuItem {
+            separator: true
+        }
+        PlasmaExtras.MenuItem {
+            text: raiz.t("Organizar os apps da barra…", "Arrange the bar apps…")
+            icon: "matsu-barra-symbolic"
+            onClicked: raiz.organizarBarra()
+        }
+    }
+
+    // Os Ajustes do Matsu já abertos nos apps fixados da barra.
+    function organizarBarra() {
+        fazer("abrir ajustes barra-apps");
+        expanded = false;
     }
 
     // Abre o que foi escolhido (app, arquivo ou resultado da busca) e fecha o menu.
@@ -125,6 +211,11 @@ PlasmoidItem {
             text: raiz.t("Gerenciador de tarefas", "Task Manager")
             icon.name: "org.matsu.tarefas"
             onTriggered: raiz.fazer("abrir tarefas")
+        },
+        PlasmaCore.Action {
+            text: raiz.t("Organizar os apps da barra…", "Arrange the bar apps…")
+            icon.name: "matsu-barra-symbolic"
+            onTriggered: raiz.organizarBarra()
         },
         PlasmaCore.Action {
             text: raiz.t("Editar os apps do menu…", "Edit applications…")
@@ -337,6 +428,7 @@ PlasmoidItem {
             function onExpandedChanged() {
                 if (raiz.expanded) {
                     cheia.preparar();
+                    raiz.fazer("apps-barra");
                 }
             }
         }
@@ -473,6 +565,7 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     Layout.preferredHeight: cheia.linhasTopo * cheia.alturaLinha
                     delegate: Linha {
+                        id: linhaTopo
                         width: ListView.view.width
                         height: cheia.alturaLinha
                         icone: model.decoration
@@ -480,6 +573,7 @@ PlasmoidItem {
                         detalhe: model.description || ""
                         destacado: topo.activeFocus && index === topo.currentIndex
                         onAcionado: raiz.abrir(topo.model, index)
+                        onMenuPedido: (x, y) => raiz.menuDoApp(linhaTopo, model.favoriteId, model.url, x, y)
                     }
                     Keys.onReturnPressed: raiz.abrir(model, currentIndex)
                     Keys.onEnterPressed: raiz.abrir(model, currentIndex)
@@ -522,12 +616,14 @@ PlasmoidItem {
                     Layout.fillHeight: true
                     QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
                     delegate: Celula {
+                        id: celulaApp
                         width: grade.cellWidth
                         height: grade.cellHeight
                         icone: model.decoration
                         titulo: model.display || ""
                         destacado: grade.activeFocus && index === grade.currentIndex
                         onAcionado: raiz.abrir(grade.model, index)
+                        onMenuPedido: (x, y) => raiz.menuDoApp(celulaApp, model.favoriteId, model.url, x, y)
                     }
                     Keys.onReturnPressed: raiz.abrir(model, currentIndex)
                     Keys.onEnterPressed: raiz.abrir(model, currentIndex)
@@ -559,6 +655,7 @@ PlasmoidItem {
                     highlightMoveDuration: 0
                     QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
                     delegate: Linha {
+                        id: linhaResultado
                         width: ListView.view.width
                         height: cheia.alturaLinha
                         icone: model.decoration
@@ -566,6 +663,7 @@ PlasmoidItem {
                         detalhe: cheia.detalheDoResultado(model.group, model.description)
                         destacado: index === lista.currentIndex
                         onAcionado: raiz.abrir(lista.model, index)
+                        onMenuPedido: (x, y) => raiz.menuDoApp(linhaResultado, model.favoriteId, model.url, x, y)
                     }
                 }
 

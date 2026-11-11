@@ -12,6 +12,8 @@ MouseArea {
     property bool destacado: false
 
     signal acionado()
+    // Botão direito (ou segurar apertado): o menu do app (fixar na barra...).
+    signal menuPedido(real x, real y)
 
     readonly property color texto: Kirigami.Theme.textColor
     readonly property color realce: Kirigami.Theme.highlightColor
@@ -19,7 +21,15 @@ MouseArea {
     hoverEnabled: true
     Accessible.role: Accessible.Button
     Accessible.name: titulo
-    onClicked: acionado()
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    onClicked: mouse => {
+        if (mouse.button === Qt.RightButton) {
+            menuPedido(mouse.x, mouse.y);
+        } else {
+            acionado();
+        }
+    }
+    onPressAndHold: mouse => menuPedido(mouse.x, mouse.y)
 
     Rectangle {
         anchors.fill: parent
