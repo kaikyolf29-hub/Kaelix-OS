@@ -252,10 +252,11 @@ hmp type "/usr/libexec/matsu/matsu-central estado"
 hmp key ret
 sleep 4
 shot "20-central-estado-lido-do-sistema"
-# Onde os atalhos Meta+A (central), Meta+N (relógio) e Meta+B (bandeja) ficaram (ou com quem brigam).
+# Onde os atalhos Meta+A (central), Meta+N (relógio) e Meta+B (bandeja) ficaram, e se
+# as atividades e o perfil de energia do KDE ficaram sem essas teclas (matsu-atalhos).
 hmp type "clear"
 hmp key ret
-hmp type "grep -i -e meta.a -e meta.n -e meta.b -e widget .config/kglobalshortcutsrc | tail -n 22"
+hmp type "grep -i -e meta.a -e meta.n -e meta.b -e widget -e next.activity -e powerprofile .config/kglobalshortcutsrc | tail -n 22"
 hmp key ret
 sleep 3
 shot "20b-atalho-da-central"

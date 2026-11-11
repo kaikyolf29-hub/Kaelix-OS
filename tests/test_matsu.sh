@@ -335,5 +335,65 @@ check "o ramo ganha * quando tem mudança" grep -q 'touch.*\*' <<< "$OUT"
 check "o prompt passa no dash (o /etc/profile também roda nele)" dash -n "$ROOT/system_files/etc/profile.d/zz-matsu-prompt.sh"
 
 echo
+echo "atalhos Meta+A (central) e Meta+B (bandeja)"
+# No login: o "percorrer as atividades" e o "trocar perfil de energia" do KDE
+# ficam sem essas teclas no arquivo de atalhos da pessoa. O kwriteconfig6 é
+# falso e anota o que gravaria. No arquivo, várias teclas ficam separadas por
+# "\t" escrito com barra, como o KDE grava.
+AT="$WORK/atalhos"; mkdir -p "$AT/bin" "$AT/home/.config"
+KGS="$AT/home/.config/kglobalshortcutsrc"
+printf '#!/usr/bin/bash\nprintf "%%s|" "$@" >> "%s"; echo >> "%s"\n' "$AT/grava.log" "$AT/grava.log" > "$AT/bin/kwriteconfig6"
+chmod +x "$AT/bin/kwriteconfig6"
+login_atalhos() { # login_atalhos <conteúdo do arquivo ou "-" para conta nova> -> o que foi gravado em $OUT
+  rm -f "$KGS" "$AT/grava.log"; touch "$AT/grava.log"
+  [[ $1 == - ]] || printf '%s\n' "$1" > "$KGS"
+  env -i HOME="$AT/home" PATH="$AT/bin:$PATH" dash "$ROOT/system_files/etc/xdg/plasma-workspace/env/matsu-atalhos.sh"
+  OUT="$(cat "$AT/grava.log")"
+}
+login_atalhos -
+check "conta nova: atividades nascem sem tecla" grep -qF 'plasmashell|--key|next activity|none,none,' <<<"$OUT"
+check "conta nova: perfil de energia fica só na tecla Battery" grep -qF $'powerProfile|Battery,Battery\tMeta+B,' <<<"$OUT"
+login_atalhos $'[plasmashell]\nnext activity=Meta+A,Meta+A,x\n[org_kde_powerdevil]\npowerProfile=Battery\\tMeta+B,Battery\\tMeta+B,y'
+check "o KDE pegou as duas teclas: as duas saem" test "$(grep -c . <<<"$OUT")" -eq 2
+login_atalhos $'[plasmashell]\nnext activity=none,Meta+A,x\n[org_kde_powerdevil]\npowerProfile=Battery,Battery\\tMeta+B,y'
+check "já sem as teclas: não grava nada" test -z "$OUT"
+login_atalhos $'[plasmashell]\nnext activity=Meta+Alt+N,Meta+A,x\n[org_kde_powerdevil]\npowerProfile=Meta+Shift+B,Battery\\tMeta+B,y'
+check "uma tecla que a pessoa escolheu (Meta+Alt+N) fica" test -z "$OUT"
+login_atalhos $'[plasmashell]\nnext activity=Ctrl+F1\\tMeta+A,Meta+A,x\n[org_kde_powerdevil]\npowerProfile=Battery,Battery\\tMeta+B,y'
+check "Meta+A como segunda tecla também sai" grep -qF 'next activity|none,none,' <<<"$OUT"
+check "o script do login passa no dash" dash -n "$ROOT/system_files/etc/xdg/plasma-workspace/env/matsu-atalhos.sh"
+
+# A garantia do começo da sessão: pergunta ao serviço de atalhos (busctl falso)
+# e só solta a tecla de quem estiver com ela; depois a peça da barra pede de novo.
+cat > "$AT/bin/busctl" <<EOF
+#!/usr/bin/bash
+echo "\$*" >> "$AT/busctl.log"
+case "\$*" in
+  *" shortcut as 4 plasmashell next activity "*) echo "ai \${FAKE_ATIV:-0}" ;;
+  *" shortcut as 4 org_kde_powerdevil powerProfile "*) echo "ai \${FAKE_ENERGIA:-0}" ;;
+  *setForeignShortcut*) echo ;;
+  *evaluateScript*) echo 's ""' ;;
+esac
+exit "\${FAKE_BUSCTL_RC:-0}"
+EOF
+chmod +x "$AT/bin/busctl"
+ajudante() { # ajudante <variáveis...> -> chamadas em $OUT
+  : > "$AT/busctl.log"
+  env "$@" MATSU_ATALHOS_UMA_VEZ=1 PATH="$AT/bin:$PATH" bash "$ROOT/system_files/usr/libexec/matsu/matsu-atalhos" >/dev/null 2>&1
+  CODE=$?
+  OUT="$(cat "$AT/busctl.log")"
+}
+ajudante FAKE_ATIV="2 268435521 268435534" FAKE_ENERGIA="1 268435522"
+check "solta o Meta+A das atividades" grep -qF 'setForeignShortcut asai 4 plasmashell next activity   0' <<<"$OUT"
+check "solta o Meta+B do perfil de energia" grep -qF 'setForeignShortcut asai 4 org_kde_powerdevil powerProfile   0' <<<"$OUT"
+check "a central e a bandeja pedem a tecla de novo" grep -qF 'var soltas = ["Meta+A","Meta+B"]' <<<"$OUT"
+ajudante FAKE_ATIV="1 268435534" FAKE_ENERGIA="0"
+check "sem a tecla, não mexe em nada" bash -c '! grep -q -e setForeignShortcut -e evaluateScript <<<"$1"' _ "$OUT"
+check "nunca usa a chamada que derruba o KWin" bash -c '! grep -rq -e setForeignShortcutKeys -e actionList "$1"' _ "$ROOT/system_files/usr/libexec/matsu/matsu-atalhos"
+ajudante FAKE_BUSCTL_RC=1
+check "sem o serviço de atalhos, sai sem erro" test "$CODE" -eq 0
+check "a garantia roda no começo de cada sessão do KDE" grep -qx 'Exec=/usr/libexec/matsu/matsu-atalhos' "$ROOT/system_files/etc/xdg/autostart/matsu-atalhos.desktop"
+
+echo
 echo "Resultado: $PASS passaram, $FAILN falharam"
 [[ $FAILN -eq 0 ]]

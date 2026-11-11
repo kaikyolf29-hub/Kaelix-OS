@@ -1,0 +1,82 @@
+#!/bin/bash
+# Matsu OS: solta as teclas dos atalhos do Matsu que o KDE pegou para outra coisa.
+#
+# Os atalhos do Matsu são como no Windows: Meta+A abre a central de controle e
+# Meta+B a setinha da bandeja. Dois atalhos do KDE nascem com as mesmas teclas:
+#   - "Percorrer as atividades" (plasmashell, "next activity"): Meta+A;
+#   - "Trocar perfil de energia" (powerdevil, "powerProfile"): Meta+B.
+# Quando duas ações têm a mesma tecla, o KDE dispara a mais antiga, e a central e
+# a bandeja não abriam. O conserto principal fica no login
+# (/etc/xdg/plasma-workspace/env/matsu-atalhos.sh), que deixa essas duas ações
+# sem a tecla no arquivo de atalhos da pessoa antes do KDE ler. Este ajudante é a
+# garantia: se mesmo assim uma delas estiver com a tecla, ela fica sem tecla. O
+# KDE guarda a mudança, então nos próximos logins ela já nasce assim.
+#
+# Roda sozinho no começo de cada sessão (/etc/xdg/autostart/matsu-atalhos.desktop)
+# e confere de novo algumas vezes, porque o trocador de atividades pode carregar
+# um pouco depois da área de trabalho. Também dá para rodar à mão.
+set -u
+
+META_A=268435521   # Qt::META | Qt::Key_A
+META_B=268435522   # Qt::META | Qt::Key_B
+
+kga() {
+  busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel "$@"
+}
+
+# tira <componente> <ação> <tecla> <nome da tecla>: se a ação tiver a tecla, fica
+# sem tecla nenhuma.
+# Usa a chamada simples do serviço de atalhos, com a lista vazia. (A chamada que
+# troca por outras teclas recebe um formato que, mal montado, derruba o KWin:
+# não usar daqui.) O perfil de energia só chega aqui se o conserto do login
+# (plasma-workspace/env/matsu-atalhos.sh, que deixa a tecla "Battery") falhar.
+tira() {
+  local saida n resto k tem=0
+  saida="$(kga shortcut as 4 "$1" "$2" "" "" 2>/dev/null)" || return 0
+  read -r _ n resto <<<"$saida"
+  [[ $n =~ ^[0-9]+$ ]] && (( n > 0 )) || return 0
+  for k in $resto; do
+    [[ $k == "$3" ]] && tem=1
+  done
+  (( tem )) || return 0
+  if kga setForeignShortcut asai 4 "$1" "$2" "" "" 0 >/dev/null 2>&1; then
+    echo "matsu-atalhos: $1 / $2 largou a tecla $4"
+    soltas+=("$4")
+  fi
+}
+
+# devolve_aos_widgets: a peça do Matsu que pediu a tecla quando ela estava ocupada
+# ficou sem atalho; aqui ela pede de novo (a central com Meta+A, a bandeja com
+# Meta+B), olhando o atalho que a barra guardou em cada peça.
+devolve_aos_widgets() {
+  local lista="" t
+  for t in "${soltas[@]}"; do lista+="${lista:+,}\"$t\""; done
+  busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "
+var soltas = [$lista];
+var p = panels();
+for (var i = 0; i < p.length; i++) {
+    var ids = p[i].widgetIds;
+    for (var j = 0; j < ids.length; j++) {
+        var w = p[i].widgetById(ids[j]);
+        w.currentConfigGroup = ['Shortcuts'];
+        var tecla = w.readConfig('global', '');
+        if (soltas.indexOf(tecla) >= 0) {
+            w.globalShortcut = '';
+            w.globalShortcut = tecla;
+            print('matsu-atalhos: ' + w.type + ' com ' + tecla + '\\n');
+        }
+    }
+}" >/dev/null 2>&1 || true
+}
+
+soltas=()
+espera=0
+for espera in 0 5 20 60; do
+  sleep "$espera"
+  soltas=()
+  tira plasmashell "next activity" "$META_A" Meta+A
+  tira org_kde_powerdevil powerProfile "$META_B" Meta+B
+  (( ${#soltas[@]} )) && devolve_aos_widgets
+  [[ ${MATSU_ATALHOS_UMA_VEZ:-0} == 1 ]] && break
+done
+exit 0

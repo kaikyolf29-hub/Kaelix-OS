@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Matsu OS - atalhos
+Name[en]=Matsu OS - shortcuts
+Comment=Deixa o Meta+A com a central e o Meta+B com a bandeja
+Comment[en]=Keeps Meta+A for the control center and Meta+B for the tray
+Exec=/usr/libexec/matsu/matsu-atalhos
+Icon=preferences-desktop-keyboard-shortcut
+NoDisplay=true
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

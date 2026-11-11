@@ -251,14 +251,12 @@ done
 ls -la /etc/plasmalogin.conf* /usr/lib/plasmalogin* /usr/share/plasmalogin* 2>/dev/null || true
 cat /etc/plasmalogin.conf
 # Atalhos do Matsu como no Windows: Meta+A abre a central, Meta+N as
-# notificações e o calendário, Meta+B a setinha da bandeja. No KDE o Meta+A
-# trocava de "atividade" e não deixava a central pegar o atalho. O "Meta+A"
-# não pode aparecer em nenhuma das duas partes da linha (a usada e a padrão):
-# com "none,Meta+A" o KDE acabou devolvendo o Meta+A para as atividades.
-# Contas antigas são arrumadas no login por plasma-workspace/env/matsu-atalhos.sh.
-kwriteconfig6 --file /etc/xdg/kglobalshortcutsrc --group plasmashell --key "next activity" "none,none,Percorrer as atividades"
-chmod 0644 /etc/xdg/kglobalshortcutsrc
-grep -i -e "meta+a" -e "meta+n" -e "meta+b" /etc/xdg/kglobalshortcutsrc || true
+# notificações e o calendário, Meta+B a setinha da bandeja. No KDE o Meta+A é
+# de "percorrer as atividades" e o Meta+B de "trocar perfil de energia". O
+# serviço de atalhos só lê o arquivo de cada pessoa, nunca o /etc/xdg, então o
+# conserto fica no login (plasma-workspace/env/matsu-atalhos.sh) e na garantia
+# do começo da sessão (autostart/matsu-atalhos.desktop -> libexec/matsu-atalhos).
+test -x /usr/libexec/matsu/matsu-atalhos
 # Tema Plasma do Matsu: ilhas de vidro com cantos redondos (o resto vem do KDE).
 kwriteconfig6 --file /etc/xdg/plasmarc --group Theme --key name Matsu
 chmod 0644 /etc/xdg/plasmarc
