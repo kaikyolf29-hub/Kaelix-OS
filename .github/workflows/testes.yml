@@ -44,3 +44,7 @@ jobs:
           # O docker não carrega a imagem (camadas demais); o podman carrega.
           sudo podman run --rm -v "$PWD/tests/vm/inventario.sh:/inventario.sh:ro,z" \
             ghcr.io/kaikyolf29-hub/matsu-os:teste bash /inventario.sh
+      - name: O que falta em português na imagem
+        run: |
+          sudo podman run --rm -v "$PWD/tests/vm/traducoes.sh:/traducoes.sh:ro,z" \
+            ghcr.io/kaikyolf29-hub/matsu-os:teste bash /traducoes.sh

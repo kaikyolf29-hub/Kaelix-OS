@@ -198,6 +198,9 @@ log "Deixando o visual do Matsu como padrão"
 for f in /etc/xdg/kdeglobals /usr/share/kde-settings/kde-profile/default/xdg/kdeglobals; do
   if [[ $f == /etc/xdg/kdeglobals || -e $f ]]; then
     kwriteconfig6 --file "$f" --group KDE --key LookAndFeelPackage org.matsu.escuro.desktop
+    # As Configurações rápidas e o ciclo dia-noite oferecem estes dois (e não o Breeze).
+    kwriteconfig6 --file "$f" --group KDE --key DefaultLightLookAndFeel org.matsu.claro.desktop
+    kwriteconfig6 --file "$f" --group KDE --key DefaultDarkLookAndFeel org.matsu.escuro.desktop
     kwriteconfig6 --file "$f" --group General --key ColorScheme MatsuEscuro
     kwriteconfig6 --file "$f" --group Icons --key Theme Matsu
     # Letra do sistema: Inter, como no vídeo da fusão (se a fonte entrou).
