@@ -16,7 +16,7 @@ MouseArea {
 
     signal ativado()
 
-    implicitHeight: Math.round(tarefas.gu * 2)
+    implicitHeight: Math.round(janela.gu * 2)
     hoverEnabled: true
     activeFocusOnTab: true
     cursorShape: Qt.PointingHandCursor
@@ -29,8 +29,8 @@ MouseArea {
 
     Rectangle {
         anchors.fill: parent
-        radius: Math.round(tarefas.gu * 0.3)
-        color: tarefas.tinta(item.escolhido ? (tarefas.escuro ? 0.08 : 0.065) : (item.pressed ? 0.06 : (item.containsMouse || item.activeFocus ? 0.045 : 0)))
+        radius: Math.round(janela.gu * 0.3)
+        color: janela.tinta(item.escolhido ? (janela.escuro ? 0.08 : 0.065) : (item.pressed ? 0.06 : (item.containsMouse || item.activeFocus ? 0.045 : 0)))
         Behavior on color {
             ColorAnimation {
                 duration: Kirigami.Units.shortDuration
@@ -43,7 +43,7 @@ MouseArea {
         width: 3
         height: item.escolhido ? Math.round(parent.height * 0.42) : 0
         radius: 1.5
-        color: tarefas.destaque
+        color: janela.destaque
         Behavior on height {
             NumberAnimation {
                 duration: Kirigami.Units.shortDuration
@@ -54,20 +54,20 @@ MouseArea {
 
     Kirigami.Icon {
         id: simbolo
-        x: Math.round(tarefas.gu * 0.75)
+        x: Math.round(janela.gu * 0.75)
         anchors.verticalCenter: parent.verticalCenter
         width: Kirigami.Units.iconSizes.small
         height: width
         source: item.icone
         isMask: true
-        color: tarefas.frente
+        color: janela.frente
         opacity: item.escolhido ? 1 : 0.85
     }
     Texto {
         anchors.left: simbolo.right
-        anchors.leftMargin: Math.round(tarefas.gu * 0.7)
+        anchors.leftMargin: Math.round(janela.gu * 0.7)
         anchors.right: parent.right
-        anchors.rightMargin: Math.round(tarefas.gu * 0.4)
+        anchors.rightMargin: Math.round(janela.gu * 0.4)
         anchors.verticalCenter: parent.verticalCenter
         text: item.nome
         elide: Text.ElideRight

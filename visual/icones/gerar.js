@@ -76,6 +76,16 @@ const ICONES = {
       `<line x1="58" y1="192" x2="198" y2="192" stroke="${B}" stroke-width="10" opacity=".55" ${liso}/>` +
       `<circle cx="162" cy="96" r="13" fill="#45D0C1" stroke="${B}" stroke-width="6"/>`,
   },
+  // Central de jogos: controle claro sobre o degradê rosa e roxo das bolinhas do
+  // Kaelix, com a cruz em roxo e os botões nas cores de fechar e tela cheia.
+  jogos: {
+    nomes: ['org.kaelix.jogos'],
+    svg: base('jog', '#FF7DB5', '#7A45E0') +
+      `<path d="M88 88 h80 a42 42 0 0 1 41 34 l10 50 a24 24 0 0 1 -42 19 l-17 -20 h-64 l-17 20 a24 24 0 0 1 -42 -19 l10 -50 a42 42 0 0 1 41 -34 z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>` +
+      `<path d="M94 116 v34 M77 133 h34" fill="none" stroke="#7A45E0" stroke-width="12" ${liso}/>` +
+      `<circle cx="160" cy="122" r="10" fill="#F0609E"/><circle cx="182" cy="144" r="10" fill="#45D0C1"/>` +
+      `<path d="M118 102 h20" stroke="#7A45E0" stroke-opacity=".35" stroke-width="7" ${liso}/>`,
+  },
   configuracoes: {
     nomes: ['systemsettings', 'org.kde.systemsettings', 'preferences-system'],
     svg: base('conf', '#A3AEDC', '#5A659F') + engrenagem(128, 128, 8, 66, 50, 22),

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!-- Kaelix OS: a Central de jogos muda o nível da placa de vídeo AMD quando um
+     jogo abre e fecha, sem pedir senha para quem está usando o computador. -->
+<policyconfig>
+  <vendor>Kaelix OS</vendor>
+  <action id="org.kaelix.jogos.placa">
+    <description>Change the graphics card performance level for a game</description>
+    <description xml:lang="pt_BR">Mudar o nível de desempenho da placa de vídeo para um jogo</description>
+    <message>The Game Center wants to change the graphics card performance level</message>
+    <message xml:lang="pt_BR">A Central de jogos quer mudar o nível de desempenho da placa de vídeo</message>
+    <icon_name>org.kaelix.jogos</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/kaelix/kaelix-jogos-placa</annotate>
+  </action>
+</policyconfig>

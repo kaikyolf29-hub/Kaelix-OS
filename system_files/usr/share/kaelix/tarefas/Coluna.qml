@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "../comum"
 
 MouseArea {
     id: cabeca
@@ -16,7 +17,7 @@ MouseArea {
     property int alinhamento: Text.AlignRight
     readonly property bool ativa: pagina.ordem === cabeca.coluna
 
-    implicitHeight: parent ? parent.height : tarefas.gu * 2.8
+    implicitHeight: parent ? parent.height : janela.gu * 2.8
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     Accessible.role: Accessible.ColumnHeader
@@ -25,13 +26,13 @@ MouseArea {
 
     Rectangle {
         anchors.fill: parent
-        color: tarefas.tinta(cabeca.pressed ? 0.07 : (cabeca.containsMouse ? 0.04 : 0))
+        color: janela.tinta(cabeca.pressed ? 0.07 : (cabeca.containsMouse ? 0.04 : 0))
     }
     Rectangle {
         visible: cabeca.separador
         width: 1
         height: parent.height
-        color: tarefas.tinta(0.07)
+        color: janela.tinta(0.07)
     }
 
     Kirigami.Icon {
@@ -43,17 +44,17 @@ MouseArea {
         height: 10
         source: "kaelix-seta-symbolic"
         isMask: true
-        color: tarefas.frente
+        color: janela.frente
         opacity: 0.7
         rotation: pagina.crescente ? -90 : 90
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: Math.round(tarefas.gu * (cabeca.alinhamento === Text.AlignLeft ? 0.75 : 0.6))
-        anchors.rightMargin: Math.round(tarefas.gu * 0.6)
-        anchors.topMargin: Math.round(tarefas.gu * 0.45)
-        anchors.bottomMargin: Math.round(tarefas.gu * 0.35)
+        anchors.leftMargin: Math.round(janela.gu * (cabeca.alinhamento === Text.AlignLeft ? 0.75 : 0.6))
+        anchors.rightMargin: Math.round(janela.gu * 0.6)
+        anchors.topMargin: Math.round(janela.gu * 0.45)
+        anchors.bottomMargin: Math.round(janela.gu * 0.35)
         spacing: 0
 
         Texto {

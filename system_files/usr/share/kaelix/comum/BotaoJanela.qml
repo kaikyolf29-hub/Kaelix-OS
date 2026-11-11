@@ -3,7 +3,7 @@
 // aparece quando o mouse chega perto das três (mostrar = mouse em cima do grupo),
 // surgindo e crescendo de leve. Com a janela em segundo plano, as bolinhas ficam
 // cinza e voltam a ter cor quando o mouse passa por cima.
-// O Gerenciador de tarefas desenha a própria barra de título, para o vidro ir até em cima.
+// Os apps do Kaelix desenham a própria barra de título, para o vidro ir até em cima.
 import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
@@ -20,7 +20,7 @@ MouseArea {
 
     readonly property color cor: tipo === "fechar" ? "#f0609e" : (tipo === "minimizar" ? "#8fa2ff" : "#45d0c1")
     readonly property color simbolo: tipo === "fechar" ? "#5a1036" : (tipo === "minimizar" ? "#1e2a6e" : "#0a4a42")
-    readonly property bool colorida: tarefas.active || mostrar
+    readonly property bool colorida: janela.active || mostrar
 
     implicitWidth: 18
     implicitHeight: 18
@@ -35,11 +35,11 @@ MouseArea {
         width: 14
         height: 14
         radius: 7
-        color: !botao.colorida ? tarefas.tinta(tarefas.escuro ? 0.2 : 0.16)
+        color: !botao.colorida ? janela.tinta(janela.escuro ? 0.2 : 0.16)
              : botao.pressed ? Qt.darker(botao.cor, 1.2) : botao.cor
         // Um contorno bem fino, um tom abaixo, dá acabamento à bolinha (como no Mac).
         border.width: 1
-        border.color: botao.colorida ? Qt.rgba(0, 0, 0, tarefas.escuro ? 0.18 : 0.1) : "transparent"
+        border.color: botao.colorida ? Qt.rgba(0, 0, 0, janela.escuro ? 0.18 : 0.1) : "transparent"
         Behavior on color {
             ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
         }

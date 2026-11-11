@@ -6,33 +6,34 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "../comum"
 
 FocusScope {
     id: pagina
 
-    readonly property string busca: tarefas.busca
+    readonly property string busca: janela.busca
     property string ordem: "nome"
     property bool crescente: true
     property var abertos: ({})
     property string escolhido: ""
     property var linhaEscolhida: null
 
-    readonly property var d: tarefas.dados
-    readonly property int colNum: Math.round(tarefas.gu * 6)
+    readonly property var d: janela.dados
+    readonly property int colNum: Math.round(janela.gu * 6)
     // Espaço da barra de rolagem, para os números não ficarem embaixo dela.
-    readonly property int margemDireita: Math.round(tarefas.gu * 0.7)
+    readonly property int margemDireita: Math.round(janela.gu * 0.7)
 
     focus: true
 
     function combina(g) {
         if (busca.length === 0)
             return true;
-        var b = tarefas.simples(busca);
-        if (tarefas.simples(g.nome).indexOf(b) !== -1)
+        var b = janela.simples(busca);
+        if (janela.simples(g.nome).indexOf(b) !== -1)
             return true;
         for (var i = 0; i < g.procs.length; i++) {
             var p = g.procs[i];
-            if (tarefas.simples(p.nome).indexOf(b) !== -1 || tarefas.simples(p.exe).indexOf(b) !== -1 || String(p.pid) === busca)
+            if (janela.simples(p.nome).indexOf(b) !== -1 || janela.simples(p.exe).indexOf(b) !== -1 || String(p.pid) === busca)
                 return true;
         }
         return false;
@@ -41,7 +42,7 @@ FocusScope {
     function comparar(a, b) {
         var r;
         if (ordem === "nome")
-            r = String(a.nome).localeCompare(String(b.nome), tarefas.local.name);
+            r = String(a.nome).localeCompare(String(b.nome), janela.local.name);
         else
             r = (a[ordem] || 0) - (b[ordem] || 0);
         if (r === 0)
@@ -62,9 +63,9 @@ FocusScope {
         if (!d)
             return [];
         var secoes = [
-            ["app", tarefas.t("Apps", "Apps")],
-            ["fundo", tarefas.t("Em segundo plano", "Background processes")],
-            ["sistema", tarefas.t("Do sistema", "System processes")]
+            ["app", janela.t("Apps", "Apps")],
+            ["fundo", janela.t("Em segundo plano", "Background processes")],
+            ["sistema", janela.t("Do sistema", "System processes")]
         ];
         var linhas = [];
         for (var s = 0; s < secoes.length; s++) {
@@ -75,7 +76,7 @@ FocusScope {
             linhas.push(linha({ tipo: "secao", chave: "s:" + secoes[s][0], nome: secoes[s][1], n: grupos.length }));
             for (var i = 0; i < grupos.length; i++) {
                 var g = grupos[i];
-                var aberto = g.n > 1 && (abertos[g.id] === true || (busca.length > 0 && !tarefas.simples(g.nome).includes(tarefas.simples(busca))));
+                var aberto = g.n > 1 && (abertos[g.id] === true || (busca.length > 0 && !janela.simples(g.nome).includes(janela.simples(busca))));
                 var alvo = g.unidade && g.id === g.unidade ? "unidade:" + g.unidade : String(g.procs[0].pid);
                 linhas.push(linha({ tipo: "grupo", chave: "g:" + g.id, nome: g.nome, icone: g.icone || "", n: g.n,
                                     cpu: g.cpu, mem: g.mem, disco: g.disco, acao: g.acao, motivo: g.motivo || "",
@@ -160,33 +161,33 @@ FocusScope {
         if (!l || l.acao === "nenhuma")
             return;
         if (l.acao === "reiniciar") {
-            kaelix.rodar("acao", tarefas.comando(["reiniciar-barra"]));
+            kaelix.rodar("acao", janela.comando(["reiniciar-barra"]));
             return;
         }
-        kaelix.rodar("acao", tarefas.comando([naHora ? "forcar" : "finalizar", l.alvo]));
+        kaelix.rodar("acao", janela.comando([naHora ? "forcar" : "finalizar", l.alvo]));
         escolhido = "";
     }
 
     function textoBotao(l) {
         if (l && l.acao === "reiniciar")
-            return tarefas.t("Reiniciar", "Restart");
-        return tarefas.t("Finalizar tarefa", "End task");
+            return janela.t("Reiniciar", "Restart");
+        return janela.t("Finalizar tarefa", "End task");
     }
 
     function motivoTexto(l) {
         if (!l)
-            return tarefas.t("Escolha um app ou processo na lista.", "Select an app or process in the list.");
+            return janela.t("Escolha um app ou processo na lista.", "Select an app or process in the list.");
         if (l.motivo === "outro-usuario")
-            return tarefas.t("É do sistema: só o administrador pode encerrar.", "Belongs to the system: only an administrator can end it.");
+            return janela.t("É do sistema: só o administrador pode encerrar.", "Belongs to the system: only an administrator can end it.");
         if (l.motivo === "sessao" || l.acao === "nenhuma")
-            return tarefas.t("Faz parte da sua sessão: encerrar fecharia tudo.", "Part of your session: ending it would close everything.");
+            return janela.t("Faz parte da sua sessão: encerrar fecharia tudo.", "Part of your session: ending it would close everything.");
         if (l.acao === "reiniciar")
-            return tarefas.t("Reinicia a barra e a área de trabalho, sem fechar os apps.", "Restarts the bar and desktop without closing apps.");
+            return janela.t("Reinicia a barra e a área de trabalho, sem fechar os apps.", "Restarts the bar and desktop without closing apps.");
         return "";
     }
 
     Connections {
-        target: tarefas
+        target: janela
         function onTiqueChanged() {
             pagina.atualizar();
         }
@@ -213,22 +214,22 @@ FocusScope {
         // Título da página e os botões, como a barra do Windows 11.
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.round(tarefas.gu * 3)
-            Layout.leftMargin: Math.round(tarefas.gu * 1.1)
-            Layout.rightMargin: Math.round(tarefas.gu * 0.6)
-            spacing: Math.round(tarefas.gu * 0.2)
+            Layout.preferredHeight: Math.round(janela.gu * 3)
+            Layout.leftMargin: Math.round(janela.gu * 1.1)
+            Layout.rightMargin: Math.round(janela.gu * 0.6)
+            spacing: Math.round(janela.gu * 0.2)
 
             Texto {
                 Layout.fillWidth: true
-                text: tarefas.t("Processos", "Processes")
+                text: janela.t("Processos", "Processes")
                 font.pointSize: Kirigami.Theme.defaultFont.pointSize + 2
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
             }
             Botao {
-                texto: tarefas.t("Nova tarefa", "Run new task")
+                texto: janela.t("Nova tarefa", "Run new task")
                 icone: "kaelix-nova-tarefa-symbolic"
-                dica: tarefas.t("Abre a busca do sistema para rodar um app ou comando", "Opens the system search to run an app or command")
+                dica: janela.t("Abre a busca do sistema para rodar um app ou comando", "Opens the system search to run an app or command")
                 onClicado: kaelix.soltar(["krunner"])
             }
             Botao {
@@ -242,13 +243,13 @@ FocusScope {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 1
-            color: tarefas.tinta(0.07)
+            color: janela.tinta(0.07)
         }
 
         // Títulos das colunas, com o total em cima (como no Windows).
         Item {
             Layout.fillWidth: true
-            implicitHeight: Math.round(tarefas.gu * 2.9)
+            implicitHeight: Math.round(janela.gu * 2.9)
 
             RowLayout {
                 anchors.fill: parent
@@ -257,7 +258,7 @@ FocusScope {
 
                 Coluna {
                     Layout.fillWidth: true
-                    titulo: tarefas.t("Nome", "Name")
+                    titulo: janela.t("Nome", "Name")
                     alinhamento: Text.AlignLeft
                     separador: false
                     coluna: "nome"
@@ -265,25 +266,25 @@ FocusScope {
                 Coluna {
                     Layout.preferredWidth: pagina.colNum
                     titulo: "CPU"
-                    total: pagina.d ? tarefas.porcento(pagina.d.cpu.uso) : ""
+                    total: pagina.d ? janela.porcento(pagina.d.cpu.uso) : ""
                     coluna: "cpu"
                 }
                 Coluna {
                     Layout.preferredWidth: pagina.colNum
-                    titulo: tarefas.t("Memória", "Memory")
-                    total: pagina.d && pagina.d.memoria.total > 0 ? tarefas.porcento(100 * pagina.d.memoria.usada / pagina.d.memoria.total) : ""
+                    titulo: janela.t("Memória", "Memory")
+                    total: pagina.d && pagina.d.memoria.total > 0 ? janela.porcento(100 * pagina.d.memoria.usada / pagina.d.memoria.total) : ""
                     coluna: "mem"
                 }
                 Coluna {
                     Layout.preferredWidth: pagina.colNum
-                    titulo: tarefas.t("Disco", "Disk")
+                    titulo: janela.t("Disco", "Disk")
                     total: {
                         if (!pagina.d)
                             return "";
                         var maior = 0;
                         for (var i = 0; i < pagina.d.discos.length; i++)
                             maior = Math.max(maior, pagina.d.discos[i].ativo);
-                        return tarefas.porcento(maior);
+                        return janela.porcento(maior);
                     }
                     coluna: "disco"
                 }
@@ -292,7 +293,7 @@ FocusScope {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 height: 1
-                color: tarefas.tinta(0.07)
+                color: janela.tinta(0.07)
             }
         }
 
@@ -308,7 +309,7 @@ FocusScope {
                     x: lista.width - pagina.margemDireita - (3 - index) * pagina.colNum
                     width: 1
                     height: parent.height
-                    color: tarefas.tinta(0.07)
+                    color: janela.tinta(0.07)
                     z: 1
                 }
             }
@@ -342,7 +343,7 @@ FocusScope {
                 Texto {
                     anchors.centerIn: parent
                     visible: pagina.d !== null && modelo.count === 0
-                    text: tarefas.t("Nada encontrado para “%1”.", "Nothing found for “%1”.").arg(pagina.busca)
+                    text: janela.t("Nada encontrado para “%1”.", "Nothing found for “%1”.").arg(pagina.busca)
                     opacity: 0.6
                 }
                 QQC2.BusyIndicator {
@@ -363,13 +364,13 @@ FocusScope {
             onTriggered: pagina.finalizar(false)
         }
         QQC2.MenuItem {
-            text: tarefas.t("Forçar fechar (se travou)", "Force close (if frozen)")
+            text: janela.t("Forçar fechar (se travou)", "Force close (if frozen)")
             enabled: pagina.linhaEscolhida !== null && pagina.linhaEscolhida.acao === "finalizar"
             onTriggered: pagina.finalizar(true)
         }
         QQC2.MenuSeparator {}
         QQC2.MenuItem {
-            text: pagina.linhaEscolhida && pagina.linhaEscolhida.aberto ? tarefas.t("Recolher", "Collapse") : tarefas.t("Mostrar os processos", "Show processes")
+            text: pagina.linhaEscolhida && pagina.linhaEscolhida.aberto ? janela.t("Recolher", "Collapse") : janela.t("Mostrar os processos", "Show processes")
             enabled: pagina.linhaEscolhida !== null && pagina.linhaEscolhida.tipo === "grupo" && pagina.linhaEscolhida.n > 1
             onTriggered: pagina.alternar(pagina.linhaEscolhida.chave.substring(2))
         }

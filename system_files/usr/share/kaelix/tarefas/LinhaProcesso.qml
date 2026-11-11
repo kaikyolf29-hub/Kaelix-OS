@@ -6,6 +6,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "../comum"
 
 MouseArea {
     id: linha
@@ -20,9 +21,9 @@ MouseArea {
     signal menuPedido()
 
     readonly property bool secao: model.tipo === "secao"
-    readonly property int recuo: Math.round(tarefas.gu * 0.75)
+    readonly property int recuo: Math.round(janela.gu * 0.75)
 
-    implicitHeight: secao ? Math.round(tarefas.gu * 2.2) : Math.round(tarefas.gu * 1.7)
+    implicitHeight: secao ? Math.round(janela.gu * 2.2) : Math.round(janela.gu * 1.7)
     hoverEnabled: !secao
     acceptedButtons: Qt.LeftButton | Qt.RightButton
     Accessible.role: secao ? Accessible.StaticText : Accessible.ListItem
@@ -60,7 +61,7 @@ MouseArea {
                 height: 12
                 source: "kaelix-seta-symbolic"
                 isMask: true
-                color: tarefas.frente
+                color: janela.frente
                 opacity: 0.7
                 rotation: linha.model.aberto ? 90 : 0
                 Behavior on rotation {
@@ -79,7 +80,7 @@ MouseArea {
             Kirigami.Icon {
                 id: icone
                 visible: !linha.secao
-                x: linha.recuo + Math.round(tarefas.gu * (linha.model.nivel > 0 ? 2.3 : 1.25))
+                x: linha.recuo + Math.round(janela.gu * (linha.model.nivel > 0 ? 2.3 : 1.25))
                 anchors.verticalCenter: parent.verticalCenter
                 width: Kirigami.Units.iconSizes.small
                 height: width
@@ -87,17 +88,17 @@ MouseArea {
                       : (linha.model.tipo === "proc" ? "kaelix-processo-symbolic" : "kaelix-engrenagem-symbolic")
                 fallback: "kaelix-engrenagem-symbolic"
                 isMask: linha.model.icone.length === 0
-                color: tarefas.frente
+                color: janela.frente
                 opacity: linha.model.icone.length > 0 ? 1 : 0.7
             }
 
             Texto {
                 anchors.left: linha.secao ? parent.left : icone.right
-                anchors.leftMargin: linha.secao ? linha.recuo : Math.round(tarefas.gu * 0.55)
+                anchors.leftMargin: linha.secao ? linha.recuo : Math.round(janela.gu * 0.55)
                 anchors.right: parent.right
-                anchors.rightMargin: Math.round(tarefas.gu * 0.5)
+                anchors.rightMargin: Math.round(janela.gu * 0.5)
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: linha.secao ? Math.round(tarefas.gu * 0.3) : 0
+                anchors.verticalCenterOffset: linha.secao ? Math.round(janela.gu * 0.3) : 0
                 text: {
                     var n = linha.model.nome;
                     if (linha.secao || (linha.model.tipo === "grupo" && linha.model.n > 1))
@@ -112,9 +113,9 @@ MouseArea {
 
         Repeater {
             model: linha.secao ? [] : [
-                { valor: linha.model.cpu, texto: tarefas.num(linha.model.cpu, 1) + "%", cheio: 50 },
-                { valor: linha.model.mem, texto: tarefas.bytes(linha.model.mem), cheio: linha.memTotal * 0.25 },
-                { valor: linha.model.disco, texto: tarefas.mbs(linha.model.disco), cheio: 20 * 1048576 }
+                { valor: linha.model.cpu, texto: janela.num(linha.model.cpu, 1) + "%", cheio: 50 },
+                { valor: linha.model.mem, texto: janela.bytes(linha.model.mem), cheio: linha.memTotal * 0.25 },
+                { valor: linha.model.disco, texto: janela.mbs(linha.model.disco), cheio: 20 * 1048576 }
             ]
 
             Rectangle {
@@ -122,7 +123,7 @@ MouseArea {
                 required property var modelData
                 Layout.preferredWidth: linha.colNum
                 Layout.fillHeight: true
-                color: tarefas.calor(modelData.valor, modelData.cheio)
+                color: janela.calor(modelData.valor, modelData.cheio)
                 Behavior on color {
                     ColorAnimation {
                         duration: Kirigami.Units.longDuration
@@ -131,7 +132,7 @@ MouseArea {
 
                 Texto {
                     anchors.fill: parent
-                    anchors.rightMargin: Math.round(tarefas.gu * 0.6)
+                    anchors.rightMargin: Math.round(janela.gu * 0.6)
                     horizontalAlignment: Text.AlignRight
                     verticalAlignment: Text.AlignVCenter
                     text: celula.modelData.texto
@@ -150,7 +151,7 @@ MouseArea {
         anchors.leftMargin: 4
         anchors.rightMargin: 4
         visible: !linha.secao
-        radius: Math.round(tarefas.gu * 0.25)
-        color: tarefas.tinta(linha.selecionada ? (tarefas.escuro ? 0.09 : 0.075) : (linha.containsMouse ? 0.045 : 0))
+        radius: Math.round(janela.gu * 0.25)
+        color: janela.tinta(linha.selecionada ? (janela.escuro ? 0.09 : 0.075) : (linha.containsMouse ? 0.045 : 0))
     }
 }

@@ -24,3 +24,5 @@ jobs:
         run: bash tests/test_central.sh
       - name: Testar o leitor do Gerenciador de tarefas
         run: python3 tests/test_tarefas.py
+      - name: Testar o ajudante da Central de jogos
+        run: python3 tests/test_jogos.py

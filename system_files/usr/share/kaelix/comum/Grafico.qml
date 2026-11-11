@@ -13,6 +13,8 @@ Canvas {
     property real maximo: 100     // 0: ajusta sozinho ao maior valor
     property color cor: Kirigami.Theme.highlightColor
     property bool mini: false
+    // Sem moldura: só a linha e o degradê (nos cartões, onde a moldura pesa).
+    property bool moldura: true
     property int pontos: 60
     property int tique: 0
 
@@ -33,7 +35,8 @@ Canvas {
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
     onCorChanged: requestPaint()
-    readonly property color neutra: tarefas.frente
+    onMolduraChanged: requestPaint()
+    readonly property color neutra: janela.frente
     onNeutraChanged: requestPaint()
 
     function linhaDe(ctx, lista, w, h, folga) {
@@ -69,8 +72,10 @@ Canvas {
         // Fundo e borda arredondados.
         ctx.beginPath();
         ctx.roundedRect(0.5, 0.5, w - 1, h - 1, raio, raio);
-        ctx.fillStyle = tinta(0.02);
-        ctx.fill();
+        if (moldura) {
+            ctx.fillStyle = tinta(0.02);
+            ctx.fill();
+        }
         ctx.save();
         ctx.clip();
 
@@ -117,6 +122,8 @@ Canvas {
             ctx.stroke();
         }
         ctx.restore();
+        if (!moldura)
+            return;
 
         ctx.beginPath();
         ctx.roundedRect(0.5, 0.5, w - 1, h - 1, raio, raio);

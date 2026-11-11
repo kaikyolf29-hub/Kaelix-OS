@@ -1,0 +1,17 @@
+# Central de jogos do Kaelix: quando um jogo abre, liga o modo jogo (GameMode),
+# o perfil gráfico dele (energia, placa de vídeo, limite de FPS) e a
+# sobreposição; quando fecha, deixa tudo como estava.
+[Unit]
+Description=Central de jogos do Kaelix (modo jogo automático)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -I -S /usr/share/kaelix/jogos/ajudante.py servico
+Restart=on-failure
+RestartSec=5
+Nice=5
+
+[Install]
+WantedBy=graphical-session.target

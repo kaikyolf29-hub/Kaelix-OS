@@ -27,10 +27,10 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: chave.ligada ? (chave.containsMouse ? Qt.lighter(tarefas.destaque, 1.08) : tarefas.destaque)
-             : tarefas.tinta(chave.containsMouse ? 0.06 : 0.02)
+        color: chave.ligada ? (chave.containsMouse ? Qt.lighter(janela.destaque, 1.08) : janela.destaque)
+             : janela.tinta(chave.containsMouse ? 0.06 : 0.02)
         border.width: chave.ligada ? 0 : 1
-        border.color: tarefas.tinta(0.6)
+        border.color: janela.tinta(0.6)
         Behavior on color {
             ColorAnimation {
                 duration: Kirigami.Units.shortDuration
@@ -44,7 +44,7 @@ MouseArea {
             radius: height / 2
             color: "transparent"
             border.width: chave.activeFocus ? 1.5 : 0
-            border.color: tarefas.frente
+            border.color: janela.frente
         }
 
         Rectangle {
@@ -54,7 +54,7 @@ MouseArea {
             radius: lado / 2
             anchors.verticalCenter: parent.verticalCenter
             x: chave.ligada ? parent.width - width - 4 : 5
-            color: chave.ligada ? (tarefas.escuro ? "#1a1a1e" : "#ffffff") : tarefas.tinta(0.75)
+            color: chave.ligada ? (janela.escuro ? "#1a1a1e" : "#ffffff") : janela.tinta(0.75)
             Behavior on x {
                 NumberAnimation {
                     duration: Kirigami.Units.shortDuration

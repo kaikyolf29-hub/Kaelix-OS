@@ -341,6 +341,26 @@ hmp mover 960 500 || true
 hmp key alt-f4
 sleep 2
 
+# Central de jogos: Início (sem jogos na máquina de teste, mostra o convite da
+# Steam), Gráficos (Ctrl+3), Sobreposição (Ctrl+4) e Placa de vídeo (Ctrl+5).
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f /usr/libexec/kaelix/kaelix-janela org.kaelix.jogos /usr/share/kaelix/jogos/Main.qml; exit"
+hmp key ret
+sleep 10
+shot "36-jogos-inicio"
+hmp key ctrl-3
+sleep 3
+shot "36b-jogos-graficos"
+hmp key ctrl-4
+sleep 3
+shot "36c-jogos-sobreposicao"
+hmp key ctrl-5
+sleep 4
+shot "36d-jogos-placa"
+hmp key alt-f4
+sleep 2
+
 # Tela de bloqueio (Meta+L), com o papel de parede do Kaelix. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
 # desbloquear continua funcionando com as peças do Kaelix.

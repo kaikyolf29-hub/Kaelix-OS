@@ -289,6 +289,10 @@ grep -H '^Icon=' /usr/share/applications/org.kde.{dolphin,konsole,discover,plasm
 log "Ligando os serviços do Kaelix"
 # Flathub e os apps Flatpak que já vêm (Heroic, Lutris, OBS, Kdenlive...).
 systemctl enable kaelix-flatpak-setup.service
+# Central de jogos: o ajudante que liga o perfil gráfico e a sobreposição
+# quando um jogo abre (e desfaz tudo quando ele fecha), na sessão de cada pessoa.
+systemctl --global enable kaelix-jogos.service
+chmod 0755 /usr/libexec/kaelix/kaelix-jogos-placa
 
 # ---------------------------------------------------------------------------
 log "Tela de boot do Kaelix"

@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+# Kaelix OS: muda o nível de desempenho das placas de vídeo AMD (o "modo" do
+# AMD Software). Quem chama é a Central de jogos, pelo pkexec, quando um jogo
+# com o perfil Desempenho ou Economia abre e quando ele fecha.
+#   kaelix-jogos-placa auto|high|low
+set -euo pipefail
+nivel="${1:-}"
+case "$nivel" in
+  auto|high|low) ;;
+  *) echo "uso: kaelix-jogos-placa auto|high|low" >&2; exit 2 ;;
+esac
+mudou=0
+for arquivo in /sys/class/drm/card*/device/power_dpm_force_performance_level; do
+  [[ $arquivo =~ ^/sys/class/drm/card[0-9]+/device/ ]] || continue
+  [[ -w $arquivo ]] || continue
+  driver="$(basename "$(readlink -f "${arquivo%/*}/driver")")"
+  [[ $driver == amdgpu ]] || continue
+  echo "$nivel" > "$arquivo" && mudou=1
+done
+(( mudou )) || { echo "nenhuma placa AMD para mudar" >&2; exit 3; }
