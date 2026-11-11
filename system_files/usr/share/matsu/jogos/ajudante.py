@@ -82,7 +82,7 @@ PADRAO = {
 
 # Programas que não são jogo: a sobreposição nunca aparece neles.
 NAO_JOGOS = ("matsu-janela", "plasmashell", "kwin_wayland", "kwin_x11", "krunner", "systemsettings", "dolphin",
-             "konsole", "brave", "brave-browser", "firefox", "chromium", "mpv", "celluloid", "vlc", "haruna",
+             "konsole", "matsu-terminal", "brave", "brave-browser", "firefox", "chromium", "mpv", "celluloid", "vlc", "haruna",
              "zed", "zeditor", "code", "blender", "obs", "kdenlive", "gimp", "krita", "steam", "steamwebhelper",
              "corectrl", "lact")
 

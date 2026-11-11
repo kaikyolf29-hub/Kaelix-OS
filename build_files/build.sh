@@ -281,6 +281,28 @@ else
   exit 1
 fi
 python3 -c "import ast,sys; ast.parse(open('/usr/share/matsu/tarefas/ajudante.py').read())"
+# Terminal do Matsu (matsu-terminal), também compilado na etapa "deco": a janela
+# de vidro com abas, e dentro dela o terminal do Konsole (a peça konsolepart).
+if [[ -s /deco/matsu-terminal ]]; then
+  install -Dm0755 /deco/matsu-terminal /usr/bin/matsu-terminal
+  rpm -q konsole-part >/dev/null 2>&1 || dnf5 -y install konsole-part
+  find /usr/lib64/qt6/plugins -path '*kf6/parts/konsolepart.so' | grep -q . \
+    || { echo "ERRO: a peça do Konsole (konsolepart) não está na imagem." >&2; exit 1; }
+  echo "matsu-terminal instalado"
+else
+  echo "ERRO: o matsu-terminal não foi compilado." >&2
+  exit 1
+fi
+# Ele vira o terminal padrão (Ctrl+Alt+T, "Abrir terminal aqui" dos Arquivos...).
+# O Konsole continua na imagem (é ele que roda dentro), mas sai do menu e larga o
+# Ctrl+Alt+T, para não ter dois terminais iguais nem dois donos do atalho.
+kwriteconfig6 --file /etc/xdg/kdeglobals --group General --key TerminalApplication matsu-terminal
+kwriteconfig6 --file /etc/xdg/kdeglobals --group General --key TerminalService org.matsu.terminal.desktop
+konsole_app=/usr/share/applications/org.kde.konsole.desktop
+if [[ -f $konsole_app ]]; then
+  sed -i '/^X-KDE-Shortcuts=/d' "$konsole_app"
+  grep -q '^NoDisplay=' "$konsole_app" || sed -i '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$konsole_app"
+fi
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
@@ -288,7 +310,10 @@ kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsO
 kwriteconfig6 --file /etc/xdg/kwinrc --group TabBox --key LayoutName thumbnail_grid
 chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
 
-# Terminal do Matsu (como no vídeo): perfil próprio com vidro, sem barra de
+# O terminal do Matsu já nasce com o perfil dele (sem piscar o perfil do Konsole).
+kwriteconfig6 --file /etc/xdg/matsu-terminalrc --group "Desktop Entry" --key DefaultProfile MatsuTerminal.profile
+chmod 0644 /etc/xdg/matsu-terminalrc
+# Konsole (se alguém abrir pelo comando): perfil próprio com vidro, sem barra de
 # menu e sem barra de ferramentas. O tema claro troca para o perfil claro.
 kwriteconfig6 --file /etc/xdg/konsolerc --group "Desktop Entry" --key DefaultProfile Matsu.profile
 kwriteconfig6 --file /etc/xdg/konsolerc --group MainWindow --key MenuBar Disabled

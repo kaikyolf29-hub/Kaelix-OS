@@ -66,3 +66,12 @@ cmake -S "${HERE}/janela" -B /tmp/janela-build -G Ninja -DCMAKE_BUILD_TYPE=Relea
 cmake --build /tmp/janela-build
 install -Dm0755 /tmp/janela-build/matsu-janela /out/matsu-janela
 log "matsu-janela compilada: $(stat -c %s /out/matsu-janela) bytes"
+
+# O terminal do Matsu (ver terminal/main.cpp): janela própria com a peça do
+# Konsole dentro.
+log "Compilando o matsu-terminal"
+dnf5 -y install kf6-kparts-devel kf6-kcoreaddons-devel kf6-kconfig-devel kf6-kwindowsystem-devel
+cmake -S "${HERE}/terminal" -B /tmp/terminal-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build /tmp/terminal-build
+install -Dm0755 /tmp/terminal-build/matsu-terminal /out/matsu-terminal
+log "matsu-terminal compilado: $(stat -c %s /out/matsu-terminal) bytes"

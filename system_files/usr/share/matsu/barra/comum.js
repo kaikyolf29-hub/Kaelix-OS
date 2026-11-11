@@ -81,7 +81,7 @@ function porBusca(painel) {
 function fixadosPadrao() {
     var fixados = ["preferred://filemanager", "preferred://browser"];
     var candidatos = [
-        "org.kde.konsole.desktop",
+        "org.matsu.terminal.desktop",
         "steam.desktop",
         "code.desktop",
         "org.kde.discover.desktop",

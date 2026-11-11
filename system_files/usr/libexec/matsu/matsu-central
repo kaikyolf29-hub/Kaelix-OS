@@ -503,7 +503,13 @@ cmd_abrir() {
       # pedido com "pagina-pedida" (vale também se a janela já estiver aberta).
       if [[ ${2:-} =~ ^[a-z]+$ ]]; then mkdir -p "$STATE_DIR" && echo "$2" > "$STATE_DIR/ajustes-pagina"; fi
       solto plasmawindowed org.matsu.ajustes ;;
-    atualizar)     solto konsole --hold -e matsu atualizar ;;
+    atualizar)
+      # No terminal do Matsu (ou no Konsole, se ele faltar), que fica aberto no fim.
+      if command -v matsu-terminal >/dev/null 2>&1; then
+        solto matsu-terminal --hold -e matsu atualizar
+      else
+        solto konsole --hold -e matsu atualizar
+      fi ;;
     kcm)
       # Qualquer tela de ajustes do KDE, pelo nome (kcm_keyboard, kcm_users...).
       [[ ${2:-} =~ ^kcm_[a-z0-9_]+$ ]] || { echo "use: abrir kcm kcm_<nome>" >&2; exit 2; }

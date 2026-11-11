@@ -15,6 +15,7 @@ Para jogar, programar, estudar cibersegurança e usar no dia a dia.
 - Duas variantes: `matsu-os` (placas AMD e Intel) e `matsu-os-nvidia` (driver oficial da NVIDIA).
 - **Jogos:** Steam com Proton, Heroic (Epic e GOG), Lutris, GameMode e MangoHud.
 - **Programação:** Git, Python, Node, compiladores, VS Code e Distrobox.
+- **Terminal próprio:** abas, tela dividida, vidro e uma barra com a pasta, o ramo do git e o programa rodando.
 - **Cibersegurança:** contêiner do Kali criado pelo comando `matsu seguranca`.
 - **Vídeo:** OBS Studio e Kdenlive. **Loja de apps:** Flathub ligado.
 - **Navegador:** no primeiro login a pessoa escolhe Google Chrome, Brave ou os dois.

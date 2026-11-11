@@ -127,6 +127,24 @@ hmp type "fastfetch"
 hmp key ret
 sleep 8
 shot "07-matsu-versao-fastfetch"
+# Terminal do Matsu: uma aba nova (Ctrl+Shift+T) e a tela dividida (Ctrl+( ).
+hmp key ctrl-shift-t
+sleep 3
+hmp type "cd /usr/share/matsu && ls"
+hmp key ret
+sleep 2
+hmp key ctrl-shift-9
+sleep 3
+hmp type "git -C /usr/share/matsu status 2>/dev/null || ls /usr/share/konsole"
+hmp key ret
+sleep 2
+shot "07b-terminal-abas-e-tela-dividida"
+# Fecha o lado novo e a aba nova (Ctrl+Shift+W duas vezes): volta para a primeira.
+hmp key ctrl-shift-w
+sleep 2
+hmp key ctrl-shift-w
+sleep 2
+shot "07c-terminal-de-volta-na-primeira-aba"
 
 # A pergunta do navegador, aberta à mão, e o registro do primeiro login.
 hmp type "clear"

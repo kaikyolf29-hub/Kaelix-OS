@@ -16,7 +16,7 @@
     </entry>
     <!-- O que aparece no lugar dos recentes numa conta nova. -->
     <entry name="fixados" type="StringList">
-      <default>org.kde.dolphin.desktop,preferred://browser,org.kde.konsole.desktop,org.kde.discover.desktop,org.matsu.ajustes.desktop</default>
+      <default>org.kde.dolphin.desktop,preferred://browser,org.matsu.terminal.desktop,org.kde.discover.desktop,org.matsu.ajustes.desktop</default>
     </entry>
     <entry name="fixadosProntos" type="Bool">
       <default>false</default>

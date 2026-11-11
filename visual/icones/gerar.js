@@ -46,9 +46,10 @@ const ICONES = {
       `<path d="M66 98 v-6 a6 6 0 0 1 6 -6 h34 l14 16 h64 a6 6 0 0 1 6 6 v62 h-124 z" fill="${B}" opacity=".5" stroke="${B}" stroke-opacity=".5" stroke-width="6" ${liso}/>` +
       `<path d="M58 124 h140 l-9 58 h-122 z" fill="${B}" stroke="${B}" stroke-width="10" ${liso}/>`,
   },
+  // Terminal do Matsu: grafite quase preto (o fundo do logo), sem o azul.
   terminal: {
-    nomes: ['utilities-terminal', 'org.kde.konsole', 'konsole'],
-    svg: base('term', '#262C58', '#12152B') +
+    nomes: ['org.matsu.terminal', 'utilities-terminal', 'org.kde.konsole', 'konsole'],
+    svg: base('term', '#3A3B42', '#141517') +
       `<polyline points="80,96 120,128 80,160" fill="none" stroke="#45D0C1" stroke-width="18" ${liso}/>` +
       `<line x1="136" y1="162" x2="180" y2="162" stroke="${B}" stroke-width="18" ${liso}/>`,
   },
