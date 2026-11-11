@@ -7,3 +7,4 @@ senha*.txt
 *.iso
 out/
 docs/visual/frames/
+__pycache__/
