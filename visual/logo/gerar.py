@@ -185,7 +185,7 @@ def emblema(p, cores, comentario):
 QUADRANTES = " ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█"   # índice: 1 alto-esq, 2 alto-dir, 4 baixo-esq, 8 baixo-dir
 
 
-def letras(p, colunas=30):
+def letras(p, colunas=34):
     """O logo em caracteres de bloco (2x2 pontos por letra), para o fastfetch.
     Uma letra do terminal é duas vezes mais alta que larga, então cada ponto
     mede w x 2w e acende quando mais da metade dele está pintada. As frestas
@@ -193,6 +193,7 @@ def letras(p, colunas=30):
     madeira na $3."""
     x0, y0, x1, y1 = p["anel"].bounds
     w = (x1 - x0) / (colunas * 2)
+    y0 -= w   # meio ponto para cima: assim o fundo do anel cai inteiro numa linha
     linhas_n = math.ceil((y1 - y0) / (w * 4))
     folhas = p["folhas"].buffer(FRESTA * 0.7, 32)
     formas = (("$1", p["anel"]), ("$2", folhas), ("$3", p["madeira"].difference(folhas)))
@@ -203,15 +204,16 @@ def letras(p, colunas=30):
         for co in range(colunas):
             bits, votos = 0, {}
             for k, (dx, dy) in enumerate(((0, 0), (1, 0), (0, 1), (1, 1))):
-                dentro = 0
+                conta = {}
                 for ax, ay in amostras:
                     ponto = Point(x0 + (co * 2 + dx + ax) * w, y0 + (li * 2 + dy + ay) * w * 2)
                     for cor, forma in formas:
                         if forma.contains(ponto):
-                            dentro += 1
+                            conta[cor] = conta.get(cor, 0) + 1
                             votos[cor] = votos.get(cor, 0) + 1
                             break
-                if dentro >= 5:
+                # o anel acende com um pouco menos, para não abrir buracos nele
+                if conta.get("$1", 0) >= 4 or conta.get("$2", 0) + conta.get("$3", 0) >= 5:
                     bits |= 1 << k
             if bits:
                 cor = max(votos, key=votos.get)
