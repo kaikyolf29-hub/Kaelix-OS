@@ -257,5 +257,15 @@ check "não apaga um tema que a pessoa fez" bash -c "grep -qF 'Não vou mexer' <
 rm -rf "$VIDRO"
 
 echo
+echo "arquivos do sistema"
+# Um link quebrado não dá erro na montagem: o arquivo só some no sistema (foi
+# assim que os ícones do tema claro e o Ctrl+Shift+Esc sumiram na troca de nome).
+OUT="$(find "$ROOT/system_files" "$ROOT/installer" -xtype l 2>/dev/null)"
+check "nenhum link quebrado nos arquivos do sistema" test -z "$OUT"
+# (O endereço do repositório no GitHub ainda é Kaelix-OS até o criador renomear.)
+OUT="$(grep -rIn -i 'kaelix' "$ROOT/system_files" 2>/dev/null | grep -v 'github.com/kaikyolf29-hub/Kaelix-OS'; find "$ROOT/system_files" -iname '*kaelix*' 2>/dev/null)"
+check "nenhum arquivo do sistema com o nome antigo (Kaelix)" test -z "$OUT"
+
+echo
 echo "Resultado: $PASS passaram, $FAILN falharam"
 [[ $FAILN -eq 0 ]]
