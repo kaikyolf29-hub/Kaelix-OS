@@ -7,7 +7,7 @@ import org.kde.kirigami as Kirigami
 MouseArea {
     id: ponto
 
-    property color cor: "#5468e8"
+    property color cor: "#a1a1a8"
     property string nome: ""
     property bool escolhido: false
     readonly property int tamanho: Math.round(Kirigami.Units.gridUnit * 1.25)

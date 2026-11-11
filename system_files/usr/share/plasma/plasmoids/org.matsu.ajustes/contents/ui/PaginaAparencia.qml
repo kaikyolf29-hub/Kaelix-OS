@@ -11,7 +11,7 @@ ColumnLayout {
     spacing: Math.round(Kirigami.Units.gridUnit * 1.1)
 
     readonly property var cores: [
-        { id: "padrao", cor: "#5468e8", nome: ajustes.t("Anil do Matsu", "Matsu indigo") },
+        { id: "padrao", cor: "#a1a1a8", nome: ajustes.t("Cinza neutro", "Neutral gray") },
         { id: "azul", cor: "#2f80ed", nome: ajustes.t("Azul", "Blue") },
         { id: "roxo", cor: "#8b5cf6", nome: ajustes.t("Roxo", "Purple") },
         { id: "rosa", cor: "#ec4899", nome: ajustes.t("Rosa", "Pink") },

@@ -32,7 +32,7 @@ Item {
         width: Math.round(parent.width * 0.6)
         height: Math.round(parent.height * 0.52)
         radius: 4
-        color: tela.escuro ? "#262c4c" : "#f0f3fc"
+        color: tela.escuro ? "#202022" : "#f3f3f5"
         border.width: 1
         border.color: tela.escuro ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(0, 0, 0, 0.08)
 

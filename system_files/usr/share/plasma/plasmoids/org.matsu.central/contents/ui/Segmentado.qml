@@ -60,7 +60,7 @@ Rectangle {
                     elide: Text.ElideRight
                     font.pointSize: Kirigami.Theme.defaultFont.pointSize - 1
                     font.weight: opcao.escolhida ? Font.DemiBold : Font.Normal
-                    color: opcao.escolhida ? "#1b2038" : Kirigami.Theme.textColor
+                    color: opcao.escolhida ? "#1a1a1e" : Kirigami.Theme.textColor
                     opacity: opcao.escolhida ? 1 : (opcao.enabled ? 0.75 : 0.35)
                 }
             }

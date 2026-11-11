@@ -657,7 +657,7 @@ cmd_bar() {
 # vidro / glass: a cor e a transparência das ilhas da barra e dos balões.
 # A cor também vira a cor de destaque do sistema (botões ligados, seleção).
 VIDRO_CORES=(padrao azul roxo rosa vermelho laranja amarelo verde grafite)
-VIDRO_PADRAO_DESTAQUE="#5468e8"   # o anil do Matsu (MatsuEscuro e MatsuClaro)
+VIDRO_PADRAO_DESTAQUE="#6e6e76"   # o cinza neutro do Matsu (a seleção de MatsuEscuro e MatsuClaro)
 
 # vidro_hex <nome ou #rrggbb>: a cor em #rrggbb ("" para o vidro sem cor).
 vidro_hex() {
@@ -764,7 +764,7 @@ cmd_glass() {
       fail "Não consegui gerar o vidro." "Could not generate the glass."
     fi
   fi
-  # A cor do destaque acompanha o vidro (no padrão, o anil do Matsu).
+  # A cor do destaque acompanha o vidro (no padrão, o cinza neutro do Matsu).
   if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
     plasma-apply-colorscheme --accent-color "${hex:-$VIDRO_PADRAO_DESTAQUE}" >/dev/null 2>&1 \
       || warn "Não consegui trocar a cor de destaque." "Could not change the accent color."
@@ -792,7 +792,7 @@ vidro_nome() {
 
 vidro_rotulo() {
   case "$1" in
-    padrao)   t "Anil do Matsu (padrão)" "Matsu indigo (default)" ;;
+    padrao)   t "Cinza neutro (padrão)" "Neutral gray (default)" ;;
     azul)     t "Azul" "Blue" ;;
     roxo)     t "Roxo" "Purple" ;;
     rosa)     t "Rosa" "Pink" ;;

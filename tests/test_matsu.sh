@@ -288,7 +288,7 @@ run vidro '#FF8800'
 check "aceita cor em #rrggbb" grep -qF 'fill="#ff8800"' "$SVG"
 run vidro padrao --transparencia normal
 check "no padrão apaga o tema da pessoa (vale o do sistema)" test ! -e "$VIDRO"
-check "no padrão o destaque volta ao anil do Matsu" called "plasma-apply-colorscheme --accent-color #5468e8"
+check "no padrão o destaque volta ao cinza neutro do Matsu" called "plasma-apply-colorscheme --accent-color #6e6e76"
 run vidro padrao --transparencia mais
 check "padrão mais transparente gera o vidro sem cor" bash -c "grep -qF 'opacity=\"0.42\"' '$SVG' && ! grep -qE 'fill=\"#[0-9a-f]{6}\" opacity=\"0.24\"' '$SVG'"
 run vidro magenta
