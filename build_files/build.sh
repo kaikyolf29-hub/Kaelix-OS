@@ -309,18 +309,6 @@ log "Telas de login, bloqueio e sair com a cara do Kaelix"
 # Essas telas vêm prontas dentro dos programas do KDE; o script troca só o
 # desenho das peças que elas dividem (relógio, foto da pessoa e botões).
 python3 "$CTX/build_files/telas-kde.py"
-# Para o registro (não muda a imagem): o desenho dos campos de texto do tema do
-# KDE, base para o campo de senha do Kaelix, e o que o assistente de primeiro
-# uso lê de marca.
-for arq in /usr/share/plasma/desktoptheme/default/widgets/lineedit.svgz \
-           /usr/share/plasma/desktoptheme/default/widgets/button.svgz; do
-  [[ -r $arq ]] || continue
-  echo "----- $arq"
-  zcat "$arq" | head -c 30000
-  echo
-done
-cat /etc/xdg/plasmasetuprc 2>/dev/null || true
-rpm -ql plasma-setup 2>/dev/null | grep -v -e '/locale/' -e '/doc/' -e '\.build-id' -e '/qml/' || true
 
 log "Limpando"
 dnf5 clean all
