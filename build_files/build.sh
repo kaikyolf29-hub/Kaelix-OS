@@ -302,21 +302,22 @@ for kdir in /usr/lib/modules/*/; do
 done
 
 # ---------------------------------------------------------------------------
-log "Registro: telas de bloqueio, saída e login que vêm do KDE"
-# Só para o registro da montagem: onde estão as telas de bloqueio, de saída e
-# de login no Plasma desta versão, e o código das peças que elas dividem
-# (relógio, foto da pessoa, botões). É a base para fazer as versões do Kaelix
-# sem chutar (não muda nada na imagem).
-rpm -ql kscreenlocker plasma-login-manager plasma-workspace 2>/dev/null \
-  | grep -i -e 'lockscreen' -e 'logout' -e 'greeter' -e '\.qml$' | grep -v -e '/locale/' | head -n 60 || true
-for arq in /usr/lib64/qt6/qml/org/kde/breeze/components/*.qml; do
+log "Telas de login, bloqueio e sair com a cara do Kaelix"
+# Essas telas vêm prontas dentro dos programas do KDE; o script troca só o
+# desenho das peças que elas dividem (relógio, foto da pessoa e botões).
+python3 "$CTX/build_files/telas-kde.py"
+# Para o registro (não muda a imagem): o desenho dos campos de texto do tema do
+# KDE, base para o campo de senha do Kaelix, e o que o assistente de primeiro
+# uso lê de marca.
+for arq in /usr/share/plasma/desktoptheme/default/widgets/lineedit.svgz \
+           /usr/share/plasma/desktoptheme/default/widgets/button.svgz; do
   [[ -r $arq ]] || continue
   echo "----- $arq"
-  cat "$arq"
+  zcat "$arq" | head -c 30000
+  echo
 done
-# O assistente de primeiro uso (criar a conta depois de instalar): o que ele lê
-# de marca e de aparência, para ganhar a cara do Kaelix.
-rpm -ql plasma-setup 2>/dev/null | grep -v -e '/locale/' -e '/doc/' | head -n 80 || true
+cat /etc/xdg/plasmasetuprc 2>/dev/null || true
+rpm -ql plasma-setup 2>/dev/null | grep -v -e '/locale/' -e '/doc/' -e '\.build-id' -e '/qml/' || true
 
 log "Limpando"
 dnf5 clean all

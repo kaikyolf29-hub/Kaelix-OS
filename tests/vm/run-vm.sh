@@ -51,6 +51,8 @@ sleep 30
 # Tela de login: digita a senha do usuário de teste.
 shot "02-login"
 hmp type "$USER_PASS"
+sleep 2
+shot "02a-login-com-senha"
 hmp key ret
 # Tela de carregamento do Kaelix (aparece por poucos segundos depois da senha).
 for i in 1 2 3; do
@@ -283,10 +285,26 @@ sleep 2
 hmp key alt-f4
 sleep 2
 
-# Tela de bloqueio (Meta+L), com o papel de parede do Kaelix.
+# Tela de bloqueio (Meta+L), com o papel de parede do Kaelix. Depois digita a
+# senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
+# desbloquear continua funcionando com as peças do Kaelix.
 hmp key meta_l-l
 sleep 8
 shot "23-tela-de-bloqueio"
+hmp type "$USER_PASS"
+sleep 2
+shot "23b-bloqueio-com-senha"
+hmp key ret
+sleep 6
+shot "23c-desbloqueado"
+
+# Tela de sair (Ctrl+Alt+Del): sair, reiniciar, desligar. Fica por último e
+# fecha com Esc logo depois do print.
+hmp key ctrl-alt-delete
+sleep 5
+shot "34-tela-de-sair"
+hmp key esc
+sleep 2
 
 echo "Prints em $OUT"
 ls -l "$OUT"
