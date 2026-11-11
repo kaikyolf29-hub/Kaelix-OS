@@ -248,6 +248,8 @@ fi
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
+# Alt+Tab como no Windows 11: as janelas em miniatura lado a lado, no vidro do Kaelix.
+kwriteconfig6 --file /etc/xdg/kwinrc --group TabBox --key LayoutName thumbnail_grid
 chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
 
 # Terminal do Kaelix (como no vídeo): perfil próprio com vidro, sem barra de
@@ -300,6 +302,22 @@ for kdir in /usr/lib/modules/*/; do
 done
 
 # ---------------------------------------------------------------------------
+log "Registro: telas de bloqueio, saída e login que vêm do KDE"
+# Só para o registro da montagem: o código das telas de bloqueio e de saída do
+# Breeze e onde a tela de login guarda as dela. É a base para fazer as versões
+# do Kaelix sem chutar (não muda nada na imagem).
+for pasta in /usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen \
+             /usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/logout; do
+  ls -la "$pasta" 2>/dev/null || continue
+  for arq in "$pasta"/*.qml; do
+    [[ -r $arq ]] || continue
+    echo "----- $arq"
+    cat "$arq"
+  done
+done
+find /usr/share /usr/lib64/qt6/qml -path '*plasmalogin*' -name '*.qml' 2>/dev/null | head -n 40 || true
+find /usr/lib64/qt6/qml/org/kde/breeze/components -name '*.qml' 2>/dev/null | head -n 40 || true
+
 log "Limpando"
 dnf5 clean all
 rm -rf /var/lib/dnf /run/dnf /run/setrans

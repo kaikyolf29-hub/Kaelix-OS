@@ -7,6 +7,9 @@ Uso:
   hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _ |)
   hmp.py <socket> click <x> <y> [largura altura]   clica com o mouse num ponto da tela (padrão 1920x1080)
   hmp.py <socket> rclick <x> <y> [largura altura]  o mesmo, com o botão direito
+  hmp.py <socket> segurar <mantida> <tecla> <segundos> <arquivo.png>
+                                          segura uma tecla (ex.: alt), aperta outra (tab) e tira
+                                          o print antes de soltar (para ver o Alt+Tab)
 
 O clique vai pelo socket QMP, que fica ao lado do monitor: <socket>.qmp
 """
@@ -63,6 +66,17 @@ def clique(sock_path, x, y, largura=1920, altura=1080, botao="left"):
     qmp(sock_path + ".qmp", [mover, mover, apertar, soltar])
 
 
+def segurar(sock_path, mantida, tecla, segundos, arquivo):
+    def ev(nome, apertada):
+        return {"execute": "input-send-event", "arguments": {"events": [
+            {"type": "key", "data": {"down": apertada, "key": {"type": "qcode", "data": nome}}}]}}
+    qmp(sock_path + ".qmp", [ev(mantida, True), ev(tecla, True), ev(tecla, False)])
+    time.sleep(segundos)
+    send(sock_path, f"screendump {arquivo} -f png")
+    time.sleep(1)
+    qmp(sock_path + ".qmp", [ev(mantida, False)])
+
+
 def main():
     sock_path, action, *args = sys.argv[1:]
     if action == "shot":
@@ -82,6 +96,8 @@ def main():
         clique(sock_path, *[int(a) for a in args])
     elif action == "rclick":
         clique(sock_path, *[int(a) for a in args], botao="right")
+    elif action == "segurar":
+        segurar(sock_path, args[0], args[1], float(args[2]), args[3])
     else:
         sys.exit(f"ação desconhecida: {action}")
 

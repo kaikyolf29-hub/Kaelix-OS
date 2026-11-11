@@ -16,8 +16,7 @@ function ilha(alinhamento) {
 }
 
 var esquerda = ilha("left");
-porMenu(esquerda);
-porBusca(esquerda);
+porMenu(esquerda, true);
 
 var centro = ilha("center");
 porApps(centro);

@@ -91,6 +91,8 @@ ICONES = {
     "kaelix-seta": svg(traco("M9.5 6l6 6-6 6")),
     "kaelix-busca": svg(traco("M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0 -13zM15.3 15.3l5 5")),
     "kaelix-certo": svg(traco("M5.5 12.5l4.2 4.2 8.8 -9.2")),
+    # Menu do Kaelix (limpar a busca).
+    "kaelix-fechar": svg(traco("M7 7l10 10M17 7L7 17")),
 }
 for nivel in range(4):
     ICONES[f"kaelix-wifi-{nivel}"] = svg(PONTO, *[traco(a, 1.0 if i < nivel else 0.3) for i, a in enumerate(ARCOS)])

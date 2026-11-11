@@ -74,10 +74,16 @@ shot "04c-arquivos"
 hmp key alt-f4
 sleep 2
 
-# Menu do Kaelix (tecla Meta).
+# Menu do Kaelix (tecla Meta), no jeito do vídeo. Depois digita uma busca,
+# como no vídeo ("term"), e fecha com Esc (o primeiro limpa, o segundo fecha).
 hmp key meta_l
 sleep 5
 shot "04d-menu"
+hmp type "term"
+sleep 4
+shot "04d2-menu-buscando"
+hmp key esc
+sleep 1
 hmp key esc
 sleep 2
 
@@ -269,6 +275,11 @@ sleep 4
 shot "31-vidro-roxo-mais-transparente"
 sleep 14
 shot "32-vidro-de-volta-ao-padrao"
+# Alt+Tab como no Windows 11: as janelas em miniatura (Ajustes e terminal).
+hmp segurar alt tab 2 "$OUT/33-alt-tab.png" && echo "print: 33-alt-tab"
+sleep 2
+hmp key alt-f4
+sleep 2
 hmp key alt-f4
 sleep 2
 

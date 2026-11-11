@@ -238,6 +238,8 @@ check "sem idioma no ambiente, lê o plasma-localerc" linha "idioma=pt"
 rm -f "$WORK/config/plasma-localerc"
 LC_ALL="" LC_MESSAGES="" LANGUAGE="pt_BR:pt" KAELIX_LANG="" LANG=en_US.UTF-8 run estado
 check "LANGUAGE vale mais que o LANG" linha "idioma=pt"
+LC_ALL="" LC_MESSAGES="" LANGUAGE="" KAELIX_LANG="" LANG=pt_BR.UTF-8 run estado idioma
+check "o menu pergunta só o idioma" test "$OUT" = "idioma=pt"
 
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"

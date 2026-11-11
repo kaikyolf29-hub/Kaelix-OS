@@ -7,7 +7,7 @@ topo.height = 2 * Math.ceil(gridUnit * 1.6 / 2);
 topo.lengthMode = "fill";
 topo.floating = false;
 topo.hiding = "none";
-porMenu(topo);
+porMenu(topo, false);
 if (tem("org.kde.plasma.appmenu")) {
     topo.addWidget("org.kde.plasma.appmenu");
 }

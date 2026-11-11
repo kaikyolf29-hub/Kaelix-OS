@@ -19,17 +19,31 @@ function alturaDaBarra() {
     return 2 * Math.ceil(gridUnit * escala / 2);
 }
 
-// Menu do Kaelix, com o logo.
-function porMenu(painel) {
-    var menu = painel.addWidget("org.kde.plasma.kickoff");
-    menu.currentConfigGroup = ["General"];
-    menu.writeConfig("icon", "kaelix-menu");
+// Menu do Kaelix, com o logo, no jeito do vídeo da fusão (busca, recentes,
+// todos os apps, ajustes e desligar). "comBusca" põe ao lado a pílula
+// "Buscar apps e arquivos", que abre o mesmo menu já pronto para digitar.
+// Sem o menu do Kaelix (não deveria acontecer), fica o menu do KDE e a busca
+// do sistema.
+function porMenu(painel, comBusca) {
+    var menu;
+    if (tem("org.kaelix.menu")) {
+        menu = painel.addWidget("org.kaelix.menu");
+        menu.currentConfigGroup = ["General"];
+        menu.writeConfig("comBusca", comBusca ? true : false);
+    } else {
+        menu = painel.addWidget("org.kde.plasma.kickoff");
+        menu.currentConfigGroup = ["General"];
+        menu.writeConfig("icon", "kaelix-menu");
+        if (comBusca) {
+            porBusca(painel);
+        }
+    }
     menu.currentConfigGroup = ["Shortcuts"];
     menu.writeConfig("global", "Alt+F1");
     return menu;
 }
 
-// Pílula "Buscar".
+// Pílula "Buscar" que abre a busca do sistema (só quando falta o menu do Kaelix).
 function porBusca(painel) {
     if (tem("org.kaelix.busca")) {
         painel.addWidget("org.kaelix.busca");

@@ -21,7 +21,7 @@ library=org.kde.breeze
 theme=Breeze
 
 [kwinrc][WindowSwitcher]
-LayoutName=org.kde.breeze.desktop
+LayoutName=thumbnail_grid
 
 [KSplash]
 Theme=org.kaelix.escuro.desktop

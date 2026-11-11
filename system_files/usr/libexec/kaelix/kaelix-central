@@ -281,10 +281,12 @@ estado_idioma() {
 
 cmd_estado() {
   # "estado nao-perturbe" lê só o não perturbe: o sino do relógio pergunta isso
-  # de tempos em tempos e não precisa acordar a rede e o som.
+  # de tempos em tempos e não precisa acordar a rede e o som. "estado idioma"
+  # é para o menu, que só precisa saber se fala português.
   case "${1:-}" in
     "") ;;
     nao-perturbe) estado_nao_perturbe; return 0 ;;
+    idioma) estado_idioma; return 0 ;;
     *) echo "parte do estado desconhecida: $1" >&2; exit 2 ;;
   esac
   estado_idioma
