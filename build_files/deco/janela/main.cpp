@@ -124,6 +124,8 @@ static QImage imagemDaSombra(int borda, int raio)
 // sombra. Refaz tudo quando a janela muda de tamanho ou é criada de novo.
 class Vidro : public QObject
 {
+    Q_OBJECT
+
 public:
     Vidro(QWindow *janela, qreal raio)
         : QObject(janela)
