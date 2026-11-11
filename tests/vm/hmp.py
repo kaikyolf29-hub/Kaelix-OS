@@ -66,6 +66,15 @@ def clique(sock_path, x, y, largura=1920, altura=1080, botao="left"):
     qmp(sock_path + ".qmp", [mover, mover, apertar, soltar])
 
 
+def mover(sock_path, x, y, largura=1920, altura=1080):
+    """Só leva o mouse até o ponto, sem clicar (para os balões de passar o mouse)."""
+    ax = int(x * 32767 / (largura - 1))
+    ay = int(y * 32767 / (altura - 1))
+    ev = {"execute": "input-send-event", "arguments": {"events": [
+        {"type": "abs", "data": {"axis": "x", "value": ax}}, {"type": "abs", "data": {"axis": "y", "value": ay}}]}}
+    qmp(sock_path + ".qmp", [ev, ev])
+
+
 def segurar(sock_path, mantida, tecla, segundos, arquivo):
     def ev(nome, apertada):
         return {"execute": "input-send-event", "arguments": {"events": [
@@ -96,6 +105,8 @@ def main():
         clique(sock_path, *[int(a) for a in args])
     elif action == "rclick":
         clique(sock_path, *[int(a) for a in args], botao="right")
+    elif action == "mover":
+        mover(sock_path, *[int(a) for a in args])
     elif action == "segurar":
         segurar(sock_path, args[0], args[1], float(args[2]), args[3])
     else:

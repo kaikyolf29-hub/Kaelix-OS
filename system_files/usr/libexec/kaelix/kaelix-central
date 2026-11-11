@@ -509,6 +509,9 @@ cmd_abrir() {
       [[ ${2:-} =~ ^kcm_[a-z0-9_]+$ ]] || { echo "use: abrir kcm kcm_<nome>" >&2; exit 2; }
       solto kcmshell6 "$2" ;;
     configuracoes) solto systemsettings ;;
+    # Pelo .desktop (kstart --application), para o app ganhar a unidade própria
+    # dele e aparecer com o nome certo na barra e no próprio gerenciador.
+    tarefas)       solto kstart --application org.kaelix.tarefas ;;
     barra)         solto kaelix barra ;;
     *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;
   esac

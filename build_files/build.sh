@@ -248,6 +248,17 @@ else
   echo "ERRO: os botões de janela do Kaelix não foram compilados." >&2
   exit 1
 fi
+# Janela dos apps do Kaelix feitos em QML (Gerenciador de tarefas), também
+# compilada na etapa "deco". Ela dá a cada app a identidade do seu .desktop,
+# para a barra mostrar o ícone e o nome certos.
+if [[ -s /deco/kaelix-janela ]]; then
+  install -Dm0755 /deco/kaelix-janela /usr/libexec/kaelix/kaelix-janela
+  echo "kaelix-janela instalada"
+else
+  echo "ERRO: a kaelix-janela não foi compilada." >&2
+  exit 1
+fi
+python3 -c "import ast,sys; ast.parse(open('/usr/share/kaelix/tarefas/ajudante.py').read())"
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""

@@ -295,6 +295,27 @@ sleep 2
 hmp key alt-f4
 sleep 2
 
+# Gerenciador de tarefas do Kaelix (Ctrl+Shift+Esc), de vidro: Processos,
+# Desempenho (Ctrl+2) e Inicialização (Ctrl+3). Com ele aberto, o mouse passa
+# em cima do ícone do meio da barra para mostrar o balão com o nome.
+hmp key ctrl-shift-esc
+sleep 9
+shot "34-gerenciador-processos"
+hmp key ctrl-2
+sleep 4
+shot "34b-gerenciador-desempenho"
+hmp key ctrl-3
+sleep 3
+shot "34c-gerenciador-inicializacao"
+hmp key ctrl-1
+sleep 1
+hmp mover 960 1046 || echo "o mouse não foi (seguindo sem ele)"
+sleep 3
+shot "35-balao-do-icone-na-barra"
+hmp mover 960 500 || true
+hmp key alt-f4
+sleep 2
+
 # Tela de bloqueio (Meta+L), com o papel de parede do Kaelix. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
 # desbloquear continua funcionando com as peças do Kaelix.

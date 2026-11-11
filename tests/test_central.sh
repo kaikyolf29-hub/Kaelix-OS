@@ -227,6 +227,10 @@ run abrir ajustes barra
 run pagina-pedida; check "abrir ajustes barra pede a página da barra" linha "pagina=barra"
 run pagina-pedida; check "o pedido vale uma vez só" test -z "$OUT"
 
+mock kstart 'exit 0'
+run abrir tarefas
+check "abre o Gerenciador de tarefas pelo .desktop" bash -c "sleep 0.3; grep -qF 'kstart --application org.kaelix.tarefas' '$CALLS'"
+
 mock kcmshell6 'exit 0'
 run abrir kcm kcm_keyboard
 check "abre uma tela de ajustes do KDE pelo nome" bash -c "sleep 0.3; grep -qF 'kcmshell6 kcm_keyboard' '$CALLS'"

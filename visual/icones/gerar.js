@@ -66,6 +66,16 @@ const ICONES = {
     nomes: ['utilities-system-monitor', 'org.kde.plasma-systemmonitor'],
     svg: base('mon', '#62E3D5', '#1E9C90') + velocimetro(128, 150, 70, 0.70),
   },
+  // Gerenciador de tarefas: o gráfico de desempenho subindo, num anil mais fundo
+  // que o dos Arquivos.
+  tarefas: {
+    nomes: ['org.kaelix.tarefas'],
+    svg: base('tar', '#6F7CFF', '#2E35B0') +
+      `<path d="M62 170 L98 128 L126 150 L162 96 L194 122 V190 H62 Z" fill="${B}" opacity=".26"/>` +
+      `<path d="M62 170 L98 128 L126 150 L162 96 L194 122" fill="none" stroke="${B}" stroke-width="15" ${liso}/>` +
+      `<line x1="58" y1="192" x2="198" y2="192" stroke="${B}" stroke-width="10" opacity=".55" ${liso}/>` +
+      `<circle cx="162" cy="96" r="13" fill="#45D0C1" stroke="${B}" stroke-width="6"/>`,
+  },
   configuracoes: {
     nomes: ['systemsettings', 'org.kde.systemsettings', 'preferences-system'],
     svg: base('conf', '#A3AEDC', '#5A659F') + engrenagem(128, 128, 8, 66, 50, 22),

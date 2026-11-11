@@ -56,3 +56,11 @@ pronto="$(find /tmp/breeze-build -name 'org.kde.breeze.so' | head -n1)"
 install -Dm0755 "$pronto" /out/org.kde.breeze.so
 echo "$destino" > /out/destino
 log "Botões do Kaelix compilados: $(stat -c %s /out/org.kde.breeze.so) bytes"
+
+# Janela dos apps do Kaelix feitos em QML (ver janela/main.cpp).
+log "Compilando a kaelix-janela"
+dnf5 -y install qt6-qtbase-devel qt6-qtdeclarative-devel kf6-kwindowsystem-devel
+cmake -S "${HERE}/janela" -B /tmp/janela-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DKAELIX_EXIGIR_KWS=ON
+cmake --build /tmp/janela-build
+install -Dm0755 /tmp/janela-build/kaelix-janela /out/kaelix-janela
+log "kaelix-janela compilada: $(stat -c %s /out/kaelix-janela) bytes"

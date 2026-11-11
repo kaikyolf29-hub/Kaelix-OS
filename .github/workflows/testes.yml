@@ -22,3 +22,5 @@ jobs:
         run: bash tests/test_kaelix.sh
       - name: Testar a central de controle
         run: bash tests/test_central.sh
+      - name: Testar o leitor do Gerenciador de tarefas
+        run: python3 tests/test_tarefas.py

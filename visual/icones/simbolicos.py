@@ -93,6 +93,23 @@ ICONES = {
     "kaelix-certo": svg(traco("M5.5 12.5l4.2 4.2 8.8 -9.2")),
     # Menu do Kaelix (limpar a busca).
     "kaelix-fechar": svg(traco("M7 7l10 10M17 7L7 17")),
+    # Gerenciador de tarefas: Processos (lista), Desempenho (gráfico),
+    # Inicialização (foguete), e os botões e linhas dele.
+    "kaelix-processos": svg(traco("M4 6.5h1.5M8.5 6.5H20M4 12h1.5M8.5 12H20M4 17.5h1.5M8.5 17.5H20")),
+    "kaelix-desempenho": svg(traco("M3.5 19.5h17M4 15.5l4 -4.5 3.5 3 4.5 -6.5 4 3.5")),
+    "kaelix-inicializacao": svg(traco("M12 3.2c3 2.3 4.4 5.4 4 9.3l-1.6 3.3H9.6L8 12.5c-.4 -3.9 1 -7 4 -9.3z"
+                                      "M8.3 12.8l-2.8 2.3v3.4l3.8 -1.6M15.7 12.8l2.8 2.3v3.4l-3.8 -1.6M10.7 19.3l1.3 1.7 1.3 -1.7"),
+                                f'<circle {CHEIO} cx="12" cy="9.3" r="1.5"/>\n'),
+    "kaelix-mais": svg(traco("M12 5v14M5 12h14")),
+    "kaelix-menu": svg(traco("M4 7h16M4 12h16M4 17h16")),
+    "kaelix-nova-tarefa": svg(traco("M5 4.5h8a1.5 1.5 0 0 1 1.5 1.5v3M9.5 19.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5"
+                                    "M17 12.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 1 0 0 -9zM17 15v4M15 17h4")),
+    "kaelix-parar": svg(traco("M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0 -17zM8.6 8.6l6.8 6.8")),
+    "kaelix-recarregar": svg(traco("M19.5 12a7.5 7.5 0 1 1 -2.2 -5.3M19.5 4.5v4.2h-4.2")),
+    "kaelix-processo": svg(traco("M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1 -1.5 1.5H5a1.5 1.5 0 0 1 -1.5 -1.5V7A1.5 1.5 0 0 1 5 5.5z"
+                                 "M7 10l2.5 2L7 14M11.5 14.5H16")),
+    "kaelix-engrenagem": svg(traco("M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0 -6z"
+                                   "M10.3 3.5h3.4l.5 2.4 1.7 1 2.3 -.8 1.7 2.9 -1.8 1.6v2l1.8 1.6 -1.7 2.9 -2.3 -.8 -1.7 1 -.5 2.4h-3.4l-.5 -2.4 -1.7 -1 -2.3 .8 -1.7 -2.9 1.8 -1.6v-2L4.1 9l1.7 -2.9 2.3 .8 1.7 -1z")),
 }
 for nivel in range(4):
     ICONES[f"kaelix-wifi-{nivel}"] = svg(PONTO, *[traco(a, 1.0 if i < nivel else 0.3) for i, a in enumerate(ARCOS)])

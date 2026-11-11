@@ -121,6 +121,12 @@ PlasmoidItem {
     }
 
     Plasmoid.contextualActions: [
+        // Como no botão Iniciar do Windows (botão direito): o Gerenciador de tarefas.
+        PlasmaCore.Action {
+            text: raiz.t("Gerenciador de tarefas", "Task Manager")
+            icon.name: "org.kaelix.tarefas"
+            onTriggered: raiz.fazer("abrir tarefas")
+        },
         PlasmaCore.Action {
             text: raiz.t("Editar os apps do menu…", "Edit applications…")
             icon.name: "kmenuedit"
