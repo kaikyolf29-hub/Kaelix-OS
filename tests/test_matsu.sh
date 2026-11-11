@@ -312,5 +312,28 @@ OUT="$(grep -rIn -i 'kaelix' "$ROOT/system_files" 2>/dev/null | grep -v 'github.
 check "nenhum arquivo do sistema com o nome antigo (Kaelix)" test -z "$OUT"
 
 echo
+echo "prompt do terminal"
+# O prompt mostra a pasta, o ramo (com * quando mudou) e a setinha, que fica
+# vermelha depois de um erro. Um ramo com nome de comando nunca é executado.
+PR="$WORK/prompt"; mkdir -p "$PR/repo"
+git -C "$PR/repo" init -q -b main
+git -C "$PR/repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m x
+git -C "$PR/repo" checkout -q -b 'x$(touch${IFS}pegou)'
+prompt_de() { # prompt_de <comandos antes> -> o prompt como o bash mostraria
+  ( cd "$PR/repo" && env -i HOME="$PR" PATH="$PATH" TERM=xterm-256color bash --norc --noprofile -c '
+      PS1="x"; id() { echo 1000; }
+      . "$1"; eval "$2"; eval "$PROMPT_COMMAND"; printf "%s" "${PS1@P}"' _ "$ROOT/system_files/etc/profile.d/zz-matsu-prompt.sh" "$1" )
+}
+OUT="$(prompt_de true)"
+check "o prompt mostra a pasta e o ramo" grep -q 'repo.*x\$(touch' <<< "$OUT"
+check "um ramo com nome de comando não roda" test ! -e "$PR/repo/pegou"
+check "a setinha fica verde depois de dar certo" grep -q $'\e\[1;32m' <<< "$OUT"
+OUT="$(prompt_de false)"
+check "a setinha fica vermelha depois de um erro" grep -q $'\e\[1;31m' <<< "$OUT"
+OUT="$(prompt_de 'echo oi > a; git add a')"
+check "o ramo ganha * quando tem mudança" grep -q 'touch.*\*' <<< "$OUT"
+check "o prompt passa no dash (o /etc/profile também roda nele)" dash -n "$ROOT/system_files/etc/profile.d/zz-matsu-prompt.sh"
+
+echo
 echo "Resultado: $PASS passaram, $FAILN falharam"
 [[ $FAILN -eq 0 ]]

@@ -391,6 +391,49 @@ static void pasta(QPainter &p, const QRectF &r, const QColor &cor)
     p.drawPath(c);
 }
 
+// Monitor (htop, btop...): barrinhas de gráfico em cima de uma linha.
+static void grafico(QPainter &p, const QRectF &r, const QColor &cor)
+{
+    p.setPen(traco(cor, 1.6));
+    const qreal x = r.x(), y = r.y(), s = r.width() / 16.0;
+    p.drawLine(QPointF(x + 2.5 * s, y + 13 * s), QPointF(x + 13.5 * s, y + 13 * s));
+    p.drawLine(QPointF(x + 4.5 * s, y + 10.5 * s), QPointF(x + 4.5 * s, y + 8 * s));
+    p.drawLine(QPointF(x + 7 * s, y + 10.5 * s), QPointF(x + 7 * s, y + 4.5 * s));
+    p.drawLine(QPointF(x + 9.5 * s, y + 10.5 * s), QPointF(x + 9.5 * s, y + 6.5 * s));
+    p.drawLine(QPointF(x + 12 * s, y + 10.5 * s), QPointF(x + 12 * s, y + 9 * s));
+}
+
+// Outro computador (ssh): duas gavetas de servidor com uma luzinha cada.
+static void servidor(QPainter &p, const QRectF &r, const QColor &cor)
+{
+    p.setPen(traco(cor, 1.4));
+    p.setBrush(Qt::NoBrush);
+    const qreal x = r.x(), y = r.y(), s = r.width() / 16.0;
+    p.drawRoundedRect(QRectF(x + 2.5 * s, y + 2.5 * s, 11 * s, 4.6 * s), 1.4 * s, 1.4 * s);
+    p.drawRoundedRect(QRectF(x + 2.5 * s, y + 8.9 * s, 11 * s, 4.6 * s), 1.4 * s, 1.4 * s);
+    p.setPen(Qt::NoPen);
+    p.setBrush(cor);
+    p.drawEllipse(QPointF(x + 5 * s, y + 4.8 * s), 0.95 * s, 0.95 * s);
+    p.drawEllipse(QPointF(x + 5 * s, y + 11.2 * s), 0.95 * s, 0.95 * s);
+}
+
+// Editor de texto (nano, vim...): um lápis inclinado.
+static void lapis(QPainter &p, const QRectF &r, const QColor &cor)
+{
+    p.setPen(traco(cor, 1.4));
+    p.setBrush(Qt::NoBrush);
+    const qreal x = r.x(), y = r.y(), s = r.width() / 16.0;
+    QPainterPath c;
+    c.moveTo(x + 10.2 * s, y + 3.3 * s);
+    c.lineTo(x + 12.7 * s, y + 5.8 * s);
+    c.lineTo(x + 5.6 * s, y + 12.9 * s);
+    c.lineTo(x + 2.6 * s, y + 13.4 * s);
+    c.lineTo(x + 3.1 * s, y + 10.4 * s);
+    c.closeSubpath();
+    p.drawPath(c);
+    p.drawLine(QPointF(x + 8.6 * s, y + 4.9 * s), QPointF(x + 11.1 * s, y + 7.4 * s));
+}
+
 // O ramo do git: duas bolinhas ligadas e uma terceira saindo de lado.
 static void ramo(QPainter &p, const QRectF &r, const QColor &cor)
 {
@@ -406,6 +449,35 @@ static void ramo(QPainter &p, const QRectF &r, const QColor &cor)
     curva.cubicTo(x + 10.5, y + 9, x + 4.5, y + 7.5, x + 4.2, y + 9.4);
     p.drawPath(curva);
 }
+}
+
+// O símbolo de cada aba muda com o programa que está rodando nela: gráfico para
+// os monitores, servidor para o ssh, lápis para os editores e o ramo para as
+// ferramentas do git. No resto, o "›_" de sempre.
+static void simboloDoPrograma(QPainter &p, const QRectF &r, const QColor &cor, const QString &programa)
+{
+    static const QStringList monitores = {QStringLiteral("htop"), QStringLiteral("btop"), QStringLiteral("top"),
+        QStringLiteral("nvtop"), QStringLiteral("glances"), QStringLiteral("bpytop"), QStringLiteral("atop"),
+        QStringLiteral("radeontop"), QStringLiteral("watch")};
+    static const QStringList remotos = {QStringLiteral("ssh"), QStringLiteral("mosh"), QStringLiteral("mosh-client"),
+        QStringLiteral("sftp"), QStringLiteral("telnet")};
+    static const QStringList editores = {QStringLiteral("nano"), QStringLiteral("vim"), QStringLiteral("nvim"),
+        QStringLiteral("vi"), QStringLiteral("micro"), QStringLiteral("hx"), QStringLiteral("helix"),
+        QStringLiteral("emacs"), QStringLiteral("kak")};
+    static const QStringList git = {QStringLiteral("git"), QStringLiteral("lazygit"), QStringLiteral("tig"),
+        QStringLiteral("gitui")};
+    const QString nome = programa.toLower();
+    if (monitores.contains(nome)) {
+        Desenho::grafico(p, r, cor);
+    } else if (remotos.contains(nome)) {
+        Desenho::servidor(p, r, cor);
+    } else if (editores.contains(nome)) {
+        Desenho::lapis(p, r, cor);
+    } else if (git.contains(nome)) {
+        Desenho::ramo(p, r.adjusted(1, 1, -1, -1), cor);
+    } else {
+        Desenho::prompt(p, r, cor);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1153,11 +1225,20 @@ void Cabecalho::desenharAba(QPainter &p, int i, const QRectF &r)
         }
     }
 
-    // O símbolo "›_" na cor da aba.
+    // O tracinho na cor da aba, embaixo da que está aberta (como no Gerenciador de
+    // tarefas). Ele cresce do meio para os lados quando a aba é escolhida.
+    if (a > 0.002) {
+        const qreal w = 16 * a;
+        p.setPen(Qt::NoPen);
+        p.setBrush(tema.corAba(aba.cor));
+        p.drawRoundedRect(QRectF(r.center().x() - w / 2, r.bottom() - 4, w, 2.5), 1.25, 1.25);
+    }
+
+    // O símbolo na cor da aba: "›_", ou o do programa que está rodando nela.
     QColor cor = tema.corAba(aba.cor);
     cor.setAlphaF(0.55 + 0.45 * qMax(a, h));
     const QRectF simbolo(r.left() + 10, r.center().y() - 8, 16, 16);
-    Desenho::prompt(p, simbolo, cor);
+    simboloDoPrograma(p, simbolo, cor, aba.programa.isEmpty() ? aba.programaFixo : aba.programa);
 
     // O título.
     const QRectF fechar = retFechar(r);
@@ -1574,25 +1655,40 @@ void Rodape::paintEvent(QPaintEvent *)
         p.drawText(QRectF(x, 0, w + 1, height()), Qt::AlignVCenter | Qt::AlignLeft, ramo);
         x += w + 8;
         p.setFont(f);
-        if (m_mudancas > 0) {
+        // Por extenso ("2 mudanças", "↑1 para enviar") quando cabe; se a janela
+        // está estreita, a versão curta ("2", "↑1").
+        QString mudancas, setas;
+        const auto montar = [&](bool extenso) {
+            mudancas.clear();
+            setas.clear();
+            if (m_mudancas > 0) {
+                mudancas = !extenso ? QString::number(m_mudancas)
+                    : m_mudancas == 1 ? t("1 mudança", "1 change")
+                                      : t("%1 mudanças", "%1 changes").arg(m_mudancas);
+            }
+            if (m_frente > 0) {
+                setas = extenso ? t("↑%1 para enviar", "↑%1 to push").arg(m_frente) : QStringLiteral("↑%1").arg(m_frente);
+            }
+            if (m_atras > 0) {
+                setas += (setas.isEmpty() ? QString() : (extenso ? QStringLiteral("  ") : QStringLiteral(" ")))
+                    + (extenso ? t("↓%1 para baixar", "↓%1 to pull").arg(m_atras) : QStringLiteral("↓%1").arg(m_atras));
+            }
+            return (mudancas.isEmpty() ? 0 : 9 + fm.horizontalAdvance(mudancas) + 12) + fm.horizontalAdvance(setas);
+        };
+        if (x + montar(true) > direita - 12) {
+            montar(false);
+        }
+        if (!mudancas.isEmpty()) {
             // Arquivos mudados: um ponto laranja e quantos.
             p.setPen(Qt::NoPen);
             p.setBrush(tema.laranja());
             p.drawEllipse(QPointF(x + 2.5, meio), 2.5, 2.5);
             x += 9;
             p.setPen(tema.tinta(0.6));
-            const QString n = QString::number(m_mudancas);
-            p.drawText(QRectF(x, 0, fm.horizontalAdvance(n) + 1, height()), Qt::AlignVCenter | Qt::AlignLeft, n);
-            x += fm.horizontalAdvance(n) + 8;
+            p.drawText(QRectF(x, 0, fm.horizontalAdvance(mudancas) + 1, height()), Qt::AlignVCenter | Qt::AlignLeft, mudancas);
+            x += fm.horizontalAdvance(mudancas) + 12;
         }
-        if (m_frente > 0 || m_atras > 0) {
-            QString setas;
-            if (m_frente > 0) {
-                setas += QStringLiteral("↑%1").arg(m_frente);
-            }
-            if (m_atras > 0) {
-                setas += (setas.isEmpty() ? QString() : QStringLiteral(" ")) + QStringLiteral("↓%1").arg(m_atras);
-            }
+        if (!setas.isEmpty()) {
             p.setPen(tema.tinta(0.5));
             p.drawText(QRectF(x, 0, fm.horizontalAdvance(setas) + 1, height()), Qt::AlignVCenter | Qt::AlignLeft, setas);
         }
