@@ -303,20 +303,20 @@ done
 
 # ---------------------------------------------------------------------------
 log "Registro: telas de bloqueio, saída e login que vêm do KDE"
-# Só para o registro da montagem: o código das telas de bloqueio e de saída do
-# Breeze e onde a tela de login guarda as dela. É a base para fazer as versões
-# do Kaelix sem chutar (não muda nada na imagem).
-for pasta in /usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen \
-             /usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/logout; do
-  ls -la "$pasta" 2>/dev/null || continue
-  for arq in "$pasta"/*.qml; do
-    [[ -r $arq ]] || continue
-    echo "----- $arq"
-    cat "$arq"
-  done
+# Só para o registro da montagem: onde estão as telas de bloqueio, de saída e
+# de login no Plasma desta versão, e o código das peças que elas dividem
+# (relógio, foto da pessoa, botões). É a base para fazer as versões do Kaelix
+# sem chutar (não muda nada na imagem).
+rpm -ql kscreenlocker plasma-login-manager plasma-workspace 2>/dev/null \
+  | grep -i -e 'lockscreen' -e 'logout' -e 'greeter' -e '\.qml$' | grep -v -e '/locale/' | head -n 60 || true
+for arq in /usr/lib64/qt6/qml/org/kde/breeze/components/*.qml; do
+  [[ -r $arq ]] || continue
+  echo "----- $arq"
+  cat "$arq"
 done
-find /usr/share /usr/lib64/qt6/qml -path '*plasmalogin*' -name '*.qml' 2>/dev/null | head -n 40 || true
-find /usr/lib64/qt6/qml/org/kde/breeze/components -name '*.qml' 2>/dev/null | head -n 40 || true
+# O assistente de primeiro uso (criar a conta depois de instalar): o que ele lê
+# de marca e de aparência, para ganhar a cara do Kaelix.
+rpm -ql plasma-setup 2>/dev/null | grep -v -e '/locale/' -e '/doc/' | head -n 80 || true
 
 log "Limpando"
 dnf5 clean all
