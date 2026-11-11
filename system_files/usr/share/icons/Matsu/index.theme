@@ -4,7 +4,7 @@ Comment=Ícones do Matsu OS, tema escuro
 Inherits=breeze-dark,hicolor
 Example=system-file-manager
 FollowsColorScheme=true
-Directories=apps/scalable,status/symbolic
+Directories=apps/scalable,ajustes/scalable,actions/16,status/symbolic
 
 [apps/scalable]
 Size=48
@@ -12,6 +12,22 @@ MinSize=16
 MaxSize=512
 Type=Scalable
 Context=Applications
+
+# Ícones das Configurações cujo nome também é ícone de ação do KDE (system-run,
+# tools-check-spelling...): o quadrado do Matsu só de 20 px para cima; abaixo
+# disso vale a pasta actions/16, ligada ao ícone original do Breeze (o certo nos
+# menus dos apps). Feitos por visual/icones/ajustes.js.
+[ajustes/scalable]
+Size=32
+MinSize=20
+MaxSize=512
+Type=Scalable
+Context=Applications
+
+[actions/16]
+Size=16
+Type=Fixed
+Context=Actions
 
 [status/symbolic]
 Size=16

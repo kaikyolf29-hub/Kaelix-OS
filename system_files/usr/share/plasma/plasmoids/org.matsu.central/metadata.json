@@ -4,7 +4,7 @@
         "Id": "org.matsu.central",
         "Name": "Central de controle do Matsu",
         "Description": "Rede, Bluetooth, som, brilho, tema e não perturbe em um lugar só",
-        "Icon": "configure",
+        "Icon": "matsu-ajuste-area-de-trabalho",
         "Category": "System Information",
         "License": "MIT",
         "Version": "1.0",

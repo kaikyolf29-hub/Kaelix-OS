@@ -8,7 +8,7 @@
         "Description": "Appearance, glass color, bar, wallpaper and displays in one window, like the Mac settings",
         "Description[pt_BR]": "Aparência, cor do vidro, barra, papel de parede e telas numa janela só, como os Ajustes do Mac",
         "Description[pt]": "Aparência, cor do vidro, barra, papel de parede e telas numa janela só, como os Ajustes do Mac",
-        "Icon": "matsu-configuracoes",
+        "Icon": "matsu-ajustes",
         "Category": "System Information",
         "License": "MIT",
         "Version": "1.0",

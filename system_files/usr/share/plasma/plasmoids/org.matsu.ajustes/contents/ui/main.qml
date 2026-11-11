@@ -226,7 +226,7 @@ PlasmoidItem {
         return simples(p.nome).indexOf(b) !== -1 || simples(p.chaves).indexOf(b) !== -1;
     }
 
-    Plasmoid.icon: "matsu-configuracoes"
+    Plasmoid.icon: "matsu-ajustes"
     preferredRepresentation: fullRepresentation
 
     P5Support.DataSource {

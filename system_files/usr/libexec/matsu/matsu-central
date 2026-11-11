@@ -553,7 +553,8 @@ cmd_abrir() {
     # Pelo .desktop (kstart --application), para o app ganhar a unidade própria
     # dele e aparecer com o nome certo na barra e no próprio gerenciador.
     tarefas)       solto kstart --application org.matsu.tarefas ;;
-    barra)         solto matsu barra ;;
+    # O jeito da barra fica nos Ajustes do Matsu (a página da barra).
+    barra)         cmd_abrir ajustes barra ;;
     *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;
   esac
 }

@@ -340,6 +340,19 @@ sleep 2
 hmp key alt-f4
 sleep 2
 
+# Configurações do sistema do KDE com os ícones do Matsu na lista inteira
+# (visual/icones/ajustes.js), maximizada para caber mais páginas.
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid systemsettings >/dev/null 2>&1 & sleep 1; exit"
+hmp key ret
+sleep 15
+hmp key meta_l-pgup
+sleep 4
+shot "34-configuracoes-do-sistema"
+hmp key alt-f4
+sleep 3
+
 # Gerenciador de tarefas do Matsu (Ctrl+Shift+Esc), de vidro: Processos,
 # Desempenho (Ctrl+2) e Inicialização (Ctrl+3). Com ele aberto, o mouse passa
 # em cima do ícone do meio da barra para mostrar o balão com o nome.

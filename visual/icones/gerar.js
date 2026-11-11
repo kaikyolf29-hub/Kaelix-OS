@@ -91,6 +91,17 @@ const ICONES = {
     nomes: ['systemsettings', 'org.kde.systemsettings', 'preferences-system'],
     svg: base('conf', '#A3AEDC', '#5A659F') + engrenagem(128, 128, 8, 66, 50, 22),
   },
+  // Ajustes do Matsu (a janela de ajustes do Matsu, como a do Mac): controles
+  // deslizantes no rosa de cerejeira do logo, para não ficar igual ao das
+  // Configurações do sistema do KDE (a engrenagem).
+  ajustes: {
+    nomes: ['org.matsu.ajustes'],
+    svg: base('ajus', '#EBA3C7', '#8C4F80') +
+      [[82, 156], [128, 100], [174, 140]].map(([y, x]) =>
+        `<path d="M62 ${y} H194" stroke="${B}" stroke-opacity=".42" stroke-width="17" ${liso}/>` +
+        `<path d="M62 ${y} H${x}" stroke="${B}" stroke-width="17" ${liso}/>` +
+        `<circle cx="${x}" cy="${y}" r="23" fill="${B}"/>`).join(''),
+  },
   editor: {
     nomes: ['kate', 'org.kde.kate', 'kwrite', 'org.kde.kwrite'],
     svg: base('edit', '#FFC677', '#E98A28') +

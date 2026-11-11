@@ -74,7 +74,7 @@ PlasmoidItem {
         fazer(acao + (ligar ? " on" : " off"));
     }
 
-    Plasmoid.icon: "configure"
+    Plasmoid.icon: "matsu-ajuste-area-de-trabalho"
     toolTipMainText: t("Central de controle", "Control center")
 
     P5Support.DataSource {

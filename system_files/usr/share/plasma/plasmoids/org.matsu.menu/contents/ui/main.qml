@@ -611,7 +611,7 @@ PlasmoidItem {
                     keyNavigationEnabled: true
                     boundsBehavior: Flickable.StopAtBounds
                     cellWidth: Math.floor(width / 4)
-                    cellHeight: Math.round(Kirigami.Units.gridUnit * 4.9)
+                    cellHeight: Math.round(Kirigami.Units.gridUnit * 5.4)
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}

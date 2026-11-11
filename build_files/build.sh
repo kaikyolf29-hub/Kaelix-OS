@@ -342,6 +342,20 @@ gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
 # qual nome de ícone cada app pede, para conferir que o nosso está cobrindo.
 grep -H '^Icon=' /usr/share/applications/org.kde.{dolphin,konsole,discover,plasma-systemmonitor,kwrite,kate,spectacle,gwenview}.desktop \
   /usr/share/applications/{systemsettings,kdesystemsettings}.desktop 2>/dev/null || true
+# Dois apps do KDE pedem um ícone que é de ação (tools-report-bug e debug-run
+# aparecem no menu Ajuda de todo app): eles ganham o ícone do Matsu direto no
+# .desktop, para o menu Ajuda dos outros apps continuar certo.
+for par in org.kde.drkonqi.coredump.gui:matsu-ajuste-falhas org.kde.kdebugsettings:matsu-ajuste-depuracao; do
+  app="/usr/share/applications/${par%%:*}.desktop"
+  if [[ -f $app ]]; then sed -i --follow-symlinks "s/^Icon=.*/Icon=${par#*:}/" "$app"; fi
+done
+# Ícones das Configurações com nome de ação (visual/icones/ajustes.js): no
+# tamanho de menu eles apontam para o original do Breeze. Se o Breeze tirar
+# algum, a ligação quebrada sai (fica o quadrado do Matsu em todo tamanho).
+for f in /usr/share/icons/Matsu{,-claro}/actions/16/*.svg; do
+  if [[ -L $f && ! -e $f ]]; then echo "aviso: o Breeze não tem mais $(readlink "$f"), tirando a ligação"; rm -f "$f"; fi
+done
+test -f /usr/share/icons/Matsu/apps/scalable/matsu-ajuste-som.svg
 
 # ---------------------------------------------------------------------------
 log "Ligando os serviços do Matsu"

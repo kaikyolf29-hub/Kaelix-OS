@@ -305,7 +305,10 @@ echo
 echo "arquivos do sistema"
 # Um link quebrado não dá erro na montagem: o arquivo só some no sistema (foi
 # assim que os ícones do tema claro e o Ctrl+Shift+Esc sumiram na troca de nome).
-OUT="$(find "$ROOT/system_files" "$ROOT/installer" -xtype l 2>/dev/null)"
+# As únicas ligações que podem apontar para fora são as do tema de ícones para o
+# Breeze (pasta actions/16, existem na imagem; o build.sh e o test_icones.sh conferem).
+OUT="$(find "$ROOT/system_files" "$ROOT/installer" -xtype l 2>/dev/null | while IFS= read -r l; do
+  [[ $l == */icons/Matsu*/actions/16/* && $(readlink "$l") == /usr/share/icons/breeze*/actions/16/* ]] || echo "$l"; done)"
 check "nenhum link quebrado nos arquivos do sistema" test -z "$OUT"
 # (O endereço do repositório no GitHub ainda é Kaelix-OS até o criador renomear.)
 OUT="$(grep -rIn -i 'kaelix' "$ROOT/system_files" 2>/dev/null | grep -v 'github.com/kaikyolf29-hub/Kaelix-OS'; find "$ROOT/system_files" -iname '*kaelix*' 2>/dev/null)"

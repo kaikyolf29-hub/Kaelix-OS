@@ -4,7 +4,7 @@
         "Id": "org.matsu.busca",
         "Name": "Busca do Matsu",
         "Description": "Campo de busca da barra do Matsu",
-        "Icon": "search",
+        "Icon": "matsu-ajuste-pesquisa",
         "Category": "Application Launchers",
         "License": "MIT",
         "Version": "1.0",
