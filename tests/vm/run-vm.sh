@@ -99,6 +99,21 @@ sleep 2
 hmp key ctrl-alt-t
 sleep 15
 shot "05-terminal"
+# Bolinhas da borda das janelas (como no Mac): com a janela maximizada, elas ficam
+# no canto de cima à esquerda; o mouse chega e os símbolos aparecem.
+hmp key meta_l-pgup
+sleep 3
+shot "05a-terminal-maximizado"
+hmp mover 38 15 || echo "o mouse não foi (seguindo sem ele)"
+sleep 1
+shot "05b-bolinhas-com-mouse"
+hmp mover 15 15 || true
+sleep 1
+shot "05c-bolinhas-com-mouse-no-fechar"
+hmp mover 960 600 || true
+sleep 1
+hmp key meta_l-pgup
+sleep 2
 hmp type "kaelix ajuda"
 hmp key ret
 sleep 5
@@ -309,6 +324,16 @@ sleep 3
 shot "34c-gerenciador-inicializacao"
 hmp key ctrl-1
 sleep 1
+# As bolinhas do próprio gerenciador, com ele maximizado (ficam no canto de cima à esquerda).
+hmp key meta_l-pgup
+sleep 3
+hmp mover 45 24 || echo "o mouse não foi (seguindo sem ele)"
+sleep 1
+shot "34d-gerenciador-bolinhas-com-mouse"
+hmp mover 960 600 || true
+sleep 1
+hmp key meta_l-pgup
+sleep 2
 hmp mover 960 1046 || echo "o mouse não foi (seguindo sem ele)"
 sleep 3
 shot "35-balao-do-icone-na-barra"

@@ -59,6 +59,13 @@ class MundoFalso:
         app = self.dados / "applications"
         escrever(app / "org.kde.dolphin.desktop",
                  "[Desktop Entry]\nName=Dolphin\nName[pt_BR]=Arquivos\nIcon=system-file-manager\n")
+        # Apps abertos fora do menu: a logo vem do .desktop pelo programa (Exec=) ou pelo D-Bus.
+        escrever(app / "steam.desktop", "[Desktop Entry]\nName=Steam\nIcon=steam\nExec=env A=1 /usr/bin/steam %U\n")
+        escrever(app / "org.telegram.desktop.desktop",
+                 "[Desktop Entry]\nName=Telegram\nIcon=org.telegram.desktop\nExec=/usr/bin/telegram-desktop -- %u\n")
+        escrever(app / "htop.desktop", "[Desktop Entry]\nName=Htop\nIcon=htop\nExec=htop\nTerminal=true\n")
+        escrever(app / "org.kde.konsole.desktop", "[Desktop Entry]\nName=Konsole\nName[pt_BR]=Terminal\n"
+                 "Icon=utilities-terminal\nExec=konsole\n")
         self.ticks_total = 1000
         self.processos(10)
         escrever(self.proc / "cpuinfo", "processor\t: 0\nmodel name\t: AMD Ryzen 5 5600 6-Core Processor\nphysical id\t: 0\n"
@@ -111,6 +118,13 @@ class MundoFalso:
             (1800, "plasmashell", 1, 30, f"0::{user}/session.slice/plasma-plasmashell.service", "/usr/bin/plasmashell\0"),
             (1900, "kdeconnectd", 1, 3, f"0::{user}/app.slice/app-org.kde.kdeconnect.daemon@autostart.service",
              "/usr/bin/kdeconnectd\0"),
+            (2000, "steam", 1, 4, f"0::{user}/app.slice/run-r0123abcd.scope", "/usr/bin/steam\0-silent\0"),
+            (2100, "telegram-deskto", 1, 2, f"0::{user}/app.slice/app-dbus\\x2d:1.2\\x2dorg.telegram.desktop@0.service",
+             "/usr/bin/telegram-desktop\0"),
+            (2200, "konsole", 1, 2, f"0::{user}/app.slice/app-org.kde.konsole-0123456789abcdef0123456789abcdef.scope",
+             "/usr/bin/konsole\0"),
+            (2201, "htop", 2200, 1, f"0::{user}/app.slice/app-org.kde.konsole-0123456789abcdef0123456789abcdef.scope",
+             "htop\0"),
         ]
         for pid, comm, ppid, ticks, cgroup, cmd in lista:
             base = self.proc / str(pid)
@@ -144,6 +158,17 @@ class Nomes(unittest.TestCase):
         self.assertEqual(f("app-brave\\x2dbrowser@0123456789abcdef0123456789abcdef.service"), ("brave-browser", False))
         self.assertEqual(f("app-dbus\\x2d:1.2\\x2dorg.kde.kded6@0.service")[0], None)
         self.assertEqual(f("pipewire.service"), (None, False))
+
+    def test_nome_do_dbus_e_programa(self):
+        a = self.a
+        self.assertEqual(a.nome_do_dbus("app-dbus\\x2d:1.2\\x2dorg.telegram.desktop@0.service"), "org.telegram.desktop")
+        self.assertIsNone(a.nome_do_dbus("pipewire.service"))
+        p = a.programa_do_exec
+        self.assertEqual(p("env A=1 /usr/bin/steam %U"), "steam")
+        self.assertEqual(p("/usr/bin/flatpak run --branch=stable --command=spotify com.spotify.Client @@u %U @@"), "spotify")
+        self.assertEqual(p("flatpak run org.exemplo.App"), "")
+        self.assertEqual(p('"/opt/Meu App/app" --x'), "app")
+        self.assertEqual(p("env"), "")
 
     def test_classificar(self):
         a = self.a
@@ -185,7 +210,7 @@ class Leitura(unittest.TestCase):
             self.assertEqual(d["cpu"]["ligado"], 3725)
             self.assertAlmostEqual(d["cpu"]["ghz"], 4.0, places=2)
             # Linhas do kernel não entram (kthreadd e kworker).
-            self.assertEqual(d["cpu"]["processos"], 6)
+            self.assertEqual(d["cpu"]["processos"], 10)
             grupos = {g["id"]: g for g in d["grupos"]}
             dolphin = grupos["app-org.kde.dolphin-0123456789abcdef0123456789abcdef.scope"]
             self.assertEqual(dolphin["tipo"], "app")
@@ -203,6 +228,18 @@ class Leitura(unittest.TestCase):
             self.assertEqual(grupos["plasma-plasmashell.service"]["acao"], "reiniciar")
             kde = grupos["app-org.kde.kdeconnect.daemon@autostart.service"]
             self.assertEqual((kde["tipo"], kde["autostart"]), ("fundo", True))
+            # Aberto fora do menu: a logo e o nome vêm do .desktop do programa.
+            steam = grupos["run-r0123abcd.scope"]
+            self.assertEqual((steam["tipo"], steam["nome"], steam["icone"]), ("fundo", "Steam", "steam"))
+            # Aberto pelo D-Bus com janela: vai para Apps, com a logo do app.
+            tg = grupos["app-dbus\\x2d:1.2\\x2dorg.telegram.desktop@0.service"]
+            self.assertEqual((tg["tipo"], tg["nome"], tg["icone"]), ("app", "Telegram", "org.telegram.desktop"))
+            # Cada processo do terminal com a própria logo (htop) ou nenhuma (o app inteiro usa a dele).
+            term = grupos["app-org.kde.konsole-0123456789abcdef0123456789abcdef.scope"]
+            self.assertEqual((term["nome"], term["icone"]), ("Terminal", "utilities-terminal"))
+            self.assertEqual({p["exe"]: p["icone"] for p in term["procs"]}, {"konsole": "utilities-terminal", "htop": "htop"})
+            # Serviços do sistema ficam com o nome amigável, sem logo de app.
+            self.assertEqual(grupos["pipewire.service"]["icone"], "")
             self.assertEqual(d["memoria"]["total"], 16000000 * 1024)
             self.assertEqual(d["memoria"]["usada"], 6000000 * 1024)
             self.assertEqual([k["nome"] for k in d["discos"]], ["nvme0n1"])

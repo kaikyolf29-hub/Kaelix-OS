@@ -18,6 +18,7 @@ import fcntl
 import json
 import os
 import re
+import shlex
 import shutil
 import signal
 import socket
@@ -37,6 +38,13 @@ PAGINA = os.sysconf("SC_PAGE_SIZE")
 NUCLEO = {"kwin_wayland", "kwin_wayland_wrapper", "kwin_x11", "ksmserver", "plasma_session",
           "startplasma-wayland", "startplasma-x11", "Xwayland", "systemd", "dbus-broker",
           "dbus-broker-launch", "dbus-daemon", "plasmalogin", "kaelix-janela-sessao"}
+
+# Programas que abrem outros (shell, intérpretes, Flatpak, Wine...): o nome deles não diz
+# qual é o app, então não servem para achar a logo.
+GENERICOS = {"sh", "bash", "zsh", "fish", "dash", "env", "sudo", "pkexec", "sleep", "python", "python3", "perl",
+             "ruby", "node", "java", "electron", "flatpak", "flatpak-session-helper", "flatpak-portal", "bwrap",
+             "xdg-dbus-proxy", "systemd", "dbus-daemon", "dbus-broker", "wine", "wine64", "wineserver",
+             "wine-preloader", "wine64-preloader", "kioworker", "kdeinit5", "xdg-open", "gio"}
 
 # Nomes que a pessoa entende para os processos mais comuns do sistema.
 NOMES = {
@@ -189,6 +197,12 @@ def pastas_de_dados():
     return vistas
 
 
+def pastas_de_autostart():
+    config = os.environ.get("XDG_CONFIG_HOME") or os.path.join(casa(), ".config")
+    outras = (os.environ.get("XDG_CONFIG_DIRS") or "/etc/xdg").split(":")
+    return [os.path.join(config, "autostart")] + [os.path.join(p, "autostart") for p in outras if p]
+
+
 def desescapar(texto):
     """Desfaz o escape do systemd nos nomes das unidades ("\\x2d" vira "-")."""
     return re.sub(r"\\x([0-9a-fA-F]{2})", lambda m: chr(int(m.group(1), 16)), texto)
@@ -220,6 +234,35 @@ def app_da_unidade(unidade):
             return None, False
         return (base or None), instancia == "autostart"
     return None, False
+
+
+def nome_do_dbus(unidade):
+    """Apps que o sistema abriu pelo D-Bus: "app-dbus\\x2d:1.2\\x2dorg.telegram.desktop@0.service"
+    vira "org.telegram.desktop" (muitas vezes é o mesmo nome do .desktop do app)."""
+    m = re.match(r"app-dbus-:[\d.]+-(.+?)(@\d+)?\.service$", desescapar(unidade))
+    return m.group(1) if m else None
+
+
+def programa_do_exec(linha):
+    """O programa que a linha Exec= de um .desktop abre: "env A=1 /usr/bin/steam %U" vira "steam";
+    "flatpak run --command=spotify com.spotify.Client" vira "spotify"."""
+    try:
+        partes = shlex.split(linha)
+    except ValueError:
+        partes = linha.split()
+    i = 0
+    while i < len(partes) and (os.path.basename(partes[i]) == "env" or
+                               ("=" in partes[i] and not partes[i].startswith("-"))):
+        i += 1
+    if i >= len(partes):
+        return ""
+    programa = os.path.basename(partes[i])
+    if programa == "flatpak":
+        for p in partes[i + 1:]:
+            if p.startswith("--command="):
+                return os.path.basename(p.split("=", 1)[1])
+        return ""
+    return programa
 
 
 def classificar(cgroup, uid):
@@ -301,6 +344,8 @@ class Leitor:
         self.ant = None
         self.cache = {}       # pid -> o que não muda enquanto o processo vive
         self.apps = {}        # id do app -> {nome, icone} (ou None)
+        self.programas = {}   # programa (do Exec= ou StartupWMClass) -> {nome, icone}
+        self.programas_lidos = None
         self.fixos = None     # dados que não mudam (nome da CPU, das placas...)
         self.nvidia = (0.0, None)
         self.ips = (0.0, {})
@@ -413,17 +458,57 @@ class Leitor:
         return par[0] if self.lingua == "pt" else par[1]
 
     def app(self, app_id):
+        """Nome e logo do app pelo .desktop dele (nos apps instalados e, se não achar, nos que
+        abrem ao entrar)."""
         if app_id in self.apps:
             return self.apps[app_id]
         achado = None
-        for pasta in pastas_de_dados():
-            arquivo = os.path.join(pasta, "applications", app_id + ".desktop")
+        lugares = [os.path.join(p, "applications") for p in pastas_de_dados()] + pastas_de_autostart()
+        for pasta in lugares:
+            arquivo = os.path.join(pasta, app_id + ".desktop")
             if os.path.isfile(arquivo):
                 dados = ler_desktop(arquivo)
-                achado = {"nome": traduzido(dados, "Name", self.lingua) or app_id, "icone": dados.get("Icon", "")}
+                achado = {"nome": traduzido(dados, "Name", self.lingua) or app_id, "icone": dados.get("Icon", ""),
+                          "oculto": dados.get("NoDisplay", "").lower() == "true"}
                 break
         self.apps[app_id] = achado
         return achado
+
+    def indice_programas(self):
+        """Todos os .desktop, por programa que abrem e por StartupWMClass. Serve para dar a logo
+        certa a apps que não abriram pelo menu (pelo terminal, por outro app, pelo systemd-run).
+        Lido de novo a cada minuto, para pegar apps instalados com o gerenciador aberto."""
+        agora = time.monotonic()
+        if self.programas_lidos is not None and agora - self.programas_lidos < 60:
+            return self.programas
+        indice = {}
+        for pasta in pastas_de_dados():
+            dir_apps = os.path.join(pasta, "applications")
+            try:
+                arquivos = sorted(os.listdir(dir_apps))
+            except OSError:
+                continue
+            for arq in arquivos:
+                if not arq.endswith(".desktop"):
+                    continue
+                dados = ler_desktop(os.path.join(dir_apps, arq))
+                if not dados.get("Icon") or dados.get("Type", "Application") != "Application":
+                    continue
+                item = {"nome": traduzido(dados, "Name", self.lingua) or arq[:-8], "icone": dados["Icon"]}
+                for chave in (programa_do_exec(dados.get("Exec", "")), dados.get("StartupWMClass", "")):
+                    chave = chave.lower()
+                    if chave and chave not in GENERICOS:
+                        indice.setdefault(chave, item)
+        self.programas, self.programas_lidos = indice, agora
+        return indice
+
+    def app_do_programa(self, exe):
+        """O app (nome e logo) de um programa pelo nome dele, ou None. Os serviços do sistema
+        (os da lista NOMES) ficam com o nome amigável e a engrenagem."""
+        exe = (exe or "").lower()
+        if not exe or exe in GENERICOS or exe in NOMES or exe in NUCLEO:
+            return None
+        return self.indice_programas().get(exe)
 
     # ----- leitura completa -----
     def amostra(self):
@@ -521,7 +606,9 @@ class Leitor:
             g["disco"] += disco
             nucleo = info["nome"] in NUCLEO
             pode = info["uid"] == MEU_UID and not nucleo and info["nome"] != "plasmashell"
+            proprio = self.app_do_programa(info["nome"]) if info["tipo"] != "sistema" else None
             g["procs"].append({"pid": pid, "nome": self.nome_amigavel(info["nome"]), "exe": info["nome"],
+                               "icone": proprio["icone"] if proprio else "",
                                "cpu": round(cpu, 1), "mem": mem, "disco": round(disco),
                                "acao": "finalizar" if pode else "nenhuma"})
             if pid == eu:
@@ -534,6 +621,18 @@ class Leitor:
             exes = {p["exe"] for p in g["procs"]}
             app_id, inicio_auto = app_da_unidade(g["unidade"])
             achado = self.app(app_id) if app_id else None
+            if not achado and g["uid"] == MEU_UID:
+                # Aberto pelo D-Bus: o nome no D-Bus costuma ser o do .desktop. Se o app
+                # aparece no menu, a pessoa abriu uma janela dele: vai para Apps.
+                pelo_dbus = nome_do_dbus(g["unidade"])
+                achado = self.app(pelo_dbus) if pelo_dbus else None
+                if achado:
+                    app_id = pelo_dbus
+                    if not achado["oculto"] and g["tipo"] == "fundo":
+                        g["tipo"] = "app"
+            if not achado and g["tipo"] != "sistema":
+                # Aberto fora do menu: acha o app pelo nome do programa principal.
+                achado = next((a for a in (self.app_do_programa(p["exe"]) for p in g["procs"]) if a), None)
             if achado:
                 g["nome"], g["icone"] = achado["nome"], achado["icone"]
             else:

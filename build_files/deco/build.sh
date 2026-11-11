@@ -44,6 +44,8 @@ if [[ "$(grep -c '^    painter->translate(1, 1);$' "$alvo")" -ne 1 ]]; then
 fi
 sed -i '/^    painter->translate(1, 1);$/r '"${HERE}/kaelix-botoes.inc" "$alvo"
 grep -q 'Kaelix OS: botões de janela' "$alvo"
+# A animação dos símbolos (aparecem com o mouse em cima) usa estas peças do Qt.
+sed -i -e '1i #include <QEasingCurve>' -e '1i #include <QPolygonF>' -e '1i #include <QTimer>' "$alvo"
 
 log "Compilando"
 cmake -S /tmp/breeze -B /tmp/breeze-build -G Ninja \

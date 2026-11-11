@@ -315,18 +315,26 @@ QQC2.ApplicationWindow {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
 
+            // Mouse em cima de qualquer bolinha (ou no vão entre elas): as três mostram o símbolo.
+            HoverHandler {
+                id: sobreBolinhas
+            }
+
             BotaoJanela {
                 tipo: "fechar"
+                mostrar: sobreBolinhas.hovered
                 dica: tarefas.t("Fechar", "Close")
                 onClicado: tarefas.close()
             }
             BotaoJanela {
                 tipo: "minimizar"
+                mostrar: sobreBolinhas.hovered
                 dica: tarefas.t("Minimizar", "Minimize")
                 onClicado: tarefas.showMinimized()
             }
             BotaoJanela {
                 tipo: "cheia"
+                mostrar: sobreBolinhas.hovered
                 ligado: tarefas.cheia
                 dica: tarefas.cheia ? tarefas.t("Sair da tela cheia", "Restore") : tarefas.t("Tela cheia", "Maximize")
                 onClicado: tarefas.alternarCheia()

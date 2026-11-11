@@ -1,6 +1,9 @@
 // Bolinha de fechar, minimizar ou tela cheia, iguais às da borda das janelas do
-// Kaelix (rosa, azul claro e verde água, com o símbolo dentro). O Gerenciador de
-// tarefas desenha a própria barra de título, para o vidro ir até em cima.
+// Kaelix (rosa, azul claro e verde água). Como no Mac, o símbolo de dentro só
+// aparece quando o mouse chega perto das três (mostrar = mouse em cima do grupo),
+// surgindo e crescendo de leve. Com a janela em segundo plano, as bolinhas ficam
+// cinza e voltam a ter cor quando o mouse passa por cima.
+// O Gerenciador de tarefas desenha a própria barra de título, para o vidro ir até em cima.
 import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
@@ -11,11 +14,13 @@ MouseArea {
     property string tipo: "fechar"    // fechar, minimizar, cheia
     property bool ligado: false       // tela cheia ligada: os cantos apontam para dentro
     property string dica: ""
+    property bool mostrar: containsMouse
 
     signal clicado()
 
-    readonly property color fundo: tipo === "fechar" ? "#f0609e" : (tipo === "minimizar" ? "#8fa2ff" : "#45d0c1")
-    readonly property color simbolo: tipo === "fechar" ? "#4a1230" : (tipo === "minimizar" ? "#1e2a66" : "#0b4740")
+    readonly property color cor: tipo === "fechar" ? "#f0609e" : (tipo === "minimizar" ? "#8fa2ff" : "#45d0c1")
+    readonly property color simbolo: tipo === "fechar" ? "#5a1036" : (tipo === "minimizar" ? "#1e2a6e" : "#0a4a42")
+    readonly property bool colorida: tarefas.active || mostrar
 
     implicitWidth: 18
     implicitHeight: 18
@@ -25,46 +30,69 @@ MouseArea {
     onClicked: botao.clicado()
 
     Rectangle {
+        id: bola
         anchors.centerIn: parent
         width: 14
         height: 14
         radius: 7
-        color: botao.pressed ? Qt.darker(botao.fundo, 1.18) : (botao.containsMouse ? Qt.lighter(botao.fundo, 1.1) : botao.fundo)
-        opacity: tarefas.active || botao.containsMouse ? 1 : 0.5
+        color: !botao.colorida ? tarefas.tinta(tarefas.escuro ? 0.2 : 0.16)
+             : botao.pressed ? Qt.darker(botao.cor, 1.2) : botao.cor
+        // Um contorno bem fino, um tom abaixo, dá acabamento à bolinha (como no Mac).
+        border.width: 1
+        border.color: botao.colorida ? Qt.rgba(0, 0, 0, tarefas.escuro ? 0.18 : 0.1) : "transparent"
+        Behavior on color {
+            ColorAnimation { duration: 140; easing.type: Easing.OutCubic }
+        }
 
-        Canvas {
-            id: desenho
+        Item {
             anchors.fill: parent
-            property color cor: botao.simbolo
-            property bool ligado: botao.ligado
-            onCorChanged: requestPaint()
-            onLigadoChanged: requestPaint()
-            onPaint: {
-                var c = getContext("2d");
-                c.reset();
-                c.strokeStyle = Qt.rgba(cor.r, cor.g, cor.b, tarefas.active || botao.containsMouse ? 1 : 0.6);
-                c.lineWidth = 1.3;
-                c.lineCap = "round";
-                c.lineJoin = "round";
-                c.beginPath();
-                if (botao.tipo === "fechar") {
-                    c.moveTo(4.6, 4.6); c.lineTo(9.4, 9.4);
-                    c.moveTo(9.4, 4.6); c.lineTo(4.6, 9.4);
-                } else if (botao.tipo === "minimizar") {
-                    c.moveTo(4.2, 7); c.lineTo(9.8, 7);
-                } else if (botao.ligado) {
-                    c.moveTo(4, 6.2); c.lineTo(6.2, 6.2); c.lineTo(6.2, 4);
-                    c.moveTo(10, 7.8); c.lineTo(7.8, 7.8); c.lineTo(7.8, 10);
-                } else {
-                    c.moveTo(4, 6.4); c.lineTo(4, 4); c.lineTo(6.4, 4);
-                    c.moveTo(10, 7.6); c.lineTo(10, 10); c.lineTo(7.6, 10);
-                }
-                c.stroke();
+            opacity: botao.mostrar ? 1 : 0
+            scale: botao.mostrar ? 1 : 0.4
+            Behavior on opacity {
+                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
-            Connections {
-                target: tarefas
-                function onActiveChanged() {
-                    desenho.requestPaint();
+            Behavior on scale {
+                NumberAnimation { duration: 220; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+            }
+
+            Canvas {
+                id: desenho
+                anchors.fill: parent
+                antialiasing: true
+                property color tom: botao.simbolo
+                property bool ligado: botao.ligado
+                onTomChanged: requestPaint()
+                onLigadoChanged: requestPaint()
+                onPaint: {
+                    var c = getContext("2d");
+                    c.reset();
+                    c.strokeStyle = tom;
+                    c.lineWidth = 1.4;
+                    c.lineCap = "round";
+                    c.lineJoin = "round";
+                    c.beginPath();
+                    if (botao.tipo === "fechar") {
+                        c.moveTo(4.7, 4.7); c.lineTo(9.3, 9.3);
+                        c.moveTo(9.3, 4.7); c.lineTo(4.7, 9.3);
+                        c.stroke();
+                    } else if (botao.tipo === "minimizar") {
+                        c.moveTo(4.2, 7); c.lineTo(9.8, 7);
+                        c.stroke();
+                    } else {
+                        // Tela cheia: dois triângulos cheios, como no Mac; saindo dela,
+                        // eles apontam para dentro.
+                        c.fillStyle = tom;
+                        c.lineWidth = 0.8;
+                        if (ligado) {
+                            c.moveTo(6.3, 3.5); c.lineTo(6.3, 6.3); c.lineTo(3.5, 6.3); c.closePath();
+                            c.moveTo(7.7, 10.5); c.lineTo(7.7, 7.7); c.lineTo(10.5, 7.7); c.closePath();
+                        } else {
+                            c.moveTo(4, 4); c.lineTo(7, 4); c.lineTo(4, 7); c.closePath();
+                            c.moveTo(10, 10); c.lineTo(7, 10); c.lineTo(10, 7); c.closePath();
+                        }
+                        c.fill();
+                        c.stroke();
+                    }
                 }
             }
         }
@@ -72,5 +100,5 @@ MouseArea {
 
     QQC2.ToolTip.visible: dica.length > 0 && containsMouse
     QQC2.ToolTip.text: dica
-    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+    QQC2.ToolTip.delay: 700
 }

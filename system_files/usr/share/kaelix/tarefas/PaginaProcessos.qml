@@ -84,7 +84,10 @@ FocusScope {
                     var procs = g.procs.slice().sort(pagina.comparar);
                     for (var j = 0; j < procs.length; j++) {
                         var p = procs[j];
-                        linhas.push(linha({ tipo: "proc", chave: "p:" + p.pid, nome: p.nome, n: 1, cpu: p.cpu, mem: p.mem,
+                        // Como no Windows, cada processo do app aparece com a logo: a dele mesmo
+                        // (se for outro programa com .desktop) ou a do app.
+                        linhas.push(linha({ tipo: "proc", chave: "p:" + p.pid, nome: p.nome, icone: p.icone || g.icone || "",
+                                            n: 1, cpu: p.cpu, mem: p.mem,
                                             disco: p.disco, acao: p.acao, alvo: String(p.pid), nivel: 1, pid: p.pid }));
                     }
                 }
