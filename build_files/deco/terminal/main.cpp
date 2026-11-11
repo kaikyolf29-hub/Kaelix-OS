@@ -570,6 +570,19 @@ public:
                                rgba(tema.tinta(tema.escuro ? 0.09 : 0.07)), rgba(tema.tinta(0.35)), rgba(tema.tinta(0.08))));
     }
 
+    // Com estilo próprio, o Qt deixa só 12 px entre o nome do item e o atalho,
+    // e o atalho cola no nome mais comprido. Uma largura mínima maior afasta
+    // a coluna dos atalhos. Chamar depois de pôr os itens.
+    void afastarAtalhos(int folga = 28)
+    {
+        ensurePolished();
+        setMinimumWidth(QMenu::sizeHint().width() + folga);
+        // Faz o menu medir os itens de novo, agora com a largura nova.
+        QAction *vazio = addAction(QString());
+        removeAction(vazio);
+        delete vazio;
+    }
+
 protected:
     void showEvent(QShowEvent *e) override
     {
@@ -2112,7 +2125,7 @@ void Janela::abrirMenu(const QPoint &onde)
     item(t("Abrir a pasta nos Arquivos", "Open folder in Files"), QKeySequence(), [this]() {
         abrirPasta();
     });
-    item(t("Ajustar o perfil do terminal...", "Edit terminal profile..."), QKeySequence(), [this]() {
+    item(t("Ajustar o perfil do terminal…", "Edit terminal profile…"), QKeySequence(), [this]() {
         if (m_atual >= 0 && m_abas[m_atual].parte) {
             QMetaObject::invokeMethod(m_abas[m_atual].parte, "showEditCurrentProfileDialog", Q_ARG(QWidget *, this));
         }
@@ -2121,8 +2134,8 @@ void Janela::abrirMenu(const QPoint &onde)
     item(t("Fechar aba", "Close tab"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_W), [this]() {
         fecharAba(m_atual);
     });
+    menu.afastarAtalhos();
     // O menu abre alinhado pela direita com o botão.
-    menu.ensurePolished();
     const QSize tamanho = menu.sizeHint();
     menu.exec(QPoint(onde.x() - tamanho.width(), onde.y()));
 }
@@ -2172,6 +2185,18 @@ void Janela::atualizarTema()
     tema.desfoque = temDesfoque();
     if (!qEnvironmentVariableIsSet("MATSU_TERMINAL_TEMA")) {
         tema.escuro = QApplication::palette().color(QPalette::Window).lightnessF() < 0.5;
+    }
+    // Com a tela dividida, o Konsole escurece a barrinha do painel sem foco
+    // com a cor de sombra do aplicativo, que no esquema de cores puxa para o
+    // azul (no tema claro fica uma faixa azulada). A sombra passa a ser preta.
+    // Trocar a paleta chama esta função de novo, e aí a sombra já está certa.
+    QPalette doApp = QApplication::palette();
+    if (doApp.color(QPalette::Active, QPalette::Shadow) != QColor(Qt::black)
+        || doApp.color(QPalette::Inactive, QPalette::Shadow) != QColor(Qt::black)) {
+        for (const auto grupo : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+            doApp.setColor(grupo, QPalette::Shadow, QColor(Qt::black));
+        }
+        QApplication::setPalette(doApp);
     }
     for (Aba &aba : m_abas) {
         if (aba.parte && aba.parte->widget()) {
