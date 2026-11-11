@@ -168,6 +168,12 @@ printf 'cor=roxo\ntransparencia=mais\n' > "$WORK/state/vidro"
 printf '[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///usr/share/wallpapers/Kaelix/\n' > "$WORK/config/plasma-org.kde.plasma.desktop-appletsrc"
 run estado
 check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\" && grep -qx 'barra_esconder=1' <<<\"\$0\"" "$OUT"
+printf 'estilo=fusao\ntamanho=media\nesconder=nao\nbusca=meio\nmenu=meio\n' > "$WORK/state/barra"
+run estado
+check "lê onde ficam a busca e o menu" bash -c "grep -qx 'barra_busca=meio' <<<\"\$0\" && grep -qx 'barra_menu=meio' <<<\"\$0\"" "$OUT"
+printf 'estilo=fusao\nbusca=;rm\n' > "$WORK/state/barra"
+run estado
+check "busca guardada estranha vira o padrão" linha "barra_busca=esquerda"
 check "lê a cor e a transparência do vidro" bash -c "grep -qx 'vidro_cor=roxo' <<<\"\$0\" && grep -qx 'vidro_transparencia=mais' <<<\"\$0\"" "$OUT"
 check "lê o papel de parede sem file:// e sem a barra do fim" bash -c "grep -qx 'papel=/usr/share/wallpapers/Kaelix' <<<\"\$0\"" "$OUT"
 run vidro azul menos
@@ -177,6 +183,8 @@ run barra windows pequena
 check "barra chama o comando kaelix" called "kaelix barra windows --tamanho pequena"
 run barra mac media sim
 check "barra pode pedir para se esconder sozinha" called "kaelix barra mac --tamanho media --esconder sim"
+run barra fusao media nao meio esquerda
+check "barra pode levar a busca para a ilha do meio" called "kaelix barra fusao --tamanho media --esconder nao --busca meio --menu esquerda"
 run barra linux; check "barra desconhecida é recusada" test "$CODE" -eq 2
 mkdir -p "$WORK/papeis/Kaelix/contents/images" "$WORK/papeis/Kaelix/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
 touch "$WORK/papeis/Kaelix/contents/images/3840x2160.png" "$WORK/papeis/Kaelix/contents/screenshot.png"

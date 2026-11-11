@@ -103,6 +103,8 @@ $(t "Exemplos" "Examples"):
   kaelix barra windows           $(t "(uma barra só embaixo, como no Windows)" "(a single bar at the bottom, like Windows)")
   kaelix barra --tamanho grande  $(t "(barra maior; também pequena e media)" "(bigger bar; also pequena and media)")
   kaelix barra --esconder sim    $(t "(a barra se esconde e aparece com o mouse)" "(the bar hides and shows up with the mouse)")
+  kaelix barra --busca meio      $(t "(a busca vai para a ilha do meio, junto dos apps; também esquerda e nao)" "(search moves to the middle island, next to the apps; also esquerda and nao)")
+  kaelix barra --menu meio       $(t "(o menu também vai para o meio, como no Windows 11)" "(the menu moves to the middle too, like Windows 11)")
   kaelix vidro roxo --transparencia mais  $(t "(vidro roxo e mais transparente)" "(purple, more transparent glass)")
 EOF
 }
@@ -445,7 +447,7 @@ bar_reply_lines() {
 }
 
 cmd_bar() {
-  local style="" size="" hide="" details=0 arg
+  local style="" size="" hide="" busca="" menu="" details=0 arg
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
@@ -457,6 +459,10 @@ cmd_bar() {
       --tamanho=*|--size=*) size="${arg#*=}" ;;
       --esconder|--autohide) hide="${1:-}"; shift || true ;;
       --esconder=*|--autohide=*) hide="${arg#*=}" ;;
+      --busca|--search)     busca="${1:-}"; shift || true ;;
+      --busca=*|--search=*) busca="${arg#*=}" ;;
+      --menu)               menu="${1:-}"; shift || true ;;
+      --menu=*)             menu="${arg#*=}" ;;
       *) fail "Estilo desconhecido: $arg. Use fusao, mac ou windows." "Unknown style: $arg. Use fusao, mac or windows." ;;
     esac
   done
@@ -473,14 +479,35 @@ cmd_bar() {
     nao|não|n|no|off|false|0)   hide=nao ;;
     *) fail "Use --esconder sim ou --esconder nao." "Use --autohide on or --autohide off." ;;
   esac
+  # Onde fica a pílula da busca (na fusão): junto do menu, na ilha do meio ou sem ela.
+  case "${busca,,}" in
+    "") ;;
+    esquerda|junto|left|menu)   busca=esquerda ;;
+    meio|centro|middle|center)  busca=meio ;;
+    nao|não|nenhuma|sem|no|off|none) busca=nao ;;
+    *) fail "Use --busca esquerda, meio ou nao." "Use --search esquerda, meio or nao." ;;
+  esac
+  # Onde fica o botão do menu (na fusão): na ilha da esquerda ou no meio, como no Windows 11.
+  case "${menu,,}" in
+    "") ;;
+    esquerda|left)              menu=esquerda ;;
+    meio|centro|middle|center)  menu=meio ;;
+    *) fail "Use --menu esquerda ou meio." "Use --menu esquerda or meio." ;;
+  esac
 
-  local cur_style cur_size cur_hide
+  local cur_style cur_size cur_hide cur_busca cur_menu
   cur_style="$(bar_saved estilo fusao)"
   cur_size="$(bar_saved tamanho media)"
   cur_hide="$(bar_saved esconder nao)"
+  cur_busca="$(bar_saved busca esquerda)"
+  cur_menu="$(bar_saved menu esquerda)"
   hide="${hide:-$cur_hide}"
+  [[ $cur_busca =~ ^(esquerda|meio|nao)$ ]] || cur_busca=esquerda
+  [[ $cur_menu =~ ^(esquerda|meio)$ ]] || cur_menu=esquerda
+  busca="${busca:-$cur_busca}"
+  menu="${menu:-$cur_menu}"
 
-  if [[ -z $style && -z $size && $hide == "$cur_hide" ]]; then
+  if [[ -z $style && -z $size && $hide == "$cur_hide" && $busca == "$cur_busca" && $menu == "$cur_menu" ]]; then
     if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
       local on_f=off on_m=off on_w=off on_p=off on_d=off on_g=off
       case "$cur_style" in mac) on_m=on ;; windows) on_w=on ;; *) on_f=on ;; esac
@@ -496,8 +523,9 @@ cmd_bar() {
       [[ -z $style ]] && return 0
     else
       say "Estilo atual da barra: $cur_style, tamanho $cur_size." "Current bar style: $cur_style, size $cur_size."
-      say "Para trocar: kaelix barra <fusao|mac|windows> [--tamanho pequena|media|grande] [--esconder sim|nao]" \
-          "To change: kaelix bar <fusao|mac|windows> [--size pequena|media|grande] [--autohide on|off]"
+      say "Busca: $cur_busca. Menu: $cur_menu." "Search: $cur_busca. Menu: $cur_menu."
+      say "Para trocar: kaelix barra <fusao|mac|windows> [--tamanho pequena|media|grande] [--esconder sim|nao] [--busca esquerda|meio|nao] [--menu esquerda|meio]" \
+          "To change: kaelix bar <fusao|mac|windows> [--size pequena|media|grande] [--autohide on|off] [--search esquerda|meio|nao] [--menu esquerda|meio]"
       return 0
     fi
   fi
@@ -540,16 +568,18 @@ cmd_bar() {
   local script
   local esconde=false
   [[ $hide == sim ]] && esconde=true
-  script="$(printf 'var kaelixFixados = [%s];\nvar kaelixEscala = %s;\nvar kaelixEsconder = %s;\n' "$fixados" "$scale" "$esconde"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
+  script="$(printf 'var kaelixFixados = [%s];\nvar kaelixEscala = %s;\nvar kaelixEsconder = %s;\nvar kaelixBusca = "%s";\nvar kaelixMenu = "%s";\n' \
+    "$fixados" "$scale" "$esconde" "$busca" "$menu"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
   if ! reply2="$(bar_script "$script")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Kaelix." \
          "Could not reach the desktop. Run this command inside the Kaelix session."
   fi
   # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
   if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
-  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\n' "$style" "$size" "$hide" > "$STATE_DIR/barra"
+  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\n' "$style" "$size" "$hide" "$busca" "$menu" > "$STATE_DIR/barra"
   ok "Barra trocada. Os apps que você fixou foram mantidos." "Bar changed. The apps you pinned were kept."
-  tip "Para voltar ao padrão: kaelix barra fusao --tamanho media" "To go back to the default: kaelix bar fusao --size media"
+  tip "Para voltar ao padrão: kaelix barra fusao --tamanho media --busca esquerda --menu esquerda" \
+      "To go back to the default: kaelix bar fusao --size media --search esquerda --menu esquerda"
 }
 
 # ---------------------------------------------------------------------------

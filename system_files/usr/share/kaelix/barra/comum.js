@@ -4,6 +4,9 @@
 //   kaelixEscala   tamanho da barra (2.25 pequena, 2.75 média, 3.25 grande)
 //   kaelixFixados  lista dos apps que a pessoa já tinha fixado
 //   kaelixEsconder true para a barra se esconder sozinha (aparece com o mouse)
+//   kaelixBusca    onde fica a pílula da busca: "esquerda" (junto do menu),
+//                  "meio" (na ilha do meio, junto dos apps) ou "nao"
+//   kaelixMenu     onde fica o botão do menu: "esquerda" ou "meio" (Windows 11)
 
 function tem(tipo) {
     return knownWidgetTypes.indexOf(tipo) !== -1;
@@ -41,6 +44,30 @@ function porMenu(painel, comBusca) {
     menu.currentConfigGroup = ["Shortcuts"];
     menu.writeConfig("global", "Alt+F1");
     return menu;
+}
+
+function ondeBusca() {
+    var v = (typeof kaelixBusca !== "undefined" && kaelixBusca) ? kaelixBusca : "esquerda";
+    return (v === "meio" || v === "nao") ? v : "esquerda";
+}
+
+function ondeMenu() {
+    return (typeof kaelixMenu !== "undefined" && kaelixMenu === "meio") ? "meio" : "esquerda";
+}
+
+// Só a pílula "Buscar apps e arquivos", longe do botão do menu (na ilha do
+// meio). Abre o mesmo menu, já pronto para digitar. Não pega atalho: a tecla
+// Meta e o Alt+F1 ficam com o botão do logo.
+function porBuscaSozinha(painel) {
+    if (tem("org.kaelix.menu")) {
+        var busca = painel.addWidget("org.kaelix.menu");
+        busca.currentConfigGroup = ["General"];
+        busca.writeConfig("comBusca", true);
+        busca.writeConfig("soBusca", true);
+        return busca;
+    }
+    porBusca(painel);
+    return null;
 }
 
 // Pílula "Buscar" que abre a busca do sistema (só quando falta o menu do Kaelix).

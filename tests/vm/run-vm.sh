@@ -138,7 +138,8 @@ hmp key alt-f4
 sleep 3
 shot "11-tema-claro-area-de-trabalho"
 
-# Estilos da barra (personalização): windows, mac, fusão grande e de volta ao padrão.
+# Estilos da barra (personalização): windows, mac, fusão grande, busca e menu no
+# meio, e de volta ao padrão.
 hmp key ctrl-alt-t
 sleep 8
 hmp type "kaelix barra windows --detalhes"
@@ -153,7 +154,16 @@ hmp type "kaelix barra fusao --tamanho grande --detalhes"
 hmp key ret
 sleep 10
 shot "14-barra-fusao-grande"
-hmp type "kaelix barra fusao --tamanho media"
+# A busca dentro da ilha do meio, e depois o menu também no meio (Windows 11).
+hmp type "kaelix barra fusao --tamanho media --busca meio"
+hmp key ret
+sleep 10
+shot "14b-barra-busca-no-meio"
+hmp type "kaelix barra --menu meio"
+hmp key ret
+sleep 10
+shot "14c-barra-menu-e-busca-no-meio"
+hmp type "kaelix barra fusao --tamanho media --busca esquerda --menu esquerda"
 hmp key ret
 sleep 10
 shot "15-barra-de-volta-ao-padrao"

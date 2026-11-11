@@ -1,5 +1,5 @@
 // Estilo "fusão" (o padrão do Kaelix): três ilhas flutuantes embaixo.
-// Menu e busca à esquerda, apps no meio, rede, som e relógio à direita.
+// Menu e busca à esquerda (ou no meio), apps no meio, rede, som e relógio à direita.
 
 function ilha(alinhamento) {
     var p = new Panel;
@@ -15,12 +15,24 @@ function ilha(alinhamento) {
     return p;
 }
 
-var esquerda = ilha("left");
-porMenu(esquerda, true);
+// A busca pode ficar junto do menu (padrão), na ilha do meio ou sumir, e o
+// menu pode ir para o meio, como no Windows 11 (aí a ilha da esquerda some).
+var buscaFica = ondeBusca();
+var menuNoMeio = ondeMenu() === "meio";
+if (!menuNoMeio) {
+    var esquerda = ilha("left");
+    porMenu(esquerda, buscaFica === "esquerda");
+}
 
 var centro = ilha("center");
+if (menuNoMeio) {
+    porMenu(centro, buscaFica !== "nao");
+} else if (buscaFica === "meio") {
+    porBuscaSozinha(centro);
+}
 porApps(centro);
 porLixeira(centro);
+print("kaelix: busca " + buscaFica + ", menu " + (menuNoMeio ? "meio" : "esquerda") + "\n");
 
 var direita = ilha("right");
 porBandeja(direita);

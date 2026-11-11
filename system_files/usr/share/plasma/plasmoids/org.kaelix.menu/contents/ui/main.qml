@@ -30,7 +30,9 @@ PlasmoidItem {
 
     readonly property string ajudante: "/usr/libexec/kaelix/kaelix-central"
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
-    readonly property bool comBusca: Plasmoid.configuration.comBusca && !vertical
+    // Só a pílula da busca, sem o logo: é a busca que fica na ilha do meio.
+    readonly property bool soBusca: Plasmoid.configuration.soBusca === true && !vertical
+    readonly property bool comBusca: (Plasmoid.configuration.comBusca === true || soBusca) && !vertical
 
     // O que a pessoa digitou na busca.
     property string busca: ""
@@ -140,6 +142,7 @@ PlasmoidItem {
     }
 
     // Na barra: o logo do Kaelix e, na fusão e no windows, a pílula da busca.
+    // Com "soBusca", só a pílula (a busca que fica na ilha do meio).
     compactRepresentation: Item {
         id: compacta
 
@@ -171,7 +174,8 @@ PlasmoidItem {
 
             MouseArea {
                 id: botao
-                width: compacta.lado
+                visible: !raiz.soBusca
+                width: visible ? compacta.lado : 0
                 height: compacta.lado
                 hoverEnabled: true
                 activeFocusOnTab: true

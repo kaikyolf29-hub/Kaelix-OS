@@ -196,6 +196,17 @@ run barra linux
 check "estilo desconhecido é recusado" test "$CODE" -ne 0
 run barra --tamanho enorme
 check "tamanho desconhecido é recusado" test "$CODE" -ne 0
+run barra --busca meio
+check "só mudar a busca também troca a barra" called 'var kaelixBusca = "meio";'
+check "lembra onde fica a busca" grep -qx "busca=meio" "$WORK/state/barra"
+run barra --menu meio
+check "o menu pode ir para o meio (e a busca continua no meio)" bash -c "grep -qF 'var kaelixMenu = \"meio\";' '$CALLS' && grep -qx 'busca=meio' '$WORK/state/barra'"
+run barra
+check "sem escolha mostra onde ficam a busca e o menu" has "Busca: meio. Menu: meio."
+run barra --busca talvez
+check "busca com valor estranho é recusada" test "$CODE" -ne 0
+run barra fusao --busca esquerda --menu esquerda
+check "a busca e o menu voltam para a esquerda" called 'var kaelixMenu = "esquerda";'
 # A área de trabalho responde à primeira parte (tirar as barras) com os apps
 # fixados e as peças antigas, que têm atalho (Meta+A, Alt+F1, Meta+B, Meta+N).
 mock busctl 'case "$*" in *kaelixAntigos*) echo "s \"kaelix-fixado: applications:steam.desktop\\nkaelix-fixado: preferred://browser\\nkaelix-peca-velha: 24\\nkaelix-peca-velha: 31\\n\"" ;; *) echo "s \"kaelix: resposta da area de trabalho\"" ;; esac; exit "${FAKE_BUSCTL_RC:-0}"'

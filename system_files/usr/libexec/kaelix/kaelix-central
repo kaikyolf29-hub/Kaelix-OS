@@ -204,15 +204,21 @@ escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "kaelix"
 }
 
 estado_barra() {
-  local estilo tamanho esconder=0
+  local estilo tamanho esconder=0 busca menu
   estilo="$(escolha barra estilo)"
   tamanho="$(escolha barra tamanho)"
   case "$estilo" in mac|windows) ;; *) estilo=fusao ;; esac
   case "$tamanho" in pequena|grande) ;; *) tamanho=media ;; esac
   [[ "$(escolha barra esconder)" == sim ]] && esconder=1
+  busca="$(escolha barra busca)"
+  menu="$(escolha barra menu)"
+  case "$busca" in meio|nao) ;; *) busca=esquerda ;; esac
+  [[ $menu == meio ]] || menu=esquerda
   echo "barra=$estilo"
   echo "barra_tamanho=$tamanho"
   echo "barra_esconder=$esconder"
+  echo "barra_busca=$busca"
+  echo "barra_menu=$menu"
 }
 
 estado_vidro() {
@@ -453,9 +459,10 @@ cmd_vidro() {
 }
 
 cmd_barra() {
-  local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}"
-  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao]" >&2; exit 2 ;; esac
-  timeout 60 "$KAELIX_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} >/dev/null 2>&1
+  local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}" busca="${4:-}" menu="${5:-}"
+  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao] [esquerda|meio|nao] [esquerda|meio]" >&2; exit 2 ;; esac
+  timeout 60 "$KAELIX_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} \
+    ${busca:+--busca "$busca"} ${menu:+--menu "$menu"} >/dev/null 2>&1
 }
 
 # Usa o papel animado (a peça do Waywallen) em todas as telas.

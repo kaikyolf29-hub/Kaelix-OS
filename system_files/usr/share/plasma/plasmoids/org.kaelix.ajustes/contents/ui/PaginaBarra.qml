@@ -1,4 +1,5 @@
-// Barra e doca: o estilo da barra (fusão, Mac ou Windows) e o tamanho.
+// Barra e doca: o estilo da barra (fusão, Mac ou Windows), o tamanho, onde
+// ficam a busca e o menu, e se a barra se esconde sozinha.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -12,12 +13,18 @@ ColumnLayout {
     readonly property string estilo: ajustes.texto("barra") || "fusao"
     readonly property string tamanho: ajustes.texto("barra_tamanho") || "media"
     readonly property bool esconde: ajustes.sim("barra_esconder")
+    readonly property string busca: ajustes.texto("barra_busca") || "esquerda"
+    readonly property string menu: ajustes.texto("barra_menu") || "esquerda"
 
-    function trocar(estilo, tamanho, esconde) {
+    function trocar(estilo, tamanho, esconde, busca, menu) {
+        var b = busca !== undefined ? busca : pagina.busca;
+        var m = menu !== undefined ? menu : pagina.menu;
         ajustes.definir("barra", estilo);
         ajustes.definir("barra_tamanho", tamanho);
         ajustes.definir("barra_esconder", esconde ? "1" : "0");
-        ajustes.fazer("barra " + estilo + " " + tamanho + " " + (esconde ? "sim" : "nao"));
+        ajustes.definir("barra_busca", b);
+        ajustes.definir("barra_menu", m);
+        ajustes.fazer("barra " + estilo + " " + tamanho + " " + (esconde ? "sim" : "nao") + " " + b + " " + m);
     }
 
     Grupo {
@@ -56,6 +63,8 @@ ColumnLayout {
                         MiniTela {
                             escuro: ajustes.sim("escuro") || ajustes.texto("escuro") === ""
                             estilo: opcao.modelData.id
+                            busca: pagina.busca
+                            menu: pagina.menu
                         }
                     }
                 }
@@ -74,6 +83,48 @@ ColumnLayout {
                     { valor: "grande", nome: ajustes.t("Grande", "Large") }
                 ]
                 onEscolhido: valor => pagina.trocar(pagina.estilo, valor, pagina.esconde)
+            }
+        }
+
+        // Onde fica a pílula "Buscar apps e arquivos". No meio ela se junta à
+        // ilha dos apps. Na barra única do Windows ela fica sempre ao lado do menu.
+        Linha {
+            visible: pagina.estilo !== "mac"
+            nome: ajustes.t("Busca", "Search")
+            detalhe: pagina.estilo === "windows" ? ajustes.t("Na barra única, a busca fica ao lado do menu.", "On the single bar, search sits next to the menu.")
+                                                 : ajustes.t("No meio, a busca se junta à ilha dos apps.", "In the middle, search joins the apps island.")
+
+            Segmentado {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 17
+                atual: pagina.estilo === "windows" && pagina.busca === "meio" ? "esquerda" : pagina.busca
+                opcoes: pagina.estilo === "windows"
+                    ? [
+                        { valor: "esquerda", nome: ajustes.t("Ao lado do menu", "Next to the menu") },
+                        { valor: "nao", nome: ajustes.t("Sem busca", "No search") }
+                    ]
+                    : [
+                        { valor: "esquerda", nome: ajustes.t("Junto do menu", "With the menu") },
+                        { valor: "meio", nome: ajustes.t("No meio", "In the middle") },
+                        { valor: "nao", nome: ajustes.t("Sem busca", "No search") }
+                    ]
+                onEscolhido: valor => pagina.trocar(pagina.estilo, pagina.tamanho, pagina.esconde, valor, pagina.menu)
+            }
+        }
+
+        // O botão do menu no meio, junto dos apps, como no Windows 11.
+        Linha {
+            visible: pagina.estilo === "fusao"
+            nome: ajustes.t("Menu", "Menu")
+            detalhe: ajustes.t("No meio, o logo fica junto dos apps, como no Windows 11.", "In the middle, the logo sits with the apps, like Windows 11.")
+
+            Segmentado {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+                atual: pagina.menu
+                opcoes: [
+                    { valor: "esquerda", nome: ajustes.t("À esquerda", "On the left") },
+                    { valor: "meio", nome: ajustes.t("No meio", "In the middle") }
+                ]
+                onEscolhido: valor => pagina.trocar(pagina.estilo, pagina.tamanho, pagina.esconde, pagina.busca, valor)
             }
         }
 

@@ -7,7 +7,8 @@ barra.height = alturaDaBarra();
 barra.lengthMode = "fill";
 barra.floating = false;
 barra.hiding = esconder();
-porMenu(barra, true);
+// Numa barra só, a busca fica sempre ao lado do menu (ou some, se a pessoa pediu).
+porMenu(barra, ondeBusca() !== "nao");
 porApps(barra);
 barra.addWidget("org.kde.plasma.panelspacer");
 porBandeja(barra);
