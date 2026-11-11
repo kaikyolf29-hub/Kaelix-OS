@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ],
+        "Description": "Põe a barra do Matsu numa tela que acabou de ser ligada.",
+        "Description[en]": "Puts the Matsu bar on a screen that was just connected.",
+        "EnabledByDefault": true,
+        "Id": "matsu-telas",
+        "License": "GPL-3.0-or-later",
+        "Name": "Barra em cada tela",
+        "Name[en]": "Bar on every screen",
+        "Version": "1.0"
+    },
+    "X-KDE-ConfigModule": "",
+    "X-Plasma-API": "javascript"
+}

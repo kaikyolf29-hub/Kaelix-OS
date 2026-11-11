@@ -171,6 +171,13 @@ check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\
 printf 'estilo=fusao\ntamanho=media\nesconder=nao\nbusca=meio\nmenu=meio\n' > "$WORK/state/barra"
 run estado
 check "lê onde ficam a busca e o menu" bash -c "grep -qx 'barra_busca=meio' <<<\"\$0\" && grep -qx 'barra_menu=meio' <<<\"\$0\"" "$OUT"
+check "várias telas: por padrão a barra em todas e o app na tela dele" bash -c "grep -qx 'barra_telas=todas' <<<\"\$0\" && grep -qx 'barra_abertos=tela' <<<\"\$0\"" "$OUT"
+printf 'estilo=fusao\ntelas=principal\nabertos=principal\n' > "$WORK/state/barra"
+run estado
+check "lê a escolha das várias telas" bash -c "grep -qx 'barra_telas=principal' <<<\"\$0\" && grep -qx 'barra_abertos=principal' <<<\"\$0\"" "$OUT"
+printf 'estilo=fusao\ntelas=;rm\nabertos=x\n' > "$WORK/state/barra"
+run estado
+check "escolha estranha das telas volta ao padrão" bash -c "grep -qx 'barra_telas=todas' <<<\"\$0\" && grep -qx 'barra_abertos=tela' <<<\"\$0\"" "$OUT"
 printf 'estilo=fusao\nbusca=;rm\n' > "$WORK/state/barra"
 run estado
 check "busca guardada estranha vira o padrão" linha "barra_busca=esquerda"
@@ -185,6 +192,8 @@ run barra mac media sim
 check "barra pode pedir para se esconder sozinha" called "matsu barra mac --tamanho media --esconder sim"
 run barra fusao media nao meio esquerda
 check "barra pode levar a busca para a ilha do meio" called "matsu barra fusao --tamanho media --esconder nao --busca meio --menu esquerda"
+run barra windows media nao esquerda esquerda principal todas
+check "barra passa a escolha das várias telas" called "matsu barra windows --tamanho media --esconder nao --busca esquerda --menu esquerda --telas principal --abertos todas"
 run barra linux; check "barra desconhecida é recusada" test "$CODE" -eq 2
 mkdir -p "$WORK/papeis/Matsu/contents/images" "$WORK/papeis/Matsu/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
 touch "$WORK/papeis/Matsu/contents/images/3840x2160.png" "$WORK/papeis/Matsu/contents/screenshot.png"

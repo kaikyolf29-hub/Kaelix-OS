@@ -1,0 +1,17 @@
+# Barra em cada tela: quando um monitor é ligado (o KWin chama este serviço
+# pelo script "matsu-telas") ou a sessão começa com mais de uma tela, põe a
+# barra do estilo da pessoa nas telas que ainda não têm nenhuma. Não mexe nas
+# barras que já existem, e não faz nada se a pessoa quer a barra só na tela
+# principal ("matsu barra --telas principal" ou os Ajustes do Matsu).
+[Unit]
+Description=Barra do Matsu em cada tela
+PartOf=graphical-session.target
+After=plasma-plasmashell.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/matsu barra --telas-novas
+TimeoutStartSec=120
+
+[Install]
+WantedBy=plasma-workspace.target

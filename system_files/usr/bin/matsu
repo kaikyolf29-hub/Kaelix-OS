@@ -105,6 +105,8 @@ $(t "Exemplos" "Examples"):
   matsu barra --esconder sim    $(t "(a barra se esconde e aparece com o mouse)" "(the bar hides and shows up with the mouse)")
   matsu barra --busca meio      $(t "(a busca vai para a ilha do meio, junto dos apps; também esquerda e nao)" "(search moves to the middle island, next to the apps; also esquerda and nao)")
   matsu barra --menu meio       $(t "(o menu também vai para o meio, como no Windows 11)" "(the menu moves to the middle too, like Windows 11)")
+  matsu barra --telas principal $(t "(com várias telas, a barra só na principal; o padrão é todas)" "(with several screens, the bar only on the main one; default is todas)")
+  matsu barra --abertos todas   $(t "(cada app aberto aparece em todas as barras; também tela e principal)" "(each open app shows on every bar; also tela and principal)")
   matsu vidro roxo --transparencia mais  $(t "(vidro roxo e mais transparente)" "(purple, more transparent glass)")
 EOF
 }
@@ -446,8 +448,45 @@ bar_reply_lines() {
   printf '%b\n' "$r"
 }
 
+# As escolhas da pessoa, como variáveis no começo do roteiro da barra (veja
+# o começo de /usr/share/matsu/barra/comum.js).
+bar_vars() { # bar_vars <tamanho> <esconder> <busca> <menu> <telas> <abertos>
+  local scale esconde=false
+  case "$1" in pequena) scale=2.25 ;; grande) scale=3.25 ;; *) scale=2.75 ;; esac
+  [[ $2 == sim ]] && esconde=true
+  printf 'var matsuEscala = %s;\nvar matsuEsconder = %s;\nvar matsuBusca = "%s";\nvar matsuMenu = "%s";\nvar matsuTelas = "%s";\nvar matsuAbertos = "%s";\n' \
+    "$scale" "$esconde" "$3" "$4" "$5" "$6"
+}
+
+# Uma tela foi ligada (ou a sessão começou com mais de uma): põe a barra do
+# estilo da pessoa nas telas que ainda não têm nenhuma. Quem chama é o serviço
+# matsu-telas, que o KWin liga quando as telas mudam. Espera a área de
+# trabalho abrir, e não faz nada se a pessoa quer a barra só na principal.
+bar_new_screens() { # bar_new_screens <estilo> <tamanho> <esconder> <busca> <menu> <telas> <abertos>
+  local style="$1" f script reply tentativa
+  [[ $6 == principal ]] && return 0
+  [[ $style =~ ^(fusao|mac|windows)$ ]] || style=fusao
+  for f in comum.js "$style.js" telas-novas.js; do
+    [[ -r $BAR_DIR/$f ]] || fail "Não achei o arquivo do estilo: $BAR_DIR/$f" "Style file not found: $BAR_DIR/$f"
+  done
+  need busctl
+  script="$(bar_vars "$2" "$3" "$4" "$5" "$6" "$7"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js" "$BAR_DIR/telas-novas.js")"
+  # A área de trabalho leva um instante para ver a tela que acabou de ligar.
+  sleep "${MATSU_TELAS_INICIO:-3}"
+  for ((tentativa = 1; tentativa <= ${MATSU_TELAS_TENTATIVAS:-12}; tentativa++)); do
+    if reply="$(bar_script "$script" 2>/dev/null)"; then
+      bar_reply_lines "$reply" | grep '^matsu-telas: ' || true
+      [[ $reply == *"matsu-telas: pronto"* ]] && return 0
+    fi
+    sleep "${MATSU_TELAS_ESPERA:-5}"
+  done
+  say "A área de trabalho não ficou pronta; as telas novas ficam sem barra por enquanto." \
+      "The desktop did not get ready; the new screens stay without a bar for now."
+  return 0
+}
+
 cmd_bar() {
-  local style="" size="" hide="" busca="" menu="" details=0 arg
+  local style="" size="" hide="" busca="" menu="" telas="" abertos="" details=0 novas=0 arg
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
@@ -463,6 +502,12 @@ cmd_bar() {
       --busca=*|--search=*) busca="${arg#*=}" ;;
       --menu)               menu="${1:-}"; shift || true ;;
       --menu=*)             menu="${arg#*=}" ;;
+      --telas|--screens)    telas="${1:-}"; shift || true ;;
+      --telas=*|--screens=*) telas="${arg#*=}" ;;
+      --abertos|--open-apps) abertos="${1:-}"; shift || true ;;
+      --abertos=*|--open-apps=*) abertos="${arg#*=}" ;;
+      # Interno: uma tela foi ligada; põe a barra só nas telas sem nenhuma.
+      --telas-novas|--new-screens) novas=1 ;;
       *) fail "Estilo desconhecido: $arg. Use fusao, mac ou windows." "Unknown style: $arg. Use fusao, mac or windows." ;;
     esac
   done
@@ -494,20 +539,48 @@ cmd_bar() {
     meio|centro|middle|center)  menu=meio ;;
     *) fail "Use --menu esquerda ou meio." "Use --menu esquerda or meio." ;;
   esac
+  # Com várias telas: a barra em todas (padrão) ou só na principal.
+  case "${telas,,}" in
+    "") ;;
+    todas|all|sim|yes|on)               telas=todas ;;
+    principal|main|uma|nao|não|no|off)  telas=principal ;;
+    *) fail "Use --telas todas ou principal." "Use --screens todas or principal." ;;
+  esac
+  # Onde aparece cada app aberto: só na barra da tela dele (padrão), em todas
+  # as barras, ou na principal e na da tela dele (as três opções do Windows).
+  case "${abertos,,}" in
+    "") ;;
+    tela|screen|onde-esta)    abertos=tela ;;
+    todas|all)                abertos=todas ;;
+    principal|main)           abertos=principal ;;
+    *) fail "Use --abertos tela, todas ou principal." "Use --open-apps tela, todas or principal." ;;
+  esac
 
-  local cur_style cur_size cur_hide cur_busca cur_menu
+  local cur_style cur_size cur_hide cur_busca cur_menu cur_telas cur_abertos
   cur_style="$(bar_saved estilo fusao)"
   cur_size="$(bar_saved tamanho media)"
   cur_hide="$(bar_saved esconder nao)"
   cur_busca="$(bar_saved busca esquerda)"
   cur_menu="$(bar_saved menu esquerda)"
+  cur_telas="$(bar_saved telas todas)"
+  cur_abertos="$(bar_saved abertos tela)"
   hide="${hide:-$cur_hide}"
   [[ $cur_busca =~ ^(esquerda|meio|nao)$ ]] || cur_busca=esquerda
   [[ $cur_menu =~ ^(esquerda|meio)$ ]] || cur_menu=esquerda
+  [[ $cur_telas =~ ^(todas|principal)$ ]] || cur_telas=todas
+  [[ $cur_abertos =~ ^(tela|todas|principal)$ ]] || cur_abertos=tela
   busca="${busca:-$cur_busca}"
   menu="${menu:-$cur_menu}"
+  telas="${telas:-$cur_telas}"
+  abertos="${abertos:-$cur_abertos}"
 
-  if [[ -z $style && -z $size && $hide == "$cur_hide" && $busca == "$cur_busca" && $menu == "$cur_menu" ]]; then
+  if [[ $novas == 1 ]]; then
+    bar_new_screens "${style:-$cur_style}" "${size:-$cur_size}" "$hide" "$busca" "$menu" "$telas" "$abertos"
+    return
+  fi
+
+  if [[ -z $style && -z $size && $hide == "$cur_hide" && $busca == "$cur_busca" && $menu == "$cur_menu" \
+        && $telas == "$cur_telas" && $abertos == "$cur_abertos" ]]; then
     if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
       local on_f=off on_m=off on_w=off on_p=off on_d=off on_g=off
       case "$cur_style" in mac) on_m=on ;; windows) on_w=on ;; *) on_f=on ;; esac
@@ -524,19 +597,17 @@ cmd_bar() {
     else
       say "Estilo atual da barra: $cur_style, tamanho $cur_size." "Current bar style: $cur_style, size $cur_size."
       say "Busca: $cur_busca. Menu: $cur_menu." "Search: $cur_busca. Menu: $cur_menu."
-      say "Para trocar: matsu barra <fusao|mac|windows> [--tamanho pequena|media|grande] [--esconder sim|nao] [--busca esquerda|meio|nao] [--menu esquerda|meio]" \
-          "To change: matsu bar <fusao|mac|windows> [--size pequena|media|grande] [--autohide on|off] [--search esquerda|meio|nao] [--menu esquerda|meio]"
+      say "Telas: $cur_telas. Apps abertos: $cur_abertos." "Screens: $cur_telas. Open apps: $cur_abertos."
+      say "Para trocar: matsu barra <fusao|mac|windows> [--tamanho pequena|media|grande] [--esconder sim|nao] [--busca esquerda|meio|nao] [--menu esquerda|meio] [--telas todas|principal] [--abertos tela|todas|principal]" \
+          "To change: matsu bar <fusao|mac|windows> [--size pequena|media|grande] [--autohide on|off] [--search esquerda|meio|nao] [--menu esquerda|meio] [--screens todas|principal] [--open-apps tela|todas|principal]"
       return 0
     fi
   fi
   style="${style:-$cur_style}"
   size="${size:-$cur_size}"
 
-  local scale
-  case "$size" in pequena) scale=2.25 ;; grande) scale=3.25 ;; *) scale=2.75 ;; esac
-
   local f
-  for f in trocar.js comum.js "$style.js"; do
+  for f in trocar.js comum.js "$style.js" todas-as-telas.js; do
     [[ -r $BAR_DIR/$f ]] || fail "Não achei o arquivo do estilo: $BAR_DIR/$f" "Style file not found: $BAR_DIR/$f"
   done
   need busctl
@@ -545,7 +616,7 @@ cmd_bar() {
   # 1) Tira as barras atuais. A área de trabalho responde com os apps fixados e
   #    as peças antigas.
   local reply1 reply2 linha fixados="" id
-  if ! reply1="$(bar_script "$(cat "$BAR_DIR/trocar.js")")"; then
+  if ! reply1="$(bar_script "$(cat "$BAR_DIR/comum.js" "$BAR_DIR/trocar.js")")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Matsu." \
          "Could not reach the desktop. Run this command inside the Matsu session."
   fi
@@ -564,19 +635,19 @@ cmd_bar() {
         fi ;;
     esac
   done < <(bar_reply_lines "$reply1")
-  # 3) Monta o estilo novo com os apps que a pessoa tinha fixado.
+  # 3) Monta o estilo novo com os apps que a pessoa tinha fixado, em cada tela.
   local script
-  local esconde=false
-  [[ $hide == sim ]] && esconde=true
-  script="$(printf 'var matsuFixados = [%s];\nvar matsuEscala = %s;\nvar matsuEsconder = %s;\nvar matsuBusca = "%s";\nvar matsuMenu = "%s";\n' \
-    "$fixados" "$scale" "$esconde" "$busca" "$menu"; cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js")"
+  script="$(printf 'var matsuFixados = [%s];\n' "$fixados"
+    bar_vars "$size" "$hide" "$busca" "$menu" "$telas" "$abertos"
+    cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js" "$BAR_DIR/todas-as-telas.js")"
   if ! reply2="$(bar_script "$script")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Matsu." \
          "Could not reach the desktop. Run this command inside the Matsu session."
   fi
   # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
   if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
-  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\n' "$style" "$size" "$hide" "$busca" "$menu" > "$STATE_DIR/barra"
+  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\ntelas=%s\nabertos=%s\n' \
+    "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" > "$STATE_DIR/barra"
   ok "Barra trocada. Os apps que você fixou foram mantidos." "Bar changed. The apps you pinned were kept."
   tip "Para voltar ao padrão: matsu barra fusao --tamanho media --busca esquerda --menu esquerda" \
       "To go back to the default: matsu bar fusao --size media --search esquerda --menu esquerda"

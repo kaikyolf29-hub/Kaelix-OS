@@ -7,6 +7,15 @@
 //   matsuBusca    onde fica a pílula da busca: "esquerda" (junto do menu),
 //                  "meio" (na ilha do meio, junto dos apps) ou "nao"
 //   matsuMenu     onde fica o botão do menu: "esquerda" ou "meio" (Windows 11)
+//   matsuTelas    "todas" (uma barra em cada tela, o padrão) ou "principal"
+//   matsuAbertos  com mais de uma tela, onde aparece cada app aberto:
+//                  "tela" (só na barra da tela onde a janela está, o padrão),
+//                  "todas" (em todas as barras) ou "principal" (na barra da
+//                  tela principal e na da tela onde a janela está)
+//
+// Cada estilo define montarTela(tela), que monta a barra numa tela só. Quem
+// escolhe as telas é o arquivo que vem depois: todas-as-telas.js (montar tudo
+// de novo) ou telas-novas.js (só as telas que ficaram sem barra).
 
 function tem(tipo) {
     return knownWidgetTypes.indexOf(tipo) !== -1;
@@ -15,6 +24,30 @@ function tem(tipo) {
 // "autohide" quando a pessoa pediu para a barra se esconder sozinha.
 function esconder() {
     return (typeof matsuEsconder !== "undefined" && matsuEsconder) ? "autohide" : "none";
+}
+
+// O Plasma numera as telas a partir da principal: a tela 0 é a principal. Só
+// nela ficam a bandeja, a central, a lixeira e os atalhos (Meta+A, Meta+B,
+// Meta+N, Alt+F1). A tecla Meta abre o menu da tela onde está o mouse.
+function ehPrincipal(tela) {
+    return tela === 0;
+}
+
+function emTodasAsTelas() {
+    return !(typeof matsuTelas !== "undefined" && matsuTelas === "principal");
+}
+
+function ondeAbertos() {
+    var v = (typeof matsuAbertos !== "undefined" && matsuAbertos) ? matsuAbertos : "tela";
+    return (v === "todas" || v === "principal") ? v : "tela";
+}
+
+// Uma barra nova na tela pedida. O Plasma cria a barra na tela que estiver em
+// uso (a do mouse); aqui ela vai sempre para a tela certa.
+function novaBarra(tela) {
+    var p = new Panel;
+    p.screen = tela;
+    return p;
 }
 
 function alturaDaBarra() {
@@ -27,7 +60,7 @@ function alturaDaBarra() {
 // "Buscar apps e arquivos", que abre o mesmo menu já pronto para digitar.
 // Sem o menu do Matsu (não deveria acontecer), fica o menu do KDE e a busca
 // do sistema.
-function porMenu(painel, comBusca) {
+function porMenu(painel, comBusca, principal) {
     var menu;
     if (tem("org.matsu.menu")) {
         menu = painel.addWidget("org.matsu.menu");
@@ -41,8 +74,10 @@ function porMenu(painel, comBusca) {
             porBusca(painel);
         }
     }
-    menu.currentConfigGroup = ["Shortcuts"];
-    menu.writeConfig("global", "Alt+F1");
+    if (principal) {
+        menu.currentConfigGroup = ["Shortcuts"];
+        menu.writeConfig("global", "Alt+F1");
+    }
     return menu;
 }
 
@@ -101,14 +136,63 @@ function fixadosPadrao() {
     return fixados;
 }
 
+// O Plasma pode devolver a lista dos fixados como texto ("a,b,c") ou como
+// lista. Aqui vira sempre lista limpa.
+function listaDeApps(valor) {
+    var itens = [];
+    if (!valor) {
+        return itens;
+    }
+    var partes = (typeof valor === "string") ? valor.split(",") : valor;
+    for (var n = 0; n < partes.length; n++) {
+        var texto = String(partes[n]).replace(/^\s+|\s+$/g, "");
+        if (texto.length && texto.indexOf("://") === -1 && texto.indexOf(":") === -1) {
+            continue;   // não parece um atalho de app
+        }
+        if (texto.length) {
+            itens.push(texto);
+        }
+    }
+    return itens;
+}
+
+// Os apps fixados na barra da tela pedida (ou em qualquer barra, se a tela
+// não tiver). Lista vazia quando não acha nenhuma.
+function fixadosDasBarras(barras, tela) {
+    var achados = null;
+    for (var a = 0; a < barras.length; a++) {
+        var ids = barras[a].widgetIds;
+        for (var w = 0; w < ids.length; w++) {
+            var item = barras[a].widgetById(ids[w]);
+            if (!item || item.type !== "org.kde.plasma.icontasks") {
+                continue;
+            }
+            item.currentConfigGroup = ["General"];
+            var lidos = listaDeApps(item.readConfig("launchers", ""));
+            if (barras[a].screen === tela) {
+                return lidos;
+            }
+            if (achados === null) {
+                achados = lidos;
+            }
+        }
+    }
+    return achados || [];
+}
+
 // Apps fixados e abertos. Mantém o que a pessoa já tinha fixado, se houver.
-function porApps(painel) {
+// Com mais de uma tela, cada barra mostra os apps abertos na sua tela (ou em
+// todas, como a pessoa escolher). Os fixados aparecem em todas as barras.
+function porApps(painel, tela) {
     var apps = painel.addWidget("org.kde.plasma.icontasks");
     apps.currentConfigGroup = ["General"];
     var guardados = (typeof matsuFixados !== "undefined") ? matsuFixados : null;
     var lista = (guardados && guardados.length) ? guardados : fixadosPadrao();
     apps.writeConfig("launchers", lista);
-    print("matsu: barra com " + lista.length + " apps fixados\n");
+    var abertos = ondeAbertos();
+    var soDaTela = abertos === "tela" || (abertos === "principal" && !ehPrincipal(tela));
+    apps.writeConfig("showOnlyCurrentScreen", soDaTela);
+    print("matsu: barra da tela " + tela + " com " + lista.length + " apps fixados" + (soDaTela ? ", abertos só desta tela" : "") + "\n");
     return apps;
 }
 
@@ -126,12 +210,17 @@ function porLixeira(painel) {
 
 // Ilha da direita, como no vídeo da fusão: ícones dos apps em segundo plano
 // (com a setinha "mostrar mais"), a pílula de rede, Bluetooth, som e bateria
-// (central de controle), a hora com a data e o sino.
-function porBandeja(painel) {
+// (central de controle), a hora com a data e o sino. Nas outras telas, como
+// no Windows, fica só a hora com a data e o sino.
+function porBandeja(painel, principal) {
+    if (!principal) {
+        porRelogio(painel, false);
+        return;
+    }
     var bandeja = painel.addWidget("org.kde.plasma.systemtray");
     arrumarBandeja(bandeja);
     porCentral(painel);
-    porRelogio(painel);
+    porRelogio(painel, true);
 }
 
 // Bandeja como no Windows: aparecem os ícones dos apps que estão rodando
@@ -167,13 +256,16 @@ function arrumarBandeja(bandeja) {
 
 // Relógio do Matsu: hora em negrito, data embaixo e o sino; um clique abre as
 // notificações e o calendário (Meta+N, como no Windows). Se ele faltar, entra o
-// relógio do KDE, discreto como no Windows 11.
-function porRelogio(painel) {
+// relógio do KDE, discreto como no Windows 11. O atalho fica só no da tela
+// principal.
+function porRelogio(painel, comAtalho) {
     if (tem("org.matsu.relogio")) {
         var nosso = painel.addWidget("org.matsu.relogio");
-        nosso.currentConfigGroup = ["Shortcuts"];
-        nosso.writeConfig("global", "Meta+N");
-        nosso.globalShortcut = "Meta+N";
+        if (comAtalho) {
+            nosso.currentConfigGroup = ["Shortcuts"];
+            nosso.writeConfig("global", "Meta+N");
+            nosso.globalShortcut = "Meta+N";
+        }
         return nosso;
     }
     var relogio = painel.addWidget("org.kde.plasma.digitalclock");

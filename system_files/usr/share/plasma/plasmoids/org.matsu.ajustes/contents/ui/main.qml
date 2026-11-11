@@ -117,7 +117,7 @@ PlasmoidItem {
         { id: "aparencia", grupo: 2, cor: "#3f4766", icone: "matsu-aparencia-symbolic",
           nome: t("Aparência", "Appearance"), chaves: "tema claro escuro cor vidro transparencia destaque" },
         { id: "barra", grupo: 2, cor: "#5468e8", icone: "matsu-barra-symbolic",
-          nome: t("Barra e doca", "Bar and dock"), chaves: "dock painel fusao mac windows tamanho" },
+          nome: t("Barra e doca", "Bar and dock"), chaves: "dock painel fusao mac windows tamanho monitor monitores telas segunda tela" },
         { id: "papel", grupo: 2, cor: "#0ea5b7", icone: "matsu-papel-symbolic",
           nome: t("Papel de parede", "Wallpaper"), chaves: "fundo imagem foto wallpaper" },
         { id: "telas", grupo: 2, cor: "#8b5cf6", icone: "matsu-tela-symbolic",

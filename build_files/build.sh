@@ -214,7 +214,8 @@ done
 # que o comando "matsu barra" usa, para existir uma fonte só.
 for tema in org.matsu.escuro.desktop org.matsu.claro.desktop; do
   mkdir -p "/usr/share/plasma/look-and-feel/$tema/contents/layouts"
-  cat /usr/share/matsu/barra/comum.js /usr/share/matsu/barra/fusao.js /usr/share/matsu/barra/papel-de-parede.js \
+  cat /usr/share/matsu/barra/comum.js /usr/share/matsu/barra/fusao.js /usr/share/matsu/barra/todas-as-telas.js \
+    /usr/share/matsu/barra/papel-de-parede.js \
     > "/usr/share/plasma/look-and-feel/$tema/contents/layouts/org.kde.plasma.desktop-layout.js"
 done
 # Papel de parede animado: a peça do KDE do Waywallen, que mostra na área de
@@ -352,6 +353,10 @@ systemctl enable matsu-flatpak-setup.service
 # quando um jogo abre (e desfaz tudo quando ele fecha), na sessão de cada pessoa.
 systemctl --global enable matsu-jogos.service
 chmod 0755 /usr/libexec/matsu/matsu-jogos-placa
+# Barra em cada tela: no começo da sessão e sempre que um monitor é ligado (o
+# script "matsu-telas" do KWin chama o serviço), põe a barra nas telas sem barra.
+systemctl --global enable matsu-telas.service
+kwriteconfig6 --file /etc/xdg/kwinrc --group Plugins --key matsu-telasEnabled true
 
 # ---------------------------------------------------------------------------
 log "Tela de boot do Matsu"

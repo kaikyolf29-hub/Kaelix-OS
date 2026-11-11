@@ -17,7 +17,8 @@
 #
 # Usados pelos Ajustes do Matsu (a janela de ajustes, como a do Mac):
 #   matsu-central vidro <cor> mais|normal|menos     (chama "matsu vidro")
-#   matsu-central barra fusao|mac|windows pequena|media|grande [sim|nao]   (chama "matsu barra"; sim = esconder sozinha)
+#   matsu-central barra fusao|mac|windows pequena|media|grande [sim|nao] [busca] [menu] [todas|principal] [tela|todas|principal]
+#                                        (chama "matsu barra"; sim = esconder sozinha; os dois últimos são das várias telas)
 #   matsu-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
 #   matsu-central papel <pasta ou imagem>|escolher|animado
 #   matsu-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
@@ -204,7 +205,7 @@ escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "matsu"
 }
 
 estado_barra() {
-  local estilo tamanho esconder=0 busca menu
+  local estilo tamanho esconder=0 busca menu telas abertos
   estilo="$(escolha barra estilo)"
   tamanho="$(escolha barra tamanho)"
   case "$estilo" in mac|windows) ;; *) estilo=fusao ;; esac
@@ -214,11 +215,17 @@ estado_barra() {
   menu="$(escolha barra menu)"
   case "$busca" in meio|nao) ;; *) busca=esquerda ;; esac
   [[ $menu == meio ]] || menu=esquerda
+  telas="$(escolha barra telas)"
+  abertos="$(escolha barra abertos)"
+  [[ $telas == principal ]] || telas=todas
+  case "$abertos" in todas|principal) ;; *) abertos=tela ;; esac
   echo "barra=$estilo"
   echo "barra_tamanho=$tamanho"
   echo "barra_esconder=$esconder"
   echo "barra_busca=$busca"
   echo "barra_menu=$menu"
+  echo "barra_telas=$telas"
+  echo "barra_abertos=$abertos"
 }
 
 estado_vidro() {
@@ -459,10 +466,10 @@ cmd_vidro() {
 }
 
 cmd_barra() {
-  local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}" busca="${4:-}" menu="${5:-}"
-  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao] [esquerda|meio|nao] [esquerda|meio]" >&2; exit 2 ;; esac
+  local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}" busca="${4:-}" menu="${5:-}" telas="${6:-}" abertos="${7:-}"
+  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao] [esquerda|meio|nao] [esquerda|meio] [todas|principal] [tela|todas|principal]" >&2; exit 2 ;; esac
   timeout 60 "$MATSU_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} \
-    ${busca:+--busca "$busca"} ${menu:+--menu "$menu"} >/dev/null 2>&1
+    ${busca:+--busca "$busca"} ${menu:+--menu "$menu"} ${telas:+--telas "$telas"} ${abertos:+--abertos "$abertos"} >/dev/null 2>&1
 }
 
 # Usa o papel animado (a peça do Waywallen) em todas as telas.

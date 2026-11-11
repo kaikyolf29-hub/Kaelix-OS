@@ -1,5 +1,6 @@
 // Barra e doca: o estilo da barra (fusão, Mac ou Windows), o tamanho, onde
-// ficam a busca e o menu, e se a barra se esconde sozinha.
+// ficam a busca e o menu, se a barra se esconde sozinha e, com mais de uma
+// tela, se a barra aparece em todas e onde ficam os apps abertos (como no Windows).
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -15,16 +16,23 @@ ColumnLayout {
     readonly property bool esconde: ajustes.sim("barra_esconder")
     readonly property string busca: ajustes.texto("barra_busca") || "esquerda"
     readonly property string menu: ajustes.texto("barra_menu") || "esquerda"
+    readonly property bool todasAsTelas: ajustes.texto("barra_telas") !== "principal"
+    readonly property string abertos: ajustes.texto("barra_abertos") || "tela"
+    readonly property int telas: Qt.application.screens.length
 
-    function trocar(estilo, tamanho, esconde, busca, menu) {
+    function trocar(estilo, tamanho, esconde, busca, menu, todas, abertos) {
         var b = busca !== undefined ? busca : pagina.busca;
         var m = menu !== undefined ? menu : pagina.menu;
+        var t = (todas !== undefined ? todas : pagina.todasAsTelas) ? "todas" : "principal";
+        var a = abertos !== undefined ? abertos : pagina.abertos;
         ajustes.definir("barra", estilo);
         ajustes.definir("barra_tamanho", tamanho);
         ajustes.definir("barra_esconder", esconde ? "1" : "0");
         ajustes.definir("barra_busca", b);
         ajustes.definir("barra_menu", m);
-        ajustes.fazer("barra " + estilo + " " + tamanho + " " + (esconde ? "sim" : "nao") + " " + b + " " + m);
+        ajustes.definir("barra_telas", t);
+        ajustes.definir("barra_abertos", a);
+        ajustes.fazer("barra " + estilo + " " + tamanho + " " + (esconde ? "sim" : "nao") + " " + b + " " + m + " " + t + " " + a);
     }
 
     Grupo {
@@ -136,6 +144,48 @@ ColumnLayout {
                 checked: pagina.esconde
                 onToggled: pagina.trocar(pagina.estilo, pagina.tamanho, checked)
                 Accessible.name: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
+            }
+        }
+    }
+
+    // Várias telas, como no Windows: a barra em todas as telas (só a principal
+    // tem a bandeja, a central e a lixeira) e onde aparece cada app aberto.
+    Grupo {
+        titulo: ajustes.t("Várias telas", "Multiple screens")
+        nota: pagina.telas > 1
+              ? ajustes.t("Agora há " + pagina.telas + " telas ligadas. Ao ligar outro monitor, a barra aparece nele sozinha.",
+                          "There are " + pagina.telas + " screens connected now. When you plug in another monitor, the bar shows up on it by itself.")
+              : ajustes.t("Vale quando houver mais de uma tela. Ao ligar um monitor, a barra aparece nele sozinha.",
+                          "Applies when there is more than one screen. When you plug in a monitor, the bar shows up on it by itself.")
+
+        Linha {
+            primeira: true
+            nome: ajustes.t("Mostrar a barra em todas as telas", "Show the bar on all screens")
+            detalhe: ajustes.t("A bandeja, a central e a lixeira ficam na tela principal.",
+                               "The tray, control center and trash stay on the main screen.")
+            PlasmaComponents.Switch {
+                checked: pagina.todasAsTelas
+                onToggled: pagina.trocar(pagina.estilo, pagina.tamanho, pagina.esconde, pagina.busca, pagina.menu, checked, pagina.abertos)
+                Accessible.name: ajustes.t("Mostrar a barra em todas as telas", "Show the bar on all screens")
+            }
+        }
+
+        Linha {
+            visible: pagina.todasAsTelas
+            nome: ajustes.t("Apps abertos aparecem", "Open apps show up")
+            detalhe: pagina.abertos === "tela" ? ajustes.t("Cada app fica só na barra da tela onde a janela está.", "Each app stays only on the bar of the screen its window is on.")
+                   : pagina.abertos === "todas" ? ajustes.t("Todo app aberto aparece em todas as barras.", "Every open app shows up on every bar.")
+                   : ajustes.t("Na barra principal e na barra da tela onde a janela está.", "On the main bar and on the bar of the screen its window is on.")
+
+            Segmentado {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 19
+                atual: pagina.abertos
+                opcoes: [
+                    { valor: "tela", nome: ajustes.t("Na tela dele", "On its screen") },
+                    { valor: "principal", nome: ajustes.t("Principal e dele", "Main and its") },
+                    { valor: "todas", nome: ajustes.t("Em todas", "On all") }
+                ]
+                onEscolhido: valor => pagina.trocar(pagina.estilo, pagina.tamanho, pagina.esconde, pagina.busca, pagina.menu, pagina.todasAsTelas, valor)
             }
         }
     }

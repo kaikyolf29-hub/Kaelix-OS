@@ -181,7 +181,7 @@ run bar mac --size=pequena
 check "estilo mac põe a barra no topo" called 'topo.location = "top"'
 check "tamanho pequeno usa a escala menor" called "var matsuEscala = 2.25;"
 run barra fusao --tamanho media
-check "estilo fusão volta com as três ilhas" called 'var direita = ilha("right");'
+check "estilo fusão volta com as três ilhas" called 'var direita = ilha(tela, "right");'
 check "sem --detalhes não mostra a resposta da área de trabalho" bash -c "! grep -qF 'resposta da area' <<<\"\$0\"" "$OUT"
 run barra fusao --detalhes
 check "--detalhes mostra a resposta da área de trabalho" has "resposta da area de trabalho"
@@ -218,6 +218,51 @@ mock busctl 'echo "s \"matsu: resposta da area de trabalho\""; exit "${FAKE_BUSC
 run barra fusao --tamanho media
 FAKE_BUSCTL_RC=1 run barra mac
 check "sem área de trabalho avisa e não guarda" bash -c "grep -qF 'Não consegui falar' <<<\"\$0\" && grep -qF 'estilo=fusao' '$WORK/state/barra'" "$OUT"
+
+echo "barra em várias telas"
+run barra fusao
+check "monta a barra em cada tela" called "montarTela(matsuTela);"
+check "por padrão a barra vai em todas as telas" called 'var matsuTelas = "todas";'
+check "por padrão o app aberto fica só na barra da tela dele" called 'var matsuAbertos = "tela";'
+check "tirar as barras velhas usa as funções comuns" bash -c "grep -n 'function fixadosDasBarras' '$CALLS' | head -n1 | cut -d: -f1 | xargs -I{} test {} -lt \"\$(grep -n 'matsuAntigos\[r\].remove' '$CALLS' | head -n1 | cut -d: -f1)\""
+run barra --telas principal
+check "a barra pode ficar só na tela principal" called 'var matsuTelas = "principal";'
+check "lembra a escolha das telas" grep -qx "telas=principal" "$WORK/state/barra"
+run barra --abertos todas
+check "o app aberto pode aparecer em todas as barras" called 'var matsuAbertos = "todas";'
+check "lembra onde aparecem os apps abertos (e mantém as telas)" bash -c "grep -qx 'abertos=todas' '$WORK/state/barra' && grep -qx 'telas=principal' '$WORK/state/barra'"
+run barra
+check "sem escolha mostra as telas e os apps abertos" has "Telas: principal. Apps abertos: todas."
+run barra --telas talvez
+check "telas com valor estranho é recusado" test "$CODE" -ne 0
+run barra --abertos talvez
+check "apps abertos com valor estranho é recusado" test "$CODE" -ne 0
+export MATSU_TELAS_INICIO=0 MATSU_TELAS_ESPERA=0 MATSU_TELAS_TENTATIVAS=3
+run barra --telas-novas
+check "com a barra só na principal, monitor novo não ganha barra" bash -c "! grep -q '^busctl' '$CALLS'"
+run barra fusao --telas todas --abertos tela
+cp "$WORK/state/barra" "$WORK/barra-antes"
+mock busctl 'echo "s \"matsu-telas: pronto, 1 de 2 telas ganharam a barra agora\n\""'
+run barra --telas-novas
+check "monitor novo ganha a barra do estilo da pessoa" bash -c "grep -qF 'telaTemBarra' '$CALLS' && grep -qF 'function ilha(tela, alinhamento)' '$CALLS'"
+check "monitor novo não tira as barras que já existem" bash -c "! grep -qF '.remove()' '$CALLS'"
+check "monitor novo não muda as escolhas guardadas" cmp -s "$WORK/state/barra" "$WORK/barra-antes"
+check "uma tentativa basta quando a área de trabalho responde" test "$(grep -c '^busctl' "$CALLS")" -eq 1
+mock busctl 'echo "s \"matsu-telas: esperando a barra da tela principal\n\""'
+run barra --telas-novas
+check "espera a área de trabalho abrir (tenta de novo)" test "$(grep -c '^busctl' "$CALLS")" -eq 3
+check "desiste sem erro e avisa" bash -c "test $CODE -eq 0 && grep -qF 'não ficou pronta' <<<\"\$0\"" "$OUT"
+unset MATSU_TELAS_INICIO MATSU_TELAS_ESPERA MATSU_TELAS_TENTATIVAS
+mock busctl 'echo "s \"matsu: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
+# Os roteiros da barra precisam ser JavaScript válido em cada combinação.
+if command -v node >/dev/null 2>&1; then
+  B="$ROOT/system_files/usr/share/matsu/barra"
+  for estilo in fusao mac windows; do
+    check "roteiro $estilo + todas as telas é JavaScript válido" bash -c "cat '$B/comum.js' '$B/$estilo.js' '$B/todas-as-telas.js' > '$WORK/r.js' && node --check '$WORK/r.js'"
+    check "roteiro $estilo + telas novas é JavaScript válido" bash -c "cat '$B/comum.js' '$B/$estilo.js' '$B/telas-novas.js' > '$WORK/r.js' && node --check '$WORK/r.js'"
+  done
+  check "roteiro de tirar as barras é JavaScript válido" bash -c "cat '$B/comum.js' '$B/trocar.js' > '$WORK/r.js' && node --check '$WORK/r.js'"
+fi
 
 echo "vidro"
 mock plasma-apply-desktoptheme 'exit 0'

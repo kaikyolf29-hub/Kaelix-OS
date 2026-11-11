@@ -56,6 +56,24 @@ Antes de instalar:
 - [ ] Recebe uma atualização assinada com `matsu atualizar`.
 - [ ] O relógio fica certo ao voltar para o Windows (ver a lista de acompanhamento).
 
+### Barra nas duas telas (como no Windows)
+
+Com dois monitores, cada tela tem a sua barra. A da tela principal tem tudo
+(bandeja, central, lixeira); a da outra tem o menu, os apps e o relógio. Cada
+app aberto aparece na barra da tela onde a janela está.
+
+- [ ] As duas telas têm barra logo no primeiro login.
+- [ ] Arrastar uma janela para a outra tela leva o ícone dela para a barra de lá.
+- [ ] A tecla Meta abre o menu na tela onde está o mouse.
+- [ ] Desligar o segundo monitor e ligar de novo: a barra volta sozinha, sem
+      aparecer duas vezes.
+- [ ] Em Ajustes do Matsu > Barra e doca > Várias telas: desligar "Mostrar a barra
+      em todas as telas" deixa a barra só na principal; "Apps abertos aparecem"
+      troca entre "Na tela dele", "Principal e dele" e "Em todas".
+
+Pelo terminal é o mesmo: `matsu barra --telas principal` ou `--telas todas`, e
+`matsu barra --abertos tela`, `todas` ou `principal`.
+
 ### Bandeja perto do relógio (como no Windows)
 
 Os ícones dos apps que ficam rodando em segundo plano aparecem na ilha da

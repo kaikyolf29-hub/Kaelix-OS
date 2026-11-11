@@ -49,7 +49,6 @@ PlasmoidItem {
         flat: true
         sorted: true
         showSeparators: false
-        showRootSeparator: true
         showTopLevelItems: true
         showAllApps: true
         showAllAppsCategorized: false
