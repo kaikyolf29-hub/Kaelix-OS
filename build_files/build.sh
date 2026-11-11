@@ -300,8 +300,20 @@ kwriteconfig6 --file /etc/xdg/kdeglobals --group General --key TerminalApplicati
 kwriteconfig6 --file /etc/xdg/kdeglobals --group General --key TerminalService org.matsu.terminal.desktop
 konsole_app=/usr/share/applications/org.kde.konsole.desktop
 if [[ -f $konsole_app ]]; then
-  sed -i '/^X-KDE-Shortcuts=/d' "$konsole_app"
-  grep -q '^NoDisplay=' "$konsole_app" || sed -i '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$konsole_app"
+  sed -i --follow-symlinks '/^X-KDE-Shortcuts=/d' "$konsole_app"
+  grep -q '^NoDisplay=' "$konsole_app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$konsole_app"
+fi
+# Os atalhos globais de abrir app saem de /usr/share/kglobalaccel: o Konsole põe
+# uma cópia dele lá com o Ctrl+Alt+T. Essa cópia sai e entra a do terminal do
+# Matsu, senão o Ctrl+Alt+T continua abrindo o Konsole.
+rm -f /usr/share/kglobalaccel/org.kde.konsole.desktop
+install -d /usr/share/kglobalaccel
+ln -sf ../applications/org.matsu.terminal.desktop /usr/share/kglobalaccel/org.matsu.terminal.desktop
+grep -q '^X-KDE-Shortcuts=Ctrl+Alt+T$' /usr/share/kglobalaccel/org.matsu.terminal.desktop \
+  || { echo "ERRO: o Ctrl+Alt+T do terminal do Matsu não ficou registrado." >&2; exit 1; }
+if grep -Rls '^X-KDE-Shortcuts=.*Ctrl+Alt+T' /usr/share/kglobalaccel/ | grep -v org.matsu.terminal; then
+  echo "ERRO: outro app ainda segura o Ctrl+Alt+T (acima)." >&2
+  exit 1
 fi
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA

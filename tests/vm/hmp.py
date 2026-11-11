@@ -18,7 +18,17 @@ import socket
 import sys
 import time
 
-KEYMAP = {" ": "spc", "-": "minus", ".": "dot", "/": "slash", "_": "shift-minus", "|": "shift-backslash", "\n": "ret"}
+# Teclado americano na máquina virtual. Um caractere que não está aqui (nem é
+# letra ou número) para o teste, em vez de sumir calado do que foi digitado.
+KEYMAP = {
+    " ": "spc", "\n": "ret", "-": "minus", "_": "shift-minus", "=": "equal", "+": "shift-equal",
+    ".": "dot", ">": "shift-dot", ",": "comma", "<": "shift-comma", "/": "slash", "?": "shift-slash",
+    ";": "semicolon", ":": "shift-semicolon", "'": "apostrophe", '"': "shift-apostrophe",
+    "\\": "backslash", "|": "shift-backslash", "`": "grave_accent", "~": "shift-grave_accent",
+    "[": "bracket_left", "]": "bracket_right", "{": "shift-bracket_left", "}": "shift-bracket_right",
+    "!": "shift-1", "@": "shift-2", "#": "shift-3", "$": "shift-4", "%": "shift-5",
+    "^": "shift-6", "&": "shift-7", "*": "shift-8", "(": "shift-9", ")": "shift-0",
+}
 
 
 def send(sock_path, cmd):
@@ -98,6 +108,8 @@ def main():
         for ch in " ".join(args):
             key = KEYMAP.get(ch)
             if key is None:
+                if not (ch.isascii() and ch.isalnum()):
+                    sys.exit(f"hmp.py: não sei digitar {ch!r}")
                 key = f"shift-{ch.lower()}" if ch.isupper() else ch
             send(sock_path, f"sendkey {key}")
             time.sleep(0.08)
