@@ -39,5 +39,6 @@ jobs:
       - uses: actions/checkout@v5
       - name: Apps e ícones da imagem
         run: |
-          docker run --rm -v "$PWD/tests/vm/inventario.sh:/inventario.sh:ro" \
+          # O docker não carrega a imagem (camadas demais); o podman carrega.
+          sudo podman run --rm -v "$PWD/tests/vm/inventario.sh:/inventario.sh:ro,z" \
             ghcr.io/kaikyolf29-hub/matsu-os:teste bash /inventario.sh
