@@ -145,6 +145,12 @@ sleep 2
 hmp key ctrl-shift-w
 sleep 2
 shot "07c-terminal-de-volta-na-primeira-aba"
+# As janelas que o KWin conhece, com posição e tamanho (para achar uma janela
+# invisível que empurre as novas para fora do centro).
+hmp type "clear; matsu-teste-janelas"
+hmp key ret
+sleep 4
+shot "07d-janelas-do-kwin"
 
 # A pergunta do navegador, aberta à mão, e o registro do primeiro login.
 hmp type "clear"

@@ -76,6 +76,7 @@ jobs:
             echo "RUN dnf5 -y install --skip-unavailable copyq udiskie libnotify && dnf5 clean all"
             echo "COPY tests/vm/teste-bandeja.sh /usr/bin/matsu-teste-bandeja"
             echo "COPY tests/vm/teste-ajustes.sh /usr/bin/matsu-teste-ajustes"
+            echo "COPY tests/vm/teste-janelas.sh /usr/bin/matsu-teste-janelas"
             # A máquina virtual manda as mensagens também para a porta serial
             # (console=ttyS0), e com isso o Plymouth mostra só texto. Este ajuste,
             # só no teste, faz ele mostrar a tela de boot do Matsu como no PC.
