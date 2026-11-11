@@ -404,6 +404,28 @@ shot "36d-jogos-placa"
 hmp key alt-f4
 sleep 2
 
+# Cada app do menu, um por um (40-app-*), para conferir tela por tela o tema
+# do Matsu, o português e se sobrou nome da base. O script de dentro
+# (teste-apps.sh) abre um app a cada 14 segundos; aqui a foto sai perto do fim
+# de cada vez e o app fecha com Alt+F4 (o Esc desfaz a tela de sair se nenhum
+# app tiver aberto).
+mapfile -t APPS < <(bash "$HERE/teste-apps.sh" --lista)
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f matsu-teste-apps; exit"
+hmp key ret
+inicio=$(date +%s)
+for i in "${!APPS[@]}"; do
+  alvo=$((inicio + 12 + i * 14))
+  agora=$(date +%s)
+  if (( alvo > agora )); then sleep $((alvo - agora)); fi
+  shot "40-app-$(printf '%02d' "$i")-${APPS[$i]}"
+  hmp key alt-f4
+  sleep 1
+  hmp key esc
+done
+sleep 3
+
 # Tela de bloqueio (Meta+L), com o papel de parede do Matsu. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
 # desbloquear continua funcionando com as peças do Matsu.

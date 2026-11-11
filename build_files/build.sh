@@ -404,6 +404,15 @@ log "Telas de login, bloqueio e sair com a cara do Matsu"
 # desenho das peças que elas dividem (relógio, foto da pessoa e botões).
 python3 "$CTX/build_files/telas-kde.py"
 
+log "Tipos de arquivo em português"
+# Depois de todos os pacotes (cada um pode trazer tipos novos).
+# Nomes dos tipos de arquivo em português ("Pasta", e não "Folder"): o
+# shared-mime-info grava "pt-BR" e o Qt procura "pt_BR" (tipos-pt-br.py).
+python3 "$CTX/build_files/tipos-pt-br.py"
+update-mime-database /usr/share/mime
+grep -q 'xml:lang="pt_BR">Pasta<' /usr/share/mime/inode/directory.xml \
+  || { echo "ERRO: o tipo pasta continua sem nome em português." >&2; exit 1; }
+
 log "Limpando"
 dnf5 clean all
 rm -rf /var/lib/dnf /run/dnf /run/setrans
