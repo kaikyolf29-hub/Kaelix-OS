@@ -18,7 +18,8 @@
     "title",
     "separator",
     { "type": "os", "key": "Sistema", "format": "{pretty-name}" },
-    { "type": "host", "key": "Computador" },
+    // Só o nome do modelo: a versão costuma vir com texto de fábrica e quebrava a linha.
+    { "type": "host", "key": "Computador", "format": "{name}" },
     { "type": "kernel", "key": "Kernel" },
     { "type": "uptime", "key": "Ligado há" },
     { "type": "packages", "key": "Pacotes" },
