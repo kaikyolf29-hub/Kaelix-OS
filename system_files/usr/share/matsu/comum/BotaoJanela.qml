@@ -18,8 +18,8 @@ MouseArea {
 
     signal clicado()
 
-    readonly property color cor: tipo === "fechar" ? "#ec6a5e" : (tipo === "minimizar" ? "#f2c14e" : "#5bc36a")
-    readonly property color simbolo: tipo === "fechar" ? "#5e1610" : (tipo === "minimizar" ? "#7a4d00" : "#0f4d1b")
+    readonly property color cor: tipo === "fechar" ? "#ff5f57" : (tipo === "minimizar" ? "#febc2e" : "#28c840")
+    readonly property color simbolo: tipo === "fechar" ? "#4d0000" : (tipo === "minimizar" ? "#995700" : "#006500")
     readonly property bool colorida: janela.active || mostrar
 
     implicitWidth: 18

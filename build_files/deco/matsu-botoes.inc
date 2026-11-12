@@ -10,16 +10,16 @@
         QColor matsuSimbolo;
         switch (type()) {
         case DecorationButtonType::Close:
-            matsuFundo = QColor(0xEC, 0x6A, 0x5E);
-            matsuSimbolo = QColor(0x5E, 0x16, 0x10);
+            matsuFundo = QColor(0xFF, 0x5F, 0x57);
+            matsuSimbolo = QColor(0x4D, 0x00, 0x00);
             break;
         case DecorationButtonType::Minimize:
-            matsuFundo = QColor(0xF2, 0xC1, 0x4E);
-            matsuSimbolo = QColor(0x7A, 0x4D, 0x00);
+            matsuFundo = QColor(0xFE, 0xBC, 0x2E);
+            matsuSimbolo = QColor(0x99, 0x57, 0x00);
             break;
         case DecorationButtonType::Maximize:
-            matsuFundo = QColor(0x5B, 0xC3, 0x6A);
-            matsuSimbolo = QColor(0x0F, 0x4D, 0x1B);
+            matsuFundo = QColor(0x28, 0xC8, 0x40);
+            matsuSimbolo = QColor(0x00, 0x65, 0x00);
             break;
         default:
             break;

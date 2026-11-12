@@ -478,7 +478,13 @@ sleep 2
 # Loja do Matsu: Início (a vitrine e as seções, com o catálogo do Flathub),
 # Apps (Ctrl+2), Jogos (Ctrl+3), Na web (Ctrl+4), Biblioteca (Ctrl+5) e a
 # página de um app (aberta pelo link appstream://, como os outros apps fazem).
-# Fica depois dos outros testes: a Loja baixa o catálogo e pesa na VM.
+# Fica depois dos outros testes: a Loja baixa o catálogo e pesa na VM. Antes,
+# fecha as janelas que sobraram (os Ajustes ficavam por cima da Loja).
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f matsu-fotos-site --fechar </dev/null >/dev/null 2>&1; sleep 4; exit"
+hmp key ret
+sleep 8
 hmp key ctrl-alt-t
 sleep 8
 hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml </dev/null >/dev/null 2>&1; sleep 2; exit"

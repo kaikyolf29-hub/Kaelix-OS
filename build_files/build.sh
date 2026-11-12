@@ -371,13 +371,25 @@ for app in /usr/share/applications/org.kde.discover*.desktop /usr/share/applicat
   grep -q '^NoDisplay=' "$app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$app"
 done
 # Pastas abrem nos Arquivos do Matsu, e os pedidos de app na Loja (em todos os
-# mimeapps.list que o KDE lê).
+# mimeapps.list que o KDE lê). Os apps do dia a dia do Matsu abrem os arquivos
+# deles (o MimeType= de cada .desktop): .ics no Calendário, músicas na Música,
+# fotos no Fotos e textos no Bloco de notas.
+pares=(inode/directory:org.matsu.arquivos.desktop x-scheme-handler/appstream:org.matsu.loja.desktop
+       application/vnd.flatpak.ref:org.matsu.loja.desktop)
+for app in calendario musica fotos blocodenotas; do
+  atalho=/usr/share/applications/org.matsu.$app.desktop
+  [[ -f $atalho ]] || continue
+  IFS=';' read -ra tipos <<< "$(sed -n 's/^MimeType=//p' "$atalho" | head -n1)"
+  for tipo in "${tipos[@]}"; do
+    [[ -n $tipo ]] && pares+=("$tipo:org.matsu.$app.desktop")
+  done
+done
+echo "Apps padrão do Matsu: ${#pares[@]} tipos de arquivo"
 for f in /etc/xdg/mimeapps.list /etc/xdg/kde-mimeapps.list /usr/share/applications/mimeapps.list \
          /usr/share/kde-settings/kde-profile/default/xdg/mimeapps.list \
          /usr/share/kde-settings/kde-profile/default/xdg/kde-mimeapps.list; do
   if [[ $f == /etc/xdg/mimeapps.list || -e $f ]]; then
-    for par in inode/directory:org.matsu.arquivos.desktop x-scheme-handler/appstream:org.matsu.loja.desktop \
-               application/vnd.flatpak.ref:org.matsu.loja.desktop; do
+    for par in "${pares[@]}"; do
       kwriteconfig6 --file "$f" --group "Default Applications" --key "${par%%:*}" "${par#*:}"
       kwriteconfig6 --file "$f" --group "Added Associations" --key "${par%%:*}" "${par#*:};"
     done
@@ -464,6 +476,26 @@ chmod 0755 /usr/libexec/matsu/matsu-jogos-placa
 # script "matsu-telas" do KWin chama o serviço), põe a barra nas telas sem barra.
 systemctl --global enable matsu-telas.service
 kwriteconfig6 --file /etc/xdg/kwinrc --group Plugins --key matsu-telasEnabled true
+# Apps do Matsu feitos em QML (Relógio, Calendário, Música...): cada pasta com
+# Main.qml tem o atalho org.matsu.<app>.desktop, e os ajudantes em Python dela
+# são lidos sem erro. Os alarmes e lembretes criam as unidades do systemd do
+# próprio usuário na hora (nada global aqui).
+for main in /usr/share/matsu/*/Main.qml; do
+  app="$(basename "$(dirname "$main")")"
+  if [[ ! -f /usr/share/applications/org.matsu.$app.desktop ]]; then
+    echo "ERRO: /usr/share/matsu/$app não tem o atalho org.matsu.$app.desktop" >&2
+    exit 1
+  fi
+done
+for py in /usr/share/matsu/*/*.py; do
+  python3 -c "import ast, sys; ast.parse(open(sys.argv[1], encoding='utf-8').read(), sys.argv[1])" "$py"
+done
+find /usr/share/matsu -name __pycache__ -type d -prune -exec rm -rf {} +
+for pacote in libnotify pipewire-utils sound-theme-freedesktop python3-dbus python3-gobject ffmpeg; do
+  rpm -q "$pacote" >/dev/null 2>&1 || rpm -q --whatprovides "$pacote" >/dev/null 2>&1 \
+    || echo "aviso: falta $pacote (som, avisos, controles de mídia ou a onda da Música ficam mais simples)"
+done
+
 # Aviso de atualização do Matsu: depois de atualizar mostra o que mudou, avisa
 # quando sai versão nova no canal (com o botão "Atualizar") e quando há apps da
 # Loja com atualização. O aviso do Discover (que abre o Discover escondido) sai.

@@ -17,24 +17,33 @@ VEZES=(
   "site-14-tarefas 14"
   "site-15-ajustes 16"
 )
+# Fecha toda janela comum (o que sobrou dos testes de antes) por um roteiro do
+# KWin. Pelo gdbus, que sempre vem no sistema (o qdbus do Qt 6 não vem).
+fechar_tudo() {
+  local roteiro nome="matsu-fotos-$RANDOM"
+  roteiro="$(mktemp --suffix=.js)"
+  echo 'for (const w of workspace.windowList()) { if (w.normalWindow && w.closeable) w.closeWindow(); }' >"$roteiro"
+  gdbus call --session --dest org.kde.KWin --object-path /Scripting \
+    --method org.kde.kwin.Scripting.loadScript "$roteiro" "$nome" >/dev/null
+  gdbus call --session --dest org.kde.KWin --object-path /Scripting --method org.kde.kwin.Scripting.start >/dev/null
+  sleep 1
+  gdbus call --session --dest org.kde.KWin --object-path /Scripting \
+    --method org.kde.kwin.Scripting.unloadScript "$nome" >/dev/null
+  rm -f "$roteiro"
+}
+
 if [[ ${1:-} == --lista ]]; then
   printf '%s\n' "${VEZES[@]}"
+  exit 0
+fi
+# Só fecha as janelas (o run-vm.sh usa antes da Loja, que precisa da tela limpa).
+if [[ ${1:-} == --fechar ]]; then
+  fechar_tudo
   exit 0
 fi
 REGISTRO=/tmp/matsu-fotos-site.log
 exec >"$REGISTRO" 2>&1 </dev/null
 
-# Fecha toda janela comum (o que sobrou dos testes de antes) por um roteiro do KWin.
-fechar_tudo() {
-  local roteiro nome="matsu-fotos-$RANDOM"
-  roteiro="$(mktemp --suffix=.js)"
-  echo 'for (const w of workspace.windowList()) { if (w.normalWindow && w.closeable) w.closeWindow(); }' >"$roteiro"
-  qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "$roteiro" "$nome" >/dev/null
-  qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start >/dev/null
-  sleep 1
-  qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$nome" >/dev/null
-  rm -f "$roteiro"
-}
 abrir() { setsid -f "$@" >/dev/null 2>&1 </dev/null; }
 
 # Cada vez começa na hora marcada (a soma das de antes, mais 2 segundos cada),

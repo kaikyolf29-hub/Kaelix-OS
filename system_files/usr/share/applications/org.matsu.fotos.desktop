@@ -1,0 +1,23 @@
+[Desktop Entry]
+Type=Application
+Name=Photos
+Name[pt_BR]=Fotos
+Name[pt]=Fotografias
+GenericName=Image Viewer
+GenericName[pt_BR]=Visualizador de imagens
+GenericName[pt]=Visualizador de imagens
+Comment=Your photos by month, favorites and albums, and an image viewer, like Photos on Windows and Mac
+Comment[pt_BR]=Suas fotos por mês, favoritas e álbuns, e o visualizador de imagens, como o Fotos do Windows e do Mac
+Comment[pt]=As suas fotografias por mês, favoritas e álbuns, e o visualizador de imagens, como o Fotos do Windows e do Mac
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.fotos). Com um arquivo (%F), abre direto no visualizador e passa
+# pelas outras imagens da mesma pasta; com o app aberto, a janela que existe recebe o arquivo.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.fotos /usr/share/matsu/fotos/Main.qml %F
+Icon=org.matsu.fotos
+Terminal=false
+Categories=Graphics;Viewer;Photography;Qt;KDE;
+Keywords=fotos;imagens;galeria;álbuns;visualizador;capturas de tela;favoritas;papel de parede;apresentação;photos;pictures;images;gallery;albums;viewer;screenshots;favorites;wallpaper;slideshow;
+MimeType=image/jpeg;image/pjpeg;image/png;image/apng;image/gif;image/webp;image/bmp;image/x-bmp;image/x-ms-bmp;image/svg+xml;image/svg+xml-compressed;image/tiff;image/avif;image/heif;image/heic;image/jxl;image/x-icon;image/vnd.microsoft.icon;image/x-tga;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;image/x-portable-anymap;image/x-xbitmap;image/x-xpixmap;image/vnd.adobe.photoshop;image/x-xcf;image/x-exr;image/x-hdr;image/vnd.radiance;image/jp2;image/x-pcx;image/qoi;image/x-qoi;image/vnd-ms.dds;image/x-dds;image/openraster;application/x-krita;image/x-adobe-dng;image/x-canon-cr2;image/x-canon-cr3;image/x-nikon-nef;image/x-sony-arw;image/x-olympus-orf;image/x-panasonic-rw2;image/x-fuji-raf;
+StartupNotify=true
+StartupWMClass=org.matsu.fotos
+SingleMainWindow=true

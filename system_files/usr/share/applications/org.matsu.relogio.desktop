@@ -1,0 +1,51 @@
+[Desktop Entry]
+Type=Application
+Name=Clock
+Name[pt_BR]=Relógio
+Name[pt]=Relógio
+GenericName=Alarms and timers
+GenericName[pt_BR]=Alarmes e temporizadores
+GenericName[pt]=Alarmes e temporizadores
+Comment=Alarms, timers, stopwatch and world clock, like the Windows Clock
+Comment[pt_BR]=Alarmes, temporizadores, cronômetro e relógio mundial, como o Relógio do Windows
+Comment[pt]=Alarmes, temporizadores, cronómetro e relógio mundial, como o Relógio do Windows
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.relogio): assim a barra mostra o ícone e o nome certos. Os alarmes
+# tocam com o app fechado (timers do systemd do usuário, gravados pelo ajudante.py).
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.relogio /usr/share/matsu/relogio/Main.qml
+Icon=org.matsu.relogio
+Terminal=false
+Categories=Utility;Clock;Qt;KDE;
+Keywords=relógio;alarme;despertador;soneca;temporizador;timer;cronômetro;cronometro;volta;hora;fuso;fuso horário;relógio mundial;mundo;cidade;clock;alarm;timer;stopwatch;world clock;time zone;
+StartupNotify=true
+StartupWMClass=org.matsu.relogio
+SingleMainWindow=true
+Actions=NovoAlarme;Temporizador;Cronometro;Mundo;
+
+[Desktop Action NovoAlarme]
+Name=New alarm
+Name[pt_BR]=Novo alarme
+Name[pt]=Novo alarme
+Icon=matsu-sino-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.relogio /usr/share/matsu/relogio/Main.qml novo-alarme
+
+[Desktop Action Temporizador]
+Name=Timer
+Name[pt_BR]=Temporizador
+Name[pt]=Temporizador
+Icon=matsu-relogio-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.relogio /usr/share/matsu/relogio/Main.qml temporizador
+
+[Desktop Action Cronometro]
+Name=Stopwatch
+Name[pt_BR]=Cronômetro
+Name[pt]=Cronómetro
+Icon=matsu-relogio-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.relogio /usr/share/matsu/relogio/Main.qml cronometro
+
+[Desktop Action Mundo]
+Name=World clock
+Name[pt_BR]=Relógio mundial
+Name[pt]=Relógio mundial
+Icon=matsu-web-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.relogio /usr/share/matsu/relogio/Main.qml mundo

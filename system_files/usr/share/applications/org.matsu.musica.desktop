@@ -1,0 +1,36 @@
+[Desktop Entry]
+Type=Application
+Name=Music
+Name[pt_BR]=Música
+Name[pt]=Música
+GenericName=Music Player
+GenericName[pt_BR]=Player de música
+GenericName[pt]=Leitor de música
+Comment=Listen to the songs in your Music folder, with albums, artists, playlists and the queue
+Comment[pt_BR]=Ouça as músicas da sua pasta Música, com álbuns, artistas, playlists e a fila
+Comment[pt]=Ouça as músicas da sua pasta Música, com álbuns, artistas, playlists e a fila
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.musica): assim a barra mostra o ícone e o nome certos, e os
+# controles de mídia do Plasma (MPRIS) acham o app pelo DesktopEntry.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.musica /usr/share/matsu/musica/Main.qml %F
+Icon=org.matsu.musica
+Terminal=false
+Categories=AudioVideo;Audio;Player;Qt;KDE;
+Keywords=música;musica;player;tocar;ouvir;álbum;artista;playlist;fila;mp3;flac;ogg;opus;music;song;album;artist;queue;audio;
+MimeType=audio/mpeg;audio/mp3;audio/x-mp3;audio/flac;audio/x-flac;audio/ogg;audio/x-vorbis+ogg;audio/vorbis;audio/opus;audio/x-opus+ogg;audio/mp4;audio/x-m4a;audio/m4a;audio/wav;audio/x-wav;audio/vnd.wave;
+StartupNotify=true
+StartupWMClass=org.matsu.musica
+SingleMainWindow=true
+Actions=Aleatorio;Fila;
+
+[Desktop Action Aleatorio]
+Name=Shuffle all
+Name[pt_BR]=Tocar tudo no aleatório
+Name[pt]=Tocar tudo em modo aleatório
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.musica /usr/share/matsu/musica/Main.qml --aleatorio
+
+[Desktop Action Fila]
+Name=Queue
+Name[pt_BR]=Fila
+Name[pt]=Fila
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.musica /usr/share/matsu/musica/Main.qml fila

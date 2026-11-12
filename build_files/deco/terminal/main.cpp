@@ -1131,8 +1131,8 @@ Cabecalho::Alvo Cabecalho::alvoEm(const QPointF &p) const
 void Cabecalho::desenharBolinhas(QPainter &p)
 {
     // Iguais às da borda das janelas do Matsu (comum/BotaoJanela.qml).
-    static const QColor cores[3] = {QColor("#ec6a5e"), QColor("#f2c14e"), QColor("#5bc36a")};
-    static const QColor simbolos[3] = {QColor("#5e1610"), QColor("#7a4d00"), QColor("#0f4d1b")};
+    static const QColor cores[3] = {QColor("#ff5f57"), QColor("#febc2e"), QColor("#28c840")};
+    static const QColor simbolos[3] = {QColor("#4d0000"), QColor("#995700"), QColor("#006500")};
     const bool sobreGrupo = m_sobre.tipo == Bolinha;
     const qreal mostrar = m_suave(QStringLiteral("bolinhas"), sobreGrupo ? 1 : 0, -1, 20);
     const bool ativa = window()->isActiveWindow();

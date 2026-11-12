@@ -1,0 +1,37 @@
+[Desktop Entry]
+Type=Application
+Name=Calendar
+Name[pt_BR]=Calendário
+Name[pt]=Calendário
+GenericName=Calendar
+GenericName[pt_BR]=Calendário
+GenericName[pt]=Calendário
+Comment=Your personal agenda, with reminders, Brazilian holidays and .ics files
+Comment[pt_BR]=Sua agenda pessoal, com lembretes, feriados do Brasil e arquivos .ics
+Comment[pt]=A sua agenda pessoal, com lembretes, feriados do Brasil e ficheiros .ics
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.calendario). Arquivos .ics passados aqui são importados.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.calendario /usr/share/matsu/calendario/Main.qml %F
+Icon=org.matsu.calendario
+Terminal=false
+Categories=Office;Calendar;Qt;KDE;
+Keywords=calendário;agenda;evento;compromisso;lembrete;feriado;aniversário;reunião;semana;mês;ics;calendar;agenda;event;appointment;reminder;holiday;birthday;meeting;week;month;
+MimeType=text/calendar;
+StartupNotify=true
+StartupWMClass=org.matsu.calendario
+SingleMainWindow=true
+Actions=NovoEvento;Proximos;
+
+[Desktop Action NovoEvento]
+Name=New event
+Name[pt_BR]=Novo evento
+Name[pt]=Novo evento
+Icon=matsu-mais-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.calendario /usr/share/matsu/calendario/Main.qml --novo
+
+[Desktop Action Proximos]
+Name=Upcoming
+Name[pt_BR]=Próximos
+Name[pt]=Próximos
+Icon=matsu-calendario-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.calendario /usr/share/matsu/calendario/Main.qml --proximos

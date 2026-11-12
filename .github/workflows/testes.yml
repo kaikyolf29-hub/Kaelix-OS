@@ -34,6 +34,14 @@ jobs:
         run: python3 tests/test_loja.py
       - name: Testar as novidades e o aviso de atualização
         run: python3 tests/test_novidades.py
+      - name: Testar os apps do dia a dia
+        run: |
+          set -e
+          for app in relogio calendario musica fotos; do
+            echo "::group::$app"
+            python3 "tests/test_$app.py"
+            echo "::endgroup::"
+          done
 
   # Inventário dos ícones da imagem publicada (só quando o commit pede, com
   # "[inventario]" na mensagem): os apps do menu e as páginas das Configurações,
