@@ -1,0 +1,34 @@
+[Desktop Entry]
+Type=Application
+Name=Camera
+Name[pt_BR]=Câmera
+Name[pt]=Câmara
+GenericName=Camera
+GenericName[pt_BR]=Câmera
+GenericName[pt]=Câmara
+Comment=Take photos and record videos with your webcam, like the Windows Camera and Photo Booth
+Comment[pt_BR]=Tire fotos e grave vídeos com a webcam, como a Câmera do Windows e o Photo Booth do Mac
+Comment[pt]=Tire fotografias e grave vídeos com a webcam, como a Câmara do Windows e o Photo Booth do Mac
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.camera): assim a barra mostra o ícone e o nome certos.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.camera /usr/share/matsu/camera/Main.qml
+Icon=org.matsu.camera
+Terminal=false
+Categories=AudioVideo;Video;Recorder;Graphics;Photography;Qt;KDE;
+Keywords=câmera;camera;webcam;foto;fotos;selfie;vídeo;gravar;filmar;temporizador;photo;photos;video;record;timer;photo booth;
+StartupNotify=true
+StartupWMClass=org.matsu.camera
+SingleMainWindow=true
+Actions=Foto;Video;
+
+[Desktop Action Foto]
+Name=Take a photo
+Name[pt_BR]=Tirar foto
+Name[pt]=Tirar fotografia
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.camera /usr/share/matsu/camera/Main.qml foto
+
+[Desktop Action Video]
+Name=Record a video
+Name[pt_BR]=Gravar vídeo
+Name[pt]=Gravar vídeo
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.camera /usr/share/matsu/camera/Main.qml video
