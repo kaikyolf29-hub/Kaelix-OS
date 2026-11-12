@@ -1,5 +1,5 @@
 // Aparência: tema claro ou escuro, a cor do vidro (que também é a cor de
-// destaque) e quanto o vidro deixa ver o que está atrás.
+// destaque), o efeito vidro ligado ou não e quanto o vidro deixa ver o que está atrás.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -92,7 +92,21 @@ ColumnLayout {
             }
         }
 
+        // Sem vidro: a barra, os balões, o menu e as janelas dos apps ficam sólidos.
         Linha {
+            nome: ajustes.t("Efeito vidro", "Glass effect")
+            detalhe: pagina.nivelAtual === "sem"
+                ? ajustes.t("Desligado: a barra, o menu e as janelas ficam sólidos.", "Off: the bar, menu and windows are solid.")
+                : ajustes.t("O papel de parede aparece de leve, desfocado, atrás da barra e das janelas.", "The wallpaper shows softly, blurred, behind the bar and windows.")
+            PlasmaComponents.Switch {
+                checked: pagina.nivelAtual !== "sem"
+                onToggled: pagina.trocarVidro(pagina.corAtual, checked ? "normal" : "sem")
+                Accessible.name: ajustes.t("Efeito vidro", "Glass effect")
+            }
+        }
+
+        Linha {
+            visible: pagina.nivelAtual !== "sem"
             nome: ajustes.t("Transparência", "Transparency")
             detalhe: ajustes.t("Quanto dá para ver o papel de parede através do vidro.", "How much of the wallpaper shows through the glass.")
 

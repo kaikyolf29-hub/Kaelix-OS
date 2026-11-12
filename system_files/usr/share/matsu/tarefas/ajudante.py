@@ -141,7 +141,7 @@ def vidro():
     cor = valores.get("cor", "")
     cor = CORES_VIDRO.get(cor, cor if re.fullmatch(r"#[0-9a-f]{6}", cor) else "")
     nivel = valores.get("transparencia", "normal")
-    return {"cor": cor, "nivel": nivel if nivel in ("mais", "normal", "menos") else "normal"}
+    return {"cor": cor, "nivel": nivel if nivel in ("mais", "normal", "menos", "sem") else "normal"}
 
 
 def idioma():

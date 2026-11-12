@@ -81,6 +81,11 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           echo "REGISTRY=ghcr.io/${OWNER}" >> "$GITHUB_ENV"
           echo "BUILD_ID=$(date -u +%Y%m%d).${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          # A versão (27, 27.1...) e os assuntos dela, do NOVIDADES.md: vão como
+          # rótulos da imagem, que o aviso de atualização lê sem baixar nada.
+          VERSAO="$(python3 system_files/usr/share/matsu/atualizacoes/ajudante.py --arquivo NOVIDADES.md versao)"
+          echo "VERSAO=${VERSAO}" >> "$GITHUB_ENV"
+          echo "NOVIDADES=$(python3 system_files/usr/share/matsu/atualizacoes/ajudante.py --arquivo NOVIDADES.md resumo "$VERSAO")" >> "$GITHUB_ENV"
 
       - name: Montar a imagem
         run: |
@@ -95,6 +100,8 @@ jobs:
             --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
             --label org.opencontainers.image.version="${BUILD_ID}" \
             --label org.opencontainers.image.revision="${GITHUB_SHA}" \
+            --label org.matsu.versao="${VERSAO}" \
+            --label org.matsu.novidades="${NOVIDADES}" \
             --tag localhost/${{ matrix.image }}:build \
             --file Containerfile .
 

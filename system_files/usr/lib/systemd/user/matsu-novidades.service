@@ -1,0 +1,15 @@
+# Aviso de atualização do Matsu: depois de atualizar, mostra o que mudou; quando
+# sai uma versão nova no canal do sistema, avisa com o botão "Atualizar"; e avisa
+# quando há apps da Loja com atualização. Cada aviso aparece uma vez só. Quem
+# chama é o matsu-novidades.timer (logo depois do login e a cada 6 horas).
+[Unit]
+Description=Aviso de atualização do Matsu
+PartOf=graphical-session.target
+After=graphical-session.target plasma-plasmashell.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -I /usr/share/matsu/atualizacoes/ajudante.py verificar
+# Fica esperando o clique nos botões dos avisos por até 1 hora.
+RuntimeMaxSec=3700
+Nice=10

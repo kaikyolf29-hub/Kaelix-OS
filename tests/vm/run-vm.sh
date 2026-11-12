@@ -318,7 +318,7 @@ hmp key esc
 sleep 2
 
 # Ajustes do Matsu (como os Ajustes do Mac): o ajudante passa pelas páginas a
-# cada 8 segundos e no fim deixa o vidro roxo e mais transparente.
+# cada 8 segundos e no fim deixa o vidro roxo e mais transparente, depois sem vidro.
 hmp key ctrl-alt-t
 sleep 8
 hmp type "matsu-teste-ajustes"
@@ -328,9 +328,11 @@ for pagina in aparencia barra barra-apps papel telas sobre; do
   shot "30-ajustes-$pagina"
   sleep 8
 done
-sleep 4
+sleep 10
 shot "31-vidro-roxo-mais-transparente"
-sleep 14
+sleep 18
+shot "31b-sem-vidro"
+sleep 16
 shot "32-vidro-de-volta-ao-padrao"
 # Alt+Tab como no Windows 11: as janelas em miniatura (Ajustes e terminal).
 hmp segurar alt tab 2 "$OUT/33-alt-tab.png" && echo "print: 33-alt-tab"
@@ -388,7 +390,7 @@ sleep 2
 # Steam), Gráficos (Ctrl+3), Sobreposição (Ctrl+4) e Placa de vídeo (Ctrl+5).
 hmp key ctrl-alt-t
 sleep 8
-hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml; exit"
+hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml </dev/null >/dev/null 2>&1; sleep 2; exit"
 hmp key ret
 sleep 10
 shot "36-jogos-inicio"
@@ -404,12 +406,82 @@ shot "36d-jogos-placa"
 hmp key alt-f4
 sleep 2
 
+# Cada app do menu, um por um (40-app-*), para conferir tela por tela o tema
+# do Matsu, o português e se sobrou nome da base. O script de dentro
+# (teste-apps.sh) abre um app a cada 14 segundos; aqui a foto sai perto do fim
+# de cada vez e o app fecha com Alt+F4 (o Esc desfaz a tela de sair se nenhum
+# app tiver aberto).
+mapfile -t APPS < <(bash "$HERE/teste-apps.sh" --lista)
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f matsu-teste-apps </dev/null >/dev/null 2>&1; sleep 2; exit"
+hmp key ret
+inicio=$(date +%s)
+for i in "${!APPS[@]}"; do
+  alvo=$((inicio + 12 + i * 14))
+  agora=$(date +%s)
+  if (( alvo > agora )); then sleep $((alvo - agora)); fi
+  shot "40-app-$(printf '%02d' "$i")-${APPS[$i]}"
+  hmp key alt-f4
+  sleep 1
+  hmp key esc
+done
+sleep 3
+hmp key ctrl-alt-t
+sleep 8
+hmp type "cat /tmp/matsu-teste-apps.log"
+hmp key ret
+sleep 2
+shot "41-registro-dos-apps"
+# Se os apps não abriram: o que estava pesando na VM e os registros dos testes.
+hmp type "clear; uptime; ps -eo pcpu,pmem,etime,comm --sort=-pcpu | head -16; ls -la /tmp/matsu-*.log"
+hmp key ret
+sleep 3
+shot "41b-carga-do-sistema"
+hmp key alt-f4
+sleep 2
+
+# Fotos do site do Matsu (site-*): cada app sozinho na tela, sem as janelas dos
+# testes de antes (o fotos-site.sh fecha tudo antes de cada uma). Cada vez dura
+# os segundos da lista mais uns 2 de fechar e abrir; a foto sai perto do fim. O
+# visual/site/preparar-fotos.py faz as fotos do site a partir delas.
+mapfile -t FOTOS_SITE < <(bash "$HERE/fotos-site.sh" --lista)
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f matsu-fotos-site </dev/null >/dev/null 2>&1; sleep 2; exit"
+hmp key ret
+inicio=$(date +%s)
+comeco=0
+for vez in "${FOTOS_SITE[@]}"; do
+  nome="${vez%% *}"; segundos="${vez##* }"
+  if [[ $nome == site-01-menu ]]; then
+    sleep 5
+    hmp key meta_l
+  fi
+  alvo=$((inicio + comeco + segundos))
+  agora=$(date +%s)
+  if (( alvo > agora )); then sleep $((alvo - agora)); fi
+  shot "$nome"
+  if [[ $nome == site-01-menu ]]; then hmp key esc; fi
+  comeco=$((comeco + segundos + 2))
+done
+sleep 4
+hmp key ctrl-alt-t
+sleep 8
+hmp type "cat /tmp/matsu-fotos-site.log"
+hmp key ret
+sleep 3
+shot "site-99-registro"
+hmp key alt-f4
+sleep 2
+
 # Loja do Matsu: Início (a vitrine e as seções, com o catálogo do Flathub),
 # Apps (Ctrl+2), Jogos (Ctrl+3), Na web (Ctrl+4), Biblioteca (Ctrl+5) e a
 # página de um app (aberta pelo link appstream://, como os outros apps fazem).
+# Fica depois dos outros testes: a Loja baixa o catálogo e pesa na VM.
 hmp key ctrl-alt-t
 sleep 8
-hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml; exit"
+hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml </dev/null >/dev/null 2>&1; sleep 2; exit"
 hmp key ret
 sleep 25
 shot "37-loja-inicio"
@@ -429,68 +501,12 @@ hmp key alt-f4
 sleep 2
 hmp key ctrl-alt-t
 sleep 8
-hmp type "setsid -f xdg-open appstream://com.brave.Browser; exit"
+hmp type "setsid -f xdg-open appstream://com.brave.Browser </dev/null >/dev/null 2>&1; sleep 2; exit"
 hmp key ret
 sleep 20
 shot "37f-loja-pagina-do-app"
 hmp key alt-f4
 sleep 2
-
-# Cada app do menu, um por um (40-app-*), para conferir tela por tela o tema
-# do Matsu, o português e se sobrou nome da base. O script de dentro
-# (teste-apps.sh) abre um app a cada 14 segundos; aqui a foto sai perto do fim
-# de cada vez e o app fecha com Alt+F4 (o Esc desfaz a tela de sair se nenhum
-# app tiver aberto).
-mapfile -t APPS < <(bash "$HERE/teste-apps.sh" --lista)
-hmp key ctrl-alt-t
-sleep 8
-hmp type "setsid -f matsu-teste-apps; exit"
-hmp key ret
-inicio=$(date +%s)
-for i in "${!APPS[@]}"; do
-  alvo=$((inicio + 12 + i * 14))
-  agora=$(date +%s)
-  if (( alvo > agora )); then sleep $((alvo - agora)); fi
-  shot "40-app-$(printf '%02d' "$i")-${APPS[$i]}"
-  hmp key alt-f4
-  sleep 1
-  hmp key esc
-done
-sleep 3
-hmp key ctrl-alt-t
-sleep 8
-hmp type "cat /tmp/matsu-teste-apps.log"
-hmp key ret
-sleep 2
-shot "41-registro-dos-apps"
-hmp key alt-f4
-sleep 2
-
-# Fotos do site do Matsu (site-*): cada app sozinho na tela, sem as janelas dos
-# testes de antes (o fotos-site.sh fecha tudo antes de cada uma). Cada vez dura
-# os segundos da lista mais uns 2 de fechar e abrir; a foto sai perto do fim. O
-# visual/site/preparar-fotos.py faz as fotos do site a partir delas.
-mapfile -t FOTOS_SITE < <(bash "$HERE/fotos-site.sh" --lista)
-hmp key ctrl-alt-t
-sleep 8
-hmp type "setsid -f matsu-fotos-site; exit"
-hmp key ret
-inicio=$(date +%s)
-comeco=0
-for vez in "${FOTOS_SITE[@]}"; do
-  nome="${vez%% *}"; segundos="${vez##* }"
-  if [[ $nome == site-01-menu ]]; then
-    sleep 5
-    hmp key meta_l
-  fi
-  alvo=$((inicio + comeco + segundos))
-  agora=$(date +%s)
-  if (( alvo > agora )); then sleep $((alvo - agora)); fi
-  shot "$nome"
-  if [[ $nome == site-01-menu ]]; then hmp key esc; fi
-  comeco=$((comeco + segundos + 2))
-done
-sleep 4
 
 # Tela de bloqueio (Meta+L), com o papel de parede do Matsu. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que

@@ -1,6 +1,6 @@
 
     // ----- Matsu OS: botões de janela nas cores do sistema -----
-    // Fechar (rosa), minimizar (azul claro) e tela cheia (verde água) são
+    // Fechar (vermelho), minimizar (amarelo) e tela cheia (verde) são
     // bolinhas. Como no Mac, o símbolo de dentro só aparece quando o mouse
     // chega em qualquer uma das três: ele surge e cresce de leve, com um
     // pulinho no fim. Com a janela em segundo plano, as bolinhas ficam cinza
@@ -10,16 +10,16 @@
         QColor matsuSimbolo;
         switch (type()) {
         case DecorationButtonType::Close:
-            matsuFundo = QColor(0xF0, 0x60, 0x9E);
-            matsuSimbolo = QColor(0x5A, 0x10, 0x36);
+            matsuFundo = QColor(0xEC, 0x6A, 0x5E);
+            matsuSimbolo = QColor(0x5E, 0x16, 0x10);
             break;
         case DecorationButtonType::Minimize:
-            matsuFundo = QColor(0x8F, 0xA2, 0xFF);
-            matsuSimbolo = QColor(0x1E, 0x2A, 0x6E);
+            matsuFundo = QColor(0xF2, 0xC1, 0x4E);
+            matsuSimbolo = QColor(0x7A, 0x4D, 0x00);
             break;
         case DecorationButtonType::Maximize:
-            matsuFundo = QColor(0x45, 0xD0, 0xC1);
-            matsuSimbolo = QColor(0x0A, 0x4A, 0x42);
+            matsuFundo = QColor(0x5B, 0xC3, 0x6A);
+            matsuSimbolo = QColor(0x0F, 0x4D, 0x1B);
             break;
         default:
             break;

@@ -1,5 +1,5 @@
 // Bolinha de fechar, minimizar ou tela cheia, iguais às da borda das janelas do
-// Matsu (rosa, azul claro e verde água). Como no Mac, o símbolo de dentro só
+// Matsu (vermelho, amarelo e verde, como no Mac). O símbolo de dentro só
 // aparece quando o mouse chega perto das três (mostrar = mouse em cima do grupo),
 // surgindo e crescendo de leve. Com a janela em segundo plano, as bolinhas ficam
 // cinza e voltam a ter cor quando o mouse passa por cima.
@@ -18,8 +18,8 @@ MouseArea {
 
     signal clicado()
 
-    readonly property color cor: tipo === "fechar" ? "#f0609e" : (tipo === "minimizar" ? "#8fa2ff" : "#45d0c1")
-    readonly property color simbolo: tipo === "fechar" ? "#5a1036" : (tipo === "minimizar" ? "#1e2a6e" : "#0a4a42")
+    readonly property color cor: tipo === "fechar" ? "#ec6a5e" : (tipo === "minimizar" ? "#f2c14e" : "#5bc36a")
+    readonly property color simbolo: tipo === "fechar" ? "#5e1610" : (tipo === "minimizar" ? "#7a4d00" : "#0f4d1b")
     readonly property bool colorida: janela.active || mostrar
 
     implicitWidth: 18

@@ -49,9 +49,9 @@ ColumnLayout {
         Linha {
             primeira: true
             abre: true
-            nome: ajustes.t("Procurar atualização", "Check for updates")
-            detalhe: ajustes.t("Abre o terminal com o comando matsu atualizar.", "Opens the terminal with the matsu update command.")
-            onAberto: ajustes.abrir("atualizar")
+            nome: ajustes.t("Atualizações e novidades", "Updates and what's new")
+            detalhe: ajustes.t("Veja o que mudou nesta versão e procure a próxima.", "See what changed in this version and check for the next one.")
+            onAberto: ajustes.abrir("atualizacoes")
         }
         Linha {
             abre: true

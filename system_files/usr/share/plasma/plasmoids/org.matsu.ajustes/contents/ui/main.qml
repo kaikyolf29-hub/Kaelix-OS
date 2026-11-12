@@ -194,7 +194,7 @@ PlasmoidItem {
         { id: "som", grupo: 1, cor: "#ec4899", icone: "matsu-volume-2-symbolic",
           nome: t("Som", "Sound"), chaves: "volume audio fone caixa microfone" },
         { id: "aparencia", grupo: 2, cor: "#3f3f46", icone: "matsu-aparencia-symbolic",
-          nome: t("Aparência", "Appearance"), chaves: "tema claro escuro cor vidro transparencia destaque" },
+          nome: t("Aparência", "Appearance"), chaves: "tema claro escuro cor vidro transparencia transparente solido destaque efeito" },
         { id: "barra", grupo: 2, cor: "#f59e0b", icone: "matsu-barra-symbolic",
           nome: t("Barra e doca", "Bar and dock"), chaves: "dock painel fusao mac windows tamanho monitor monitores telas segunda tela" },
         { id: "papel", grupo: 2, cor: "#0ea5b7", icone: "matsu-papel-symbolic",

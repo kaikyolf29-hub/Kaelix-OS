@@ -1,0 +1,28 @@
+[Desktop Entry]
+Type=Application
+Name=Updates
+Name[pt_BR]=Atualizações
+Name[pt]=Atualizações
+GenericName=System Updates
+GenericName[pt_BR]=Atualizações do sistema
+GenericName[pt]=Atualizações do sistema
+Comment=See what is new in Matsu and update the system
+Comment[pt_BR]=Veja o que há de novo no Matsu e atualize o sistema
+Comment[pt]=Veja o que há de novo no Matsu e atualize o sistema
+# A janela é aberta pelo matsu-janela, com a identidade deste arquivo. Os avisos
+# de atualização (atualizacoes/ajudante.py) também se apresentam com este nome e ícone.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.atualizacoes /usr/share/matsu/atualizacoes/Main.qml
+Icon=org.matsu.atualizacoes
+Terminal=false
+Categories=System;Settings;Qt;KDE;
+Keywords=atualizações;atualizar;novidades;versão;o que mudou;sistema;matsu;update;updates;upgrade;what's new;changelog;version;
+StartupNotify=true
+StartupWMClass=org.matsu.atualizacoes
+SingleMainWindow=true
+Actions=Historico;
+
+[Desktop Action Historico]
+Name=All versions
+Name[pt_BR]=Todas as versões
+Name[pt]=Todas as versões
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.atualizacoes /usr/share/matsu/atualizacoes/Main.qml versoes

@@ -71,11 +71,29 @@ Item {
             visible: grade.visible && size < 1.0
         }
 
-        // Voltar para o começo quando a lista muda (outra categoria, outra busca).
-        onModelChanged: positionViewAtBeginning()
+        // Voltar para o começo quando a lista muda (outra categoria, outra busca),
+        // com o título à mostra. O cabeçalho pode crescer depois (as pílulas das
+        // categorias quebram linha): no topo, a grade acompanha e o título não corta.
+        property bool noTopo: true
+        function voltarAoTopo() {
+            if (noTopo && !atYBeginning)
+                positionViewAtBeginning();
+        }
+        onModelChanged: {
+            noTopo = true;
+            Qt.callLater(voltarAoTopo);
+        }
+        onMovementStarted: noTopo = false
+        onMovementEnded: noTopo = atYBeginning
+        Timer {
+            id: esperaTopo
+            interval: 40
+            onTriggered: grade.voltarAoTopo()
+        }
 
         header: ColumnLayout {
             width: grade.width
+            onHeightChanged: esperaTopo.restart()
             spacing: Math.round(janela.gu * 0.8)
 
             Item {

@@ -1,6 +1,8 @@
 // Um item da lista de assuntos à esquerda: ícone de linha e o nome. O escolhido
-// ganha um fundo claro e o tracinho da cor de destaque na ponta, como no
-// Windows 11. Com a lista recolhida, fica só o ícone (o nome aparece no balão).
+// ganha um fundo claro e o tracinho na ponta, na cor da frente (nunca colorido),
+// como no Windows 11. Com a lista recolhida, fica só o ícone (o nome aparece no balão).
+// Na JanelaMatsu o fundo do escolhido é uma pílula só, que desliza de um item
+// para o outro (fundoEscolhido: false).
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -13,6 +15,7 @@ MouseArea {
     property string nome: ""
     property bool escolhido: false
     property bool soIcone: false
+    property bool fundoEscolhido: true
 
     signal ativado()
 
@@ -30,7 +33,7 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         radius: Math.round(janela.gu * 0.3)
-        color: janela.tinta(item.escolhido ? (janela.escuro ? 0.08 : 0.065) : (item.pressed ? 0.06 : (item.containsMouse || item.activeFocus ? 0.045 : 0)))
+        color: janela.tinta(item.escolhido && item.fundoEscolhido ? (janela.escuro ? 0.08 : 0.065) : (item.escolhido ? 0 : (item.pressed ? 0.06 : (item.containsMouse || item.activeFocus ? 0.045 : 0))))
         Behavior on color {
             ColorAnimation {
                 duration: Kirigami.Units.shortDuration
@@ -41,9 +44,10 @@ MouseArea {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         width: 3
+        visible: item.fundoEscolhido
         height: item.escolhido ? Math.round(parent.height * 0.42) : 0
         radius: 1.5
-        color: janela.destaque
+        color: janela.frente
         Behavior on height {
             NumberAnimation {
                 duration: Kirigami.Units.shortDuration

@@ -1,0 +1,13 @@
+# Chama o aviso de atualização do Matsu 2 minutos depois do login e a cada 6 horas.
+[Unit]
+Description=Procurar novidades do Matsu
+PartOf=graphical-session.target
+
+[Timer]
+OnActiveSec=2min
+OnUnitActiveSec=6h
+RandomizedDelaySec=10min
+AccuracySec=5min
+
+[Install]
+WantedBy=graphical-session.target

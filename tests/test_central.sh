@@ -183,6 +183,9 @@ run estado
 check "busca guardada estranha vira o padrão" linha "barra_busca=esquerda"
 check "lê a cor e a transparência do vidro" bash -c "grep -qx 'vidro_cor=roxo' <<<\"\$0\" && grep -qx 'vidro_transparencia=mais' <<<\"\$0\"" "$OUT"
 check "lê o papel de parede sem file:// e sem a barra do fim" bash -c "grep -qx 'papel=/usr/share/wallpapers/Matsu' <<<\"\$0\"" "$OUT"
+printf 'cor=padrao\ntransparencia=sem\n' > "$WORK/state/vidro"
+run estado
+check "lê o vidro desligado (sem vidro)" linha "vidro_transparencia=sem"
 run vidro azul menos
 check "vidro chama o comando matsu" called "matsu vidro azul --transparencia menos"
 run vidro; check "vidro sem cor é recusado" test "$CODE" -eq 2
@@ -239,6 +242,8 @@ run pagina-pedida; check "o pedido vale uma vez só" test -z "$OUT"
 mock kstart 'exit 0'
 run abrir tarefas
 check "abre o Gerenciador de tarefas pelo .desktop" bash -c "sleep 0.3; grep -qF 'kstart --application org.matsu.tarefas' '$CALLS'"
+run abrir atualizacoes
+check "abre a janela Atualizações pelo .desktop" bash -c "sleep 0.3; grep -qF 'kstart --application org.matsu.atualizacoes' '$CALLS'"
 
 mock kcmshell6 'exit 0'
 run abrir kcm kcm_keyboard

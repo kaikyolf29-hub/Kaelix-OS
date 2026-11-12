@@ -59,7 +59,9 @@ QQC2.ApplicationWindow {
     property var vidroConf: ({ cor: "", nivel: "normal" })
     readonly property bool cheia: visibility === Window.Maximized || visibility === Window.FullScreen
     readonly property int raio: cheia ? 0 : 10
-    readonly property real opacidadeVidro: desfoque ? ({ mais: 0.6, normal: 0.72, menos: 0.85 })[vidroConf.nivel] || 0.72 : 1
+    // "Sem vidro" nos Ajustes (nível "sem"): a janela fica sólida mesmo com o desfoque.
+    readonly property bool comVidro: desfoque && vidroConf.nivel !== "sem"
+    readonly property real opacidadeVidro: comVidro ? ({ mais: 0.6, normal: 0.72, menos: 0.85 })[vidroConf.nivel] || 0.72 : 1
     // Cinza neutro, como o Mica do Windows 11: nada do azul do esquema de cores.
     readonly property color fundo: escuro ? Qt.rgba(0.125, 0.125, 0.133, opacidadeVidro) : Qt.rgba(0.953, 0.953, 0.96, opacidadeVidro)
     // O miolo (onde ficam as páginas) é uma camada um pouco mais funda.
@@ -68,6 +70,8 @@ QQC2.ApplicationWindow {
     // Destaque, só em detalhes pequenos (tracinho do escolhido, chave ligada): a cor
     // do vidro que a pessoa escolheu; no vidro padrão, a própria cor da frente.
     readonly property color destaque: vidroConf.cor ? (escuro ? Qt.lighter(vidroConf.cor, 1.25) : vidroConf.cor) : frente
+    // A cor do texto em cima do destaque (quase preto em cor clara, branco em cor escura).
+    readonly property color sobreDestaque: (0.299 * destaque.r + 0.587 * destaque.g + 0.114 * destaque.b) > 0.6 ? "#141416" : "#ffffff"
     // A cor da frente com transparência: textos fracos, linhas, fundos de seleção.
     function tinta(a) {
         return Qt.rgba(frente.r, frente.g, frente.b, a);
@@ -148,6 +152,16 @@ QQC2.ApplicationWindow {
             showNormal();
         else
             showMaximized();
+    }
+
+    // Aviso rápido embaixo, que some sozinho: tipo "" (informação), "certo" ou "erro".
+    // Com acao e funcao, mostra um botão (ex.: "Desfazer").
+    //   janela.avisoRapido(t("Alarme criado", "Alarm created"), "certo")
+    property var _aviso: ({ texto: "", tipo: "", acao: "", funcao: null })
+    function avisoRapido(texto, tipo, acao, funcao) {
+        _aviso = { texto: texto, tipo: tipo || "", acao: acao || "", funcao: funcao || null };
+        tempoAviso.interval = tipo === "erro" ? 8000 : (acao ? 6000 : 3500);
+        tempoAviso.restart();
     }
 
     function irPara(nome) {
@@ -370,7 +384,48 @@ QQC2.ApplicationWindow {
             }
         }
 
+        // O fundo do assunto aberto: uma pílula só, que desliza até o novo (e o
+        // tracinho estica no caminho, como no Windows 11).
+        Rectangle {
+            id: pilula
+            readonly property Item alvo: {
+                for (var i = 0; i < janela.paginas.length; i++)
+                    if (janela.paginas[i].id === janela.pagina)
+                        return repetidorPaginas.count > i ? repetidorPaginas.itemAt(i) : null;
+                return null;
+            }
+            visible: alvo !== null
+            x: colunaLateral.x + (alvo ? alvo.x : 0)
+            y: colunaLateral.y + (alvo ? alvo.y : 0)
+            width: alvo ? alvo.width : 0
+            height: alvo ? alvo.height : 0
+            radius: Math.round(janela.gu * 0.3)
+            color: janela.tinta(janela.escuro ? 0.08 : 0.065)
+            onAlvoChanged: if (visible) esticar.restart()
+            Behavior on y {
+                NumberAnimation {
+                    duration: 260
+                    easing.type: Easing.OutCubic
+                }
+            }
+            Rectangle {
+                id: tracinho
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 3
+                height: Math.round(parent.height * 0.42)
+                radius: 1.5
+                color: janela.frente
+            }
+            SequentialAnimation {
+                id: esticar
+                NumberAnimation { target: tracinho; property: "height"; to: Math.round(pilula.height * 0.7); duration: 110; easing.type: Easing.OutQuad }
+                NumberAnimation { target: tracinho; property: "height"; to: Math.round(pilula.height * 0.42); duration: 220; easing.type: Easing.OutBack }
+            }
+        }
+
         ColumnLayout {
+            id: colunaLateral
             anchors.fill: parent
             anchors.leftMargin: Math.round(janela.gu * 0.4)
             anchors.rightMargin: Math.round(janela.gu * 0.4)
@@ -390,6 +445,7 @@ QQC2.ApplicationWindow {
             }
 
             Repeater {
+                id: repetidorPaginas
                 model: janela.paginas
 
                 ItemLateral {
@@ -399,6 +455,7 @@ QQC2.ApplicationWindow {
                     nome: modelData.nome
                     soIcone: janela.recolhida
                     escolhido: janela.pagina === modelData.id
+                    fundoEscolhido: false
                     onAtivado: janela.pagina = modelData.id
                 }
             }
@@ -445,6 +502,81 @@ QQC2.ApplicationWindow {
             anchors.margins: 1
             clip: true
             source: janela.conteudo
+        }
+    }
+
+    // ----- o aviso rápido embaixo, por cima de tudo -----
+    Timer {
+        id: tempoAviso
+    }
+    Rectangle {
+        id: avisoBalao
+        readonly property bool mostrar: janela._aviso.texto !== "" && tempoAviso.running
+        readonly property color corTipo: janela._aviso.tipo === "erro" ? (janela.escuro ? "#ff8a8a" : "#c62828")
+                                       : (janela._aviso.tipo === "certo" ? (janela.escuro ? "#5fd39a" : "#1f8a52") : janela.frente)
+        z: 90
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: parent.height - (mostrar ? height + Math.round(janela.gu * 1.2) : -Math.round(janela.gu * 0.4))
+        width: Math.min(linhaAviso.implicitWidth + Math.round(janela.gu * 1.6), parent.width - janela.gu * 4)
+        height: Math.round(janela.gu * 2.5)
+        radius: height / 2
+        opacity: mostrar ? 1 : 0
+        scale: mostrar ? 1 : 0.92
+        visible: opacity > 0
+        color: janela.escuro ? Qt.rgba(0.18, 0.18, 0.19, 0.98) : Qt.rgba(0.99, 0.99, 1, 0.99)
+        border.width: 1
+        border.color: janela.tinta(0.12)
+        Behavior on y {
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.2
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 200
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 260
+                easing.type: Easing.OutCubic
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            // Com o mouse em cima, o aviso espera.
+            onContainsMouseChanged: if (containsMouse) tempoAviso.stop(); else if (avisoBalao.visible) tempoAviso.restart()
+        }
+        RowLayout {
+            id: linhaAviso
+            anchors.fill: parent
+            anchors.leftMargin: Math.round(janela.gu * 0.8)
+            anchors.rightMargin: Math.round(janela.gu * (janela._aviso.acao ? 0.4 : 0.9))
+            spacing: Math.round(janela.gu * 0.5)
+            Kirigami.Icon {
+                implicitWidth: Kirigami.Units.iconSizes.small
+                implicitHeight: implicitWidth
+                source: janela._aviso.tipo === "erro" ? "matsu-alerta-symbolic" : (janela._aviso.tipo === "certo" ? "matsu-certo-symbolic" : "matsu-info-symbolic")
+                isMask: true
+                color: avisoBalao.corTipo
+            }
+            Texto {
+                Layout.fillWidth: true
+                text: janela._aviso.texto
+                elide: Text.ElideRight
+            }
+            Botao {
+                visible: janela._aviso.acao !== ""
+                texto: janela._aviso.acao
+                onClicado: {
+                    tempoAviso.stop();
+                    if (janela._aviso.funcao)
+                        janela._aviso.funcao();
+                }
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Gera o tema Plasma do Matsu: o fundo das ilhas da barra, dos balões e das dicas.
 
-Uso: gerar.py [--cor #rrggbb] [--transparencia mais|normal|menos] <pasta do tema>
+Uso: gerar.py [--cor #rrggbb] [--transparencia mais|normal|menos|sem] <pasta do tema>
 
 Sem opções sai o vidro padrão, que vai na imagem:
   python3 system_files/usr/share/matsu/vidro/gerar.py system_files/usr/share/plasma/desktoptheme/Matsu
@@ -55,6 +55,8 @@ NIVEIS = {
     "mais":   {"ilha": (0.42, 0.80), "balao": (0.56, 0.88)},
     "normal": {"ilha": (0.62, 0.88), "balao": (0.74, 0.94)},
     "menos":  {"ilha": (0.82, 0.95), "balao": (0.90, 0.98)},
+    # "Sem vidro" nos Ajustes: sólido mesmo com o desfoque ligado.
+    "sem":    {"ilha": (1, 1), "balao": (1, 1)},
 }
 TINTA = None    # (cor, força) quando a pessoa escolheu uma cor
 

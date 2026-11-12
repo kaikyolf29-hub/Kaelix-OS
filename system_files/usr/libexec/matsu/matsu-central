@@ -11,12 +11,12 @@
 #   matsu-central mudo
 #   matsu-central brilho 1..100
 #   matsu-central perfil economia|equilibrado|desempenho
-#   matsu-central abrir rede|bluetooth|som|tela|luz-noturna|energia|notificacoes|sobre|ajustes|atualizar|configuracoes|barra
+#   matsu-central abrir rede|bluetooth|som|tela|luz-noturna|energia|notificacoes|sobre|ajustes|atualizar|atualizacoes|configuracoes|barra
 #   matsu-central abrir kcm kcm_<nome>             (qualquer tela de ajustes do KDE)
 #   matsu-central bloquear | sair
 #
 # Usados pelos Ajustes do Matsu (a janela de ajustes, como a do Mac):
-#   matsu-central vidro <cor> mais|normal|menos     (chama "matsu vidro")
+#   matsu-central vidro <cor> mais|normal|menos|sem (chama "matsu vidro")
 #   matsu-central barra fusao|mac|windows pequena|media|grande [sim|nao] [busca] [menu] [todas|principal] [tela|todas|principal]
 #                                        (chama "matsu barra"; sim = esconder sozinha; os dois últimos são das várias telas)
 #   matsu-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
@@ -237,7 +237,7 @@ estado_vidro() {
   local cor nivel
   cor="$(escolha vidro cor)"
   nivel="$(escolha vidro transparencia)"
-  case "$nivel" in mais|menos) ;; *) nivel=normal ;; esac
+  case "$nivel" in mais|menos|sem) ;; *) nivel=normal ;; esac
   echo "vidro_cor=${cor:-padrao}"
   echo "vidro_transparencia=$nivel"
 }
@@ -466,7 +466,7 @@ cmd_pagina_pedida() {
 
 cmd_vidro() {
   local cor="${1:-}" nivel="${2:-normal}"
-  [[ -n $cor ]] || { echo "use: vidro <cor> mais|normal|menos" >&2; exit 2; }
+  [[ -n $cor ]] || { echo "use: vidro <cor> mais|normal|menos|sem" >&2; exit 2; }
   timeout 60 "$MATSU_BIN" vidro "$cor" --transparencia "$nivel" >/dev/null 2>&1
 }
 
@@ -553,6 +553,8 @@ cmd_abrir() {
     # Pelo .desktop (kstart --application), para o app ganhar a unidade própria
     # dele e aparecer com o nome certo na barra e no próprio gerenciador.
     tarefas)       solto kstart --application org.matsu.tarefas ;;
+    # A janela Atualizações (versão, versão nova e o que mudou em cada uma).
+    atualizacoes)  solto kstart --application org.matsu.atualizacoes ;;
     # O jeito da barra fica nos Ajustes do Matsu (a página da barra).
     barra)         cmd_abrir ajustes barra ;;
     *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;

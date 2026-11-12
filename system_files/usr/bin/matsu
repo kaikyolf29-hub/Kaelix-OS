@@ -110,6 +110,7 @@ $(t "Exemplos" "Examples"):
   matsu barra apps              $(t "(mostra os apps fixados na barra)" "(shows the apps pinned to the bar)")
   matsu barra fixar kate        $(t "(põe um app na barra; tirar tira, ordem muda a ordem)" "(pins an app to the bar; unpin removes it, order reorders)")
   matsu vidro roxo --transparencia mais  $(t "(vidro roxo e mais transparente)" "(purple, more transparent glass)")
+  matsu vidro --transparencia sem       $(t "(sem o efeito vidro: barra, menu e janelas sólidos)" "(no glass effect: solid bar, menu and windows)")
 EOF
 }
 
@@ -984,8 +985,9 @@ cmd_glass() {
     "") ;;
     mais|more|alta|high)         nivel=mais ;;
     normal|media|média|medium)   nivel=normal ;;
-    menos|less|baixa|low|solido|sólido) nivel=menos ;;
-    *) fail "Transparência desconhecida: $nivel. Use mais, normal ou menos." "Unknown transparency: $nivel. Use mais, normal or menos." ;;
+    menos|less|baixa|low)        nivel=menos ;;
+    sem|nenhuma|none|off|solido|sólido|solid) nivel=sem ;;
+    *) fail "Transparência desconhecida: $nivel. Use mais, normal, menos ou sem." "Unknown transparency: $nivel. Use mais, normal, menos or sem." ;;
   esac
   if [[ -n $cor ]]; then
     vidro_hex "$cor" >/dev/null || fail "Cor desconhecida: $cor. Use ${VIDRO_CORES[*]} ou #rrggbb." \
@@ -1005,17 +1007,18 @@ cmd_glass() {
         lista+=("$c" "$(vidro_rotulo "$c")" "$on")
       done
       cor="$(kdialog --title "Matsu" --radiolist "$(t "De que cor você quer o vidro?" "What color do you want the glass?")" "${lista[@]}" | tr -d '"')" || return 0
-      local on_m=off on_n=off on_s=off
-      case "$cur_nivel" in mais) on_m=on ;; menos) on_s=on ;; *) on_n=on ;; esac
+      local on_m=off on_n=off on_s=off on_x=off
+      case "$cur_nivel" in mais) on_m=on ;; menos) on_s=on ;; sem) on_x=on ;; *) on_n=on ;; esac
       nivel="$(kdialog --title "Matsu" --radiolist "$(t "Quanto de transparência?" "How much transparency?")" \
         mais   "$(t "Mais transparente" "More transparent")" "$on_m" \
         normal "$(t "Normal" "Normal")" "$on_n" \
-        menos  "$(t "Menos transparente" "Less transparent")" "$on_s" | tr -d '"')" || return 0
+        menos  "$(t "Menos transparente" "Less transparent")" "$on_s" \
+        sem    "$(t "Sem vidro (sólido)" "No glass (solid)")" "$on_x" | tr -d '"')" || return 0
       [[ -z $cor ]] && return 0
     else
       say "Vidro atual: cor $cur_cor, transparência $cur_nivel." "Current glass: color $cur_cor, transparency $cur_nivel."
-      say "Para trocar: matsu vidro <${VIDRO_CORES[*]// /|}|#rrggbb> [--transparencia mais|normal|menos]" \
-          "To change: matsu glass <${VIDRO_CORES[*]// /|}|#rrggbb> [--transparency mais|normal|menos]"
+      say "Para trocar: matsu vidro <${VIDRO_CORES[*]// /|}|#rrggbb> [--transparencia mais|normal|menos|sem]" \
+          "To change: matsu glass <${VIDRO_CORES[*]// /|}|#rrggbb> [--transparency mais|normal|menos|sem]"
       return 0
     fi
   fi

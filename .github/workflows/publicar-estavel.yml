@@ -3,17 +3,22 @@
 # Só roda quando o criador manda, pela aba Actions, escrevendo PUBLICAR.
 # Pega a imagem do canal "teste" (já assinada), coloca no canal "estavel"
 # com o número da versão, cria o Release com as notas e anexa as ISOs.
+#
+# Versões (docs/VERSOES.md): 27 é a edição de 2027; as atualizações do ano são
+# 27.1, 27.2... O número tem de ser o da versão de cima do NOVIDADES.md e o da
+# imagem do canal teste (rótulo org.matsu.versao), e as notas saem de lá.
 name: Publicar versão estável
 
 on:
   workflow_dispatch:
     inputs:
       versao:
-        description: "Número da versão (exemplo: 1.0)"
+        description: "Número da versão: 27 (a edição) ou 27.1, 27.2... (igual ao de cima do NOVIDADES.md)"
         required: true
       notas:
-        description: "Notas da versão: o que mudou"
-        required: true
+        description: "Recado extra (opcional): as novidades já saem do NOVIDADES.md"
+        required: false
+        default: ""
       confirmar:
         description: "Escreva PUBLICAR para confirmar"
         required: true
@@ -37,11 +42,22 @@ jobs:
         env:
           VERSAO: ${{ inputs.versao }}
         run: |
-          if ! [[ "$VERSAO" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-            echo "::error::Versão inválida: use números como 1.0 ou 1.1.2"
+          EDICAO="$(tr -dc '0-9' < EDICAO)"
+          if ! [[ "$VERSAO" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Versão inválida: use 27 (a edição) ou 27.1, 27.2..."
+            exit 1
+          fi
+          if [[ "$VERSAO" != "$EDICAO" && "$VERSAO" != "$EDICAO".* ]]; then
+            echo "::error::A versão $VERSAO não é da edição $EDICAO (arquivo EDICAO)"
+            exit 1
+          fi
+          NO_ARQUIVO="$(python3 system_files/usr/share/matsu/atualizacoes/ajudante.py --arquivo NOVIDADES.md versao)"
+          if [[ "$NO_ARQUIVO" != "$VERSAO" ]]; then
+            echo "::error::A versão de cima do NOVIDADES.md é $NO_ARQUIVO, não $VERSAO. Escreva as novidades da $VERSAO lá primeiro."
             exit 1
           fi
           echo "tag=v${VERSAO}" >> "$GITHUB_OUTPUT"
+          echo "edicao=${EDICAO}" >> "$GITHUB_OUTPUT"
 
       - uses: sigstore/cosign-installer@v3
         with:
@@ -55,8 +71,13 @@ jobs:
           REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
           echo "$TOKEN" | skopeo login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
           for IMG in matsu-os matsu-os-nvidia; do
-            # Só promove imagem com assinatura válida.
+            # Só promove imagem com assinatura válida e da versão pedida.
             cosign verify --key cosign.pub "${REGISTRY}/${IMG}:teste" > /dev/null
+            NA_IMAGEM="$(skopeo inspect --no-tags "docker://${REGISTRY}/${IMG}:teste" | jq -r '.Labels["org.matsu.versao"] // empty')"
+            if [[ "$NA_IMAGEM" != "$VERSAO" ]]; then
+              echo "::error::${IMG}:teste é da versão '${NA_IMAGEM:-sem número}', não ${VERSAO}. Rode o fluxo \"Montar imagem\" e espere terminar."
+              exit 1
+            fi
             for TAG in estavel "${VERSAO}"; do
               skopeo copy --all --preserve-digests "docker://${REGISTRY}/${IMG}:teste" "docker://${REGISTRY}/${IMG}:${TAG}"
             done
@@ -69,9 +90,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.tag.outputs.tag }}
           VERSAO: ${{ inputs.versao }}
+          EDICAO: ${{ steps.tag.outputs.edicao }}
           NOTAS: ${{ inputs.notas }}
         run: |
-          gh release create "$TAG" --target "$GITHUB_SHA" --title "Matsu OS ${VERSAO}" --notes "$NOTAS"
+          # As notas: o recado extra (se tiver) e a parte da versão no NOVIDADES.md,
+          # com a data de hoje no lugar de "Em preparação".
+          MESES=(janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro)
+          HOJE="$(date -u +%-d) de ${MESES[$(( 10#$(date -u +%m) - 1 ))]} de $(date -u +%Y)"
+          {
+            if [[ -n "$NOTAS" ]]; then printf '%s\n\n' "$NOTAS"; fi
+            python3 system_files/usr/share/matsu/atualizacoes/ajudante.py --arquivo NOVIDADES.md notas "$VERSAO" \
+              | sed "0,/^_Em preparação_\$/s//_Publicada em ${HOJE}_/"
+          } > /tmp/notas.md
+          if [[ "$VERSAO" == "$EDICAO" ]]; then
+            TITULO="Matsu ${EDICAO} OS"
+          else
+            TITULO="Matsu ${EDICAO} OS · versão ${VERSAO}"
+          fi
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TITULO" --notes-file /tmp/notas.md
 
   iso:
     needs: promover

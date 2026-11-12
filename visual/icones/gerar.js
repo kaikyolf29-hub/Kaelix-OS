@@ -151,6 +151,19 @@ function lata(cheia) {
     corpo;
 }
 
+// Ícones dos apps novos do Matsu, um arquivo por app em apps/ (Relógio, Música...):
+//   module.exports = ({ base, B, liso }) => ({ relogio: { nomes: ['org.matsu.relogio'], svg: base('rel', '#..', '#..') + `...` } });
+const pastaApps = path.join(__dirname, 'apps');
+if (fs.existsSync(pastaApps)) {
+  for (const arq of fs.readdirSync(pastaApps).filter((a) => a.endsWith('.js')).sort()) {
+    const novos = require(path.join(pastaApps, arq))({ base, B, liso });
+    for (const [nome, ic] of Object.entries(novos)) {
+      if (ICONES[nome]) throw new Error(`ícone repetido: ${nome} (${arq})`);
+      ICONES[nome] = ic;
+    }
+  }
+}
+
 const saida = process.argv[2];
 if (!saida) { console.error('uso: node gerar.js <pasta de saída>'); process.exit(1); }
 fs.mkdirSync(saida, { recursive: true });

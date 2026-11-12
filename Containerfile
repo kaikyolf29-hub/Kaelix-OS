@@ -18,6 +18,8 @@ COPY system_files /system_files
 COPY cosign.pub /cosign.pub
 # O número da edição do ano (27 = edição 2027): o nome do sistema é "Matsu 27 OS".
 COPY EDICAO /EDICAO
+# O que mudou em cada versão (27, 27.1, 27.2...): a de cima é a versão da imagem.
+COPY NOVIDADES.md /NOVIDADES.md
 
 # Etapa que compila os botões de janela do Matsu. Usa a mesma base da imagem,
 # para a versão do KDE ser exatamente a mesma. Só o arquivo pronto (/out) vai

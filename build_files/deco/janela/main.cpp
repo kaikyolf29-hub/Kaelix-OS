@@ -14,6 +14,8 @@
 // O QML recebe o objeto "matsu" para rodar os ajudantes do app:
 //   matsu.iniciar(chave, [programa, args...])  fica rodando; cada linha da
 //                                               saída chega no sinal linha(chave, texto)
+//   matsu.escrever(chave, texto)               manda uma linha para a entrada de um
+//                                               programa aberto com iniciar (ex.: o MPRIS da Música)
 //   matsu.rodar(chave, [programa, args...])    roda uma vez; o fim chega no sinal
 //                                               pronto(chave, saida, codigo)
 //   matsu.soltar([programa, args...])          abre um programa solto, que continua
@@ -22,10 +24,22 @@
 //   matsu.ativarVidro(janela, raio)            janela de vidro: desfoca o que está atrás
 //                                               (efeito Desfoque do KWin), com cantos
 //                                               redondos e sombra; devolve se o desfoque existe
+//   matsu.ler(caminho)                         o texto de um arquivo (UTF-8); "" se não der
+//   matsu.gravar(caminho, texto)               grava o texto (de uma vez, sem deixar o
+//                                               arquivo pela metade); devolve se deu certo
+//   matsu.existe(caminho)                      se o arquivo ou a pasta existe
+//   matsu.pasta(nome)                          uma pasta da pessoa: "casa", "musica", "imagens",
+//                                               "videos", "documentos", "downloads", "area",
+//                                               "dados" (~/.local/share/matsu/<app>) e "config"
+//                                               (~/.config/matsu); as pastas de dados são criadas
 //   sinal pedido(argumentos)                    o app foi aberto de novo com outros argumentos
 //   sinal vidroMudou(ligado)                    o desfoque foi ligado ou desligado no KWin
 #include <QApplication>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QSaveFile>
+#include <QStandardPaths>
 #include <QHash>
 #include <QIcon>
 #include <QImage>
@@ -309,6 +323,16 @@ public:
         p->start(comando.first(), comando.mid(1));
     }
 
+    Q_INVOKABLE bool escrever(const QString &chave, const QString &texto)
+    {
+        QProcess *p = m_vigias.value(chave);
+        if (!p || p->state() != QProcess::Running) {
+            return false;
+        }
+        p->write(texto.toUtf8().replace('\n', ' ') + '\n');
+        return true;
+    }
+
     Q_INVOKABLE void parar(const QString &chave)
     {
         if (QProcess *p = m_vigias.value(chave)) {
@@ -339,6 +363,59 @@ public:
     Q_INVOKABLE bool soltar(const QStringList &comando)
     {
         return !comando.isEmpty() && QProcess::startDetached(comando.first(), comando.mid(1));
+    }
+
+    // Arquivos de texto (notas, o Bloco de notas, listas dos apps). Aceita file:// também.
+    static QString local(const QString &caminho)
+    {
+        return caminho.startsWith(QLatin1String("file:")) ? QUrl(caminho).toLocalFile() : caminho;
+    }
+    Q_INVOKABLE QString ler(const QString &caminho) const
+    {
+        QFile f(local(caminho));
+        if (!f.open(QIODevice::ReadOnly)) {
+            return QString();
+        }
+        return QString::fromUtf8(f.readAll());
+    }
+    Q_INVOKABLE bool gravar(const QString &caminho, const QString &texto) const
+    {
+        const QString alvo = local(caminho);
+        QDir().mkpath(QFileInfo(alvo).absolutePath());
+        QSaveFile f(alvo);
+        if (!f.open(QIODevice::WriteOnly)) {
+            return false;
+        }
+        f.write(texto.toUtf8());
+        return f.commit();
+    }
+    Q_INVOKABLE bool existe(const QString &caminho) const
+    {
+        return QFileInfo::exists(local(caminho));
+    }
+    Q_INVOKABLE QString pasta(const QString &nome) const
+    {
+        static const QHash<QString, QStandardPaths::StandardLocation> tipos = {
+            {QStringLiteral("casa"), QStandardPaths::HomeLocation},
+            {QStringLiteral("musica"), QStandardPaths::MusicLocation},
+            {QStringLiteral("imagens"), QStandardPaths::PicturesLocation},
+            {QStringLiteral("videos"), QStandardPaths::MoviesLocation},
+            {QStringLiteral("documentos"), QStandardPaths::DocumentsLocation},
+            {QStringLiteral("downloads"), QStandardPaths::DownloadLocation},
+            {QStringLiteral("area"), QStandardPaths::DesktopLocation},
+        };
+        QString caminho;
+        if (nome == QLatin1String("dados")) {
+            const QString curto = m_appId.startsWith(QLatin1String("org.matsu.")) ? m_appId.mid(10) : m_appId;
+            caminho = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/matsu/") + curto;
+            QDir().mkpath(caminho);
+        } else if (nome == QLatin1String("config")) {
+            caminho = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/matsu");
+            QDir().mkpath(caminho);
+        } else if (tipos.contains(nome)) {
+            caminho = QStandardPaths::writableLocation(tipos.value(nome));
+        }
+        return caminho;
     }
 
 Q_SIGNALS:

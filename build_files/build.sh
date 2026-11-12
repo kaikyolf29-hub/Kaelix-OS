@@ -37,6 +37,10 @@ dnf5 -y install \
 
 dnf5 -y install --skip-unavailable gamemode.i686 mangohud.i686
 
+# Apps do Matsu feitos em QML: som e vídeo (Música, Câmera, Relógio) vêm do Qt Multimedia.
+dnf5 -y install --skip-unavailable qt6-qtmultimedia
+rpm -q qt6-qtmultimedia || echo "AVISO: sem qt6-qtmultimedia, a Música e a Câmera do Matsu não abrem." >&2
+
 # Bandeja do sistema (perto do relógio), como no Windows. O KDE já mostra os
 # ícones dos apps pelo protocolo novo (StatusNotifierItem). Aqui entram as
 # bibliotecas que os apps usam para chegar nele (libayatana-appindicator e a
@@ -105,6 +109,20 @@ EDICAO="$(tr -dc '0-9' < "${CTX}/EDICAO")"
 [[ -n $EDICAO ]] || { echo "ERRO: o arquivo EDICAO está vazio" >&2; exit 1; }
 ANO="20${EDICAO}"
 NOME="Matsu ${EDICAO} OS"
+# Durante o ano saem atualizações menores: 27.1, 27.2... A versão é a de cima do
+# NOVIDADES.md (docs/VERSOES.md), que também vai para o sistema: a janela
+# Atualizações e o aviso de atualização (atualizacoes/ajudante.py) mostram o que mudou.
+VERSAO="$(python3 /usr/share/matsu/atualizacoes/ajudante.py --arquivo "${CTX}/NOVIDADES.md" versao)"
+if [[ $VERSAO != "$EDICAO" && $VERSAO != "$EDICAO".* ]]; then
+  echo "ERRO: a versão de cima do NOVIDADES.md ($VERSAO) não é da edição $EDICAO" >&2
+  exit 1
+fi
+MESES=(janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro)
+HOJE="$(date -u +%-d) de ${MESES[$(( 10#$(date -u +%m) - 1 ))]} de $(date -u +%Y)"
+# A versão ainda sem data ("Em preparação") ganha a data da montagem.
+sed "0,/^_Em preparação_\$/s//_Montada em ${HOJE}_/" "${CTX}/NOVIDADES.md" > /usr/share/matsu/novidades.md
+chmod 0644 /usr/share/matsu/novidades.md
+python3 /usr/share/matsu/atualizacoes/ajudante.py --arquivo /usr/share/matsu/novidades.md resumo "$VERSAO" >/dev/null
 OWNER="${IMAGE_REGISTRY#*/}"
 REPO_URL="https://github.com/${OWNER}/Kaelix-OS"
 # O nome do Fedora não aparece para a pessoa: o sistema se apresenta como
@@ -113,7 +131,7 @@ REPO_URL="https://github.com/${OWNER}/Kaelix-OS"
 # conferem a base por eles.
 sed -i \
   -e 's/^NAME=.*/NAME="Matsu OS"/' \
-  -e "s/^VERSION=.*/VERSION=\"${EDICAO} (Edição ${ANO})\"/" \
+  -e "s/^VERSION=.*/VERSION=\"${VERSAO} (Edição ${ANO})\"/" \
   -e "s/^PRETTY_NAME=.*/PRETTY_NAME=\"${NOME}\"/" \
   -e "s/^VARIANT=.*/VARIANT=\"Edição ${ANO}\"/" \
   -e 's/^VARIANT_ID=.*/VARIANT_ID=matsu/' \
@@ -138,6 +156,7 @@ fi
 { grep -rlZ -e '@EDICAO@' -e '@ANO@' /usr/share/matsu /usr/share/plasma /usr/share/applications \
     /usr/share/plymouth /etc/xdg 2>/dev/null || true; } | xargs -0 -r sed -i -e "s/@EDICAO@/${EDICAO}/g" -e "s/@ANO@/${ANO}/g"
 echo "Nome no sistema: $(grep -E '^(NAME|PRETTY_NAME|VERSION|VARIANT|DEFAULT_HOSTNAME)=' /usr/lib/os-release | tr '\n' ' ')"
+echo "Versão: ${VERSAO} (novidades em /usr/share/matsu/novidades.md)"
 
 mkdir -p /usr/share/matsu
 jq -n \
@@ -147,8 +166,9 @@ jq -n \
   --arg build "${BUILD_ID}" \
   --arg fedora "${FEDORA_VERSION}" \
   --arg edicao "${EDICAO}" \
+  --arg versao "${VERSAO}" \
   '{"image-name":$name, "image-variant":$variant, "image-registry":$registry,
-    "build-id":$build, "fedora-version":$fedora, "edicao":$edicao}' \
+    "build-id":$build, "fedora-version":$fedora, "edicao":$edicao, "versao":$versao}' \
   > /usr/share/matsu/image-info.json
 
 # ---------------------------------------------------------------------------
@@ -365,6 +385,14 @@ for f in /etc/xdg/mimeapps.list /etc/xdg/kde-mimeapps.list /usr/share/applicatio
   fi
 done
 update-desktop-database -q /usr/share/applications 2>/dev/null || true
+# Fixados do menu: o Fedora põe Discover, Dolphin, Konsole e KWrite na frente dos
+# fixados de toda conta nova (kicker-extra-favoritesrc). No Matsu os fixados são só
+# os do menu do Matsu (Arquivos, navegador, Terminal, Loja e Ajustes).
+{ find /usr/share /etc -name 'kicker-extra-favoritesrc' 2>/dev/null; echo /etc/xdg/kicker-extra-favoritesrc; } | sort -u | while read -r f; do
+  [[ -s $f ]] && echo "kicker-extra-favoritesrc do Fedora ($f): $(tr '\n' ' ' < "$f")"
+  printf '[General]\nPrepend=\nAppend=\nIgnoreDefaults=false\n' > "$f"
+  chmod 0644 "$f"
+done
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
@@ -436,6 +464,17 @@ chmod 0755 /usr/libexec/matsu/matsu-jogos-placa
 # script "matsu-telas" do KWin chama o serviço), põe a barra nas telas sem barra.
 systemctl --global enable matsu-telas.service
 kwriteconfig6 --file /etc/xdg/kwinrc --group Plugins --key matsu-telasEnabled true
+# Aviso de atualização do Matsu: depois de atualizar mostra o que mudou, avisa
+# quando sai versão nova no canal (com o botão "Atualizar") e quando há apps da
+# Loja com atualização. O aviso do Discover (que abre o Discover escondido) sai.
+test -f /usr/share/applications/org.matsu.atualizacoes.desktop
+test -f /usr/share/matsu/atualizacoes/Main.qml
+command -v skopeo >/dev/null || echo "aviso: sem o skopeo, o aviso de versão nova não consegue ler o canal"
+systemctl --global enable matsu-novidades.timer
+aviso_discover=/etc/xdg/autostart/org.kde.discover.notifier.desktop
+if [[ -f $aviso_discover ]] && ! grep -q '^Hidden=true' "$aviso_discover"; then
+  sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nHidden=true/' "$aviso_discover"
+fi
 
 # ---------------------------------------------------------------------------
 log "Tela de boot do Matsu"

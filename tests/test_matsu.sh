@@ -291,6 +291,12 @@ check "no padrão apaga o tema da pessoa (vale o do sistema)" test ! -e "$VIDRO"
 check "no padrão o destaque volta ao cinza neutro do Matsu" called "plasma-apply-colorscheme --accent-color #6e6e76"
 run vidro padrao --transparencia mais
 check "padrão mais transparente gera o vidro sem cor" bash -c "grep -qF 'opacity=\"0.42\"' '$SVG' && ! grep -qE 'fill=\"#[0-9a-f]{6}\" opacity=\"0.24\"' '$SVG'"
+run vidro padrao --transparencia sem
+check "sem vidro: a barra e os balões ficam sólidos" bash -c "grep -qF 'opacity=\"1\"' '$SVG' && grep -qF 'transparencia=sem' '$WORK/state/vidro'"
+L=en run glass --transparency=solid
+check "solid (em inglês) também tira o vidro" grep -qF 'transparencia=sem' "$WORK/state/vidro"
+run vidro --transparencia normal
+check "ligar o vidro de novo volta ao normal" bash -c "grep -qF 'transparencia=normal' '$WORK/state/vidro' && test ! -e '$VIDRO'"
 run vidro magenta
 check "cor desconhecida é recusada" test "$CODE" -ne 0
 run vidro azul --transparencia total

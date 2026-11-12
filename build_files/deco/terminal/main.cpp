@@ -217,7 +217,8 @@ static void lerVidro()
     };
     cor = nomes.value(cor, cor);
     tema.corVidro = QColor::isValidColorName(cor) && cor.startsWith(QLatin1Char('#')) ? QColor(cor) : QColor();
-    tema.nivel = (nivel == QLatin1String("mais") || nivel == QLatin1String("menos")) ? nivel : QStringLiteral("normal");
+    tema.nivel = (nivel == QLatin1String("mais") || nivel == QLatin1String("menos") || nivel == QLatin1String("sem"))
+        ? nivel : QStringLiteral("normal");
 }
 
 static bool temDesfoque()
@@ -228,6 +229,10 @@ static bool temDesfoque()
     }
     if (qEnvironmentVariableIsSet("MATSU_TERMINAL_COM_VIDRO")) {
         return true;
+    }
+    // "Sem vidro" nos Ajustes (matsu vidro --transparencia sem): janela sólida.
+    if (tema.nivel == QLatin1String("sem")) {
+        return false;
     }
     return KWindowEffects::isEffectAvailable(KWindowEffects::BlurBehind);
 }
@@ -1126,8 +1131,8 @@ Cabecalho::Alvo Cabecalho::alvoEm(const QPointF &p) const
 void Cabecalho::desenharBolinhas(QPainter &p)
 {
     // Iguais às da borda das janelas do Matsu (comum/BotaoJanela.qml).
-    static const QColor cores[3] = {QColor("#f0609e"), QColor("#8fa2ff"), QColor("#45d0c1")};
-    static const QColor simbolos[3] = {QColor("#5a1036"), QColor("#1e2a6e"), QColor("#0a4a42")};
+    static const QColor cores[3] = {QColor("#ec6a5e"), QColor("#f2c14e"), QColor("#5bc36a")};
+    static const QColor simbolos[3] = {QColor("#5e1610"), QColor("#7a4d00"), QColor("#0f4d1b")};
     const bool sobreGrupo = m_sobre.tipo == Bolinha;
     const qreal mostrar = m_suave(QStringLiteral("bolinhas"), sobreGrupo ? 1 : 0, -1, 20);
     const bool ativa = window()->isActiveWindow();
@@ -2536,8 +2541,11 @@ void Janela::changeEvent(QEvent *e)
         update();
     } else if (e->type() == QEvent::ActivationChange) {
         m_cabecalho->update();
-        // O vidro pode ter sido ligado ou desligado nos efeitos do KWin.
-        if (tema.desfoque != temDesfoque()) {
+        // O vidro pode ter sido trocado nos Ajustes ou nos efeitos do KWin.
+        const QString nivelAntes = tema.nivel;
+        const QColor corAntes = tema.corVidro;
+        lerVidro();
+        if (tema.desfoque != temDesfoque() || tema.nivel != nivelAntes || tema.corVidro != corAntes) {
             atualizarTema();
         }
     }
