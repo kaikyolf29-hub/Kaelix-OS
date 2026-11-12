@@ -466,6 +466,32 @@ shot "41-registro-dos-apps"
 hmp key alt-f4
 sleep 2
 
+# Fotos do site do Matsu (site-*): cada app sozinho na tela, sem as janelas dos
+# testes de antes (o fotos-site.sh fecha tudo antes de cada uma). Cada vez dura
+# os segundos da lista mais uns 2 de fechar e abrir; a foto sai perto do fim. O
+# site/preparar-fotos.py faz as fotos do site a partir delas.
+mapfile -t FOTOS_SITE < <(bash "$HERE/fotos-site.sh" --lista)
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f matsu-fotos-site; exit"
+hmp key ret
+inicio=$(date +%s)
+comeco=0
+for vez in "${FOTOS_SITE[@]}"; do
+  nome="${vez%% *}"; segundos="${vez##* }"
+  if [[ $nome == site-01-menu ]]; then
+    sleep 5
+    hmp key meta_l
+  fi
+  alvo=$((inicio + comeco + segundos))
+  agora=$(date +%s)
+  if (( alvo > agora )); then sleep $((alvo - agora)); fi
+  shot "$nome"
+  if [[ $nome == site-01-menu ]]; then hmp key esc; fi
+  comeco=$((comeco + segundos + 2))
+done
+sleep 4
+
 # Tela de bloqueio (Meta+L), com o papel de parede do Matsu. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
 # desbloquear continua funcionando com as peças do Matsu.

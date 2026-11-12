@@ -87,6 +87,7 @@ jobs:
             echo "COPY tests/vm/teste-ajustes.sh /usr/bin/matsu-teste-ajustes"
             echo "COPY tests/vm/teste-janelas.sh /usr/bin/matsu-teste-janelas"
             echo "COPY tests/vm/teste-apps.sh /usr/bin/matsu-teste-apps"
+            echo "COPY tests/vm/fotos-site.sh /usr/bin/matsu-fotos-site"
             # A máquina virtual manda as mensagens também para a porta serial
             # (console=ttyS0), e com isso o Plymouth mostra só texto. Este ajuste,
             # só no teste, faz ele mostrar a tela de boot do Matsu como no PC.
