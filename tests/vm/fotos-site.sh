@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # Só na máquina virtual de teste: as fotos do site do Matsu (site-*). Fecha as
 # janelas que sobraram dos outros testes e abre um app por vez, sozinho na tela,
-# para a VM tirar a foto perto do fim de cada vez. O site/preparar-fotos.py
+# para a VM tirar a foto perto do fim de cada vez. O visual/site/preparar-fotos.py
 # transforma essas prints nas fotos do site.
 #
 # Uso: matsu-fotos-site            faz a sequência

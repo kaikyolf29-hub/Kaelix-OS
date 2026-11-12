@@ -1,0 +1,38 @@
+# Publica o site do Matsu (a pasta site/) no GitHub Pages. Por enquanto só à mão
+# (Actions > Publicar o site > Run workflow): o GitHub Pages precisa estar ligado
+# em Settings > Pages, com a origem "GitHub Actions".
+name: Publicar o site
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: site
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Conferir o site
+        run: |
+          test -f site/index.html
+          # Toda foto e arquivo que a página pede existe na pasta.
+          grep -oE '(src|href)="(img|fontes)/[^"]+"' site/index.html | sed -E 's/^[a-z]+="//; s/"$//' | sort -u | while read -r f; do
+            if [[ ! -f site/$f ]]; then echo "falta site/$f"; exit 1; fi
+          done
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: publicar
+        uses: actions/deploy-pages@v4

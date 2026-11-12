@@ -469,7 +469,7 @@ sleep 2
 # Fotos do site do Matsu (site-*): cada app sozinho na tela, sem as janelas dos
 # testes de antes (o fotos-site.sh fecha tudo antes de cada uma). Cada vez dura
 # os segundos da lista mais uns 2 de fechar e abrir; a foto sai perto do fim. O
-# site/preparar-fotos.py faz as fotos do site a partir delas.
+# visual/site/preparar-fotos.py faz as fotos do site a partir delas.
 mapfile -t FOTOS_SITE < <(bash "$HERE/fotos-site.sh" --lista)
 hmp key ctrl-alt-t
 sleep 8

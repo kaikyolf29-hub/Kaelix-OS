@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Matsu 27 OS</title>
+  <meta name="description" content="Sistema para o seu computador, de graça: bonito, pronto para jogar e fácil de usar, em português do começo ao fim.">
+  <meta property="og:title" content="Matsu 27 OS">
+  <meta property="og:description" content="Sistema para o seu computador, de graça: bonito, pronto para jogar e fácil de usar.">
+  <meta property="og:image" content="img/papel-escuro.png">
+  <meta name="theme-color" content="#1b1120">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fontes/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<!-- A barra do Matsu, como no sistema: três ilhas de vidro. -->
+<nav class="barra" aria-label="Seções" data-en-aria="Sections">
+  <a class="ilha ilha-marca" href="#inicio">
+    <img src="img/logo.svg" alt="" width="30" height="30">
+    <span>Matsu 27</span>
+  </a>
+  <div class="ilha ilha-apps">
+    <a href="#sistema" data-rotulo="O sistema" data-en-rotulo="The system">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M8 20.5h8M12 17v3.5"/></svg>
+    </a>
+    <a href="#jogos" data-rotulo="Jogos" data-en-rotulo="Games">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 7h9a4.5 4.5 0 0 1 4.4 5.5l-.9 4a2.6 2.6 0 0 1-4.4 1.2L13.9 16h-3.8l-1.7 1.7A2.6 2.6 0 0 1 4 16.5l-.9-4A4.5 4.5 0 0 1 7.5 7Z"/><path d="M8 10.2v3.2M6.4 11.8h3.2"/><circle cx="15.6" cy="11" r=".6"/><circle cx="17.2" cy="12.8" r=".6"/></svg>
+    </a>
+    <a href="#loja" data-rotulo="Loja" data-en-rotulo="Store">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5h14l-1 10.2a2 2 0 0 1-2 1.8H8a2 2 0 0 1-2-1.8Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/><path d="M12 11.5v5m-2.2-2.2L12 16.5l2.2-2.2"/></svg>
+    </a>
+    <a href="#barra" data-rotulo="Do seu jeito" data-en-rotulo="Your way">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="15.5" width="18" height="5" rx="2.5"/><path d="M6 11h5M6 7h12"/><circle cx="15" cy="11" r="1.6"/></svg>
+    </a>
+    <a href="#apps" data-rotulo="Apps do dia a dia" data-en-rotulo="Everyday apps">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5A2 2 0 0 1 5.5 5.5h4l2 2h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2Z"/></svg>
+    </a>
+    <a href="#seguro" data-rotulo="Seguro" data-en-rotulo="Secure">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 6v5.6c0 4.3-2.9 7.4-7 8.9-4.1-1.5-7-4.6-7-8.9V6Z"/><path d="m9 12 2.2 2.2L15.3 10"/></svg>
+    </a>
+    <a href="#baixar" data-rotulo="Baixar" data-en-rotulo="Download">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>
+    </a>
+  </div>
+  <div class="ilha ilha-hora">
+    <button type="button" class="idioma" id="idioma" aria-label="Mudar para inglês" data-en-aria="Switch to Portuguese">EN</button>
+    <span class="relogio" aria-hidden="true"><b id="hora">--:--</b><small id="data"></small></span>
+  </div>
+</nav>
+
+<header class="topo" id="inicio">
+  <div class="topo-texto">
+    <h1>Matsu 27 <span>OS</span></h1>
+    <p class="abertura" data-en="A free system for your computer: beautiful from the first boot, ready for games and easy to use, in your language from start to finish.">Um sistema de graça para o seu computador: bonito desde o primeiro boot, pronto para jogar e fácil de usar, em português do começo ao fim.</p>
+    <div class="acoes">
+      <a class="botao botao-cheio" href="#baixar" data-en="Download Matsu 27">Baixar o Matsu 27</a>
+      <a class="botao" href="#sistema" data-en="See what it looks like">Ver como é</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="parte" id="sistema">
+    <div class="texto">
+      <h2 data-en="You already know how to use it">Você já sabe usar</h2>
+      <p data-en="The menu, the bar with your open apps, the search and the clock are where you expect them. The windows are made of glass and show your wallpaper behind them, in dark or light.">O menu, a barra com os apps abertos, a busca e o relógio ficam onde você espera. As janelas são de vidro e deixam ver o papel de parede atrás, no tema escuro ou no claro.</p>
+    </div>
+    <figure class="foto foto-larga">
+      <img src="img/area-de-trabalho.webp" width="1600" height="900" loading="lazy"
+           alt="A área de trabalho do Matsu com o menu aberto" data-en-alt="The Matsu desktop with the menu open">
+    </figure>
+    <div class="dupla">
+      <figure class="foto">
+        <img src="img/escuro.webp" width="960" height="540" loading="lazy" alt="Tema escuro" data-en-alt="Dark theme">
+        <figcaption data-en="Dark">Escuro</figcaption>
+      </figure>
+      <figure class="foto">
+        <img src="img/claro.webp" width="960" height="540" loading="lazy" alt="Tema claro" data-en-alt="Light theme">
+        <figcaption data-en="Light">Claro</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="parte" id="jogos">
+    <div class="texto">
+      <h2 data-en="Made for gaming">Feito para jogar</h2>
+      <p data-en="Steam, Heroic (Epic and GOG) and Lutris come installed. The Game Center gathers your games in one place and sets everything up when a game opens.">A Steam, o Heroic (Epic e GOG) e o Lutris já vêm instalados. A Central de jogos junta seus jogos num lugar só e deixa tudo pronto quando um jogo abre.</p>
+      <ul class="lista">
+        <li data-en="A graphics profile for each game: performance, quality or battery saving.">Um perfil gráfico para cada jogo: desempenho, qualidade ou economia.</li>
+        <li data-en="An in-game overlay with FPS, CPU, graphics card and memory.">Sobreposição no jogo com FPS, processador, placa de vídeo e memória.</li>
+        <li data-en="AMD, Intel or NVIDIA: the right driver is already there.">AMD, Intel ou NVIDIA: o driver certo já vem.</li>
+        <li data-en="Wallpaper Engine animated wallpapers work as soon as you install it from Steam.">Os papéis de parede animados do Wallpaper Engine funcionam assim que você instala pela Steam.</li>
+      </ul>
+    </div>
+    <figure class="foto foto-larga">
+      <img src="img/jogos.webp" width="1600" height="900" loading="lazy"
+           alt="A Central de jogos do Matsu" data-en-alt="The Matsu Game Center">
+    </figure>
+  </section>
+
+  <section class="parte" id="loja">
+    <div class="texto">
+      <h2 data-en="Every app in one click">Todo app num clique</h2>
+      <p data-en="The Matsu Store has Discord, Spotify, OBS, browsers and thousands of other apps, with photos and descriptions. Instagram, TikTok and YouTube become apps with their own logo, in their own window.">A Loja do Matsu tem Discord, Spotify, OBS, navegadores e milhares de outros apps, com fotos e descrição. Instagram, TikTok e YouTube viram app com a logo deles, numa janela própria.</p>
+    </div>
+    <figure class="foto foto-larga">
+      <img src="img/loja.webp" width="1600" height="900" loading="lazy"
+           alt="A Loja do Matsu" data-en-alt="The Matsu Store">
+    </figure>
+  </section>
+
+  <section class="parte" id="barra">
+    <div class="texto">
+      <h2 data-en="The bar, your way">A barra do seu jeito</h2>
+      <p data-en="Pick the style you like best and change it whenever you want in Matsu Settings: Matsu's own, in glass islands; one like Windows; or one like the Mac.">Escolha o estilo que você mais gosta e troque quando quiser nos Ajustes do Matsu: o do Matsu, em ilhas de vidro; um como o do Windows; ou um como o do Mac.</p>
+    </div>
+    <div class="estilos" role="tablist" aria-label="Estilo da barra" data-en-aria="Bar style">
+      <button type="button" role="tab" aria-selected="true" data-estilo="fusao" data-en="Matsu">Matsu</button>
+      <button type="button" role="tab" aria-selected="false" data-estilo="windows">Windows</button>
+      <button type="button" role="tab" aria-selected="false" data-estilo="mac">Mac</button>
+    </div>
+    <figure class="foto foto-larga faixa">
+      <img id="foto-barra" src="img/barra-fusao.webp" width="1920" height="140" loading="lazy"
+           alt="A barra no estilo do Matsu" data-en-alt="The bar in Matsu style">
+    </figure>
+  </section>
+
+  <section class="parte" id="apps">
+    <div class="texto">
+      <h2 data-en="Everyday apps, with the same look">Os apps do dia a dia, com a mesma cara</h2>
+      <p data-en="Files, the terminal, the task manager and the settings were made for Matsu, so nothing looks out of place.">Arquivos, terminal, gerenciador de tarefas e ajustes foram feitos para o Matsu, então nada fica com cara de outro sistema.</p>
+    </div>
+    <div class="grade-apps">
+      <figure class="foto">
+        <img src="img/arquivos.webp" width="1200" height="675" loading="lazy" alt="Arquivos" data-en-alt="Files">
+        <figcaption><b data-en="Files">Arquivos</b> <span data-en="Tabs, search and folder icons made for Matsu.">Abas, busca e ícones de pasta feitos para o Matsu.</span></figcaption>
+      </figure>
+      <figure class="foto">
+        <img src="img/terminal.webp" width="1200" height="675" loading="lazy" alt="Terminal" data-en-alt="Terminal">
+        <figcaption><b>Terminal</b> <span data-en="Tabs, split view and a bar that shows the folder and the git branch.">Abas, tela dividida e uma barra que mostra a pasta e o ramo do git.</span></figcaption>
+      </figure>
+      <figure class="foto">
+        <img src="img/tarefas.webp" width="1200" height="675" loading="lazy" alt="Gerenciador de tarefas" data-en-alt="Task Manager">
+        <figcaption><b data-en="Task Manager">Gerenciador de tarefas</b> <span data-en="Ctrl+Shift+Esc, just like on Windows.">Ctrl+Shift+Esc, como no Windows.</span></figcaption>
+      </figure>
+      <figure class="foto">
+        <img src="img/ajustes.webp" width="1200" height="675" loading="lazy" alt="Ajustes do Matsu" data-en-alt="Matsu Settings">
+        <figcaption><b data-en="Matsu Settings">Ajustes do Matsu</b> <span data-en="Theme, glass color, wallpaper, bar and screens in one place.">Tema, cor do vidro, papel de parede, barra e telas num lugar só.</span></figcaption>
+      </figure>
+    </div>
+    <div class="texto mais">
+      <h3 data-en="Also for studying and programming">Também para estudar e programar</h3>
+      <p data-en="VS Code, Git, Python and Node are installed, and Distrobox runs other systems inside Matsu. The command matsu seguranca creates a Kali Linux container for studying cybersecurity.">VS Code, Git, Python e Node já vêm instalados, e o Distrobox roda outros sistemas dentro do Matsu. O comando <code>matsu seguranca</code> cria um contêiner do Kali Linux para estudar cibersegurança.</p>
+    </div>
+  </section>
+
+  <section class="parte" id="seguro">
+    <div class="texto">
+      <h2 data-en="Secure and always up to date">Seguro e sempre em dia</h2>
+    </div>
+    <dl class="fatos">
+      <div>
+        <dt data-en="Updates all at once">Atualiza tudo de uma vez</dt>
+        <dd data-en="The new version is installed whole and comes in when you restart. If anything goes wrong, pick the previous one in the boot menu.">A versão nova é instalada inteira e entra quando você reinicia. Se algo der errado, é só escolher a anterior no menu de boot.</dd>
+      </div>
+      <div>
+        <dt data-en="Signed and tested">Assinado e testado</dt>
+        <dd data-en="Every image is signed, and before it goes out it is switched on in a virtual machine that opens each app and takes photos of the screen.">Cada imagem é assinada e, antes de sair, liga numa máquina virtual que abre cada app e tira fotos da tela.</dd>
+      </div>
+      <div>
+        <dt data-en="Apps in their own box">Apps na caixinha deles</dt>
+        <dd data-en="Store apps run isolated from the rest of the system (Flatpak), so one app can't break another.">Os apps da Loja rodam isolados do resto do sistema (Flatpak), e um app não estraga o outro.</dd>
+      </div>
+      <div>
+        <dt data-en="One edition a year">Uma edição por ano</dt>
+        <dd data-en="Matsu 27, then 28, 29... The number is the year. Between editions, fixes arrive every day.">Matsu 27, depois 28, 29... O número é o ano. Entre uma edição e outra, as correções chegam todo dia.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="parte" id="baixar">
+    <div class="texto">
+      <h2 data-en="Download Matsu 27">Baixar o Matsu 27</h2>
+      <p class="aviso" data-en="The first version is almost ready. Follow it on GitHub to know the day it comes out.">A primeira versão está quase pronta. Acompanhe no GitHub para saber o dia em que sai.</p>
+      <div class="acoes">
+        <a class="botao botao-cheio" href="https://github.com/kaikyolf29-hub/Kaelix-OS" data-en="Follow on GitHub">Acompanhar no GitHub</a>
+      </div>
+    </div>
+    <div class="baixar">
+      <div>
+        <h3 data-en="How to install">Como instalar</h3>
+        <ol class="passos">
+          <li data-en="Download the Matsu image (ISO file).">Baixe a imagem do Matsu (o arquivo ISO).</li>
+          <li data-en="Write it to a USB stick of 8 GB or more with balenaEtcher or Ventoy.">Grave num pendrive de 8 GB ou mais com o balenaEtcher ou o Ventoy.</li>
+          <li data-en="Start the computer from the USB stick and choose Install Matsu OS.">Ligue o computador pelo pendrive e escolha Instalar o Matsu OS.</li>
+          <li data-en="Create your account on first boot and pick your browser: Brave, Chrome or both.">No primeiro boot, crie sua conta e escolha o navegador: Brave, Chrome ou os dois.</li>
+        </ol>
+      </div>
+      <div>
+        <h3 data-en="What you need">O que precisa</h3>
+        <dl class="requisitos">
+          <div><dt data-en="Processor">Processador</dt><dd data-en="64-bit, Intel or AMD">64 bits, Intel ou AMD</dd></div>
+          <div><dt data-en="Memory">Memória</dt><dd data-en="4 GB (8 GB for gaming)">4 GB (8 GB para jogar)</dd></div>
+          <div><dt data-en="Disk">Disco</dt><dd data-en="64 GB free, SSD recommended">64 GB livres, de preferência SSD</dd></div>
+          <div><dt data-en="Graphics card">Placa de vídeo</dt><dd data-en="AMD, Intel or NVIDIA (there is a version with the NVIDIA driver)">AMD, Intel ou NVIDIA (tem uma versão com o driver da NVIDIA)</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="rodape">
+  <img src="img/emblema.svg" alt="" width="40" height="40">
+  <p data-en="Matsu 27 OS is free and open source (GPL 3.0). The name comes from the Japanese pine, matsu (松).">O Matsu 27 OS é livre e de graça (GPL 3.0). O nome vem do pinheiro japonês, matsu (松).</p>
+  <a href="https://github.com/kaikyolf29-hub/Kaelix-OS" data-en="Source code on GitHub">Código no GitHub</a>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>

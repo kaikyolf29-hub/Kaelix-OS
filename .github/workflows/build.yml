@@ -14,6 +14,9 @@ on:
       - ".github/workflows/prints.yml"
       - ".github/workflows/publicar-estavel.yml"
       - ".github/workflows/testes.yml"
+      - ".github/workflows/site.yml"
+      - "site/**"
+      - "visual/site/**"
       - ".github/dependabot.yml"
   pull_request:
     branches: [main]
