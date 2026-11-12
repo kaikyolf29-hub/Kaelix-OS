@@ -158,8 +158,10 @@ QQC2.ApplicationWindow {
     // Com acao e funcao, mostra um botão (ex.: "Desfazer").
     //   janela.avisoRapido(t("Alarme criado", "Alarm created"), "certo")
     property var _aviso: ({ texto: "", tipo: "", acao: "", funcao: null })
+    property bool _avisoAberto: false
     function avisoRapido(texto, tipo, acao, funcao) {
         _aviso = { texto: texto, tipo: tipo || "", acao: acao || "", funcao: funcao || null };
+        _avisoAberto = true;
         tempoAviso.interval = tipo === "erro" ? 8000 : (acao ? 6000 : 3500);
         tempoAviso.restart();
     }
@@ -508,16 +510,18 @@ QQC2.ApplicationWindow {
     // ----- o aviso rápido embaixo, por cima de tudo -----
     Timer {
         id: tempoAviso
+        onTriggered: janela._avisoAberto = false
     }
     Rectangle {
         id: avisoBalao
-        readonly property bool mostrar: janela._aviso.texto !== "" && tempoAviso.running
+        readonly property bool mostrar: janela._aviso.texto !== "" && janela._avisoAberto
         readonly property color corTipo: janela._aviso.tipo === "erro" ? (janela.escuro ? "#ff8a8a" : "#c62828")
                                        : (janela._aviso.tipo === "certo" ? (janela.escuro ? "#5fd39a" : "#1f8a52") : janela.frente)
         z: 90
         anchors.horizontalCenter: parent.horizontalCenter
         y: parent.height - (mostrar ? height + Math.round(janela.gu * 1.2) : -Math.round(janela.gu * 0.4))
-        width: Math.min(linhaAviso.implicitWidth + Math.round(janela.gu * 1.6), parent.width - janela.gu * 4)
+        width: Math.min(linhaAviso.implicitWidth + linhaAviso.anchors.leftMargin + linhaAviso.anchors.rightMargin + 2,
+                        parent.width - janela.gu * 4)
         height: Math.round(janela.gu * 2.5)
         radius: height / 2
         opacity: mostrar ? 1 : 0
@@ -544,11 +548,13 @@ QQC2.ApplicationWindow {
                 easing.type: Easing.OutCubic
             }
         }
+        // Segura os cliques (não passam para o que está embaixo).
         MouseArea {
             anchors.fill: parent
-            hoverEnabled: true
-            // Com o mouse em cima, o aviso espera.
-            onContainsMouseChanged: if (containsMouse) tempoAviso.stop(); else if (avisoBalao.visible) tempoAviso.restart()
+        }
+        // Com o mouse em cima, o aviso espera.
+        HoverHandler {
+            onHoveredChanged: if (hovered) tempoAviso.stop(); else if (avisoBalao.mostrar) tempoAviso.restart()
         }
         RowLayout {
             id: linhaAviso
@@ -573,6 +579,7 @@ QQC2.ApplicationWindow {
                 texto: janela._aviso.acao
                 onClicado: {
                     tempoAviso.stop();
+                    janela._avisoAberto = false;
                     if (janela._aviso.funcao)
                         janela._aviso.funcao();
                 }

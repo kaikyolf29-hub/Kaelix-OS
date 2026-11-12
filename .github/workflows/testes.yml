@@ -37,9 +37,9 @@ jobs:
       - name: Testar os apps do dia a dia
         run: |
           set -e
-          for app in relogio calendario musica fotos; do
+          for app in relogio calendario musica fotos blocodenotas calculadora; do
             echo "::group::$app"
-            python3 "tests/test_$app.py"
+            if [[ -f tests/test_$app.js ]]; then node "tests/test_$app.js"; else python3 "tests/test_$app.py"; fi
             echo "::endgroup::"
           done
 

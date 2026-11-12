@@ -1,0 +1,31 @@
+[Desktop Entry]
+Type=Application
+Name=Notepad
+Name[pt_BR]=Bloco de notas
+Name[pt]=Bloco de notas
+GenericName=Text Editor
+GenericName[pt_BR]=Editor de texto
+GenericName[pt]=Editor de texto
+Comment=Edit text files in tabs, like the Windows 11 Notepad
+Comment[pt_BR]=Edite arquivos de texto em abas, como o Bloco de Notas do Windows 11
+Comment[pt]=Edite ficheiros de texto em separadores, como o Bloco de Notas do Windows 11
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.blocodenotas): assim a barra mostra o ícone e o nome certos. Com o
+# app já aberto, os arquivos chegam nele e abrem em abas novas.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.blocodenotas /usr/share/matsu/blocodenotas/Main.qml %F
+Icon=org.matsu.blocodenotas
+Terminal=false
+Categories=Utility;TextEditor;Qt;KDE;
+Keywords=bloco de notas;notepad;editor;texto;txt;arquivo de texto;anotações;código;log;markdown;csv;json;text;editor;plain text;notes;code;
+MimeType=text/plain;text/markdown;text/x-markdown;text/x-log;text/csv;text/tab-separated-values;text/x-csrc;text/x-chdr;text/x-c++src;text/x-c++hdr;text/x-java;text/x-python;text/x-python3;text/x-script.python;text/javascript;application/javascript;application/x-javascript;text/css;text/html;text/xml;application/xml;application/json;application/x-yaml;text/x-yaml;application/toml;text/x-ini;text/x-makefile;text/x-cmake;text/x-sql;text/x-tex;text/x-readme;text/x-changelog;text/x-copying;text/x-authors;text/x-install;application/x-shellscript;text/x-sh;application/x-desktop;application/x-subrip;text/vnd.trolltech.linguist;
+StartupNotify=true
+StartupWMClass=org.matsu.blocodenotas
+SingleMainWindow=true
+Actions=NovaAba;
+
+[Desktop Action NovaAba]
+Name=New tab
+Name[pt_BR]=Nova aba
+Name[pt]=Novo separador
+Icon=matsu-mais-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.blocodenotas /usr/share/matsu/blocodenotas/Main.qml --nova-aba

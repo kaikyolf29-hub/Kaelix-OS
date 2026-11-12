@@ -1,0 +1,36 @@
+[Desktop Entry]
+Type=Application
+Name=Calculator
+Name[pt_BR]=Calculadora
+Name[pt]=Calculadora
+GenericName=Calculator
+GenericName[pt_BR]=Calculadora
+GenericName[pt]=Calculadora
+Comment=Standard and scientific calculator with unit converter, history and memory, like the Windows Calculator
+Comment[pt_BR]=Calculadora padrão e científica, com conversor de unidades, histórico e memória, como a do Windows
+Comment[pt]=Calculadora padrão e científica, com conversor de unidades, histórico e memória, como a do Windows
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.calculadora): assim a barra mostra o ícone e o nome certos.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.calculadora /usr/share/matsu/calculadora/Main.qml
+Icon=org.matsu.calculadora
+Terminal=false
+Categories=Utility;Calculator;Qt;KDE;
+Keywords=calculadora;calcular;conta;contas;científica;porcentagem;raiz;conversor;unidades;converter;medidas;temperatura;calculator;calc;math;scientific;percent;converter;units;
+StartupNotify=true
+StartupWMClass=org.matsu.calculadora
+SingleMainWindow=true
+Actions=Cientifica;Conversor;
+
+[Desktop Action Cientifica]
+Name=Scientific
+Name[pt_BR]=Científica
+Name[pt]=Científica
+Icon=accessories-calculator
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.calculadora /usr/share/matsu/calculadora/Main.qml cientifica
+
+[Desktop Action Conversor]
+Name=Unit converter
+Name[pt_BR]=Conversor de unidades
+Name[pt]=Conversor de unidades
+Icon=accessories-calculator
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.calculadora /usr/share/matsu/calculadora/Main.qml conversor
