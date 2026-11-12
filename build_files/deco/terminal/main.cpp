@@ -1225,14 +1225,8 @@ void Cabecalho::desenharAba(QPainter &p, int i, const QRectF &r)
         }
     }
 
-    // O tracinho na cor da aba, embaixo da que está aberta (como no Gerenciador de
-    // tarefas). Ele cresce do meio para os lados quando a aba é escolhida.
-    if (a > 0.002) {
-        const qreal w = 16 * a;
-        p.setPen(Qt::NoPen);
-        p.setBrush(tema.corAba(aba.cor));
-        p.drawRoundedRect(QRectF(r.center().x() - w / 2, r.bottom() - 4, w, 2.5), 1.25, 1.25);
-    }
+    // A aba aberta se destaca só pelo fundo (sem tracinho colorido embaixo: o
+    // Kaiky achou desnecessário, 11/11/2026).
 
     // O símbolo na cor da aba: "›_", ou o do programa que está rodando nela.
     QColor cor = tema.corAba(aba.cor);

@@ -1502,11 +1502,6 @@ void Cabecalho::desenharAba(QPainter &p, int i, const QRectF &r)
             p.setPen(QPen(QBrush(brilho), 1));
             p.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), 7.5, 7.5);
         }
-        // O tracinho na cor da aba, embaixo da que está aberta.
-        const qreal w = 16 * a;
-        p.setPen(Qt::NoPen);
-        p.setBrush(tema.corAba(aba.cor));
-        p.drawRoundedRect(QRectF(r.center().x() - w / 2, r.bottom() - 4, w, 2.5), 1.25, 1.25);
     }
 
     // O símbolo da pasta na cor da aba.
