@@ -4,7 +4,7 @@ Comment=Ícones do Matsu OS, tema claro
 Inherits=breeze,hicolor
 Example=system-file-manager
 FollowsColorScheme=true
-Directories=apps/scalable,ajustes/scalable,actions/16,status/symbolic
+Directories=apps/scalable,ajustes/scalable,actions/16,status/symbolic,mimetypes/pequeno,mimetypes/pequeno@2x,mimetypes/scalable,places/pequeno,places/pequeno@2x,places/scalable
 
 [apps/scalable]
 Size=48
@@ -35,3 +35,50 @@ MinSize=8
 MaxSize=512
 Type=Scalable
 Context=Status
+
+# Pastas e tipos de arquivo (visual/icones/tipos.py; os nomes do Breeze viram
+# ligações no build_files/icones-de-arquivo.py). Até 36 px o desenho de traço da
+# lista; acima disso, a folha com o selo colorido e a pasta com o desenho.
+[mimetypes/pequeno]
+Size=22
+MinSize=8
+MaxSize=36
+Type=Scalable
+Context=MimeTypes
+
+[mimetypes/pequeno@2x]
+Size=22
+Scale=2
+MinSize=8
+MaxSize=36
+Type=Scalable
+Context=MimeTypes
+
+[mimetypes/scalable]
+Size=64
+MinSize=37
+MaxSize=512
+Type=Scalable
+Context=MimeTypes
+
+[places/pequeno]
+Size=22
+MinSize=8
+MaxSize=36
+Type=Scalable
+Context=Places
+
+[places/pequeno@2x]
+Size=22
+Scale=2
+MinSize=8
+MaxSize=36
+Type=Scalable
+Context=Places
+
+[places/scalable]
+Size=64
+MinSize=37
+MaxSize=512
+Type=Scalable
+Context=Places

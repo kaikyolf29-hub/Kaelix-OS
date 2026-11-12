@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+<defs><linearGradient id="frente" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b1a4fb"/><stop offset="1" stop-color="#988af4"/></linearGradient></defs>
+<path d="M4 13a4 4 0 0 1 4 -4h14.3a4 4 0 0 1 2.9 1.2l3.6 3.8H56a4 4 0 0 1 4 4v33a4 4 0 0 1 -4 4H8a4 4 0 0 1 -4 -4z" fill="#7c6be0"/>
+<path d="M4 23a4 4 0 0 1 4 -4h48a4 4 0 0 1 4 4v27a4 4 0 0 1 -4 4H8a4 4 0 0 1 -4 -4z" fill="url(#frente)"/>
+<path d="M8 19.5h48" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1"/>
+<g transform="translate(22.4 26.6) scale(0.8)" opacity="0.92">
+<path d="M12 4.5v10.5M7.4 10.6L12 15.2l4.6-4.6M5.5 19.5h13" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

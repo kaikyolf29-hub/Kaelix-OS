@@ -16,8 +16,9 @@ tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 cp -a "$ICONES/Matsu" "$ICONES/Matsu-claro" "$tmp/"
 node visual/icones/gerar.js "$tmp/Matsu/apps/scalable" >/dev/null
 node visual/icones/ajustes.js "$tmp/Matsu" "$tmp/Matsu-claro" >/dev/null
+python3 visual/icones/tipos.py "$tmp" >/dev/null
 for t in Matsu Matsu-claro; do
-  check "$t: os geradores estão em dia (rode visual/icones/ajustes.js e gerar.js)" \
+  check "$t: os geradores estão em dia (rode visual/icones/ajustes.js, gerar.js e tipos.py)" \
     "diff -r --no-dereference '$ICONES/$t' '$tmp/$t' >/dev/null"
 done
 
@@ -41,7 +42,8 @@ check "ícone de ação sem o quadrado do Matsu:${sem_quadrado:- nenhum}" "[[ -z
 check "Matsu-claro usa os mesmos ícones de apps" "[[ \$(readlink '$ICONES/Matsu-claro/apps') == ../Matsu/apps ]]"
 check "Matsu e Matsu-claro com os mesmos nomes" \
   "diff <(cd '$ICONES/Matsu' && find . ! -name index.theme -not -path './apps*' | sort) <(cd '$ICONES/Matsu-claro' && find . ! -name index.theme -not -path './apps*' | sort) >/dev/null"
-for d in apps/scalable ajustes/scalable actions/16 status/symbolic; do
+for d in apps/scalable ajustes/scalable actions/16 status/symbolic mimetypes/pequeno mimetypes/pequeno@2x mimetypes/scalable \
+         places/pequeno places/pequeno@2x places/scalable; do
   check "index.theme do Matsu lista a pasta $d" "grep -q '^Directories=.*$d' '$ICONES/Matsu/index.theme'"
   check "index.theme do Matsu-claro lista a pasta $d" "grep -q '^Directories=.*$d' '$ICONES/Matsu-claro/index.theme'"
 done
@@ -83,6 +85,40 @@ for n in edit-copy edit-paste help-about tools-report-bug debug-run system-log-o
          printer network-connect applications-games applications-internet; do
   check "$n continua com o Breeze" "! compgen -G '$ICONES/Matsu/*/*/$n.svg' >/dev/null"
 done
+
+# 6b) Pastas e tipos de arquivo: cada nome do Breeze vira ligação para o desenho
+# certo do Matsu (build_files/icones-de-arquivo.py, rodado num Breeze de mentira).
+falso="$tmp/raiz/usr/share/icons"
+mkdir -p "$falso"
+cp -a "$ICONES/Matsu" "$ICONES/Matsu-claro" "$falso/"
+for b in breeze breeze-dark; do
+  mkdir -p "$falso/$b/mimetypes/22" "$falso/$b/places/22"
+  for n in video-x-matroska application-x-cd-image application-vnd.efi.iso application-pdf application-zip \
+           text-markdown text-x-python image-png audio-mpeg application-x-rpm application-x-krita \
+           application-vnd.oasis.opendocument.spreadsheet video-x-generic-symbolic; do
+    touch "$falso/$b/mimetypes/22/$n.svg"
+  done
+  for n in folder folder-download folder-pictures folder-red folder-open user-home folder-games folder-symbolic; do
+    touch "$falso/$b/places/22/$n.svg"
+  done
+done
+python3 build_files/icones-de-arquivo.py "$tmp/raiz" >/dev/null
+liga() { [[ $(readlink "$falso/Matsu/$1") == "$2" && $(readlink "$falso/Matsu-claro/$1") == "$2" ]]; }
+for par in video-x-matroska:video application-x-cd-image:disco application-vnd.efi.iso:disco application-pdf:pdf \
+           application-zip:compactado text-markdown:texto text-x-python:codigo image-png:imagem audio-mpeg:audio \
+           application-x-rpm:pacote application-vnd.oasis.opendocument.spreadsheet:planilha; do
+  check "${par%%:*} vira o desenho ${par#*:}" "liga mimetypes/pequeno/${par%%:*}.svg matsu-tipo-${par#*:}.svg && liga mimetypes/scalable/${par%%:*}.svg matsu-tipo-${par#*:}.svg"
+done
+check "inode-directory vira a pasta do Matsu" "liga mimetypes/pequeno/inode-directory.svg ../../places/pequeno/matsu-pasta.svg"
+for par in folder: folder-download:-downloads folder-pictures:-imagens user-home:-pessoal folder-games:-jogos; do
+  check "${par%%:*} vira a pasta matsu-pasta${par#*:}" "liga places/scalable/${par%%:*}.svg matsu-pasta${par#*:}.svg"
+done
+for n in places/scalable/folder-red places/pequeno/folder-open places/pequeno/folder-symbolic \
+         mimetypes/pequeno/video-x-generic-symbolic mimetypes/pequeno/application-x-krita; do
+  check "$n continua com o Breeze" "[[ ! -e '$falso/Matsu/$n.svg' ]]"
+done
+check "todo desenho de tipo existe nos dois temas" \
+  "[[ -z \$(find '$falso'/Matsu*/mimetypes '$falso'/Matsu*/places -xtype l) ]]"
 
 # 7) O build.sh troca o ícone dos dois apps que pedem ícone de ação.
 check "build.sh troca o ícone do visualizador de falhas" "grep -q 'org.kde.drkonqi.coredump.gui:matsu-ajuste-falhas' build_files/build.sh"

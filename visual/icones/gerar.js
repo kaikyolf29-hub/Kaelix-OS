@@ -41,7 +41,7 @@ function velocimetro(cx, cy, r, nivel) {
 
 const ICONES = {
   arquivos: {
-    nomes: ['system-file-manager', 'org.kde.dolphin'],
+    nomes: ['org.matsu.arquivos', 'system-file-manager', 'org.kde.dolphin'],
     svg: base('arq', '#7C8DFF', '#4353D6') +
       `<path d="M66 98 v-6 a6 6 0 0 1 6 -6 h34 l14 16 h64 a6 6 0 0 1 6 6 v62 h-124 z" fill="${B}" opacity=".5" stroke="${B}" stroke-opacity=".5" stroke-width="6" ${liso}/>` +
       `<path d="M58 124 h140 l-9 58 h-122 z" fill="${B}" stroke="${B}" stroke-width="10" ${liso}/>`,

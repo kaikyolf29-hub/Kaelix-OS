@@ -317,6 +317,40 @@ if grep -Rls '^X-KDE-Shortcuts=.*Ctrl+Alt+T' /usr/share/kglobalaccel/ | grep -v 
   echo "ERRO: outro app ainda segura o Ctrl+Alt+T (acima)." >&2
   exit 1
 fi
+# Arquivos do Matsu (matsu-arquivos), compilado na etapa "deco": a janela de vidro
+# da imagem escolhida, com a lista do Dolphin (a peça dolphinpart) dentro. Vira o
+# app de pastas padrão, o "Mostrar na pasta" dos outros apps e o Meta+E; o nome
+# Dolphin some do menu, da barra e das buscas.
+if [[ -s /deco/matsu-arquivos ]]; then
+  install -Dm0755 /deco/matsu-arquivos /usr/bin/matsu-arquivos
+  find /usr/lib64/qt6/plugins -path '*kf6/parts/dolphinpart.so' | grep -q . \
+    || { echo "ERRO: a peça do Dolphin (dolphinpart) não está na imagem." >&2; exit 1; }
+  echo "matsu-arquivos instalado"
+else
+  echo "ERRO: o matsu-arquivos não foi compilado." >&2
+  exit 1
+fi
+dolphin_app=/usr/share/applications/org.kde.dolphin.desktop
+if [[ -f $dolphin_app ]]; then
+  sed -i --follow-symlinks '/^X-KDE-Shortcuts=/d' "$dolphin_app"
+  grep -q '^NoDisplay=' "$dolphin_app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$dolphin_app"
+fi
+rm -f /usr/share/kglobalaccel/org.kde.dolphin.desktop
+ln -sf ../applications/org.matsu.arquivos.desktop /usr/share/kglobalaccel/org.matsu.arquivos.desktop
+# "Mostrar na pasta" (org.freedesktop.FileManager1): só o nosso atende.
+rm -f /usr/share/dbus-1/services/org.kde.dolphin.FileManager1.service
+test -f /usr/share/dbus-1/services/org.matsu.arquivos.FileManager1.service
+# Pastas abrem nos Arquivos do Matsu (em todos os mimeapps.list que o KDE lê).
+for f in /etc/xdg/mimeapps.list /etc/xdg/kde-mimeapps.list /usr/share/applications/mimeapps.list \
+         /usr/share/kde-settings/kde-profile/default/xdg/mimeapps.list \
+         /usr/share/kde-settings/kde-profile/default/xdg/kde-mimeapps.list; do
+  if [[ $f == /etc/xdg/mimeapps.list || -e $f ]]; then
+    kwriteconfig6 --file "$f" --group "Default Applications" --key inode/directory org.matsu.arquivos.desktop
+    kwriteconfig6 --file "$f" --group "Added Associations" --key inode/directory "org.matsu.arquivos.desktop;"
+    chmod 0644 "$f"
+  fi
+done
+update-desktop-database -q /usr/share/applications 2>/dev/null || true
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
@@ -339,8 +373,24 @@ kwriteconfig6 --file /etc/xdg/konsolerc --group KonsoleWindow --key ShowWindowTi
 kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key GlobalViewProps true
 kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key ShowStatusBar true
 kwriteconfig6 --file /etc/xdg/dolphinrc --group General --key ShowFullPathInTitlebar false
+# Lista em detalhes como no Windows: sem a setinha de abrir pasta dentro da lista
+# (e sem as linhas de árvore que vêm com ela).
+kwriteconfig6 --file /etc/xdg/dolphinrc --group DetailsMode --key ExpandableFolders false
+# Linhas mais baixas, como na imagem escolhida: ícone pequeno também com miniatura.
+kwriteconfig6 --file /etc/xdg/dolphinrc --group DetailsMode --key IconSize 22
+kwriteconfig6 --file /etc/xdg/dolphinrc --group DetailsMode --key PreviewSize 22
+# Menu do botão direito sem "Atividades" (o Matsu não usa atividades do Plasma).
+kwriteconfig6 --file /etc/xdg/kservicemenurc --group Show --key kactivitymanagerd_fileitem_linking_plugin false
+chmod 0644 /etc/xdg/kservicemenurc
+# Tamanhos como no Windows: "1,2 GB" e "412 MB" (e não "GiB"/"MiB").
+kwriteconfig6 --file /etc/xdg/kdeglobals --group Locale --key BinaryUnitDialect 1
 chmod 0644 /etc/xdg/konsolerc /etc/xdg/dolphinrc
 gtk-update-icon-cache -f /usr/share/icons/hicolor 2>/dev/null || true
+# Pastas e tipos de arquivo no desenho do Matsu (lavanda, folha com selo): cada
+# nome que o Breeze tem vira uma ligação para o desenho da categoria.
+python3 "$CTX/build_files/icones-de-arquivo.py"
+test -L /usr/share/icons/Matsu/mimetypes/pequeno/video-x-matroska.svg
+test -L /usr/share/icons/Matsu-claro/places/scalable/folder-download.svg
 # Ícones próprios dos apps do sistema (tema de ícones Matsu). Fica no registro
 # qual nome de ícone cada app pede, para conferir que o nosso está cobrindo.
 grep -H '^Icon=' /usr/share/applications/org.kde.{dolphin,konsole,discover,plasma-systemmonitor,kwrite,kate,spectacle,gwenview}.desktop \

@@ -425,6 +425,14 @@ for i in "${!APPS[@]}"; do
   hmp key esc
 done
 sleep 3
+hmp key ctrl-alt-t
+sleep 8
+hmp type "cat /tmp/matsu-teste-apps.log"
+hmp key ret
+sleep 2
+shot "41-registro-dos-apps"
+hmp key alt-f4
+sleep 2
 
 # Tela de bloqueio (Meta+L), com o papel de parede do Matsu. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que

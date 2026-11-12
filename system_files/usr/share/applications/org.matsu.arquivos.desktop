@@ -1,0 +1,24 @@
+[Desktop Entry]
+Type=Application
+Name=Files
+Name[pt_BR]=Arquivos
+GenericName=File manager
+GenericName[pt_BR]=Gerenciador de arquivos
+Comment=Folders, disks and files, with tabs and glass
+Comment[pt_BR]=Pastas, discos e arquivos, com abas e vidro
+Exec=matsu-arquivos %U
+Icon=org.matsu.arquivos
+Terminal=false
+StartupNotify=true
+StartupWMClass=org.matsu.arquivos
+MimeType=inode/directory;
+Categories=Qt;KDE;System;FileTools;FileManager;
+Keywords=files;folders;explorer;file manager;disk;dolphin;
+Keywords[pt_BR]=arquivos;pastas;explorador;gerenciador de arquivos;disco;documentos;downloads;
+X-KDE-Shortcuts=Meta+E
+Actions=NovaJanela;
+
+[Desktop Action NovaJanela]
+Name=New Window
+Name[pt_BR]=Nova janela
+Exec=matsu-arquivos

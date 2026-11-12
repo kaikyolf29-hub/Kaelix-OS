@@ -75,3 +75,13 @@ cmake -S "${HERE}/terminal" -B /tmp/terminal-build -G Ninja -DCMAKE_BUILD_TYPE=R
 cmake --build /tmp/terminal-build
 install -Dm0755 /tmp/terminal-build/matsu-terminal /out/matsu-terminal
 log "matsu-terminal compilado: $(stat -c %s /out/matsu-terminal) bytes"
+
+# Os Arquivos do Matsu (ver arquivos/main.cpp): janela própria de vidro, igual à
+# imagem escolhida, com a lista do Dolphin (a peça dolphinpart) dentro.
+log "Compilando o matsu-arquivos"
+dnf5 -y install kf6-kparts-devel kf6-kio-devel kf6-solid-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
+  kf6-kwindowsystem-devel qt6-qtbase-devel
+cmake -S "${HERE}/arquivos" -B /tmp/arquivos-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build /tmp/arquivos-build
+install -Dm0755 /tmp/arquivos-build/matsu-arquivos /out/matsu-arquivos
+log "matsu-arquivos compilado: $(stat -c %s /out/matsu-arquivos) bytes"
