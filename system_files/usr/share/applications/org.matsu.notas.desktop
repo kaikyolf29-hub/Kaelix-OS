@@ -1,0 +1,36 @@
+[Desktop Entry]
+Type=Application
+Name=Notes
+Name[pt_BR]=Notas
+Name[pt]=Notas
+GenericName=Quick Notes
+GenericName[pt_BR]=Notas rápidas
+GenericName[pt]=Notas rápidas
+Comment=Quick notes and checklists that save themselves, like Apple Notes and Google Keep
+Comment[pt_BR]=Notas rápidas e listas de tarefas que se salvam sozinhas, como o Notas do Mac e o Google Keep
+Comment[pt]=Notas rápidas e listas de tarefas que se guardam sozinhas, como as Notas do Mac e o Google Keep
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.notas): assim a barra mostra o ícone e o nome certos.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.notas /usr/share/matsu/notas/Main.qml
+Icon=org.matsu.notas
+Terminal=false
+Categories=Utility;Office;Qt;KDE;
+Keywords=notas;nota;lembrete;lembretes;lista;listas;tarefas;compras;anotar;anotações;rascunho;ideias;post-it;autoadesiva;notes;note;memo;reminder;checklist;todo;sticky;keep;
+StartupNotify=true
+StartupWMClass=org.matsu.notas
+SingleMainWindow=true
+Actions=NovaNota;NovaLista;
+
+[Desktop Action NovaNota]
+Name=New note
+Name[pt_BR]=Nova nota
+Name[pt]=Nova nota
+Icon=matsu-nova-tarefa-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.notas /usr/share/matsu/notas/Main.qml --nova
+
+[Desktop Action NovaLista]
+Name=New checklist
+Name[pt_BR]=Nova lista
+Name[pt]=Nova lista
+Icon=matsu-processos-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.notas /usr/share/matsu/notas/Main.qml --lista
