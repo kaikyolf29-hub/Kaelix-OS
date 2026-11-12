@@ -119,8 +119,8 @@ function fixadosPadrao() {
         "org.matsu.terminal.desktop",
         "steam.desktop",
         "code.desktop",
-        "org.kde.discover.desktop",
-        "org.kde.plasma-systemmonitor.desktop"
+        "org.matsu.loja.desktop",
+        "org.matsu.tarefas.desktop"
     ];
     for (var c = 0; c < candidatos.length; c++) {
         if (applicationExists(candidatos[c])) {

@@ -404,6 +404,38 @@ shot "36d-jogos-placa"
 hmp key alt-f4
 sleep 2
 
+# Loja do Matsu: Início (a vitrine e as seções, com o catálogo do Flathub),
+# Apps (Ctrl+2), Jogos (Ctrl+3), Na web (Ctrl+4), Biblioteca (Ctrl+5) e a
+# página de um app (aberta pelo link appstream://, como os outros apps fazem).
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml; exit"
+hmp key ret
+sleep 25
+shot "37-loja-inicio"
+hmp key ctrl-2
+sleep 4
+shot "37b-loja-apps"
+hmp key ctrl-3
+sleep 4
+shot "37c-loja-jogos"
+hmp key ctrl-4
+sleep 6
+shot "37d-loja-na-web"
+hmp key ctrl-5
+sleep 4
+shot "37e-loja-biblioteca"
+hmp key alt-f4
+sleep 2
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f xdg-open appstream://com.brave.Browser; exit"
+hmp key ret
+sleep 20
+shot "37f-loja-pagina-do-app"
+hmp key alt-f4
+sleep 2
+
 # Cada app do menu, um por um (40-app-*), para conferir tela por tela o tema
 # do Matsu, o português e se sobrou nome da base. O script de dentro
 # (teste-apps.sh) abre um app a cada 14 segundos; aqui a foto sai perto do fim

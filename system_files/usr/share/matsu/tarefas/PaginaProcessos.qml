@@ -322,7 +322,7 @@ FocusScope {
                 boundsBehavior: Flickable.StopAtBounds
                 currentIndex: -1
                 highlightFollowsCurrentItem: false
-                QQC2.ScrollBar.vertical: QQC2.ScrollBar {
+                QQC2.ScrollBar.vertical: BarraRolagem {
                     id: rolagem
                 }
 

@@ -55,7 +55,7 @@ const ICONES = {
   },
   // Loja: sacola azul com a seta de baixar (o Kaiky pediu tirar o rosa, 10/11/2026).
   loja: {
-    nomes: ['plasmadiscover', 'org.kde.discover'],
+    nomes: ['org.matsu.loja', 'plasmadiscover', 'org.kde.discover'],
     svg: base('loja', '#63D0FF', '#2867E3') +
       `<path d="M100 104 v-12 a28 28 0 0 1 56 0 v12" fill="none" stroke="${B}" stroke-width="13" ${liso}/>` +
       `<path d="M70 104 h116 l-6 74 a14 14 0 0 1 -14 13 h-76 a14 14 0 0 1 -14 -13 z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>` +

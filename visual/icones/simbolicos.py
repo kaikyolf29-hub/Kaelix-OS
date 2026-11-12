@@ -140,6 +140,36 @@ ICONES = {
     "matsu-recarregar": svg(traco("M19.5 12a7.5 7.5 0 1 1 -2.2 -5.3M19.5 4.5v4.2h-4.2")),
     "matsu-processo": svg(traco("M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1 -1.5 1.5H5a1.5 1.5 0 0 1 -1.5 -1.5V7A1.5 1.5 0 0 1 5 5.5z"
                                  "M7 10l2.5 2L7 14M11.5 14.5H16")),
+    # Loja do Matsu: Apps (quatro quadrados), Na web (globo), Biblioteca (livros), atualizar.
+    "matsu-apps": svg(traco("M5.5 4h3a1.5 1.5 0 0 1 1.5 1.5v3A1.5 1.5 0 0 1 8.5 10h-3A1.5 1.5 0 0 1 4 8.5v-3A1.5 1.5 0 0 1 5.5 4z"
+                            "M15.5 4h3A1.5 1.5 0 0 1 20 5.5v3a1.5 1.5 0 0 1 -1.5 1.5h-3A1.5 1.5 0 0 1 14 8.5v-3A1.5 1.5 0 0 1 15.5 4z"
+                            "M5.5 14h3a1.5 1.5 0 0 1 1.5 1.5v3A1.5 1.5 0 0 1 8.5 20h-3A1.5 1.5 0 0 1 4 18.5v-3A1.5 1.5 0 0 1 5.5 14z"
+                            "M17 14v6M14 17h6")),
+    "matsu-web": svg(traco("M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0 -17zM3.5 12h17"
+                           "M12 3.5c2.3 2.5 3.4 5.3 3.4 8.5s-1.1 6 -3.4 8.5c-2.3 -2.5 -3.4 -5.3 -3.4 -8.5s1.1 -6 3.4 -8.5z")),
+    "matsu-biblioteca": svg(traco("M5 4.5h2.5a1 1 0 0 1 1 1v13a1 1 0 0 1 -1 1H5a1 1 0 0 1 -1 -1v-13a1 1 0 0 1 1 -1z"
+                                  "M11 4.5h2.5a1 1 0 0 1 1 1v13a1 1 0 0 1 -1 1H11a1 1 0 0 1 -1 -1v-13a1 1 0 0 1 1 -1z"
+                                  "M15.2 6.4l2.3 -.6a1 1 0 0 1 1.2 .7l2.9 12a1 1 0 0 1 -.7 1.2l-2.3 .6a1 1 0 0 1 -1.2 -.7l-2.9 -12a1 1 0 0 1 .7 -1.2z")),
+    "matsu-verificado": svg('<path class="ColorScheme-Text" fill="currentColor" stroke="none" d="M12 2.5l2.3 1.7 2.8 -.2 1 2.7 2.4 1.5'
+                            ' -.8 2.7.8 2.7 -2.4 1.5 -1 2.7 -2.8 -.2L12 19.3l-2.3 -1.7 -2.8.2 -1 -2.7 -2.4 -1.5.8 -2.7 -.8 -2.7 2.4 -1.5 1 -2.7 2.8.2z'
+                            'M8.2 11.2l-1.3 1.3 3.4 3.4 6.8 -6.8 -1.3 -1.3 -5.5 5.5z" fill-rule="evenodd"/>\n'),
+    "matsu-voltar": svg(traco("M15 5l-7 7 7 7")),
+    # Alerta: triângulo com a exclamação (avisos da loja).
+    "matsu-alerta": svg(traco("M10.3 4.2a2 2 0 0 1 3.4 0l7.4 12.8a2 2 0 0 1 -1.7 3h-14.8a2 2 0 0 1 -1.7 -3z"),
+                        traco("M12 9.5v4"), '<circle ' + CHEIO + ' cx="12" cy="16.8" r="1.15"/>\n'),
+    # Lixeira: remover um app.
+    "matsu-lixeira": svg(traco("M4.5 6.5h15M9.5 6.5v-1.6a1.4 1.4 0 0 1 1.4 -1.4h2.2a1.4 1.4 0 0 1 1.4 1.4v1.6"
+                               "M6.3 6.5l.9 12.4a1.8 1.8 0 0 0 1.8 1.6h6a1.8 1.8 0 0 0 1.8 -1.6l.9 -12.4M10.2 10.5v6M13.8 10.5v6")),
+    # Abrir fora (o site de um app, no navegador).
+    "matsu-link": svg(traco("M13.5 4.5h6v6M19.5 4.5l-8 8M17.5 13.5v4.2a1.8 1.8 0 0 1 -1.8 1.8h-9.4a1.8 1.8 0 0 1 -1.8 -1.8v-9.4"
+                            "a1.8 1.8 0 0 1 1.8 -1.8h4.2")),
+    # Escudo com o certinho: licença e segurança na página de cada app.
+    "matsu-escudo": svg(traco("M12 3l7 2.8v5.4c0 4.4 -2.9 8 -7 9.8c-4.1 -1.8 -7 -5.4 -7 -9.8v-5.4z"), traco("M8.8 12.2l2.2 2.2 4.2 -4.4")),
+    # Coração: doar para quem faz o app.
+    "matsu-coracao": svg(traco("M12 19.5s-7.5 -4.4 -7.5 -10a4.2 4.2 0 0 1 7.5 -2.6a4.2 4.2 0 0 1 7.5 2.6c0 5.6 -7.5 10 -7.5 10z")),
+    # Etiqueta: versão.
+    "matsu-etiqueta": svg(traco("M3.8 12.6v-7a1.8 1.8 0 0 1 1.8 -1.8h7l7.6 7.6a1.8 1.8 0 0 1 0 2.5l-6.5 6.5a1.8 1.8 0 0 1 -2.5 0z"),
+                          '<circle ' + CHEIO + ' cx="8.3" cy="8.3" r="1.4"/>\n'),
     "matsu-engrenagem": svg(traco("M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0 -6z"
                                    "M10.3 3.5h3.4l.5 2.4 1.7 1 2.3 -.8 1.7 2.9 -1.8 1.6v2l1.8 1.6 -1.7 2.9 -2.3 -.8 -1.7 1 -.5 2.4h-3.4l-.5 -2.4 -1.7 -1 -2.3 .8 -1.7 -2.9 1.8 -1.6v-2L4.1 9l1.7 -2.9 2.3 .8 1.7 -1z")),
 }

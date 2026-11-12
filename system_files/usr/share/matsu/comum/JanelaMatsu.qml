@@ -83,7 +83,7 @@ QQC2.ApplicationWindow {
 
     // ----- números do jeito da pessoa (vírgula no Brasil) -----
     function num(valor, casas) {
-        return Number(valor).toLocaleString(local, "f", casas);
+        return Number(valor).toLocaleString(local, "f", casas === undefined ? 0 : casas);
     }
     function porcento(v) {
         return num(v, 0) + "%";

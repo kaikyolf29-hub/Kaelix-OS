@@ -340,13 +340,27 @@ ln -sf ../applications/org.matsu.arquivos.desktop /usr/share/kglobalaccel/org.ma
 # "Mostrar na pasta" (org.freedesktop.FileManager1): só o nosso atende.
 rm -f /usr/share/dbus-1/services/org.kde.dolphin.FileManager1.service
 test -f /usr/share/dbus-1/services/org.matsu.arquivos.FileManager1.service
-# Pastas abrem nos Arquivos do Matsu (em todos os mimeapps.list que o KDE lê).
+# Loja do Matsu no lugar do Discover, e o Gerenciador de tarefas do Matsu no
+# lugar do Monitor do sistema do KDE: os dois do KDE saem do menu, da barra e
+# das buscas (continuam na imagem). Os links appstream:// dos outros apps e o
+# .flatpakref do botão "Instalar" do site do Flathub abrem na Loja.
+test -f /usr/share/applications/org.matsu.loja.desktop
+python3 -c "import ast; ast.parse(open('/usr/share/matsu/loja/ajudante.py').read())"
+for app in /usr/share/applications/org.kde.discover*.desktop /usr/share/applications/org.kde.plasma-systemmonitor.desktop; do
+  [[ -f $app ]] || continue
+  grep -q '^NoDisplay=' "$app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$app"
+done
+# Pastas abrem nos Arquivos do Matsu, e os pedidos de app na Loja (em todos os
+# mimeapps.list que o KDE lê).
 for f in /etc/xdg/mimeapps.list /etc/xdg/kde-mimeapps.list /usr/share/applications/mimeapps.list \
          /usr/share/kde-settings/kde-profile/default/xdg/mimeapps.list \
          /usr/share/kde-settings/kde-profile/default/xdg/kde-mimeapps.list; do
   if [[ $f == /etc/xdg/mimeapps.list || -e $f ]]; then
-    kwriteconfig6 --file "$f" --group "Default Applications" --key inode/directory org.matsu.arquivos.desktop
-    kwriteconfig6 --file "$f" --group "Added Associations" --key inode/directory "org.matsu.arquivos.desktop;"
+    for par in inode/directory:org.matsu.arquivos.desktop x-scheme-handler/appstream:org.matsu.loja.desktop \
+               application/vnd.flatpak.ref:org.matsu.loja.desktop; do
+      kwriteconfig6 --file "$f" --group "Default Applications" --key "${par%%:*}" "${par#*:}"
+      kwriteconfig6 --file "$f" --group "Added Associations" --key "${par%%:*}" "${par#*:};"
+    done
     chmod 0644 "$f"
   fi
 done

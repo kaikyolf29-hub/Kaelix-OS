@@ -16,7 +16,7 @@
     </entry>
     <!-- O que aparece no lugar dos recentes numa conta nova. -->
     <entry name="fixados" type="StringList">
-      <default>org.matsu.arquivos.desktop,preferred://browser,org.matsu.terminal.desktop,org.kde.discover.desktop,org.matsu.ajustes.desktop</default>
+      <default>org.matsu.arquivos.desktop,preferred://browser,org.matsu.terminal.desktop,org.matsu.loja.desktop,org.matsu.ajustes.desktop</default>
     </entry>
     <entry name="fixadosProntos" type="Bool">
       <default>false</default>

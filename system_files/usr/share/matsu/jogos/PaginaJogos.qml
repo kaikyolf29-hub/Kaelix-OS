@@ -90,7 +90,7 @@ Item {
             model: pagina.lista
             boundsBehavior: Flickable.StopAtBounds
             keyNavigationEnabled: true
-            QQC2.ScrollBar.vertical: QQC2.ScrollBar {}
+            QQC2.ScrollBar.vertical: BarraRolagem {}
 
             delegate: Item {
                 id: celula

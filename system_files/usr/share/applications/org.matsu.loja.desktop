@@ -1,0 +1,45 @@
+[Desktop Entry]
+Type=Application
+Name=Matsu Store
+Name[pt_BR]=Loja do Matsu
+Name[pt]=Loja do Matsu
+GenericName=App store
+GenericName[pt_BR]=Loja de apps
+GenericName[pt]=Loja de aplicações
+Comment=Apps, games and websites as apps, with photos, in one click
+Comment[pt_BR]=Apps, jogos e sites como app, com fotos, num clique
+Comment[pt]=Aplicações, jogos e sites como aplicação, com fotos, num clique
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.loja): assim a barra mostra o ícone e o nome certos. O %U recebe o
+# appstream://<id> dos outros apps e o .flatpakref do botão "Instalar" do Flathub.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml %U
+Icon=org.matsu.loja
+Terminal=false
+Categories=System;PackageManager;Qt;KDE;
+Keywords=loja;store;apps;aplicativos;programas;instalar;install;baixar;download;flatpak;flathub;jogos;games;atualizar;update;sites;web;
+MimeType=x-scheme-handler/appstream;application/vnd.flatpak.ref;
+StartupNotify=true
+StartupWMClass=org.matsu.loja
+SingleMainWindow=true
+Actions=Apps;Jogos;Biblioteca;
+
+[Desktop Action Apps]
+Name=Apps
+Name[pt_BR]=Apps
+Name[pt]=Aplicações
+Icon=matsu-apps-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml apps
+
+[Desktop Action Jogos]
+Name=Games
+Name[pt_BR]=Jogos
+Name[pt]=Jogos
+Icon=matsu-jogos-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml jogos
+
+[Desktop Action Biblioteca]
+Name=Library and updates
+Name[pt_BR]=Biblioteca e atualizações
+Name[pt]=Biblioteca e atualizações
+Icon=matsu-biblioteca-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml biblioteca

@@ -317,7 +317,7 @@ Item {
                 contentHeight: corpo.implicitHeight + janela.gu * 2
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                QQC2.ScrollBar.vertical: QQC2.ScrollBar {}
+                QQC2.ScrollBar.vertical: BarraRolagem {}
 
                 ColumnLayout {
                     id: corpo

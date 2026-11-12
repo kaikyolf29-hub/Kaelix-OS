@@ -30,6 +30,8 @@ jobs:
         run: python3 tests/test_tarefas.py
       - name: Testar o ajudante da Central de jogos
         run: python3 tests/test_jogos.py
+      - name: Testar o ajudante da Loja do Matsu
+        run: python3 tests/test_loja.py
 
   # Inventário dos ícones da imagem publicada (só quando o commit pede, com
   # "[inventario]" na mensagem): os apps do menu e as páginas das Configurações,

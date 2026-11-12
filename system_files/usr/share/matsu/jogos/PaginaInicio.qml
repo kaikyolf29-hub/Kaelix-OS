@@ -18,7 +18,7 @@ Flickable {
     contentHeight: coluna.implicitHeight + 2 * margem
     clip: true
     boundsBehavior: Flickable.StopAtBounds
-    QQC2.ScrollBar.vertical: QQC2.ScrollBar {}
+    QQC2.ScrollBar.vertical: BarraRolagem {}
 
     ColumnLayout {
         id: coluna
