@@ -52,7 +52,7 @@ jobs:
             image: matsu-os-nvidia
             base: ghcr.io/ublue-os/kinoite-nvidia
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Conferir a chave pública
         run: |

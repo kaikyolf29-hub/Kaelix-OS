@@ -46,7 +46,7 @@ jobs:
           - image: matsu-os-nvidia
             suffix: nvidia
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Preparar nomes
         env:
