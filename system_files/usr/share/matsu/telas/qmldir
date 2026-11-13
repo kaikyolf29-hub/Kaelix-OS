@@ -1,0 +1,9 @@
+# Peças das telas de login e de bloqueio do Matsu (no jeito do Mac): a hora grande,
+# a foto da pessoa, a senha em pílula de vidro e os botões redondos.
+# Quem usa: o LockScreenUi.qml do KDE (trocado na montagem por build_files/telas-matsu.py)
+# e o greeter do Plasma Login Manager. Importe com: import "file:///usr/share/matsu/telas" as Matsu
+Relogio 1.0 Relogio.qml
+Pessoa 1.0 Pessoa.qml
+CampoSenha 1.0 CampoSenha.qml
+BotaoRedondo 1.0 BotaoRedondo.qml
+Fundo 1.0 Fundo.qml

@@ -1,0 +1,22 @@
+# Arquivos que o fluxo "Extrair arquivos da imagem" (.github/workflows/extrair.yml)
+# copia da imagem do canal teste para o ramo "extraidos" do repositório.
+# Serve para ler as peças do KDE/Fedora que o Matsu troca (este ambiente de
+# trabalho não baixa pacotes do Fedora). Uma linha por item:
+#   caminho ou padrão (glob): copia os arquivos (pastas inteiras, até 1 MB cada)
+#   rpm:<pacote>: a lista de arquivos do pacote e os de texto (qml, js, json...)
+# Mudar só esta lista não monta imagem nova (tests/** fica fora do build.yml).
+
+# Telas de login (Plasma Login Manager) e bloqueio
+rpm:plasma-login-manager
+rpm:kscreenlocker
+/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen
+/usr/lib64/qt6/qml/org/kde/breeze/components
+/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents
+/usr/share/plasma/look-and-feel/org.matsu.escuro.desktop
+/etc/plasmalogin.conf
+/usr/lib/plasmalogin
+/usr/share/plasmalogin
+
+# Primeiro uso (criar a conta) e janela de senha
+rpm:plasma-setup
+rpm:polkit-kde

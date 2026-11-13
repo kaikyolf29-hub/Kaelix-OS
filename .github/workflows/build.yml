@@ -15,6 +15,7 @@ on:
       - ".github/workflows/publicar-estavel.yml"
       - ".github/workflows/testes.yml"
       - ".github/workflows/site.yml"
+      - ".github/workflows/extrair.yml"
       - "site/**"
       - "visual/site/**"
       - ".github/dependabot.yml"

@@ -78,6 +78,13 @@ ICONES = {
     "matsu-cadeado": svg(traco("M7.5 11V8a4.5 4.5 0 0 1 9 0v3"
                                 "M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2z")),
     "matsu-desligar": svg(traco("M12 3.5v8M6.7 6.6a8 8 0 1 0 10.6 0")),
+    # Telas de login e bloqueio: reiniciar, trocar de pessoa, outra pessoa e teclado.
+    "matsu-reiniciar": svg(traco("M19.5 12a7.5 7.5 0 1 1 -2.2 -5.3M19.5 4.2v4.3h-4.3")),
+    "matsu-trocar-usuario": svg(traco("M9.5 4a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0 -7zM3.5 20a6 6 0 0 1 10.2 -4.3"
+                                       "M15.5 14.5h5.5M18.8 12.3l2.2 2.2 -2.2 2.2M21 19.5h-5.5M17.7 17.3l-2.2 2.2 2.2 2.2")),
+    "matsu-outra-pessoa": svg(traco("M10 4a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0 -7zM4 20a6 6 0 0 1 9.4 -4.9M18 14v6M15 17h6")),
+    "matsu-teclado": svg(traco("M4.5 6h15a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-15a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2z"
+                                "M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M8 14h8")),
     # Ajustes do Matsu (a janela de ajustes, como a do Mac).
     "matsu-aparencia": svg(traco("M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0 -17z"),
                             f'<path {CHEIO} d="M12 3.5a8.5 8.5 0 0 1 0 17z"/>\n'),

@@ -267,6 +267,30 @@ check "LANGUAGE vale mais que o LANG" linha "idioma=pt"
 LC_ALL="" LC_MESSAGES="" LANGUAGE="" MATSU_LANG="" LANG=pt_BR.UTF-8 run estado idioma
 check "o menu pergunta só o idioma" test "$OUT" = "idioma=pt"
 
+echo "Sua conta: nome e foto da pessoa"
+mkdir -p "$WORK/contas"
+MATSU_CONTAS_ICONES="$WORK/contas" MATSU_FACE="$WORK/face.icon" run conta
+check "conta: o usuário de agora" linha "usuario=$(id -un)"
+check "conta: sem foto, foto vazia" linha "foto="
+printf 'png' > "$WORK/face.icon"
+MATSU_CONTAS_ICONES="$WORK/contas" MATSU_FACE="$WORK/face.icon" run conta
+check "conta: sem a do AccountsService, usa o .face.icon" linha "foto=$WORK/face.icon"
+printf 'png' > "$WORK/contas/$(id -un)"
+MATSU_CONTAS_ICONES="$WORK/contas" MATSU_FACE="$WORK/face.icon" run conta
+check "conta: a foto do AccountsService vem primeiro" linha "foto=$WORK/contas/$(id -un)"
+rm -f "$WORK/face.icon"
+printf 'imagem' > "$WORK/nova.png"
+MATSU_FACE="$WORK/face.icon" run foto "$WORK/nova.png"
+check "foto: grava o .face.icon" bash -c "[ '$CODE' -eq 0 ] && grep -q imagem '$WORK/face.icon'"
+check "foto: avisa o AccountsService" called "SetIconFile s $WORK/face.icon"
+MATSU_FACE="$WORK/face.icon" run foto "$WORK/nao-existe.png"
+check "foto: imagem que não existe dá erro" test "$CODE" -eq 2
+head -c 1100000 /dev/zero > "$WORK/grande.png"
+MATSU_FACE="$WORK/face.icon" run foto "$WORK/grande.png"
+check "foto: mais de 1 MB dá erro" test "$CODE" -eq 2
+MATSU_FACE="$WORK/face.icon" run foto tirar
+check "foto: tirar apaga o .face.icon e limpa no AccountsService" bash -c "[ ! -e '$WORK/face.icon' ] && grep -q 'SetIconFile s ' '$CALLS'"
+
 echo
 echo "Resultado: $PASS passaram, $FAILN falharam"
 [[ $FAILN -eq 0 ]]

@@ -1,0 +1,73 @@
+# Copia arquivos da imagem do canal teste (lista em tests/extrair.txt) para o ramo
+# "extraidos" do repositório, com as versões dos pacotes em VERSOES.txt.
+# Serve para ler as peças do KDE/Fedora que o Matsu troca de cara (as telas de
+# login e bloqueio, o primeiro uso...) sem baixar pacotes do Fedora.
+name: Extrair arquivos da imagem
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tests/extrair.txt"
+      - ".github/workflows/extrair.yml"
+
+permissions:
+  contents: write
+  packages: read
+
+concurrency:
+  group: extrair
+  cancel-in-progress: true
+
+jobs:
+  extrair:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Liberar espaço em disco
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Copiar os arquivos da imagem
+        env:
+          IMG: ghcr.io/${{ github.repository_owner }}/matsu-os:teste
+        run: |
+          mkdir -p /tmp/extraidos
+          docker pull -q "$IMG"
+          docker run --rm --entrypoint /usr/bin/bash \
+            -v "$PWD/tests/extrair.txt:/lista:ro" -v /tmp/extraidos:/saida "$IMG" -c '
+            set -u
+            mkdir -p /saida/arquivos
+            { rpm -q plasma-workspace plasma-desktop kwin kscreenlocker plasma-login-manager plasma-setup polkit-kde kf6-kirigami qt6-qtbase 2>&1
+              cat /etc/os-release | grep -E "^(NAME|VERSION)="; } > /saida/VERSOES.txt
+            : > /tmp/lista
+            while read -r linha; do
+              [[ -z $linha || $linha == \#* ]] && continue
+              if [[ $linha == rpm:* ]]; then
+                pacote=${linha#rpm:}
+                rpm -ql "$pacote" > "/saida/lista-$pacote.txt" 2>&1 || continue
+                grep -E "\.(qml|js|json|conf|desktop|xml|ini|svg|sh|service|rules|policy|kcfg)$" "/saida/lista-$pacote.txt" \
+                  | grep -v "/locale/" >> /tmp/lista || true
+              else
+                for p in $linha; do
+                  [[ -e $p ]] && find "$p" -type f -size -1M >> /tmp/lista
+                done
+              fi
+            done < /lista
+            sort -u /tmp/lista | while read -r f; do [[ -f $f ]] && echo "$f"; done > /tmp/lista2
+            tar -cf - -T /tmp/lista2 2>/dev/null | tar -xf - -C /saida/arquivos
+            echo "$(wc -l < /tmp/lista2) arquivos copiados"'
+          sudo chown -R "$(id -u):$(id -g)" /tmp/extraidos
+
+      - name: Publicar no ramo "extraidos"
+        run: |
+          cp -r /tmp/extraidos /tmp/publicar
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan extraidos
+          git rm -rf --quiet . || true
+          cp -r /tmp/publicar/. .
+          git add -A
+          git commit -q -m "Arquivos extraídos da imagem do canal teste (${GITHUB_SHA::7})"
+          git push -f origin extraidos

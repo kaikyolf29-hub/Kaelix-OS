@@ -28,6 +28,9 @@
 #   matsu-central fixar <app> | tirar <app>         põe ou tira um app da barra (também usado pelo menu)
 #   matsu-central ordem <app,app,...>               a ordem nova dos apps fixados
 #   matsu-central fixados-padrao                    volta aos apps fixados do começo
+#   matsu-central conta                             a pessoa: usuario=, nome= e foto= (caminho, ou vazio)
+#   matsu-central foto <imagem>|tirar               troca a foto da pessoa (login, bloqueio, menu)
+#   matsu-central foto-escolher                     abre a escolha de imagem e diz "escolhida=<caminho>"
 #
 # A central só desenha: quem lê e muda o sistema é este arquivo, que tem teste.
 # Cada parte funciona sozinha: o que a máquina não tem (Wi-Fi, Bluetooth, tela
@@ -57,6 +60,10 @@ PLASMA_WALL_DIRS="${MATSU_PLASMA_WALL_DIRS:-/usr/share/plasma/wallpapers:${XDG_D
 # escreve o arquivo do MangoHud (o jogo aberto relê na hora).
 JOGOS_AJUDANTE="${MATSU_JOGOS_AJUDANTE:-/usr/share/matsu/jogos/ajudante.py}"
 JOGOS_CONFIG="${MATSU_JOGOS_CONFIG:-$CONFIG_DIR/matsu/jogos.json}"
+# A foto da pessoa: a cópia do AccountsService (que a tela de login lê) e o
+# ~/.face.icon (que a tela de bloqueio e o menu leem).
+CONTAS_ICONES="${MATSU_CONTAS_ICONES:-/var/lib/AccountsService/icons}"
+FACE="${MATSU_FACE:-$HOME/.face.icon}"
 
 have() { command -v "$1" >/dev/null 2>&1; }
 # Nenhum comando pode travar a central: dois segundos e segue.
@@ -586,6 +593,44 @@ cmd_abrir() {
   esac
 }
 
+# Ajustes > Sua conta: o nome e a foto da pessoa.
+cmd_conta() {
+  local usuario nome foto=""
+  usuario="$(id -un)"
+  nome="$(getent passwd "$usuario" | cut -d: -f5 | cut -d, -f1)"
+  [[ -n $nome ]] || nome="$usuario"
+  if [[ -s $CONTAS_ICONES/$usuario && -r $CONTAS_ICONES/$usuario ]]; then
+    foto="$CONTAS_ICONES/$usuario"
+  elif [[ -s $FACE ]]; then
+    foto="$FACE"
+  fi
+  echo "usuario=$usuario"
+  echo "nome=$nome"
+  echo "foto=$foto"
+}
+
+# Troca a foto (os Ajustes já mandam a imagem quadrada, de 512 px) ou tira.
+cmd_foto() {
+  local arquivo="${1:-}" objeto
+  objeto="/org/freedesktop/Accounts/User$(id -u)"
+  if [[ $arquivo == tirar ]]; then
+    rm -f "$FACE"
+    curto busctl call org.freedesktop.Accounts "$objeto" org.freedesktop.Accounts.User SetIconFile s "" >/dev/null || true
+    return 0
+  fi
+  [[ -f $arquivo && -r $arquivo ]] || { echo "não achei a imagem: $arquivo" >&2; exit 2; }
+  # O AccountsService recusa imagem maior que 1 MB.
+  (( $(stat -c %s "$arquivo") <= 1048576 )) || { echo "a imagem passa de 1 MB" >&2; exit 2; }
+  if ! install -m 0644 "$arquivo" "$FACE.novo" || ! mv -f "$FACE.novo" "$FACE"; then
+    echo "não deu para gravar a foto" >&2
+    exit 1
+  fi
+  if ! curto busctl call org.freedesktop.Accounts "$objeto" org.freedesktop.Accounts.User SetIconFile s "$FACE" >/dev/null; then
+    echo "aviso: o AccountsService não guardou a foto; a tela de login fica sem ela" >&2
+  fi
+  return 0
+}
+
 main() {
   local cmd="${1:-estado}"
   shift || true
@@ -612,6 +657,12 @@ main() {
     fixados-padrao)  matsu_na_lingua barra apps --padrao >/dev/null ;;
     papel)         cmd_papel "$@" ;;
     abrir)         cmd_abrir "$@" ;;
+    conta)         cmd_conta ;;
+    foto)          cmd_foto "$@" ;;
+    foto-escolher)
+      have kdialog || exit 1
+      escolhida="$(kdialog --title "Matsu" --getopenfilename "$HOME" "image/png image/jpeg image/webp" 2>/dev/null)" || exit 0
+      [[ -n $escolhida ]] && echo "escolhida=$escolhida" ;;
     bloquear)      curto loginctl lock-session ;;
     sair)          curto busctl --user call org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt promptAll >/dev/null ;;
     *) echo "comando desconhecido: $cmd" >&2; exit 2 ;;

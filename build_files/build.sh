@@ -578,6 +578,9 @@ log "Telas de login, bloqueio e sair com a cara do Matsu"
 # Essas telas vêm prontas dentro dos programas do KDE; o script troca só o
 # desenho das peças que elas dividem (relógio, foto da pessoa e botões).
 python3 "$CTX/build_files/telas-kde.py"
+# A tela de bloqueio inteira no jeito do Mac (hora grande, foto, senha em pílula):
+# o MatsuBloco.qml veio do system_files; o script liga ele no LockScreenUi do KDE.
+python3 "$CTX/build_files/telas-matsu.py"
 
 log "Tipos de arquivo em português"
 # Depois de todos os pacotes (cada um pode trazer tipos novos).

@@ -36,6 +36,8 @@ jobs:
         run: python3 tests/test_novidades.py
       - name: Testar a Central de segurança
         run: python3 tests/test_seguranca.py
+      - name: Testar a troca da tela de bloqueio
+        run: python3 tests/test_telas.py
       - name: Testar os apps do dia a dia
         run: |
           set -e

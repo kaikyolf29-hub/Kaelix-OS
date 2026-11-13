@@ -45,6 +45,11 @@ PlasmoidItem {
     property var inicioLeitura: ({})
     property double ultimaMudanca: 0
     property string versao: ""
+    // Sua conta: usuario, nome e foto (do "matsu-central conta").
+    property var conta: ({})
+    property int contaVersao: 0
+    // A foto que a pessoa escolheu agora (a página recorta e manda gravar).
+    property string fotoEscolhida: ""
     property string pagina: "aparencia"
     // Uma parte da página para mostrar ao abrir ("apps": os apps da barra).
     property string secao: ""
@@ -177,6 +182,9 @@ PlasmoidItem {
     function atualizar() {
         comando.connectSource(ajudante + " estado");
     }
+    function lerConta() {
+        comando.connectSource(ajudante + " conta");
+    }
     function fazer(argumentos) {
         comando.connectSource(ajudante + " " + argumentos);
     }
@@ -197,6 +205,8 @@ PlasmoidItem {
 
     // Os assuntos da lista da esquerda, em grupos como no Mac.
     readonly property var paginas: [
+        { id: "conta", grupo: -1, cor: "#6e6e76", icone: "matsu-outra-pessoa-symbolic",
+          nome: t("Sua conta", "Your account"), chaves: "foto usuario usuaria senha nome perfil avatar pessoa login" },
         { id: "rede", grupo: 0, cor: "#2f80ed", icone: "matsu-wifi-3-symbolic",
           nome: t("Rede", "Network"), chaves: "wi-fi wifi internet cabo vpn network" },
         { id: "bluetooth", grupo: 0, cor: "#2563eb", icone: "matsu-bluetooth-symbolic",
@@ -261,6 +271,21 @@ PlasmoidItem {
                     }
                     ajustes.pagina = pedida;
                 }
+            } else if (fonte === ajustes.ajudante + " conta") {
+                var c = {};
+                String(dados["stdout"] || "").split("\n").forEach(function (l) {
+                    var i = l.indexOf("=");
+                    if (i > 0) c[l.substring(0, i)] = l.substring(i + 1);
+                });
+                ajustes.conta = c;
+            } else if (fonte === ajustes.ajudante + " foto-escolher") {
+                var e = String(dados["stdout"] || "").trim();
+                if (e.indexOf("escolhida=") === 0 && e.length > 10) {
+                    ajustes.fotoEscolhida = e.substring(10);
+                }
+            } else if (fonte.indexOf(ajustes.ajudante + " foto ") === 0) {
+                ajustes.contaVersao += 1;
+                ajustes.lerConta();
             } else if (fonte === "matsu versao") {
                 ajustes.versao = String(dados["stdout"] || "").trim();
             } else if (fonte.indexOf(ajustes.ajudante + " apps-barra") === 0) {
@@ -302,6 +327,7 @@ PlasmoidItem {
 
     Component.onCompleted: {
         fazer("papeis");
+        lerConta();
         comando.connectSource("matsu versao");
     }
 
@@ -441,7 +467,7 @@ PlasmoidItem {
                                         Rectangle {
                                             implicitWidth: Math.round(janela.gu * 1.35)
                                             implicitHeight: implicitWidth
-                                            radius: Math.round(width * 0.27)
+                                            radius: item.modelData.id === "conta" ? width / 2 : Math.round(width * 0.27)
                                             color: item.modelData.cor
                                             border.width: item.escolhido ? 1 : 0
                                             border.color: Qt.rgba(1, 1, 1, 0.5)
@@ -450,9 +476,20 @@ PlasmoidItem {
                                                 anchors.centerIn: parent
                                                 width: Math.round(parent.width * 0.68)
                                                 height: width
+                                                visible: !fotoDaConta.visible
                                                 source: item.modelData.icone
                                                 isMask: true
                                                 color: "#ffffff"
+                                            }
+                                            // Em "Sua conta", a foto da pessoa (ou a primeira letra).
+                                            Avatar {
+                                                id: fotoDaConta
+                                                anchors.fill: parent
+                                                visible: item.modelData.id === "conta" && !!ajustes.conta.nome
+                                                name: ajustes.conta.nome || ""
+                                                source: ajustes.conta.foto ? "file://" + ajustes.conta.foto + "?v=" + ajustes.contaVersao : ""
+                                                color: "#6e6e76"
+                                                initialsColor: "#ffffff"
                                             }
                                         }
                                         PlasmaComponents.Label {
@@ -537,6 +574,7 @@ PlasmoidItem {
                         Layout.fillWidth: true
                         source: {
                             switch (ajustes.pagina) {
+                            case "conta": return "PaginaConta.qml";
                             case "rede": return "PaginaRede.qml";
                             case "bluetooth": return "PaginaBluetooth.qml";
                             case "notificacoes": return "PaginaNotificacoes.qml";
