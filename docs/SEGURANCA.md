@@ -105,6 +105,19 @@ proteção vem em camadas:
 programa do Linux, programa do Windows (`.exe`, `.msi`), `.run`, `.jar`, `.deb` ou
 `.rpm`.
 
+Por onde ele é chamado:
+
+- **Navegador** (abrir o download): o navegador abre pelo GIO ou pelo portal, que
+  seguem o app padrão do tipo de arquivo, e o padrão desses tipos é o tratador.
+- **Arquivos** (dois cliques): o KIO perguntaria "Executar?" e rodaria o programa
+  sem olhar de onde veio. O Matsu grava `behaviourOnLaunch=open` em
+  `/etc/xdg/kiorc` (grupo `Executable scripts`), então o arquivo vai para o app do
+  tipo dele: programas para o tratador (que abre direto o que não veio da internet),
+  scripts para o Bloco de notas.
+- **`xdg-open` no terminal**: no KDE ele chama o `kioclient`, que recusa qualquer
+  executável ("não é permitido iniciar executáveis neste contexto") antes de olhar
+  o app padrão. Para testar pelo terminal, use `gio open arquivo`.
+
 - Se o arquivo **veio da internet** e não está na lista de liberados, a janela
   `Aviso.qml` abre. Saber que veio da internet usa a marca que o navegador grava
   (`user.xdg.origin.url`) ou o fato de estar em Downloads. A janela mostra o nome,
