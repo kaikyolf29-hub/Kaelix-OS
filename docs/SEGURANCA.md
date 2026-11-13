@@ -45,7 +45,7 @@ Os arquivos ficam assim:
 
 ## 1. O escudo (antivírus)
 
-O antivírus é o **ClamAV** do Fedora (pacotes `clamav`, `clamd` e `clamav-update`).
+O antivírus é o **ClamAV** do Fedora (pacotes `clamav`, `clamd` e `clamav-update`, que no Fedora 44 se chama `clamav-freshclam`).
 
 - **A lista de ameaças não vem na imagem.** São uns 230 MB. Ela é baixada no
   primeiro uso com internet e depois atualizada a cada 4 horas

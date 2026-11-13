@@ -398,6 +398,18 @@ class TestFirewall(Base):
         for s in casa["servicos"]:
             self.assertTrue(s == "dhcpv6-client" or s in S.IDS_SERVICOS or s in ("ws-discovery-client", "llmnr-client"), s)
 
+    def test_zona_padrao_de_etc_ou_de_usr_lib(self):
+        S = self.S
+        etc = Path(self.tmp.name) / "etc-sem-conf"
+        etc.mkdir()
+        usr = Path(self.tmp.name) / "usr-firewalld"
+        usr.mkdir()
+        (usr / "firewalld.conf").write_text("DefaultZone=matsu-publica\n")
+        with mock.patch.object(S, "FIREWALLD_ETC", str(etc)), mock.patch.object(S, "FIREWALLD_USR", str(usr)):
+            self.assertEqual(S.zona_padrao(), "matsu-publica", "sem /etc, vale o de /usr/lib")
+            (etc / "firewalld.conf").write_text("DefaultZone=matsu-casa\n")
+            self.assertEqual(S.zona_padrao(), "matsu-casa", "o de /etc vale mais")
+
     def test_rede_com_saidas_de_mentira(self):
         S = self.S
         etc = Path(self.tmp.name) / "etc-firewalld"

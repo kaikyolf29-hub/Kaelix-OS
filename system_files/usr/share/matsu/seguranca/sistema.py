@@ -145,7 +145,12 @@ def ler_zona_padrao(texto):
 
 
 def zona_padrao():
-    return ler_zona_padrao(ler(os.path.join(FIREWALLD_ETC, "firewalld.conf"))) or "public"
+    # O firewalld novo pode guardar o padrão em /usr/lib; o de /etc, se existir, vale mais.
+    for base in (FIREWALLD_ETC, FIREWALLD_USR):
+        nome = ler_zona_padrao(ler(os.path.join(base, "firewalld.conf")))
+        if nome:
+            return nome
+    return "public"
 
 
 def estado_firewall():

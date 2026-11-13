@@ -15,11 +15,13 @@ erro() { echo "ERRO: $*" >&2; exit 1; }
 # ---------------------------------------------------------------------------
 log "Segurança: antivírus (ClamAV)"
 # clamav (o motor e o clamscan), clamd (o serviço, que o escudo usa pelo soquete)
-# e clamav-update (o freshclam, que baixa a lista de ameaças). Sem o clamav-data:
+# e clamav-update (o freshclam, que baixa a lista de ameaças; no Fedora 44 o
+# pacote se chama clamav-freshclam e o dnf aceita os dois nomes). Sem o clamav-data:
 # a lista (~230 MB) não vai dentro da imagem, ela é baixada no primeiro uso com
 # internet e atualizada a cada 4 horas (matsu-escudo-atualizar.timer).
 dnf5 -y install --setopt=install_weak_deps=False clamav clamd clamav-update
-rpm -q clamav clamd clamav-update
+rpm -q clamav clamd
+rpm -qf /usr/bin/freshclam || erro "o freshclam (clamav-update/clamav-freshclam) não entrou"
 if rpm -q clamav-data >/dev/null 2>&1; then
   # Veio como dependência: a lista do pacote fica fora da imagem (o freshclam baixa a atual).
   echo "aviso: o clamav-data entrou junto; tirando a lista dele da imagem (ela é baixada no primeiro uso)"
@@ -69,15 +71,26 @@ for zona in matsu-publica matsu-casa; do
   done < <(sed -n 's/.*<service name="\([^"]*\)".*/\1/p' "$arquivo")
 done
 echo "Zona padrão antes: $(sed -n 's/^DefaultZone=//p' /etc/firewalld/firewalld.conf 2>/dev/null || echo '?')"
-if ! firewall-offline-cmd --set-default-zone=matsu-publica; then
-  echo "aviso: firewall-offline-cmd falhou; trocando a zona padrão direto no firewalld.conf"
-  if grep -q '^DefaultZone=' /etc/firewalld/firewalld.conf; then
+firewall-offline-cmd --set-default-zone=matsu-publica || echo "aviso: firewall-offline-cmd não trocou a zona padrão"
+zona_padrao() {
+  firewall-offline-cmd --get-default-zone 2>/dev/null \
+    || sed -n 's/^DefaultZone=//p' /etc/firewalld/firewalld.conf 2>/dev/null || true
+}
+if [[ "$(zona_padrao)" != matsu-publica ]]; then
+  # Plano B: o firewalld.conf de /etc (copiado do padrão de /usr/lib, se o de /etc não existir).
+  echo "aviso: trocando a zona padrão direto no /etc/firewalld/firewalld.conf"
+  mkdir -p /etc/firewalld
+  if [[ ! -f /etc/firewalld/firewalld.conf && -f /usr/lib/firewalld/firewalld.conf ]]; then
+    cp /usr/lib/firewalld/firewalld.conf /etc/firewalld/firewalld.conf
+  fi
+  if grep -q '^DefaultZone=' /etc/firewalld/firewalld.conf 2>/dev/null; then
     sed -i 's/^DefaultZone=.*/DefaultZone=matsu-publica/' /etc/firewalld/firewalld.conf
   else
     echo 'DefaultZone=matsu-publica' >> /etc/firewalld/firewalld.conf
   fi
 fi
-grep -q '^DefaultZone=matsu-publica$' /etc/firewalld/firewalld.conf || erro "a zona padrão não ficou matsu-publica"
+[[ "$(zona_padrao)" == matsu-publica ]] || erro "a zona padrão ficou '$(zona_padrao)', não matsu-publica"
+echo "Zona padrão agora: matsu-publica"
 firewall-offline-cmd --info-zone=matsu-casa || true
 systemctl enable firewalld.service
 
