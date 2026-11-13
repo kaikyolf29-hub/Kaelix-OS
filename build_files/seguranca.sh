@@ -108,8 +108,10 @@ HOME=/tmp/matsu-seguranca-teste python3 -I -S /usr/share/matsu/seguranca/ajudant
   | python3 -c "import json, sys; print('Central de segurança: estado', json.load(sys.stdin)['geral'])" \
   || echo "aviso: o ajudante da Central de segurança não respondeu na montagem (conferir no sistema)"
 rm -rf /tmp/matsu-seguranca-teste
-command -v systemd-analyze >/dev/null && systemd-analyze verify --man=no \
-  /usr/lib/systemd/system/matsu-escudo-clamd.service /usr/lib/systemd/system/matsu-escudo-atualizar.service 2>&1 | head -20 || true
+if command -v systemd-analyze >/dev/null; then
+  systemd-analyze verify --man=no \
+    /usr/lib/systemd/system/matsu-escudo-clamd.service /usr/lib/systemd/system/matsu-escudo-atualizar.service 2>&1 | head -20 || true
+fi
 # O tratador dos executáveis baixados entra no cache de tipos de arquivo.
 update-desktop-database -q /usr/share/applications 2>/dev/null || true
 grep -q 'org.matsu.seguranca.aviso.desktop' /usr/share/applications/mimeinfo.cache \
