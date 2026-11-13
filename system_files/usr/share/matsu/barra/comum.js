@@ -12,6 +12,9 @@
 //                  "tela" (só na barra da tela onde a janela está, o padrão),
 //                  "todas" (em todas as barras) ou "principal" (na barra da
 //                  tela principal e na da tela onde a janela está)
+//   matsuEstilo   o estilo da barra ("fusao", "mac" ou "windows"); cada
+//                  arquivo de estilo também diz o seu. Serve para o limite de
+//                  apps fixados (veja limiteDeApps).
 //
 // Cada estilo define montarTela(tela), que monta a barra numa tela só. Quem
 // escolhe as telas é o arquivo que vem depois: todas-as-telas.js (montar tudo
@@ -112,6 +115,130 @@ function porBusca(painel) {
     }
 }
 
+function estiloDaBarra() {
+    var v = (typeof matsuEstilo !== "undefined" && matsuEstilo) ? matsuEstilo : "fusao";
+    return (v === "mac" || v === "windows") ? v : "fusao";
+}
+
+// Medidas da barra de baixo, em pixels, para saber quantos apps cabem nela.
+// Vêm do que o Plasma desenha (com folga, porque o gridUnit deste roteiro pode
+// sair um pouco menor que o das peças): cada app é um quadrado da altura da
+// barra com um respiro em volta; a pílula da busca tem 12,5 gridUnits mais o
+// espaço; a ilha da direita (escudo, setinha, central, relógio e sino) cerca
+// de 17,5.
+function larguraDoApp(altura) {
+    return altura + Math.round(gridUnit * 0.45);
+}
+
+function larguraDaBusca() {
+    return gridUnit * 13;
+}
+
+function larguraDaBandeja() {
+    return gridUnit * 18;
+}
+
+// Na fusão, a ilha do meio (os apps) fica centrada e não pode encostar nas
+// ilhas dos lados: o tamanho máximo dela sai da largura da tela menos o dobro
+// da ilha mais larga dos lados (ela é centrada), com um respiro.
+function espacoDoMeio(largura, altura) {
+    var esquerda = 0;
+    if (ondeMenu() !== "meio") {
+        esquerda = altura + (ondeBusca() === "esquerda" ? larguraDaBusca() : 0) + gridUnit;
+    }
+    var lados = Math.max(esquerda, larguraDaBandeja()) + gridUnit * 2;
+    return Math.max(gridUnit * 8, Math.min(Math.round(largura * 0.6), largura - lados * 2));
+}
+
+// Quantos apps fixados cabem na barra de baixo sem passar da borda e sem
+// encostar nas outras ilhas, numa tela com esta largura e uma barra com esta
+// altura. Fica um lugar livre para um app aberto que não é fixado (com mais
+// abertos, o Plasma encolhe os ícones um pouco, sem passar da borda). Nunca
+// menos de 4; na fusão e no windows, até 12 (mais que isso já não fica bonito);
+// na doca do estilo Mac, até 24 (a barra de cima leva a bandeja e o relógio).
+function limiteDeApps(estilo, largura, altura, meioMedido) {
+    var app = larguraDoApp(altura);
+    var lixeira = app + Math.round(gridUnit * 0.5);
+    var espaco, maximo = 12;
+    if (estilo === "mac") {
+        espaco = Math.round(largura * 0.8) - lixeira - gridUnit;
+        maximo = 24;
+    } else if (estilo === "windows") {
+        espaco = largura - altura - (ondeBusca() !== "nao" ? larguraDaBusca() : 0) - larguraDaBandeja() - gridUnit * 2;
+    } else {
+        var junto = 0;
+        if (ondeMenu() === "meio") {
+            junto = altura + (ondeBusca() !== "nao" ? larguraDaBusca() : 0);
+        } else if (ondeBusca() === "meio") {
+            junto = larguraDaBusca();
+        }
+        espaco = (meioMedido > 0 ? meioMedido : espacoDoMeio(largura, altura)) - junto - lixeira - gridUnit;
+    }
+    var cabem = Math.floor(espaco / app) - 1;
+    return Math.max(4, Math.min(maximo, cabem));
+}
+
+// O limite para as barras que este arranjo vai montar: conta a tela mais
+// estreita (os fixados são os mesmos em todas as barras).
+function limiteDoArranjo(estilo, altura) {
+    var telas = emTodasAsTelas() ? Math.max(1, screenCount) : 1;
+    var limite = 0;
+    for (var t = 0; t < telas; t++) {
+        var l = limiteDeApps(estilo, screenGeometry(t).width, altura);
+        limite = (limite === 0) ? l : Math.min(limite, l);
+    }
+    return limite;
+}
+
+// Na fusão, com as ilhas já na tela: o espaço da ilha do meio pelo
+// comprimento de verdade das ilhas dos lados (o Plasma sabe quanto cada uma
+// ocupa). Zero quando não dá para medir.
+function espacoDoMeioMedido(barras, painel) {
+    if (painel.alignment !== "center") {
+        return 0;
+    }
+    var lados = 0;
+    for (var i = 0; i < barras.length; i++) {
+        var b = barras[i];
+        if (b.id !== painel.id && b.screen === painel.screen && b.location === painel.location
+                && (b.alignment === "left" || b.alignment === "right") && b.length > 0) {
+            lados = Math.max(lados, b.length);
+        }
+    }
+    if (lados <= 0) {
+        return 0;
+    }
+    var largura = screenGeometry(painel.screen >= 0 ? painel.screen : 0).width;
+    // A ilha flutuante fica um pouco longe da borda; mais um respiro entre as ilhas.
+    return Math.max(gridUnit * 8, Math.min(Math.round(largura * 0.6), largura - 2 * (lados + Math.round(gridUnit * 1.5))));
+}
+
+// O limite das barras que já estão na área de trabalho (para fixar um app
+// novo): a barra com apps mais apertada manda. Zero se não achar nenhuma.
+// Na fusão, de quebra, a ilha do meio passa a respeitar o tamanho medido das
+// ilhas dos lados (assim ela nunca encosta nelas, nem com muitos abertos).
+function limiteDasBarras(barras, estilo) {
+    var limite = 0;
+    for (var a = 0; a < barras.length; a++) {
+        var ids = barras[a].widgetIds;
+        for (var w = 0; w < ids.length; w++) {
+            var item = barras[a].widgetById(ids[w]);
+            if (!item || (item.type !== "org.kde.plasma.icontasks" && item.type !== "org.kde.plasma.taskmanager")) {
+                continue;
+            }
+            var tela = barras[a].screen >= 0 ? barras[a].screen : 0;
+            var altura = barras[a].height > 0 ? barras[a].height : alturaDaBarra();
+            var medido = (estilo === "fusao") ? espacoDoMeioMedido(barras, barras[a]) : 0;
+            if (medido > 0 && barras[a].maximumLength !== medido) {
+                barras[a].maximumLength = medido;
+            }
+            var l = limiteDeApps(estilo, screenGeometry(tela).width, altura, medido);
+            limite = (limite === 0) ? l : Math.min(limite, l);
+        }
+    }
+    return limite;
+}
+
 // Só entra na barra o programa que está instalado, para não sobrar ícone em branco.
 function fixadosPadrao() {
     var fixados = ["preferred://filemanager", "preferred://browser"];
@@ -188,11 +315,23 @@ function porApps(painel, tela) {
     apps.currentConfigGroup = ["General"];
     var guardados = (typeof matsuFixados !== "undefined") ? matsuFixados : null;
     var lista = (guardados && guardados.length) ? guardados : fixadosPadrao();
+    // Nunca mais apps do que cabem na barra deste estilo. Os que sobram são
+    // avisados ("matsu-cortado") e o comando "matsu barra" guarda: voltam
+    // quando a pessoa usar um estilo com mais lugar (a doca do Mac).
+    var limite = limiteDoArranjo(estiloDaBarra(), painel.height > 0 ? painel.height : alturaDaBarra());
+    if (lista.length > limite) {
+        if (tela === 0) {
+            for (var c = limite; c < lista.length; c++) {
+                print("matsu-cortado: " + lista[c] + "\n");
+            }
+        }
+        lista = lista.slice(0, limite);
+    }
     apps.writeConfig("launchers", lista);
     var abertos = ondeAbertos();
     var soDaTela = abertos === "tela" || (abertos === "principal" && !ehPrincipal(tela));
     apps.writeConfig("showOnlyCurrentScreen", soDaTela);
-    print("matsu: barra da tela " + tela + " com " + lista.length + " apps fixados" + (soDaTela ? ", abertos só desta tela" : "") + "\n");
+    print("matsu: barra da tela " + tela + " com " + lista.length + " apps fixados (cabem " + limite + ")" + (soDaTela ? ", abertos só desta tela" : "") + "\n");
     return apps;
 }
 
@@ -223,6 +362,19 @@ function porBandeja(painel, principal) {
     porRelogio(painel, true);
 }
 
+// Uma lista de peças guardada pelo Plasma ("a,b" ou lista) como lista limpa.
+function listaDePecas(valor) {
+    var itens = [];
+    var partes = !valor ? [] : (typeof valor === "string") ? valor.split(",") : valor;
+    for (var n = 0; n < partes.length; n++) {
+        var texto = String(partes[n]).replace(/^\s+|\s+$/g, "");
+        if (texto.length) {
+            itens.push(texto);
+        }
+    }
+    return itens;
+}
+
 // Bandeja como no Windows: aparecem os ícones dos apps que estão rodando
 // (Discord, Steam, OBS...), com menu no botão direito. Rede, som, Bluetooth e
 // bateria já estão na pílula da central; as outras peças do KDE (área de
@@ -239,13 +391,28 @@ function arrumarBandeja(bandeja) {
             alvo = interno;
         }
     }
+    // O escudo da Central de segurança fica à mostra, perto dos ícones da
+    // central (como no mockup); o resto das peças do KDE vai para a setinha.
+    var aMostra = tem("org.matsu.seguranca") ? ["org.matsu.seguranca"] : [];
     var guardados = [];
     for (var i = 0; i < knownWidgetTypes.length; i++) {
-        guardados.push(knownWidgetTypes[i]);
+        if (aMostra.indexOf(knownWidgetTypes[i]) === -1) {
+            guardados.push(knownWidgetTypes[i]);
+        }
     }
     alvo.currentConfigGroup = ["General"];
     alvo.writeConfig("hiddenItems", guardados);
-    alvo.writeConfig("shownItems", []);
+    alvo.writeConfig("shownItems", aMostra);
+    if (aMostra.length) {
+        // Liga o escudo na bandeja (sem desligar as outras peças já ligadas).
+        var extras = listaDePecas(alvo.readConfig("extraItems", ""));
+        for (var m = 0; m < aMostra.length; m++) {
+            if (extras.indexOf(aMostra[m]) === -1) {
+                extras.push(aMostra[m]);
+            }
+        }
+        alvo.writeConfig("extraItems", extras);
+    }
     alvo.writeConfig("iconSize", 0);        // 16 px, do tamanho dos ícones da pílula
     alvo.writeConfig("iconSpacing", 2);
     bandeja.currentConfigGroup = ["Shortcuts"];

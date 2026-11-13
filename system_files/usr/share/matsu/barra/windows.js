@@ -2,6 +2,8 @@
 // Menu, busca e apps à esquerda; rede, som e relógio no canto direito
 // (nas outras telas, só o relógio, como no Windows).
 
+var matsuEstilo = "windows";
+
 function montarTela(tela) {
     var principal = ehPrincipal(tela);
     var barra = novaBarra(tela);

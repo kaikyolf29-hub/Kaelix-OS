@@ -1,6 +1,8 @@
 // Estilo "fusão" (o padrão do Matsu): três ilhas flutuantes embaixo.
 // Menu e busca à esquerda (ou no meio), apps no meio, rede, som e relógio à direita.
 
+var matsuEstilo = "fusao";
+
 function ilha(tela, alinhamento) {
     var p = novaBarra(tela);
     p.location = "bottom";
@@ -9,7 +11,10 @@ function ilha(tela, alinhamento) {
     // A ilha tem o tamanho do que está dentro dela.
     p.lengthMode = "fit";
     p.minimumLength = gridUnit * 4;
-    p.maximumLength = Math.round(screenGeometry(tela).width * 0.6);
+    // A ilha do meio nunca encosta nas dos lados (nem com muitos apps abertos:
+    // aí o Plasma encolhe os ícones).
+    p.maximumLength = (alinhamento === "center") ? espacoDoMeio(screenGeometry(tela).width, p.height)
+                                                 : Math.round(screenGeometry(tela).width * 0.6);
     p.floating = true;
     p.hiding = esconder();
     return p;

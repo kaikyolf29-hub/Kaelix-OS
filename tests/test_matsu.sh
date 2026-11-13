@@ -215,6 +215,16 @@ check "solta o atalho das peças antigas" bash -c "grep -qF 'unregister ss plasm
 check "solta os atalhos antes de montar a barra nova" bash -c "[ \"\$(grep -n 'unregister' '$CALLS' | head -n1 | cut -d: -f1)\" -lt \"\$(grep -n 'topo.location' '$CALLS' | head -n1 | cut -d: -f1)\" ]"
 check "a barra nova recebe os apps que a pessoa fixou" called 'var matsuFixados = ["applications:steam.desktop","preferred://browser"];'
 mock busctl 'echo "s \"matsu: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
+# A barra nova é menor: os apps que passaram do limite ficam guardados e voltam na doca do Mac.
+mock busctl 'case "$*" in *matsuAntigos*) echo "s \"matsu-fixado: applications:steam.desktop\\nmatsu-fixado: preferred://browser\\n\"" ;; *todas-as-telas*|*matsuQuantasTelas*) echo "s \"matsu-cortado: preferred://browser\\n\"" ;; *) echo "s \"ok\"" ;; esac'
+run barra fusao --tamanho grande
+check "barra menor: avisa quais apps ficaram guardados" has "Ficaram guardados: Navegador"
+check "barra menor: guarda os apps que não couberam" grep -qx "preferred://browser" "$WORK/state/fixados-guardados"
+mock busctl 'case "$*" in *matsuAntigos*) echo "s \"matsu-fixado: applications:steam.desktop\\n\"" ;; *) echo "s \"ok\"" ;; esac'
+run barra mac
+check "no estilo Mac os apps guardados voltam para a doca" called 'var matsuFixados = ["applications:steam.desktop","preferred://browser"];'
+check "depois de voltar, não ficam mais guardados" test ! -e "$WORK/state/fixados-guardados"
+mock busctl 'echo "s \"matsu: resposta da area de trabalho\""; exit "${FAKE_BUSCTL_RC:-0}"'
 run barra fusao --tamanho media
 FAKE_BUSCTL_RC=1 run barra mac
 check "sem área de trabalho avisa e não guarda" bash -c "grep -qF 'Não consegui falar' <<<\"\$0\" && grep -qF 'estilo=fusao' '$WORK/state/barra'" "$OUT"
@@ -426,7 +436,8 @@ echo "busctl \$*" >> "$CALLS"
 if [[ \${FAKE_RESPOSTA:-} == sem-barra ]]; then echo 's "matsu-fixados: sem-barra\\n"'; exit 0; fi
 r=""
 for a in \${FAKE_FIXADOS:-}; do r+="matsu-fixado: \$a\\\\n"; done
-echo "s \"\${r}matsu-fixados: pronto\\\\n\""
+for a in \${FAKE_NAO_COUBE:-}; do r+="matsu-nao-coube: \$a\\\\n"; done
+echo "s \"\${r}matsu-limite: \${FAKE_LIMITE:-12}\\\\nmatsu-fixados: pronto\\\\n\""
 EOF
 chmod +x "$MOCK/busctl"
 mock xdg-settings 'case "$1" in get) echo "${FAKE_NAVEGADOR:-}" ;; esac; exit 0'
@@ -461,6 +472,24 @@ check "a lista não mostra app escondido nem só do GNOME" bash -c '! grep -q -e
 check "a lista vem em ordem de nome" test "$(cut -d'|' -f3 <<<"$OUT" | tr '\n' ',')" = "Dolphin,Kate,Navegador Firefox,Steam da pessoa,"
 FAKE_RESPOSTA=sem-barra run barra apps
 check "sem lugar para apps na barra, explica" has "não tem lugar para apps fixados"
+run barra apps --lista
+check "a lista para os Ajustes diz quantos apps cabem" has "limite|12|"
+run barra apps
+check "mostra quantos apps cabem" has "Cabem até 12 apps nesta barra."
+mock notify-send 'exit 0'
+printf 'estilo=fusao\n' > "$WORK/state/barra"
+FAKE_NAO_COUBE="applications:org.kde.kate.desktop" FAKE_LIMITE=8 run barra fixar kate
+check "barra cheia: não fixa e dá erro" test "$CODE" -ne 0
+check "barra cheia: aviso gentil com o limite" has "Kate não coube. A barra cabe até 8 apps. No estilo Mac a doca cabe mais."
+check "barra cheia: diz como abrir lugar" has "matsu barra tirar"
+check "barra cheia: fora do terminal (menu) vira notificação" called "notify-send --app-name=Matsu --icon=matsu-barra-symbolic Kate não coube na barra"
+check "o limite depende do estilo guardado" called 'var matsuEstilo = "fusao";'
+printf 'estilo=mac\n' > "$WORK/state/barra"
+FAKE_NAO_COUBE="applications:org.kde.kate.desktop" FAKE_LIMITE=15 run barra fixar kate
+check "no estilo Mac fala da doca" has "A doca cabe até 15 apps."
+FAKE_FIXADOS="a b c d e f g h" FAKE_LIMITE=8 run barra apps
+check "barra cheia na lista: avisa antes de fixar outro" has "Para fixar outro, tire um antes"
+rm -f "$WORK/state/barra" "$MOCK/notify-send"
 run barra apps --padrao
 check "voltar aos apps do começo" called 'var matsuAcao = "padrao";'
 # Os Ajustes e o menu pedem pelo matsu-central, na língua da pessoa.

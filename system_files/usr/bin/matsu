@@ -453,12 +453,13 @@ bar_reply_lines() {
 
 # As escolhas da pessoa, como variáveis no começo do roteiro da barra (veja
 # o começo de /usr/share/matsu/barra/comum.js).
-bar_vars() { # bar_vars <tamanho> <esconder> <busca> <menu> <telas> <abertos>
+bar_vars() { # bar_vars <tamanho> <esconder> <busca> <menu> <telas> <abertos> [estilo]
   local scale esconde=false
   case "$1" in pequena) scale=2.25 ;; grande) scale=3.25 ;; *) scale=2.75 ;; esac
   [[ $2 == sim ]] && esconde=true
   printf 'var matsuEscala = %s;\nvar matsuEsconder = %s;\nvar matsuBusca = "%s";\nvar matsuMenu = "%s";\nvar matsuTelas = "%s";\nvar matsuAbertos = "%s";\n' \
     "$scale" "$esconde" "$3" "$4" "$5" "$6"
+  if [[ ${7:-} =~ ^(fusao|mac|windows)$ ]]; then printf 'var matsuEstilo = "%s";\n' "$7"; fi
 }
 
 # Uma tela foi ligada (ou a sessão começou com mais de uma): põe a barra do
@@ -651,9 +652,12 @@ pin_match() { # pin_match <texto> <fixados> <tabela>
   return 1
 }
 
-# Manda a ação para a barra e devolve os apps fixados depois dela, um por linha.
+# Manda a ação para a barra. Depois dela: BAR_FIXADOS (os apps fixados, um por
+# linha), BAR_LIMITE (quantos apps cabem na barra; 0 se a barra não disse) e
+# BAR_NAO_COUBE (os apps que não couberam, um por linha).
+BAR_FIXADOS="" BAR_LIMITE=0 BAR_NAO_COUBE=""
 bar_pins() { # bar_pins <ler|fixar|tirar|ordem|padrao> [apps...]
-  local acao="$1" lista="" a f reply linhas
+  local acao="$1" lista="" a f reply linhas estilo
   shift
   for a in "$@"; do
     a="${a//\\/\\\\}"; a="${a//\"/\\\"}"
@@ -663,7 +667,12 @@ bar_pins() { # bar_pins <ler|fixar|tirar|ordem|padrao> [apps...]
     [[ -r $BAR_DIR/$f ]] || fail "Não achei o arquivo da barra: $BAR_DIR/$f" "Bar file not found: $BAR_DIR/$f"
   done
   need busctl
+  # O limite depende do estilo, do lugar da busca e do menu (o que divide a
+  # barra com os apps). Sem escolha guardada, a área de trabalho descobre.
+  estilo=""; [[ -r $STATE_DIR/barra ]] && estilo="$(bar_saved estilo fusao)"
   reply="$(bar_script "$(printf 'var matsuAcao = "%s";\nvar matsuApps = [%s];\n' "$acao" "$lista"
+                         bar_vars "$(bar_saved tamanho media)" nao "$(bar_saved busca esquerda)" "$(bar_saved menu esquerda)" \
+                           "$(bar_saved telas todas)" "$(bar_saved abertos tela)" "$estilo"
                          cat "$BAR_DIR/comum.js" "$BAR_DIR/fixados.js")")" \
     || fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Matsu." \
             "Could not reach the desktop. Run this command inside the Matsu session."
@@ -674,7 +683,27 @@ bar_pins() { # bar_pins <ler|fixar|tirar|ordem|padrao> [apps...]
   fi
   grep -q '^matsu-fixados: pronto' <<<"$linhas" \
     || fail "A área de trabalho não respondeu direito. Tente de novo." "The desktop did not answer properly. Try again."
-  sed -n 's/^matsu-fixado: //p' <<<"$linhas"
+  BAR_FIXADOS="$(sed -n 's/^matsu-fixado: //p' <<<"$linhas")"
+  BAR_NAO_COUBE="$(sed -n 's/^matsu-nao-coube: //p' <<<"$linhas")"
+  BAR_LIMITE="$(sed -n 's/^matsu-limite: \([0-9][0-9]*\)$/\1/p' <<<"$linhas" | head -n1)"
+  BAR_LIMITE="${BAR_LIMITE:-0}"
+}
+
+# O aviso gentil de quando a barra está cheia. No estilo Mac a doca cabe mais.
+bar_cheia_msg() { # bar_cheia_msg <limite>
+  if [[ "$(bar_saved estilo fusao)" == mac ]]; then
+    t "A doca cabe até $1 apps." "The dock fits up to $1 apps."
+  else
+    t "A barra cabe até $1 apps. No estilo Mac a doca cabe mais." "The bar fits up to $1 apps. The Mac style dock fits more."
+  fi
+}
+
+# Fora do terminal (o "Fixar na barra" do menu chama pelo matsu-central), o
+# aviso vai também como notificação, senão a pessoa não vê nada acontecer.
+bar_avisar() { # bar_avisar <título> <texto>
+  [[ -t 1 || -t 2 ]] && return 0
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send --app-name="Matsu" --icon=matsu-barra-symbolic "$1" "$2" >/dev/null 2>&1 || true
 }
 
 cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
@@ -685,13 +714,13 @@ cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
   case "$verbo" in
     apps|fixados|pinned)
       case "${1:-}" in
-        "") fixados="$(bar_pins ler)" ;;
-        --lista|--list) modo=lista; fixados="$(bar_pins ler)" ;;
+        "") bar_pins ler; fixados="$BAR_FIXADOS" ;;
+        --lista|--list) modo=lista; bar_pins ler; fixados="$BAR_FIXADOS" ;;
         --instalados|--installed)
           awk -F'|' '$5 == 1 { print "app|applications:" $2 "|" $3 "|" $4 }' <<<"$tabela" | sort -f -t'|' -k3,3
           return 0 ;;
         --padrao|--padrão|--default)
-          fixados="$(bar_pins padrao)"
+          bar_pins padrao; fixados="$BAR_FIXADOS"
           ok "A barra voltou aos apps do começo." "The bar is back to the starting apps." ;;
         *) fail "Opção desconhecida: $1. Use --lista, --instalados ou --padrao." "Unknown option: $1. Use --list, --installed or --default." ;;
       esac ;;
@@ -701,24 +730,38 @@ cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
         app="$(app_resolve "$a" "$tabela")" || fail "Não achei o app \"$a\"." "Could not find the app \"$a\"."
         apps+=("$app")
       done
-      fixados="$(bar_pins fixar "${apps[@]}")"
+      bar_pins fixar "${apps[@]}"; fixados="$BAR_FIXADOS"
+      local fora=()
       for app in "${apps[@]}"; do
-        ok "$(pin_label "$app" "$tabela" | cut -d'|' -f1) está na barra." "$(pin_label "$app" "$tabela" | cut -d'|' -f1) is on the bar."
-      done ;;
+        if grep -qxF -- "$app" <<<"$BAR_NAO_COUBE"; then
+          fora+=("$(pin_label "$app" "$tabela" | cut -d'|' -f1)")
+        else
+          ok "$(pin_label "$app" "$tabela" | cut -d'|' -f1) está na barra." "$(pin_label "$app" "$tabela" | cut -d'|' -f1) is on the bar."
+        fi
+      done
+      if (( ${#fora[@]} )); then
+        local cheia nomes
+        cheia="$(bar_cheia_msg "$BAR_LIMITE")"
+        nomes="$(IFS=,; printf '%s' "${fora[*]}")"; nomes="${nomes//,/, }"
+        bar_avisar "$(t "$nomes não coube na barra" "$nomes did not fit on the bar")" "$cheia $(t "Para abrir lugar, tire um app da barra." "To make room, unpin an app.")"
+        printf '%s✖%s %s\n' "$C_ERR" "$C_OFF" "$(t "$nomes não coube. $cheia" "$nomes did not fit. $cheia")" >&2
+        tip "Para abrir lugar, tire um app: matsu barra tirar <app>" "To make room, unpin an app: matsu bar unpin <app>"
+        exit 1
+      fi ;;
     tirar|unpin|desafixar|remover)
       [[ $# -gt 0 ]] || fail "Diga qual app tirar. Exemplo: matsu barra tirar steam" "Say which app to unpin. Example: matsu bar unpin steam"
-      fixados="$(bar_pins ler)"
+      bar_pins ler; fixados="$BAR_FIXADOS"
       for a in "$@"; do
         app="$(pin_match "$a" "$fixados" "$tabela")" || fail "\"$a\" não está fixado na barra." "\"$a\" is not pinned to the bar."
         apps+=("$app")
       done
-      fixados="$(bar_pins tirar "${apps[@]}")"
+      bar_pins tirar "${apps[@]}"; fixados="$BAR_FIXADOS"
       for app in "${apps[@]}"; do
         ok "$(pin_label "$app" "$tabela" | cut -d'|' -f1) saiu da barra." "$(pin_label "$app" "$tabela" | cut -d'|' -f1) left the bar."
       done ;;
     ordem|order)
       [[ $# -gt 0 ]] || fail "Diga a ordem. Exemplo: matsu barra ordem arquivos,navegador,steam" "Say the order. Example: matsu bar order files,browser,steam"
-      fixados="$(bar_pins ler)"
+      bar_pins ler; fixados="$BAR_FIXADOS"
       # Aceita "a,b,c" ou "a b c" (e nomes com espaço entre vírgulas).
       local junto
       local -a pedidos=()
@@ -730,7 +773,7 @@ cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
         app="$(pin_match "$a" "$fixados" "$tabela")" || fail "\"$a\" não está fixado na barra." "\"$a\" is not pinned to the bar."
         apps+=("$app")
       done
-      fixados="$(bar_pins ordem "${apps[@]}")"
+      bar_pins ordem "${apps[@]}"; fixados="$BAR_FIXADOS"
       ok "Ordem trocada." "Order changed." ;;
   esac
   if [[ $modo == lista ]]; then
@@ -739,6 +782,8 @@ cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
       IFS='|' read -r nome icone desk < <(pin_label "$app" "$tabela")
       printf 'fixado|%s|%s|%s|%s\n' "$app" "$nome" "$icone" "$desk"
     done <<<"$fixados"
+    # Quantos apps cabem na barra e o estilo (os Ajustes avisam quando enche).
+    printf 'limite|%s|%s\n' "$BAR_LIMITE" "$(bar_saved estilo fusao)"
     return 0
   fi
   say "Apps fixados na barra:" "Apps pinned to the bar:"
@@ -753,6 +798,14 @@ cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
     printf '  %2d. %s\n' "$n" "$nome"
   done <<<"$fixados"
   (( n )) || say "  (nenhum)" "  (none)"
+  if (( BAR_LIMITE > 0 )); then
+    if (( n >= BAR_LIMITE )); then
+      tip "$(bar_cheia_msg "$BAR_LIMITE") Para fixar outro, tire um antes: matsu barra tirar <app>." \
+          "$(bar_cheia_msg "$BAR_LIMITE") To pin another, unpin one first: matsu bar unpin <app>."
+      return 0
+    fi
+    tip "Cabem até $BAR_LIMITE apps nesta barra." "Up to $BAR_LIMITE apps fit on this bar."
+  fi
   tip "Para fixar outro: matsu barra fixar <app>. Para tirar: matsu barra tirar <app>." \
       "To pin another: matsu bar pin <app>. To unpin: matsu bar unpin <app>."
 }
@@ -911,9 +964,19 @@ cmd_bar() {
     esac
   done < <(bar_reply_lines "$reply1")
   # 3) Monta o estilo novo com os apps que a pessoa tinha fixado, em cada tela.
-  local script
+  #    Os que não couberam numa barra menor ficaram guardados e voltam aqui
+  #    (no fim da lista) quando a barra nova tem lugar: a doca do Mac.
+  local guardados="$STATE_DIR/fixados-guardados" script
+  if [[ $style == mac && -s $guardados ]]; then
+    while IFS= read -r linha; do
+      [[ -n $linha && $fixados != *"\"$linha\""* ]] || continue
+      linha="${linha//\\/}"; linha="${linha//\"/}"
+      fixados+="${fixados:+,}\"$linha\""
+    done < "$guardados"
+    rm -f "$guardados"
+  fi
   script="$(printf 'var matsuFixados = [%s];\n' "$fixados"
-    bar_vars "$size" "$hide" "$busca" "$menu" "$telas" "$abertos"
+    bar_vars "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$style"
     cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js" "$BAR_DIR/todas-as-telas.js")"
   if ! reply2="$(bar_script "$script")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Matsu." \
@@ -923,6 +986,22 @@ cmd_bar() {
   if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
   mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\ntelas=%s\nabertos=%s\n' \
     "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" > "$STATE_DIR/barra"
+  # A barra nova é menor que a de antes: os apps que passaram do limite ficam
+  # guardados (e a pessoa fica sabendo quais).
+  local cortados
+  cortados="$(bar_reply_lines "$reply2" | sed -n 's/^matsu-cortado: //p')"
+  if [[ -n $cortados ]]; then
+    local tabela nomes="" app
+    printf '%s\n' "$cortados" >> "$guardados"
+    tabela="$(app_table)"
+    while IFS= read -r app; do
+      [[ -n $app ]] && nomes+="${nomes:+, }$(pin_label "$app" "$tabela" | cut -d'|' -f1)"
+    done <<<"$cortados"
+    ok "Barra trocada." "Bar changed."
+    warn "Nem todos os apps fixados cabem nesta barra. Ficaram guardados: $nomes. Eles voltam no estilo Mac (a doca cabe mais)." \
+         "Not every pinned app fits on this bar. Kept aside: $nomes. They come back in the Mac style (the dock fits more)."
+    return 0
+  fi
   ok "Barra trocada. Os apps que você fixou foram mantidos." "Bar changed. The apps you pinned were kept."
   tip "Para voltar ao padrão: matsu barra fusao --tamanho media --busca esquerda --menu esquerda" \
       "To go back to the default: matsu bar fusao --size media --search esquerda --menu esquerda"

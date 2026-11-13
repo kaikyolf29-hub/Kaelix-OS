@@ -141,13 +141,19 @@ PlasmoidItem {
 
     // Na barra: uma pílula com rede, Bluetooth, som e bateria, como no vídeo da
     // fusão e no Windows 11. Um clique abre a central.
+    //
+    // Na barra fina de cima (estilo Mac) a pílula se abre: cada ícone fica
+    // solto, com a pílula só ao passar o mouse, a bateria ganha a %, e no fim
+    // vem o botão da central. Qualquer um deles abre a central; a rodinha do
+    // mouse em cima do som muda o volume.
     compactRepresentation: MouseArea {
         id: compacta
 
         readonly property int icone: Kirigami.Units.iconSizes.small
         readonly property int folga: Math.round(Kirigami.Units.gridUnit * 0.6)
+        readonly property bool fina: height > 0 && height < Kirigami.Units.gridUnit * 1.9
 
-        Layout.minimumWidth: pilula.width + 2
+        Layout.minimumWidth: fina ? linhaFina.implicitWidth : pilula.width + 2
         Layout.preferredWidth: Layout.minimumWidth
         Layout.maximumWidth: Layout.minimumWidth
         Layout.fillHeight: true
@@ -165,6 +171,7 @@ PlasmoidItem {
 
             readonly property color base: raiz.expanded ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
 
+            visible: !compacta.fina
             anchors.centerIn: parent
             height: Math.min(compacta.height - 2, Math.round(Kirigami.Units.gridUnit * 2))
             width: icones.implicitWidth + compacta.folga * 2
@@ -178,6 +185,7 @@ PlasmoidItem {
 
         Row {
             id: icones
+            visible: !compacta.fina
             anchors.centerIn: pilula
             spacing: compacta.folga
 
@@ -209,6 +217,102 @@ PlasmoidItem {
                 height: compacta.icone
                 nivel: raiz.numero("bateria")
                 carregando: raiz.sim("carregando")
+            }
+        }
+
+        // A barra fina de cima: ícones soltos e o botão da central.
+        Row {
+            id: linhaFina
+
+            // A rodinha do mouse no som: de 5 em 5 (o touchpad soma aos poucos).
+            property real giro: 0
+            // O ícone clicado fica aceso com a central aberta (pelo atalho, o da central).
+            property int clicado: 4
+            function abrir(qual) {
+                clicado = qual;
+                raiz.expanded = !raiz.expanded;
+            }
+
+            visible: compacta.fina
+            height: parent.height
+            anchors.right: parent.right
+            spacing: Math.round(Kirigami.Units.gridUnit * 0.1)
+
+            IconeFino {
+                aceso: raiz.expanded && linhaFina.clicado === 0
+                onClicked: linhaFina.abrir(0)
+                Kirigami.Icon {
+                    width: compacta.icone
+                    height: compacta.icone
+                    source: raiz.iconeRede
+                    isMask: true
+                    color: Kirigami.Theme.textColor
+                }
+            }
+            IconeFino {
+                visible: raiz.sim("bt_tem")
+                aceso: raiz.expanded && linhaFina.clicado === 1
+                onClicked: linhaFina.abrir(1)
+                Kirigami.Icon {
+                    width: compacta.icone
+                    height: compacta.icone
+                    source: "matsu-bluetooth-symbolic"
+                    isMask: true
+                    color: Kirigami.Theme.textColor
+                    opacity: raiz.sim("bt_ligado") ? 1 : 0.45
+                }
+            }
+            IconeFino {
+                aceso: raiz.expanded && linhaFina.clicado === 2
+                onClicked: linhaFina.abrir(2)
+                onWheel: (roda) => {
+                    if (!raiz.sim("vol_tem")) {
+                        return;
+                    }
+                    linhaFina.giro += roda.angleDelta.y;
+                    var passos = Math.trunc(linhaFina.giro / 120);
+                    if (passos !== 0) {
+                        linhaFina.giro -= passos * 120;
+                        var novo = Math.max(0, Math.min(100, raiz.numero("vol") + passos * 5));
+                        raiz.definir("vol", String(novo));
+                        raiz.fazer("volume " + novo);
+                    }
+                }
+                Kirigami.Icon {
+                    width: compacta.icone
+                    height: compacta.icone
+                    source: raiz.iconeSom
+                    isMask: true
+                    color: Kirigami.Theme.textColor
+                    opacity: raiz.sim("vol_tem") ? 1 : 0.5
+                }
+            }
+            IconeFino {
+                visible: raiz.sim("bateria_tem")
+                aceso: raiz.expanded && linhaFina.clicado === 3
+                onClicked: linhaFina.abrir(3)
+                Bateria {
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: compacta.icone
+                    nivel: raiz.numero("bateria")
+                    carregando: raiz.sim("carregando")
+                }
+                PlasmaComponents.Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: raiz.numero("bateria") + "%"
+                    font.features: { "tnum": 1 }
+                }
+            }
+            IconeFino {
+                aceso: raiz.expanded && linhaFina.clicado === 4
+                onClicked: linhaFina.abrir(4)
+                Kirigami.Icon {
+                    width: compacta.icone
+                    height: compacta.icone
+                    source: Qt.resolvedUrl("../icones/matsu-central.svg")
+                    isMask: true
+                    color: Kirigami.Theme.textColor
+                }
             }
         }
     }

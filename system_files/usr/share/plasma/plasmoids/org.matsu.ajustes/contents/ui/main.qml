@@ -32,6 +32,10 @@ PlasmoidItem {
     // Apps fixados na barra ({app, nome, icone, desk}) e todos os apps para escolher.
     property var fixados: []
     property var instalados: []
+    // Quantos apps cabem na barra (0 = a barra não disse) e o estilo dela.
+    property int limiteFixados: 0
+    property string estiloDoLimite: ""
+    readonly property bool barraCheia: limiteFixados > 0 && fixados.length >= limiteFixados
     // Mudanças nos fixados ainda indo para a barra: enquanto houver, a lista da
     // tela não é trocada pela lida da barra (evita piscar a ordem velha).
     property int fixadosPendentes: 0
@@ -94,6 +98,9 @@ PlasmoidItem {
             var partes = linhas[i].split("|");
             if (partes.length >= 4 && partes[0] === "fixado") {
                 lista.push({ app: partes[1], nome: partes[2], icone: partes[3], desk: partes[4] || "" });
+            } else if (partes.length >= 2 && partes[0] === "limite") {
+                limiteFixados = parseInt(partes[1], 10) || 0;
+                estiloDoLimite = partes[2] || "";
             }
         }
         fixados = lista;
@@ -136,6 +143,9 @@ PlasmoidItem {
         mudarFixados(fixados.filter(function (x) { return x.app !== app; }), "tirar " + aspas(app));
     }
     function fixarApp(item) {
+        if (barraCheia) {
+            return;
+        }
         mudarFixados(fixados.concat([item]), "fixar " + aspas(item.app));
     }
     function fixadosPadrao() {

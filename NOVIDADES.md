@@ -15,7 +15,7 @@ _Em preparação_
 A primeira edição do Matsu: tudo com o mesmo vidro, em português, e feito para jogar,
 estudar e trabalhar.
 
-- **Barra em três ilhas**: o menu, os apps abertos e a bandeja separados, com vidro e cantos redondos. Também tem os estilos Mac e Windows, e a barra aparece em cada monitor.
+- **Barra em três ilhas**: o menu, os apps abertos e a bandeja separados, com vidro e cantos redondos. Também tem o estilo Windows e o estilo Mac, com a barra de cima mostrando o nome e os menus do app aberto, e a barra aparece em cada monitor.
 - **Efeito vidro**: escolha a cor e a transparência nos Ajustes, ou desligue o vidro e deixe tudo sólido.
 - **Loja do Matsu**: apps e jogos com fotos, em português, com atualização de tudo num clique.
 - **Central de jogos**: a biblioteca da Steam, Epic e GOG num lugar só, o FPS na tela que liga e desliga com Win+Alt+F, os ajustes e os drivers da placa de vídeo, e os controles de PlayStation e Xbox pelo Bluetooth.

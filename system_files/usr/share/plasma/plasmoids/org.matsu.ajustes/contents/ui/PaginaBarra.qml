@@ -217,6 +217,57 @@ ColumnLayout {
             opacity: 0.65
         }
 
+        // A barra cheia: um aviso gentil no lugar de deixar fixar mais (a barra
+        // passaria da borda). O número vem da barra: depende do tamanho dela e
+        // da largura da tela.
+        Rectangle {
+            id: avisoCheia
+            Layout.fillWidth: true
+            Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            Layout.rightMargin: Math.round(Kirigami.Units.gridUnit * 0.6)
+            Layout.topMargin: ajustes.barraCheia ? Kirigami.Units.smallSpacing : 0
+            Layout.preferredHeight: ajustes.barraCheia ? linhaCheia.implicitHeight + Kirigami.Units.largeSpacing * 2 : 0
+            visible: Layout.preferredHeight > 0
+            opacity: ajustes.barraCheia ? 1 : 0
+            clip: true
+            radius: Math.round(Kirigami.Units.gridUnit * 0.45)
+            color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.06)
+            Behavior on Layout.preferredHeight {
+                NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+            }
+            Behavior on opacity {
+                NumberAnimation { duration: Kirigami.Units.longDuration }
+            }
+
+            RowLayout {
+                id: linhaCheia
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: Kirigami.Units.largeSpacing
+                anchors.rightMargin: Kirigami.Units.largeSpacing
+                spacing: Kirigami.Units.largeSpacing
+
+                Kirigami.Icon {
+                    Layout.alignment: Qt.AlignTop
+                    implicitWidth: Kirigami.Units.iconSizes.small
+                    implicitHeight: implicitWidth
+                    source: "matsu-info-symbolic"
+                    isMask: true
+                    color: Kirigami.Theme.textColor
+                }
+                PlasmaComponents.Label {
+                    Layout.fillWidth: true
+                    text: ajustes.estiloDoLimite === "mac"
+                          ? ajustes.t("A doca cabe até " + ajustes.limiteFixados + " apps. Para pôr outro, tire um da lista.",
+                                      "The dock fits up to " + ajustes.limiteFixados + " apps. To add another, remove one from the list.")
+                          : ajustes.t("A barra cabe até " + ajustes.limiteFixados + " apps. No estilo Mac a doca cabe mais.",
+                                      "The bar fits up to " + ajustes.limiteFixados + " apps. The Mac style dock fits more.")
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
         // Os botões de baixo: pôr outro app e voltar aos apps do começo.
         RowLayout {
             Layout.fillWidth: true
@@ -227,6 +278,7 @@ ColumnLayout {
             spacing: Kirigami.Units.smallSpacing
 
             PlasmaComponents.Button {
+                enabled: grupoApps.escolhendo || !ajustes.barraCheia
                 icon.name: grupoApps.escolhendo ? "go-up-symbolic" : "list-add-symbolic"
                 text: grupoApps.escolhendo ? ajustes.t("Fechar a lista de apps", "Close the app list") : ajustes.t("Adicionar app…", "Add app…")
                 onClicked: {
@@ -327,7 +379,12 @@ ColumnLayout {
             }
         }
 
+        // Ao chegar no limite, a lista de apps fecha (o aviso aparece no lugar).
         function fixar(app) {
+            if (ajustes.barraCheia) {
+                grupoApps.escolhendo = false;
+                return;
+            }
             ajustes.fixarApp(app);
             busca.text = "";
             grupoApps.escolhendo = false;

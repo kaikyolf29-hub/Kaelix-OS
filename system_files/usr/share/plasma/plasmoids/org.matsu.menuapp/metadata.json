@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.matsu.menuapp",
+        "Name": "Matsu App Menu",
+        "Name[pt_BR]": "Nome e menus do app",
+        "Description": "The name of the app in use, in bold, with its menus, for the Matsu top bar",
+        "Description[pt_BR]": "O nome do app em uso, em negrito, com os menus dele, para a barra de cima do Matsu",
+        "Icon": "matsu-barra-symbolic",
+        "Category": "Windows and Tasks",
+        "License": "MIT",
+        "Version": "1.0",
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
