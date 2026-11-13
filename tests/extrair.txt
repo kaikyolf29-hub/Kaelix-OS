@@ -5,6 +5,7 @@
 #   caminho ou padrão (glob): copia os arquivos (pastas inteiras, até 1 MB cada)
 #   rpm:<pacote>: a lista de arquivos do pacote, os de texto (qml, js, json...) e o
 #     QML compilado dentro dos programas do pacote (em qrc/, por tests/extrair-qrc.py)
+#   busca:<nome ou padrão>: onde o arquivo está na imagem (sai em busca.txt)
 # Mudar só esta lista não monta imagem nova (tests/** fica fora do build.yml).
 
 # Telas de login (Plasma Login Manager) e bloqueio
@@ -21,3 +22,13 @@ rpm:kscreenlocker
 # Primeiro uso (criar a conta) e janela de senha
 rpm:plasma-setup
 rpm:polkit-kde
+
+# Plasma 6.8: a tela de bloqueio e a de sair saíram das pastas de antes
+rpm:plasma-workspace
+rpm:plasma-desktop
+busca:LockScreenUi*
+busca:LockScreen.qml
+busca:Logout.qml
+busca:SystemDialog.qml
+busca:MainBlock.qml
+busca:*lockscreen*

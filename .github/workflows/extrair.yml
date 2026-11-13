@@ -52,6 +52,12 @@ jobs:
             : > /tmp/binarios
             while read -r linha; do
               [[ -z $linha || $linha == \#* ]] && continue
+              if [[ $linha == busca:* ]]; then
+                # Onde está um arquivo (o KDE muda as coisas de lugar entre versões).
+                find / -xdev \( -path /proc -o -path /sys -o -path /var -o -path /sysroot \) -prune -o \
+                  -iname "${linha#busca:}" -print 2>/dev/null >> /saida/busca.txt || true
+                continue
+              fi
               if [[ $linha == rpm:* ]]; then
                 pacote=${linha#rpm:}
                 rpm -ql "$pacote" > "/saida/lista-$pacote.txt" 2>&1 || continue
