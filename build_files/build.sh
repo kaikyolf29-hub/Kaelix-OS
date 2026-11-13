@@ -403,6 +403,16 @@ for app in calendario musica fotos blocodenotas; do
     [[ -n $tipo ]] && pares+=("$tipo:org.matsu.$app.desktop")
   done
 done
+# Programas baixados (AppImage, programas do Linux e do Windows, .deb, .rpm,
+# .jar) abrem pelo aviso da Central de segurança, que confere de onde vieram
+# antes de abrir. Os scripts (.sh) continuam abrindo no Bloco de notas.
+for tipo in application/vnd.appimage application/x-iso9660-appimage application/x-executable \
+            application/x-sharedlib application/x-msdownload application/vnd.microsoft.portable-executable \
+            application/x-ms-dos-executable application/x-dosexec application/x-ms-ne-executable \
+            application/x-msi application/vnd.debian.binary-package application/x-rpm \
+            application/java-archive application/x-makeself; do
+  pares+=("$tipo:org.matsu.seguranca.aviso.desktop")
+done
 echo "Apps padrão do Matsu: ${#pares[@]} tipos de arquivo"
 for f in /etc/xdg/mimeapps.list /etc/xdg/kde-mimeapps.list /usr/share/applications/mimeapps.list \
          /usr/share/kde-settings/kde-profile/default/xdg/mimeapps.list \

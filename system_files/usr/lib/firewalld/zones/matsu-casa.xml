@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matsu: rede de casa (a sua rede, onde estão o seu celular, a TV e a
+     impressora). Entram só os serviços conhecidos que fazem sentido em casa;
+     a Central de segurança liga e desliga cada um (Apps que podem receber
+     conexões). O acesso remoto (SSH) fica desligado. -->
+<zone>
+  <short>Matsu: rede de casa</short>
+  <description>Rede de casa: aceita só os serviços conhecidos (Steam Remote Play, KDE Connect, impressoras, TV e aparelhos da rede).</description>
+  <service name="dhcpv6-client"/>
+  <service name="mdns"/>
+  <service name="samba-client"/>
+  <service name="ipp-client"/>
+  <service name="upnp-client"/>
+  <service name="ws-discovery-client"/>
+  <service name="llmnr-client"/>
+  <service name="kdeconnect"/>
+  <service name="steam-streaming"/>
+  <service name="steam-lan-transfer"/>
+  <forward/>
+</zone>

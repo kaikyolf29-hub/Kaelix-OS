@@ -1,0 +1,24 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.matsu.seguranca",
+        "Name": "Matsu Security",
+        "Name[pt_BR]": "Segurança do Matsu",
+        "Name[pt]": "Segurança do Matsu",
+        "Description": "Shield status in the tray: pause it for a while or open the Security center",
+        "Description[pt_BR]": "O estado do escudo na bandeja: pausar por um tempo ou abrir a Central de segurança",
+        "Description[pt]": "O estado do escudo na bandeja: pausar por um tempo ou abrir a Central de segurança",
+        "Icon": "matsu-escudo-symbolic",
+        "Category": "System Information",
+        "License": "MIT",
+        "Version": "1.0",
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-NotificationArea": "true",
+    "X-Plasma-NotificationAreaCategory": "SystemServices"
+}

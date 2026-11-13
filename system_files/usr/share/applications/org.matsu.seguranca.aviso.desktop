@@ -1,0 +1,19 @@
+[Desktop Entry]
+Type=Application
+Name=Check and open
+Name[pt_BR]=Verificar e abrir
+Name[pt]=Verificar e abrir
+Comment=Checks programs downloaded from the internet before opening them
+Comment[pt_BR]=Confere os programas baixados da internet antes de abrir
+Comment[pt]=Confere os programas transferidos da internet antes de abrir
+# O "SmartScreen" do Matsu: o tratador dos programas baixados (AppImage,
+# programas do Linux e do Windows, scripts, .run, .deb, .rpm, .jar). O que veio
+# da internet e não é conhecido passa pelo aviso; o resto abre direto.
+# Não é o padrão dos scripts (.sh): esses continuam abrindo no editor.
+Exec=/usr/libexec/matsu/matsu-seguranca abrir %f
+Icon=org.matsu.seguranca
+Terminal=false
+NoDisplay=true
+StartupNotify=false
+Categories=System;Security;
+MimeType=application/vnd.appimage;application/x-iso9660-appimage;application/x-executable;application/x-sharedlib;application/x-pie-executable;application/x-shellscript;application/x-makeself;application/x-msdownload;application/x-ms-dos-executable;application/vnd.microsoft.portable-executable;application/x-dosexec;application/x-ms-ne-executable;application/x-msi;application/vnd.debian.binary-package;application/x-deb;application/x-rpm;application/x-redhat-package-manager;application/java-archive;application/x-java-archive;

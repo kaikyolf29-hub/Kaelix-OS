@@ -413,6 +413,42 @@ shot "36f-jogos-drivers"
 hmp key alt-f4
 sleep 2
 
+# Central de segurança: Início, Escudo (Ctrl+2), Rede e firewall (Ctrl+3),
+# Permissões dos apps (Ctrl+4), Integridade (Ctrl+5) e Histórico (Ctrl+6).
+# Depois, um "programa baixado da internet" de mentira (com o site gravado no
+# arquivo, como o Brave faz) aberto pelo sistema mostra o aviso antes de abrir.
+hmp key ctrl-alt-t
+sleep 8
+hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.seguranca /usr/share/matsu/seguranca/Main.qml </dev/null >/dev/null 2>&1; sleep 2; exit"
+hmp key ret
+sleep 10
+shot "38-seguranca-inicio"
+hmp key ctrl-2
+sleep 4
+shot "38b-seguranca-escudo"
+hmp key ctrl-3
+sleep 5
+shot "38c-seguranca-rede"
+hmp key ctrl-4
+sleep 5
+shot "38d-seguranca-apps"
+hmp key ctrl-5
+sleep 6
+shot "38e-seguranca-integridade"
+hmp key ctrl-6
+sleep 3
+shot "38f-seguranca-historico"
+hmp key alt-f4
+sleep 2
+hmp key ctrl-alt-t
+sleep 8
+hmp type "d=\$(xdg-user-dir DOWNLOAD); printf '#!/bin/sh\\necho oi\\n' > \"\$d/programa-teste.AppImage\"; python3 -c 'import os,sys; os.setxattr(sys.argv[1], \"user.xdg.origin.url\", b\"https://exemplo.com.br/programa-teste.AppImage\")' \"\$d/programa-teste.AppImage\"; setsid -f xdg-open \"\$d/programa-teste.AppImage\" </dev/null >/dev/null 2>&1; sleep 2; exit"
+hmp key ret
+sleep 12
+shot "38g-seguranca-aviso-de-programa-baixado"
+hmp key alt-f4
+sleep 2
+
 # Cada app do menu, um por um (40-app-*), para conferir tela por tela o tema
 # do Matsu, o português e se sobrou nome da base. O script de dentro
 # (teste-apps.sh) abre um app a cada 14 segundos; aqui a foto sai perto do fim

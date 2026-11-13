@@ -1,0 +1,12 @@
+# Atualiza a lista de ameaças do escudo do Matsu 10 minutos depois de ligar e
+# a cada 4 horas (sem horário fixo, para não pesar no servidor do ClamAV).
+[Unit]
+Description=Atualiza a lista de ameaças do escudo do Matsu
+
+[Timer]
+OnBootSec=10min
+OnUnitInactiveSec=4h
+RandomizedDelaySec=20min
+
+[Install]
+WantedBy=timers.target

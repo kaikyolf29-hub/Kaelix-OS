@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+# Central de segurança do Matsu: "Verificar os arquivos do sistema".
+# Confere, só lendo, cada arquivo do sistema contra a soma gravada na
+# atualização assinada (ostree fsck). Roda como root pelo pkexec (ação
+# org.matsu.seguranca.fsck) e não aceita argumentos: não muda nada.
+# Saída para a Central: as linhas do ostree e, no fim, "FIM <código>".
+set -uo pipefail
+export LC_ALL=C
+repo=/sysroot/ostree/repo
+if [[ ! -d $repo ]] || ! command -v ostree >/dev/null 2>&1; then
+  echo "ERRO sem-ostree"
+  exit 3
+fi
+# O ostree só mostra o progresso (objetos conferidos / total) num terminal; o
+# "script" finge um, e as voltas de linha (\r) viram linhas para a Central ler.
+if command -v script >/dev/null 2>&1; then
+  script -qefc "ostree fsck --repo=$repo" /dev/null | tr '\r' '\n'
+  codigo=${PIPESTATUS[0]}
+else
+  ostree fsck --repo="$repo" 2>&1
+  codigo=$?
+fi
+echo "FIM $codigo"
+exit "$codigo"

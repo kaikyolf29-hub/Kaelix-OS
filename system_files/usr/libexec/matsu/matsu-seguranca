@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+# Central de segurança do Matsu: atalho para o ajudante (Python, na pasta do app).
+# Quem chama: o tratador de executáveis baixados (org.matsu.seguranca.aviso.desktop,
+# "matsu-seguranca abrir <arquivo>") e o ícone da bandeja ("matsu-seguranca bandeja").
+# Os comandos estão no começo de /usr/share/matsu/seguranca/ajudante.py.
+set -euo pipefail
+exec /usr/bin/python3 -I -S /usr/share/matsu/seguranca/ajudante.py "$@"

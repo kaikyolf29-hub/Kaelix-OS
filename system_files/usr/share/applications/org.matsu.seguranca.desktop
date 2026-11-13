@@ -1,0 +1,43 @@
+[Desktop Entry]
+Type=Application
+Name=Security
+Name[pt_BR]=Segurança
+Name[pt]=Segurança
+GenericName=Security Center
+GenericName[pt_BR]=Central de segurança
+GenericName[pt]=Centro de segurança
+Comment=Real-time shield against viruses, firewall, app permissions and system integrity
+Comment[pt_BR]=Escudo contra vírus em tempo real, firewall, permissões dos apps e integridade do sistema
+Comment[pt]=Escudo contra vírus em tempo real, firewall, permissões das apps e integridade do sistema
+# A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
+# (org.matsu.seguranca): assim a barra mostra o ícone e o nome certos.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.seguranca /usr/share/matsu/seguranca/Main.qml
+Icon=org.matsu.seguranca
+Terminal=false
+Categories=System;Security;Qt;KDE;
+Keywords=segurança;antivírus;antivirus;vírus;virus;ameaça;malware;quarentena;escudo;firewall;rede;privacidade;permissões;câmera;microfone;localização;integridade;secure boot;criptografia;security;threat;quarantine;shield;network;privacy;permissions;camera;microphone;location;integrity;encryption;defender;
+StartupNotify=true
+StartupWMClass=org.matsu.seguranca
+SingleMainWindow=true
+Actions=Verificar;Rede;Permissoes;
+
+[Desktop Action Verificar]
+Name=Quick scan
+Name[pt_BR]=Verificação rápida
+Name[pt]=Verificação rápida
+Icon=matsu-escudo-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.seguranca /usr/share/matsu/seguranca/Main.qml verificar-rapida
+
+[Desktop Action Rede]
+Name=Network and firewall
+Name[pt_BR]=Rede e firewall
+Name[pt]=Rede e firewall
+Icon=matsu-web-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.seguranca /usr/share/matsu/seguranca/Main.qml rede
+
+[Desktop Action Permissoes]
+Name=App permissions
+Name[pt_BR]=Permissões dos apps
+Name[pt]=Permissões das apps
+Icon=matsu-apps-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.seguranca /usr/share/matsu/seguranca/Main.qml apps

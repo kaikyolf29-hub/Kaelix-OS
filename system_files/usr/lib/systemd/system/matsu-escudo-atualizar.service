@@ -1,0 +1,34 @@
+# Lista de ameaças do escudo do Matsu: o freshclam baixa a lista do ClamAV
+# (~230 MB na primeira vez, poucos KB depois) em /var/lib/clamav. Roda pelo
+# timer (a cada 4 horas) e quando o escudo vê que a lista ainda não chegou.
+[Unit]
+Description=Lista de ameaças do escudo do Matsu (freshclam)
+Documentation=man:freshclam(1)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=clamupdate
+Group=clamupdate
+StateDirectory=clamav
+StateDirectoryMode=0755
+ExecStart=/usr/bin/freshclam --foreground --stdout --config-file=/usr/share/matsu/seguranca/freshclam.conf
+# Conta os bytes baixados: a Central mostra o progresso do primeiro download.
+IPAccounting=yes
+TimeoutStartSec=45min
+Nice=15
+CPUWeight=20
+IOSchedulingClass=idle
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+LockPersonality=yes

@@ -1,0 +1,50 @@
+# O antivírus (clamd) do escudo do Matsu. Não sobe com o computador: o escudo
+# de cada pessoa pede quando há arquivo para verificar e manda parar depois de
+# 10 minutos sem uso (com a lista de ameaças carregada ele ocupa ~1 GB de
+# memória). A regra do polkit 50-matsu-seguranca.rules deixa quem está na
+# frente do computador ligar e desligar só esta unidade e a da lista, sem senha.
+[Unit]
+Description=Antivírus do escudo do Matsu (clamd sob demanda)
+Documentation=man:clamd(8) man:clamd.conf(5)
+ConditionPathExistsGlob=/var/lib/clamav/main.{c[vl]d,inc}
+ConditionPathExistsGlob=/var/lib/clamav/daily.{c[vl]d,inc}
+
+[Service]
+Type=simple
+# Usuário sem nome, criado na hora pelo systemd: o clamd não é dono de nada.
+DynamicUser=yes
+# O SELinux do Fedora só deixa o antivírus ler arquivos da pessoa (o descritor
+# que o escudo manda) com esta opção ligada. Vale até reiniciar; sem SELinux, nada.
+ExecStartPre=-+/usr/sbin/setsebool antivirus_can_scan_system on
+ExecStart=/usr/sbin/clamd --foreground=yes --config-file=/usr/share/matsu/seguranca/clamd.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+RuntimeDirectory=matsu-escudo
+RuntimeDirectoryMode=0755
+TimeoutStartSec=420
+Restart=on-failure
+RestartSec=10
+# Os jogos ganham do antivírus na hora de usar o processador e o disco.
+Nice=10
+CPUWeight=20
+IOWeight=20
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+OOMScoreAdjust=500
+# Caixa fechada: só lê a lista de ameaças e recebe os arquivos pelo soquete.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native

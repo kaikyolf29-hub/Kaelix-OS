@@ -1,0 +1,18 @@
+# Escudo em tempo real do Matsu (Central de segurança): vigia Downloads, Área
+# de trabalho e os pendrives da pessoa e manda cada arquivo novo para o
+# antivírus (matsu-escudo-clamd.service). Roda como a própria pessoa.
+[Unit]
+Description=Escudo em tempo real do Matsu (Central de segurança)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -I -S /usr/share/matsu/seguranca/escudo.py
+Restart=on-failure
+RestartSec=5
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,20 @@
+// Central de segurança do Matsu: quem está na frente do computador (sessão
+// local e ativa) pode ligar e desligar o antivírus do escudo e pedir a lista
+// de ameaças nova, sem senha. Só estas duas unidades e só ligar, desligar e
+// reiniciar: elas não dão poder nenhum além disso (o clamd roda numa caixa
+// fechada e o freshclam só baixa a lista do ClamAV). Mudar o firewall, a zona
+// padrão ou qualquer outra coisa do sistema continua pedindo a senha de
+// administrador, pelas regras do próprio firewalld e do systemd.
+polkit.addRule(function (action, subject) {
+    if (action.id !== "org.freedesktop.systemd1.manage-units") {
+        return polkit.Result.NOT_HANDLED;
+    }
+    var unidade = action.lookup("unit");
+    var verbo = action.lookup("verb");
+    if ((unidade === "matsu-escudo-clamd.service" || unidade === "matsu-escudo-atualizar.service") &&
+        (verbo === "start" || verbo === "stop" || verbo === "restart") &&
+        subject.local && subject.active) {
+        return polkit.Result.YES;
+    }
+    return polkit.Result.NOT_HANDLED;
+});

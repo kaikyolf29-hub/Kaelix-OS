@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Service
+# Botão direito nos Arquivos do Matsu: "Verificar com o escudo" (Central de segurança).
+MimeType=all/all;
+Actions=verificar;
+X-KDE-Priority=TopLevel
+
+[Desktop Action verificar]
+Name=Scan with the shield
+Name[pt_BR]=Verificar com o escudo
+Name[pt]=Verificar com o escudo
+Icon=org.matsu.seguranca
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.seguranca /usr/share/matsu/seguranca/Main.qml verificar %f

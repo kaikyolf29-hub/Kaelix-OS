@@ -21,6 +21,7 @@ estudar e trabalhar.
 - **Central de jogos**: a biblioteca da Steam, Epic e GOG num lugar só, o FPS na tela que liga e desliga com Win+Alt+F, os ajustes e os drivers da placa de vídeo, e os controles de PlayStation e Xbox pelo Bluetooth.
 - **Arquivos do Matsu**: o gerenciador de arquivos com ícones próprios e tamanhos em KB, MB e GB.
 - **Terminal do Matsu**: abas, tela dividida e uma barra com a pasta, o ramo do git e o programa rodando.
+- **Central de segurança**: antivírus que confere os downloads e os pendrives sem pesar nos jogos, aviso antes de abrir programa baixado da internet, firewall com rede de casa ou pública num clique, permissões dos apps e a saúde do sistema.
 - **Gerenciador de tarefas**: processos, gráficos de desempenho e os apps que abrem com o sistema (Ctrl+Shift+Esc).
 - **Apps do dia a dia**: Relógio com alarmes, timer e cronômetro, Calendário, Notas, Calculadora, Bloco de notas, Fotos, Câmera e Música.
 - **Animações em tudo**: botões, chaves, listas e páginas respondem ao toque com movimentos leves.

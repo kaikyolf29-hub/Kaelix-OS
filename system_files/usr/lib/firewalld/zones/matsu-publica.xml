@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matsu: rede pública (café, aeroporto, escola, redes que você não conhece).
+     Nada de fora entra: só a resposta do roteador para o endereço IPv6. Os apps
+     continuam usando a internet normalmente (o que sai não é bloqueado). -->
+<zone>
+  <short>Matsu: rede pública</short>
+  <description>Rede pública: nenhuma conexão de fora é aceita. É o padrão do Matsu para toda rede nova.</description>
+  <service name="dhcpv6-client"/>
+  <forward/>
+</zone>

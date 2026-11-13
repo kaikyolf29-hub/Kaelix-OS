@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!-- Central de segurança do Matsu. -->
+<policyconfig>
+  <vendor>Matsu OS</vendor>
+  <icon_name>org.matsu.seguranca</icon_name>
+
+  <!-- Abrir mesmo assim um arquivo da internet que não é conhecido: pede a senha
+       da PRÓPRIA pessoa (auth_self), para ninguém liberar por ela sem ela ver.
+       Nada roda como root; o arquivo abre com a permissão da pessoa. -->
+  <action id="org.matsu.seguranca.liberar">
+    <description>Open an unknown file from the internet anyway</description>
+    <description xml:lang="pt_BR">Abrir mesmo assim um arquivo desconhecido da internet</description>
+    <message>To open "$(arquivo)" anyway, confirm it is you.</message>
+    <message xml:lang="pt_BR">Para abrir "$(arquivo)" mesmo assim, confirme que é você.</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_self</allow_active>
+    </defaults>
+  </action>
+
+  <!-- Verificar os arquivos do sistema (ostree fsck, só leitura): roda como root
+       pelo pkexec, sem argumentos. Não muda nada, então quem está na frente do
+       computador pode pedir sem senha. -->
+  <action id="org.matsu.seguranca.fsck">
+    <description>Check the system files</description>
+    <description xml:lang="pt_BR">Verificar os arquivos do sistema</description>
+    <message>Checking the system files needs permission.</message>
+    <message xml:lang="pt_BR">Verificar os arquivos do sistema precisa de permissão.</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/matsu/matsu-seguranca-fsck</annotate>
+  </action>
+</policyconfig>
