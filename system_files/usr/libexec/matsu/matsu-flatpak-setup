@@ -29,6 +29,21 @@ while read -r app; do
   flatpak install --system --noninteractive --or-update flathub "$app" || failed=1
 done < "$LIST"
 
+# Sobreposição de FPS do Matsu (MangoHud) também nos jogos abertos por apps
+# Flatpak (Heroic, Lutris): eles precisam da camada Vulkan do MangoHud na mesma
+# versão da base deles. A versão sai da própria base de cada app (a seção
+# "Extension org.freedesktop.Platform.VulkanLayer" dela). Se não der, segue sem.
+for app in com.heroicgameslauncher.hgl net.lutris.Lutris; do
+  base="$(flatpak info --system --show-runtime "$app" 2>/dev/null)" || continue
+  versao="$(flatpak info --system --show-metadata "$base" 2>/dev/null | awk '
+    /^\[/ { dentro = ($0 == "[Extension org.freedesktop.Platform.VulkanLayer]") ; next }
+    dentro && /^versions?=/ { sub(/^versions?=/, ""); split($0, v, ";"); print v[1]; exit }')"
+  [[ -n $versao ]] || versao="${base##*/}"
+  echo "Camada do MangoHud para $app (base $base): $versao"
+  flatpak install --system --noninteractive --or-update flathub \
+    "org.freedesktop.Platform.VulkanLayer.MangoHud//$versao" || echo "aviso: sem a camada do MangoHud $versao" >&2
+done
+
 if [[ $failed == 0 ]]; then
   mkdir -p "$(dirname "$STAMP")"
   echo "$want" > "$STAMP"

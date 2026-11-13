@@ -1,6 +1,8 @@
 // O coração das favoritas: ao favoritar ele pula (cresce e volta com mola), solta
-// um anel e umas faíscas no rosa do Matsu, como o "curtir" dos apps de foto.
-// "claro": em cima de foto ou do fundo escuro do visualizador (contorno branco).
+// um anel e umas faíscas no rosa do Matsu, como o "curtir" dos apps de foto; ao
+// tirar, murcha de leve. "claro": em cima de foto ou de fundo escuro (contorno
+// branco); "comFundo": com o círculo escuro atrás (em cima de foto).
+//   BotaoCoracao { ligado: favorita; onClicado: favorita = !favorita }
 import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
@@ -13,6 +15,10 @@ MouseArea {
     property bool claro: false
     property bool comFundo: claro
     property real lado: Math.round(janela.gu * 1.75)
+    // O rosa do coração cheio, do anel e das faíscas.
+    property color cor: "#ff5c8d"
+    property string dicaLigado: janela.t("Tirar das favoritas", "Remove from favorites")
+    property string dicaDesligado: janela.t("Favoritar", "Add to favorites")
 
     signal clicado()
 
@@ -26,7 +32,7 @@ MouseArea {
     enabled: mostrar
     Accessible.role: Accessible.CheckBox
     Accessible.checked: ligado
-    Accessible.name: ligado ? janela.t("Tirar das favoritas", "Remove from favorites") : janela.t("Favoritar", "Add to favorites")
+    Accessible.name: ligado ? dicaLigado : dicaDesligado
     onClicked: botao.clicado()
     onLigadoChanged: {
         if (ligado) {
@@ -70,7 +76,7 @@ MouseArea {
         radius: width / 2
         color: "transparent"
         border.width: 2
-        border.color: janela.corCoracao
+        border.color: botao.cor
         opacity: 0
     }
     // As faíscas: seis pontinhos que saem do meio.
@@ -84,7 +90,7 @@ MouseArea {
             width: 3
             height: 3
             radius: 1.5
-            color: index % 2 === 0 ? janela.corCoracao : "#ffb3cb"
+            color: index % 2 === 0 ? botao.cor : Qt.lighter(botao.cor, 1.35)
             x: botao.width / 2 - 1.5 + Math.cos(angulo) * distancia
             y: botao.height / 2 - 1.5 + Math.sin(angulo) * distancia
             opacity: 0
@@ -98,7 +104,7 @@ MouseArea {
         height: width
         source: botao.ligado ? String(Qt.resolvedUrl("icones/coracao-cheio.svg")) : "matsu-coracao-symbolic"
         isMask: true
-        color: botao.ligado ? janela.corCoracao : (botao.claro ? "#ffffff" : janela.frente)
+        color: botao.ligado ? botao.cor : (botao.claro ? "#ffffff" : janela.frente)
     }
 
     SequentialAnimation {

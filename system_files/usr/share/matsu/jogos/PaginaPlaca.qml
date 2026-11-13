@@ -159,15 +159,17 @@ Flickable {
             Repeater {
                 model: pagina.p ? [
                     { nome: janela.t("Uso", "Usage"), valor: pagina.p.uso >= 0 ? janela.porcento(pagina.p.uso) : "—", extra: "",
-                      chave: "uso", cor: janela.cores.gpu, maximo: 100 },
+                      chave: "uso", cor: janela.cores.gpu, maximo: 100, anel: pagina.p.uso >= 0 ? pagina.p.uso / 100 : -1 },
                     { nome: janela.t("Temperatura", "Temperature"), valor: pagina.p.temp > 0 ? pagina.p.temp + " °C" : "—",
                       extra: pagina.p.temp_junc > 0 ? janela.t("ponto mais quente ", "hotspot ") + pagina.p.temp_junc + " °C" : "",
-                      chave: "temp", cor: pagina.p.temp >= 85 ? "#f0609e" : janela.cores.rede, maximo: 100 },
+                      chave: "temp", cor: pagina.p.temp >= 85 ? "#f0609e" : janela.cores.rede, maximo: 100,
+                      anel: pagina.p.temp > 0 ? Math.min(1, pagina.p.temp / 100) : -1 },
                     { nome: janela.t("Velocidade", "Clock"), valor: pagina.p.mhz > 0 ? janela.num(pagina.p.mhz, 0) + " MHz" : "—",
                       extra: pagina.p.mhz_mem > 0 ? janela.t("memória ", "memory ") + janela.num(pagina.p.mhz_mem, 0) + " MHz" : "",
                       chave: "mhz", cor: janela.cores.cpu, maximo: 0 },
                     { nome: janela.t("Memória de vídeo", "Video memory"), valor: pagina.p.vram_total > 0 ? janela.par(pagina.p.vram_usada, pagina.p.vram_total) : "—",
-                      extra: "", chave: "vram", cor: janela.cores.mem, maximo: 100 },
+                      extra: "", chave: "vram", cor: janela.cores.mem, maximo: 100,
+                      anel: pagina.p.vram_total > 0 ? pagina.p.vram_usada / pagina.p.vram_total : -1 },
                     { nome: janela.t("Consumo", "Power"), valor: pagina.p.watts > 0 ? janela.num(pagina.p.watts, 0) + " W" : "—",
                       extra: pagina.p.watts_max > 0 ? janela.t("limite ", "limit ") + janela.num(pagina.p.watts_max, 0) + " W" : "",
                       chave: "watts", cor: janela.cores.disco, maximo: pagina.p.watts_max > 0 ? pagina.p.watts_max : 0 },
@@ -182,7 +184,7 @@ Flickable {
                     required property var modelData
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
-                    implicitHeight: Math.round(janela.gu * 6.4)
+                    implicitHeight: Math.round(janela.gu * 6.8)
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -190,34 +192,50 @@ Flickable {
                         spacing: 2
                         RowLayout {
                             Layout.fillWidth: true
-                            Rectangle {
-                                width: 8
-                                height: 8
-                                radius: 4
-                                color: bloco.modelData.cor
-                            }
-                            Texto {
+                            spacing: Math.round(janela.gu * 0.4)
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                text: bloco.modelData.nome
-                                font.pointSize: Kirigami.Theme.smallFont.pointSize
-                                opacity: 0.65
-                                elide: Text.ElideRight
+                                spacing: 2
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Rectangle {
+                                        width: 8
+                                        height: 8
+                                        radius: 4
+                                        color: bloco.modelData.cor
+                                    }
+                                    Texto {
+                                        Layout.fillWidth: true
+                                        text: bloco.modelData.nome
+                                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                        opacity: 0.65
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                                // O número rola de um valor para o outro.
+                                NumeroRolante {
+                                    texto: bloco.modelData.valor
+                                    font.pixelSize: Math.round(janela.gu * 1.25)
+                                    font.weight: Font.DemiBold
+                                    font.features: { "tnum": 1 }
+                                }
+                                Texto {
+                                    Layout.fillWidth: true
+                                    text: bloco.modelData.extra || " "
+                                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                    opacity: 0.55
+                                    elide: Text.ElideRight
+                                }
                             }
-                        }
-                        Texto {
-                            Layout.fillWidth: true
-                            text: bloco.modelData.valor
-                            font.pixelSize: Math.round(janela.gu * 1.25)
-                            font.weight: Font.DemiBold
-                            font.features: { "tnum": 1 }
-                            elide: Text.ElideRight
-                        }
-                        Texto {
-                            Layout.fillWidth: true
-                            text: bloco.modelData.extra || " "
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            opacity: 0.55
-                            elide: Text.ElideRight
+                            Anel {
+                                visible: bloco.modelData.anel !== undefined && bloco.modelData.anel >= 0
+                                Layout.preferredWidth: Math.round(janela.gu * 2.6)
+                                Layout.preferredHeight: Layout.preferredWidth
+                                Layout.alignment: Qt.AlignTop
+                                valor: bloco.modelData.anel || 0
+                                cor: bloco.modelData.cor
+                                espessura: 4
+                            }
                         }
                         Grafico {
                             Layout.fillWidth: true
@@ -276,7 +294,7 @@ Flickable {
             spacing: 2
             LinhaOpcao {
                 Layout.fillWidth: true
-                ultima: !(janela.dados && janela.dados.ajuste)
+                ultima: false
                 icone: "matsu-desempenho-symbolic"
                 nome: janela.t("Velocidade da placa agora", "Card speed right now")
                 texto: {
@@ -292,6 +310,20 @@ Flickable {
                     icone: "matsu-seta-symbolic"
                     iconeNoFim: true
                     onClicado: janela.pagina = "graficos"
+                }
+            }
+            LinhaOpcao {
+                Layout.fillWidth: true
+                primeira: false
+                ultima: !(janela.dados && janela.dados.ajuste)
+                icone: Qt.resolvedUrl("icones/driver.svg")
+                nome: janela.t("Drivers", "Drivers")
+                texto: janela.t("Mesa, Vulkan, OpenGL e a versão do Matsu com o driver da NVIDIA.", "Mesa, Vulkan, OpenGL and Matsu's NVIDIA driver version.")
+                Botao {
+                    texto: janela.t("Ver drivers", "See drivers")
+                    icone: "matsu-seta-symbolic"
+                    iconeNoFim: true
+                    onClicado: janela.pagina = "drivers"
                 }
             }
             LinhaOpcao {

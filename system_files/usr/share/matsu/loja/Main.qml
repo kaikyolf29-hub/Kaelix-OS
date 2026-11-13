@@ -20,6 +20,7 @@ JanelaMatsu {
     iconeReserva: "matsu-loja"
     dicaBusca: t("Buscar apps, jogos e sites", "Search apps, games and sites")
     paginaDaBusca: "apps"
+    trocaSuave: true
     paginas: [
         { id: "inicio", icone: "matsu-inicio-symbolic", nome: t("Início", "Home") },
         { id: "apps", icone: "matsu-apps-symbolic", nome: t("Apps", "Apps") },
@@ -64,12 +65,17 @@ JanelaMatsu {
     property var fila: []             // o que espera a vez (o Flatpak faz uma coisa por vez)
     property string rodando: ""       // a chave do que o Flatpak está fazendo agora
     property var avisos: ({})         // id -> mensagem de erro da última tentativa
+    // O que acabou de dar certo: id -> { acao, quando }. O botão mostra "Instalado ✓"
+    // por uns segundos e não pisca "Obter" enquanto a lista do que está instalado
+    // ainda não voltou do Flatpak.
+    property var concluidos: ({})
     property int mudancas: 0          // sobe a cada mudança em tarefas/instalados (para os bindings)
     // ----- a página de um app -----
     property string appAberto: ""
     property var detalhes: ({})
     property string categoria: ""     // filtro da página Apps
     property string secao: ""         // "Ver tudo" de uma seção do Início
+    property string ordem: "matsu"    // como a página Apps ordena: "matsu", "nome" ou "verificados"
     // Aviso que aparece embaixo por alguns segundos (um erro ao instalar, por exemplo).
     property string aviso: ""
     property int avisoN: 0
@@ -129,11 +135,17 @@ JanelaMatsu {
     readonly property var ordemCategorias: ["internet", "audio-video", "graficos", "escritorio", "jogos", "educacao",
                                             "desenvolvimento", "utilitarios", "sistema"]
 
-    // O estado do botão de um app: "obter", "abrir", "sistema", "atualizar", "trabalhando".
+    // O estado do botão de um app: "obter", "abrir", "sistema", "atualizar",
+    // "trabalhando" ou "feito" (acabou de instalar ou atualizar).
     function estado(id) {
         var _m = mudancas;
         if (tarefas[id])
             return "trabalhando";
+        var c = concluidos[id];
+        if (c && c.acao !== "remover" && (Date.now() - c.quando < 2200 || !instalados[id]))
+            return "feito";
+        if (c && c.acao === "remover")
+            return noSistema[id] ? "sistema" : "obter";
         if (instalados[id])
             return atualizacoes[id] ? "atualizar" : "abrir";
         if (noSistema[id])
@@ -146,7 +158,35 @@ JanelaMatsu {
     }
     function acaoAgora(id) {
         var _m = mudancas;
-        return tarefas[id] ? tarefas[id].acao : "";
+        if (tarefas[id])
+            return tarefas[id].acao;
+        return concluidos[id] ? concluidos[id].acao : "";
+    }
+    // Tira de "concluidos" o que a lista do que está instalado já confirmou (ou que
+    // ficou velho demais), depois do tempo do "Instalado ✓".
+    function limparConcluidos() {
+        var agora = Date.now(), novo = {}, sobrou = false, mudou = false;
+        for (var id in concluidos) {
+            var c = concluidos[id];
+            var confirmado = c.acao === "remover" ? !instalados[id] : !!instalados[id];
+            if (agora - c.quando > 20000 || (agora - c.quando >= 2200 && confirmado)) {
+                mudou = true;
+            } else {
+                novo[id] = c;
+                sobrou = true;
+            }
+        }
+        if (mudou) {
+            concluidos = novo;
+            mudancas++;
+        }
+        if (sobrou)
+            limpeza.restart();
+    }
+    Timer {
+        id: limpeza
+        interval: 2300
+        onTriggered: janela.limparConcluidos()
     }
 
     // ----- ações -----
@@ -165,6 +205,7 @@ JanelaMatsu {
             if (tarefas[ids[i]])
                 continue;
             avisos = mexer(avisos, ids[i], undefined);
+            concluidos = mexer(concluidos, ids[i], undefined);
             tarefas = mexer(tarefas, ids[i], { acao: acao, progresso: 0, chave: chave, fila: true });
         }
         fila = fila.concat([{ chave: chave, ids: ids, cmd: comando([acao, alvo]) }]);
@@ -298,6 +339,7 @@ JanelaMatsu {
         for (var i = 0; i < ids.length; i++) {
             var id = ids[i];
             if (d.fim) {
+                var feita = tarefas[id].acao;
                 tarefas = mexer(tarefas, id, undefined);
                 if (!d.ok && !d.cancelado && d.erro) {
                     avisos = mexer(avisos, id, d.erro);
@@ -305,6 +347,10 @@ JanelaMatsu {
                 }
                 if (d.ok && d.acao !== "instalar")
                     atualizacoes = mexer(atualizacoes, id, undefined);
+                if (d.ok && !d.cancelado) {
+                    concluidos = mexer(concluidos, id, { acao: d.acao || feita, quando: Date.now() });
+                    limpeza.restart();
+                }
             } else {
                 tarefas = mexer(tarefas, id, Object.assign({}, tarefas[id], { progresso: d.progresso || 0 }));
             }
@@ -392,6 +438,8 @@ JanelaMatsu {
                 janela.instalados = inst;
                 janela.sitesInstalados = d.web;
                 janela.mudancas++;
+                if (Object.keys(janela.concluidos).length > 0)
+                    janela.limparConcluidos();
             } else if (chave === "atualizacoes") {
                 janela.procurando = false;
                 if (d) {

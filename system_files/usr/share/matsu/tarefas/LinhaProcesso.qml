@@ -18,7 +18,7 @@ MouseArea {
 
     signal clicada()
     signal alternada()
-    signal menuPedido()
+    signal menuPedido(real x, real y)
 
     readonly property bool secao: model.tipo === "secao"
     readonly property int recuo: Math.round(janela.gu * 0.75)
@@ -34,7 +34,7 @@ MouseArea {
         if (secao)
             return;
         if (mouse.button === Qt.RightButton)
-            linha.menuPedido();
+            linha.menuPedido(mouse.x, mouse.y);
         else
             linha.clicada();
     }
@@ -143,7 +143,8 @@ MouseArea {
         }
     }
 
-    // Escolhida ou com o mouse em cima: um véu claro por cima da linha toda.
+    // Escolhida ou com o mouse em cima: um véu claro por cima da linha toda (a
+    // escolhida ganha também a borda fina). Acende e apaga devagar.
     Rectangle {
         anchors.fill: parent
         anchors.topMargin: 1
@@ -152,6 +153,18 @@ MouseArea {
         anchors.rightMargin: 4
         visible: !linha.secao
         radius: Math.round(janela.gu * 0.25)
-        color: janela.tinta(linha.selecionada ? (janela.escuro ? 0.09 : 0.075) : (linha.containsMouse ? 0.045 : 0))
+        color: janela.tinta(linha.selecionada ? (janela.escuro ? 0.09 : 0.075) : (linha.containsMouse ? (linha.pressed ? 0.07 : 0.045) : 0))
+        border.width: 1
+        border.color: janela.tinta(linha.selecionada ? (janela.escuro ? 0.12 : 0.13) : 0)
+        Behavior on color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 120
+            }
+        }
     }
 }

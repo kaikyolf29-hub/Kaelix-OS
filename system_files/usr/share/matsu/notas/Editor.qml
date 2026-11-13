@@ -265,14 +265,14 @@ Item {
         }
 
         // Formatação (só no texto).
-        BotaoIcone {
+        BotaoSimbolo {
             visible: !editor.naLixeira && !editor.ehLista
             icone: Qt.resolvedUrl("icones/negrito.svg")
             dica: janela.t("Negrito (Ctrl+B)", "Bold (Ctrl+B)")
             ligado: editor.jeito.negrito
             onClicado: editor.formatar("negrito")
         }
-        BotaoIcone {
+        BotaoSimbolo {
             visible: !editor.naLixeira && !editor.ehLista
             icone: Qt.resolvedUrl("icones/italico.svg")
             dica: janela.t("Itálico (Ctrl+I)", "Italic (Ctrl+I)")
@@ -287,14 +287,14 @@ Item {
             implicitHeight: Math.round(janela.gu * 1.1)
             color: janela.tinta(0.14)
         }
-        BotaoIcone {
+        BotaoSimbolo {
             visible: !editor.naLixeira
             icone: editor.nota && editor.nota.fixada ? Qt.resolvedUrl("icones/fixada.svg") : Qt.resolvedUrl("icones/fixar.svg")
             dica: editor.nota && editor.nota.fixada ? janela.t("Desafixar", "Unpin") : janela.t("Fixar no topo", "Pin to top")
             ligado: editor.nota !== null && editor.nota.fixada
             onClicado: janela.fixar(editor.nid)
         }
-        BotaoIcone {
+        BotaoSimbolo {
             id: botaoCor
             visible: !editor.naLixeira
             icone: Qt.resolvedUrl("icones/cor.svg")
@@ -303,13 +303,13 @@ Item {
             ligado: paleta.opened
             onClicado: paleta.abrirEm(botaoCor)
         }
-        BotaoIcone {
+        BotaoSimbolo {
             visible: !editor.naLixeira
             icone: "matsu-lixeira-symbolic"
             dica: janela.t("Mover para a Lixeira (Delete)", "Move to Trash (Delete)")
             onClicado: janela.apagar(editor.nid)
         }
-        BotaoIcone {
+        BotaoSimbolo {
             id: botaoMais
             visible: !editor.naLixeira
             icone: Qt.resolvedUrl("icones/reticencias.svg")
@@ -331,7 +331,7 @@ Item {
             texto: janela.t("Restaurar", "Restore")
             onClicado: janela.restaurar(editor.nid)
         }
-        BotaoIcone {
+        BotaoSimbolo {
             visible: editor.flutuante
             Layout.leftMargin: Math.round(janela.gu * 0.2)
             icone: "matsu-fechar-symbolic"

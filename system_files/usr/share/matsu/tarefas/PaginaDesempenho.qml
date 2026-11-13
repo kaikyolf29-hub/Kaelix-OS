@@ -1,6 +1,9 @@
 // Desempenho, como no Windows: à esquerda cada parte do computador com um
 // gráfico pequeno (CPU, memória, discos, rede, placa de vídeo); à direita a
 // parte escolhida, com o gráfico do último minuto e os números dela.
+// Os números rolam algarismo por algarismo, o gráfico grande desliza a cada
+// segundo e o fundo da parte escolhida desliza até a nova. As listas usam os
+// nomes como modelo (iguais a cada leitura), para nada ser refeito a cada segundo.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -173,6 +176,22 @@ Item {
 
     readonly property var lista: { janela.tique; return partes(); }
     readonly property var info: { janela.tique; escolhida; return detalhes(); }
+    readonly property var vazia: ({ chave: "", nome: "", cor: "gray", hist: "", hist2: "", max: 100, sub: "", sub2: "" })
+    readonly property int indiceEscolhida: {
+        for (var i = 0; i < lista.length; i++)
+            if (lista[i].chave === escolhida)
+                return i;
+        return -1;
+    }
+    onEscolhidaChanged: {
+        marcaParte.animar = true;
+        fimMarca.restart();
+    }
+    Timer {
+        id: fimMarca
+        interval: 400
+        onTriggered: marcaParte.animar = false
+    }
 
 
     ColumnLayout {
@@ -219,6 +238,30 @@ Item {
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
 
+                // O fundo da parte escolhida (com a borda fina), que desliza até a nova.
+                Rectangle {
+                    id: marcaParte
+                    readonly property Item alvo: pagina.indiceEscolhida >= 0 && pagina.indiceEscolhida < repetidorPartes.count
+                                                 ? repetidorPartes.itemAt(pagina.indiceEscolhida) : null
+                    property bool animar: false
+                    visible: alvo !== null
+                    x: colunaPartes.x
+                    y: alvo ? colunaPartes.y + alvo.y : 0
+                    width: colunaPartes.width
+                    height: alvo ? alvo.height : 0
+                    radius: Math.round(janela.gu * 0.3)
+                    color: janela.tinta(janela.escuro ? 0.08 : 0.065)
+                    border.width: 1
+                    border.color: janela.tinta(janela.escuro ? 0.1 : 0.11)
+                    Behavior on y {
+                        enabled: marcaParte.animar
+                        NumberAnimation {
+                            duration: 280
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+
                 ColumnLayout {
                     id: colunaPartes
                     x: Math.round(janela.gu * 0.4)
@@ -227,11 +270,13 @@ Item {
                     spacing: 2
 
                     Repeater {
-                        model: pagina.lista
+                        id: repetidorPartes
+                        model: pagina.lista.map(function (p) { return p.chave; })
 
                         MouseArea {
                             id: parte
-                            required property var modelData
+                            required property int index
+                            readonly property var modelData: pagina.lista[index] || pagina.vazia
                             readonly property bool ativa: pagina.escolhida === modelData.chave
 
                             Layout.fillWidth: true
@@ -247,7 +292,7 @@ Item {
                             Rectangle {
                                 anchors.fill: parent
                                 radius: Math.round(janela.gu * 0.3)
-                                color: janela.tinta(parte.ativa ? (janela.escuro ? 0.08 : 0.065) : (parte.containsMouse || parte.activeFocus ? 0.04 : 0))
+                                color: janela.tinta(!parte.ativa && (parte.containsMouse || parte.activeFocus) ? 0.04 : 0)
                                 Behavior on color {
                                     ColorAnimation {
                                         duration: Kirigami.Units.shortDuration
@@ -374,6 +419,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Math.round(janela.gu * (pagina.info && pagina.info.transferencia ? 9 : 12))
                         cor: pagina.info ? pagina.info.cor : "gray"
+                        suave: true
                         valores: pagina.info ? (janela.historico[pagina.info.hist] || []) : []
                         valores2: pagina.info && pagina.info.hist2 ? (janela.historico[pagina.info.hist2] || []) : []
                         maximo: pagina.info ? pagina.info.max : 100
@@ -427,6 +473,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.preferredHeight: Math.round(janela.gu * 4.5)
                             cor: janela.cores.disco
+                            suave: true
                             maximo: 0
                             valores: pagina.info && pagina.info.transferencia ? (janela.historico[pagina.info.transferencia.hist] || []) : []
                             valores2: pagina.info && pagina.info.transferencia ? (janela.historico[pagina.info.transferencia.hist2] || []) : []
@@ -449,10 +496,11 @@ Item {
                             Layout.fillWidth: true
                             spacing: 3
                             Repeater {
-                                model: pagina.info && pagina.info.nucleos ? pagina.info.nucleos : []
+                                model: pagina.info && pagina.info.nucleos ? pagina.info.nucleos.length : 0
                                 Rectangle {
                                     id: barra
-                                    required property var modelData
+                                    required property int index
+                                    readonly property real modelData: pagina.info && pagina.info.nucleos ? (pagina.info.nucleos[index] || 0) : 0
                                     readonly property int total: pagina.info && pagina.info.nucleos ? pagina.info.nucleos.length : 1
                                     width: Math.max(4, (corpo.width - (total - 1) * 3) / total)
                                     height: Math.round(janela.gu * 1.4)
@@ -509,12 +557,24 @@ Item {
                                     width: comp.m && comp.m.total > 0 ? parent.width * comp.m.usada / comp.m.total : 0
                                     color: janela.cores.mem
                                     opacity: 0.85
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: Kirigami.Units.longDuration
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
                                 Rectangle {
                                     height: parent.height
                                     width: comp.m && comp.m.total > 0 ? parent.width * Math.min(comp.m.cache, comp.m.total - comp.m.usada) / comp.m.total : 0
                                     color: janela.cores.mem
                                     opacity: 0.35
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: Kirigami.Units.longDuration
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -559,21 +619,22 @@ Item {
                             columnSpacing: Math.round(janela.gu * 1.4)
                             rowSpacing: Math.round(janela.gu * 0.55)
 
+                            // Os números rolam (o modelo é o nome de cada um: igual a cada segundo).
                             Repeater {
-                                model: pagina.info ? pagina.info.grandes : []
+                                model: pagina.info ? pagina.info.grandes.map(function (g) { return pagina.escolhida + "|" + g.r; }) : []
                                 ColumnLayout {
                                     id: numero
-                                    required property var modelData
+                                    required property int index
+                                    readonly property var modelData: pagina.info && pagina.info.grandes[index] ? pagina.info.grandes[index] : ({ r: "", v: "" })
                                     spacing: 0
                                     Texto {
                                         text: numero.modelData.r
                                         font.pointSize: Kirigami.Theme.smallFont.pointSize
                                         opacity: 0.72
                                     }
-                                    Texto {
-                                        text: numero.modelData.v
+                                    NumeroRolante {
+                                        texto: numero.modelData.v
                                         font.pointSize: Kirigami.Theme.defaultFont.pointSize + 5
-                                        font.features: { "tnum": 1 }
                                     }
                                 }
                             }
@@ -587,26 +648,25 @@ Item {
                             rowSpacing: Math.round(janela.gu * 0.25)
 
                             Repeater {
-                                model: pagina.info ? pagina.info.tabela : []
+                                model: pagina.info ? pagina.info.tabela.map(function (l) { return l.r; }) : []
                                 Texto {
-                                    required property var modelData
+                                    required property string modelData
                                     required property int index
                                     Layout.row: index
                                     Layout.column: 0
-                                    text: modelData.r + ":"
+                                    text: modelData + ":"
                                     font.pointSize: Kirigami.Theme.smallFont.pointSize + 0.5
                                     opacity: 0.72
                                 }
                             }
                             Repeater {
-                                model: pagina.info ? pagina.info.tabela : []
+                                model: pagina.info ? pagina.info.tabela.map(function (l) { return l.r; }) : []
                                 Texto {
-                                    required property var modelData
                                     required property int index
                                     Layout.row: index
                                     Layout.column: 1
                                     Layout.fillWidth: true
-                                    text: modelData.v
+                                    text: pagina.info && pagina.info.tabela[index] ? pagina.info.tabela[index].v : ""
                                     font.pointSize: Kirigami.Theme.smallFont.pointSize + 0.5
                                     elide: Text.ElideRight
                                 }
@@ -615,10 +675,10 @@ Item {
                     }
                 }
 
-                QQC2.BusyIndicator {
+                Girando {
                     anchors.centerIn: parent
+                    width: Math.round(janela.gu * 1.6)
                     visible: pagina.d === null
-                    running: visible
                 }
             }
         }

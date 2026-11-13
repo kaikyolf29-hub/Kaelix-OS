@@ -1,7 +1,8 @@
 // Capa com cantos redondos (álbuns e vídeos): carrega no fundo, no tamanho certo,
-// com o bloco pulsando até chegar. "aproximar" amplia de leve por dentro (mouse em cima).
+// com o brilho passando até chegar. "aproximar" amplia de leve por dentro (mouse em cima).
 import QtQuick
 import QtQuick.Effects
+import "../comum"
 
 Item {
     id: capa

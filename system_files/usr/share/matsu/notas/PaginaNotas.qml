@@ -304,13 +304,13 @@ Item {
                         elide: Text.ElideRight
                     }
                 }
-                BotaoIcone {
+                BotaoSimbolo {
                     visible: janela.pagina !== "lixeira"
                     icone: Qt.resolvedUrl("icones/nova-nota.svg")
                     dica: janela.t("Nova nota (Ctrl+N)", "New note (Ctrl+N)")
                     onClicado: janela.nova("texto")
                 }
-                BotaoIcone {
+                BotaoSimbolo {
                     visible: janela.pagina !== "lixeira"
                     icone: Qt.resolvedUrl("icones/lista.svg")
                     dica: janela.t("Nova lista (Ctrl+Shift+N)", "New checklist (Ctrl+Shift+N)")

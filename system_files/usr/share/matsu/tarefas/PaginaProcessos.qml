@@ -1,7 +1,8 @@
 // Processos, como no Gerenciador de tarefas do Windows: os apps abertos, o que
 // roda em segundo plano e o que é do sistema, com CPU, memória e disco de cada
 // um. Clicar no título de uma coluna ordena por ela. Os apps com mais de um
-// processo abrem com a setinha.
+// processo abrem com a setinha. "Finalizar tarefa" pergunta uma vez (o botão fica
+// vermelho com o nome), gira enquanto fecha e mostra "Finalizado ✓".
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -17,6 +18,9 @@ FocusScope {
     property var abertos: ({})
     property string escolhido: ""
     property var linhaEscolhida: null
+    // O botão de finalizar: "" (normal), "pergunta", "carregando" ou "feito".
+    property string fase: ""
+    property var alvoFase: null
 
     readonly property var d: janela.dados
     readonly property int colNum: Math.round(janela.gu * 6)
@@ -138,6 +142,9 @@ FocusScope {
     }
 
     function escolher(chave) {
+        // Escolheu outra linha no meio da pergunta: a pergunta some.
+        if (fase === "pergunta" && alvoFase && alvoFase.chave !== chave)
+            fase = "";
         escolhido = chave;
         atualizar();
     }
@@ -168,6 +175,68 @@ FocusScope {
         escolhido = "";
     }
 
+    // Primeiro clique: pergunta; segundo: fecha. Delete faz o mesmo.
+    function pedirFinalizar() {
+        if (fase === "pergunta") {
+            confirmar();
+            return;
+        }
+        var l = linhaEscolhida;
+        if (fase !== "" || !l || l.acao === "nenhuma")
+            return;
+        alvoFase = l;
+        fase = "pergunta";
+        voltaPergunta.restart();
+    }
+    function confirmar() {
+        voltaPergunta.stop();
+        var l = alvoFase;
+        if (!l)
+            return;
+        var antes = linhaEscolhida;
+        linhaEscolhida = l;
+        fase = "carregando";
+        finalizar(false);
+        if (l.acao === "reiniciar")
+            linhaEscolhida = antes;
+    }
+    function forcar() {
+        var l = linhaEscolhida;
+        if (!l || l.acao !== "finalizar" || fase === "carregando")
+            return;
+        voltaPergunta.stop();
+        alvoFase = l;
+        fase = "carregando";
+        finalizar(true);
+    }
+    function textoPergunta(l) {
+        if (!l)
+            return "";
+        var nome = l.nome.length > 22 ? l.nome.substring(0, 21) + "…" : l.nome;
+        if (l.acao === "reiniciar")
+            return janela.t("Reiniciar a barra?", "Restart the bar?");
+        return janela.t("Finalizar “" + nome + "”?", "End “" + nome + "”?");
+    }
+    Timer {
+        id: voltaPergunta
+        interval: 5000
+        onTriggered: if (pagina.fase === "pergunta") pagina.fase = ""
+    }
+    Timer {
+        id: voltaFeito
+        interval: 1800
+        onTriggered: pagina.fase = ""
+    }
+    Connections {
+        target: matsu
+        function onPronto(chave, saida, codigo) {
+            if (chave === "acao" && pagina.fase === "carregando") {
+                pagina.fase = "feito";
+                voltaFeito.restart();
+            }
+        }
+    }
+
     function textoBotao(l) {
         if (l && l.acao === "reiniciar")
             return janela.t("Reiniciar", "Restart");
@@ -195,7 +264,15 @@ FocusScope {
     Component.onCompleted: atualizar()
     onBuscaChanged: atualizar()
 
-    Keys.onDeletePressed: finalizar(false)
+    Keys.onDeletePressed: pedirFinalizar()
+    Keys.onEscapePressed: (e) => {
+        if (fase === "pergunta") {
+            fase = "";
+            e.accepted = true;
+        } else {
+            e.accepted = false;
+        }
+    }
     Keys.onUpPressed: mover(-1)
     Keys.onDownPressed: mover(1)
     Keys.onReturnPressed: {
@@ -232,12 +309,53 @@ FocusScope {
                 dica: janela.t("Abre a busca do sistema para rodar um app ou comando", "Opens the system search to run an app or command")
                 onClicado: matsu.soltar(["krunner"])
             }
-            Botao {
-                texto: pagina.textoBotao(pagina.linhaEscolhida)
-                icone: pagina.linhaEscolhida && pagina.linhaEscolhida.acao === "reiniciar" ? "matsu-recarregar-symbolic" : "matsu-parar-symbolic"
-                ativo: pagina.linhaEscolhida !== null && pagina.linhaEscolhida.acao !== "nenhuma"
-                dica: pagina.motivoTexto(pagina.linhaEscolhida)
-                onClicado: pagina.finalizar(false)
+            // Normal, o botão de vidro; perguntando, fechando ou pronto, o botão cheio
+            // (vermelho, a rodinha, verde com o visto). A largura desliza entre eles.
+            Item {
+                id: lugarFinalizar
+                readonly property bool emAcao: pagina.fase !== ""
+                Layout.preferredWidth: emAcao ? destaqueFinalizar.implicitWidth : botaoFinalizar.implicitWidth
+                Layout.preferredHeight: Math.max(botaoFinalizar.implicitHeight, destaqueFinalizar.implicitHeight)
+                Behavior on Layout.preferredWidth {
+                    NumberAnimation {
+                        duration: 220
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Botao {
+                    id: botaoFinalizar
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: lugarFinalizar.emAcao ? 0 : 1
+                    visible: opacity > 0
+                    texto: pagina.textoBotao(pagina.linhaEscolhida)
+                    icone: pagina.linhaEscolhida && pagina.linhaEscolhida.acao === "reiniciar" ? "matsu-recarregar-symbolic" : "matsu-parar-symbolic"
+                    ativo: !lugarFinalizar.emAcao && pagina.linhaEscolhida !== null && pagina.linhaEscolhida.acao !== "nenhuma"
+                    dica: pagina.motivoTexto(pagina.linhaEscolhida)
+                    onClicado: pagina.pedirFinalizar()
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 160
+                        }
+                    }
+                }
+                BotaoDestaque {
+                    id: destaqueFinalizar
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: lugarFinalizar.emAcao ? 1 : 0
+                    visible: opacity > 0
+                    perigo: pagina.alvoFase !== null && pagina.alvoFase.acao !== "reiniciar"
+                    estado: pagina.fase === "carregando" ? "carregando" : (pagina.fase === "feito" ? "feito" : "")
+                    texto: pagina.textoPergunta(pagina.alvoFase)
+                    textoFeito: pagina.alvoFase && pagina.alvoFase.acao === "reiniciar" ? janela.t("Reiniciada", "Restarted") : janela.t("Finalizado", "Ended")
+                    onClicado: pagina.confirmar()
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 160
+                        }
+                    }
+                }
             }
         }
         Rectangle {
@@ -334,9 +452,9 @@ FocusScope {
                     memTotal: pagina.d ? pagina.d.memoria.total : 1
                     onClicada: pagina.escolher(linhaDel.model.chave)
                     onAlternada: pagina.alternar(linhaDel.model.chave.substring(2))
-                    onMenuPedido: {
+                    onMenuPedido: (x, y) => {
                         pagina.escolher(linhaDel.model.chave);
-                        menu.popup();
+                        menu.abrirEm(linhaDel, x, y);
                     }
                 }
 
@@ -346,33 +464,34 @@ FocusScope {
                     text: janela.t("Nada encontrado para “%1”.", "Nothing found for “%1”.").arg(pagina.busca)
                     opacity: 0.6
                 }
-                QQC2.BusyIndicator {
+                Girando {
                     anchors.centerIn: parent
+                    width: Math.round(janela.gu * 1.6)
                     visible: pagina.d === null
-                    running: visible
                 }
             }
         }
     }
 
-    QQC2.Menu {
+    // O menu do botão direito, com o fundo dos balões do Matsu (setas e Enter andam nele).
+    MenuMatsu {
         id: menu
-
-        QQC2.MenuItem {
-            text: pagina.textoBotao(pagina.linhaEscolhida)
-            enabled: pagina.linhaEscolhida !== null && pagina.linhaEscolhida.acao !== "nenhuma"
-            onTriggered: pagina.finalizar(false)
-        }
-        QQC2.MenuItem {
-            text: janela.t("Forçar fechar (se travou)", "Force close (if frozen)")
-            enabled: pagina.linhaEscolhida !== null && pagina.linhaEscolhida.acao === "finalizar"
-            onTriggered: pagina.finalizar(true)
-        }
-        QQC2.MenuSeparator {}
-        QQC2.MenuItem {
-            text: pagina.linhaEscolhida && pagina.linhaEscolhida.aberto ? janela.t("Recolher", "Collapse") : janela.t("Mostrar os processos", "Show processes")
-            enabled: pagina.linhaEscolhida !== null && pagina.linhaEscolhida.tipo === "grupo" && pagina.linhaEscolhida.n > 1
-            onTriggered: pagina.alternar(pagina.linhaEscolhida.chave.substring(2))
+        readonly property var l: pagina.linhaEscolhida
+        itens: [
+            { id: "finalizar", nome: pagina.textoBotao(l), icone: l && l.acao === "reiniciar" ? "matsu-recarregar-symbolic" : "matsu-parar-symbolic",
+              ativo: l !== null && l.acao !== "nenhuma" },
+            { id: "forcar", nome: janela.t("Forçar fechar (se travou)", "Force close (if frozen)"), icone: "matsu-raio-symbolic",
+              perigo: true, ativo: l !== null && l.acao === "finalizar" },
+            { id: "alternar", nome: l && l.aberto ? janela.t("Recolher", "Collapse") : janela.t("Mostrar os processos", "Show processes"),
+              icone: "matsu-processos-symbolic", separador: true, ativo: l !== null && l.tipo === "grupo" && l.n > 1 }
+        ]
+        onEscolhido: (id) => {
+            if (id === "finalizar")
+                pagina.pedirFinalizar();
+            else if (id === "forcar")
+                pagina.forcar();
+            else if (id === "alternar" && pagina.linhaEscolhida)
+                pagina.alternar(pagina.linhaEscolhida.chave.substring(2));
         }
     }
 }

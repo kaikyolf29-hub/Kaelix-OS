@@ -79,7 +79,9 @@ Item {
         Item {
             Layout.fillWidth: true
         }
-        BotaoIcone {
+        BotaoSimbolo {
+            lado: Math.round(janela.gu * 1.85)
+            focavel: false
             icone: "matsu-busca-symbolic"
             dica: janela.t("Localizar (Ctrl+F)", "Find (Ctrl+F)")
             ligado: janela.tela !== null && janela.tela.busca.aberta
@@ -90,7 +92,9 @@ Item {
                     janela.tela.busca.abrir(false);
             }
         }
-        BotaoIcone {
+        BotaoSimbolo {
+            lado: Math.round(janela.gu * 1.85)
+            focavel: false
             id: botaoFonte
             icone: "matsu-texto-symbolic"
             dica: janela.t("Fonte", "Font")

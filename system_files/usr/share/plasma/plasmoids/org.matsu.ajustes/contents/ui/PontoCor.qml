@@ -1,5 +1,5 @@
 // Bolinha de cor, como a cor de destaque dos Ajustes do Mac. A escolhida ganha
-// um anel em volta e um sinal de certo.
+// um anel em volta (que abre devagar) e um sinal de certo (que pula).
 import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
@@ -29,8 +29,15 @@ MouseArea {
         color: "transparent"
         border.width: 2
         border.color: ponto.cor
-        visible: ponto.escolhido || ponto.activeFocus
-        opacity: ponto.escolhido ? 1 : 0.5
+        visible: opacity > 0
+        opacity: ponto.escolhido ? 1 : (ponto.activeFocus ? 0.5 : 0)
+        scale: ponto.escolhido || ponto.activeFocus ? 1 : 0.8
+        Behavior on opacity {
+            NumberAnimation { duration: 180 }
+        }
+        Behavior on scale {
+            NumberAnimation { duration: 240; easing.type: Easing.OutBack }
+        }
     }
     Rectangle {
         anchors.centerIn: parent
@@ -53,6 +60,10 @@ MouseArea {
             source: "matsu-certo-symbolic"
             isMask: true
             color: "#ffffff"
+            scale: ponto.escolhido ? 1 : 0.4
+            Behavior on scale {
+                NumberAnimation { duration: 260; easing.type: Easing.OutBack; easing.overshoot: 2.5 }
+            }
         }
     }
 

@@ -28,6 +28,13 @@ animações curtas em cada toque. Para ver todas as peças juntas:
 no meio, lista de assuntos à esquerda (a pílula do escolhido desliza) e o miolo.
 Veja o começo de `JanelaMatsu.qml`. Também tem:
 
+- `semLista`: sem a lista de assuntos (um editor, a Câmera); o miolo ocupa a largura
+  toda e a barra de título fica igual. Já vem ligado quando `paginas: []`.
+- `raioMiolo`: o raio dos cantos de cima do miolo (com a lista, só o da esquerda;
+  sem a lista, os dois; o padrão sem a lista é 0, colado na barra de título).
+- `trocaSuave: true`: a página nova entra aparecendo e subindo de leve (também quando
+  duas páginas usam o mesmo arquivo). Desligado por padrão.
+
 - `janela.avisoRapido(texto, tipo, acao, funcao)`: aviso que sobe embaixo e some
   sozinho; `tipo` "" / "certo" / "erro"; com `acao` aparece um botão ("Desfazer").
 - `janela.num`, `bytes`, `duracao`, `simples` (tira acentos para a busca), `local`.
@@ -53,6 +60,7 @@ O programa `matsu-janela` dá ao QML o objeto `matsu`:
 | --- | --- | --- |
 | `Texto` | texto na cor certa | `Texto { text: "Oi" }` |
 | `Cartao` | cartão do miolo | `Cartao { ... }` |
+| `CartaoClicavel` | cartão que se clica (um app, uma categoria): com o mouse sobe um pouco e ganha sombra macia; apertando, afunda | `CartaoClicavel { width; height; onClicked: ...; RowLayout { anchors.fill: parent; ... } }`; `raio`, `elevar: false` (só clareia) |
 | `Botao` | botão sem fundo (barra de ferramentas) | `Botao { texto; icone; dica; onClicado }` |
 | `BotaoDestaque` | botão principal; `estado: "carregando"` (rodinha) e `"feito"` (verde com visto); `perigo` (vermelho) | `BotaoDestaque { texto: "Enviar"; estado: s; textoFeito: "Enviado" }` |
 | `Chave` | ligar e desligar | `Chave { ligada: x; onTrocada: (l) => x = l }` |
@@ -60,7 +68,7 @@ O programa `matsu-janela` dá ao QML o objeto `matsu`:
 | `Seletor` | botões segmentados com a pílula que desliza | `Seletor { opcoes: [{id, nome}]; escolhido; onEscolher: (id) => ... }` |
 | `Passos` | valor numa lista, com setinhas | `Passos { opcoes; escolhido; onEscolher }` |
 | `Contador` | − número + (o número rola); segurar repete | `Contador { valor; minimo; maximo; passo; sufixo: " min"; onMudou: (v) => ... }` |
-| `NumeroRolante` | número cujos algarismos rolam ao mudar | `NumeroRolante { texto: janela.num(v, 2); font.pixelSize: 40 }` |
+| `NumeroRolante` | número cujos algarismos rolam ao mudar; casa nova entra abrindo espaço, a que sobra sai (sem refazer as outras) | `NumeroRolante { texto: janela.num(v, 2); font.pixelSize: 40 }` |
 | `Anel` | anel de progresso (0 a 1), pula ao completar | `Anel { valor: 0.75; texto: "3/4"; subtexto: "tarefas" }` |
 | `Girando` | rodinha de carregando | `Girando { width: janela.gu }` |
 | `Etiqueta` | chip; o visto entra ao escolher | `Etiqueta { texto: "Rock"; escolhida: x; onTrocada: (e) => x = e }` |
@@ -68,12 +76,25 @@ O programa `matsu-janela` dá ao QML o objeto `matsu`:
 | `Onda` | onda do som com o progresso; clicar pula | `Onda { amostras: [...]; progresso: 0.4; onBuscar: (f) => ... }` |
 | `Sanfona` | cartão que abre e fecha | `Sanfona { titulo: "Pergunta"; Texto { ... } }` |
 | `Campo` | campo de texto | `Campo { dica: "Nome"; texto; onEditado: (t) => ...; onConfirmado: ... }` |
-| `Suspensa` | lista suspensa com visto | `Suspensa { opcoes: [{id, nome}]; escolhido; onEscolher: (id) => ... }` |
-| `MenuMatsu` | menu do botão direito | `menu.abrirEm(item, x, y)`; `itens: [{id, nome, icone, atalho, perigo, separador}]` |
+| `Suspensa` | lista suspensa com visto; lista comprida abre para o lado que cabe, rola e mostra a escolhida; setas e Enter | `Suspensa { opcoes: [{id, nome, icone}]; escolhido; onEscolher: (id) => ... }` |
+| `MenuMatsu` | menu do botão direito; abre com o foco (Esc fecha, setas e Enter escolhem) | `menu.abrirEm(item, x, y)`; `itens: [{id, nome, icone, atalho, perigo, separador, ativo}]` |
 | `Dialogo` | pergunta no meio, com o fundo escurecido | `dialogo.perguntar({titulo, texto, sim, nao, perigo, terceiro}, aoSim, aoTerceiro)` |
 | `Vazio` | quando não há nada (sem músicas, sem câmera) | `Vazio { icone; titulo; texto; botao; onClicado }` |
 | `LinhaOpcao` | linha de ajuste (ícone, nome, explicação e o controle) | `LinhaOpcao { nome; texto; Chave { } }` |
 | `BarraRolagem` | barra de rolagem fina do Matsu | `QQC2.ScrollBar.vertical: BarraRolagem {}` |
-| `ImagemRedonda` | imagem com cantos redondos | ver o arquivo |
-| `Grafico` | gráfico de linha (Gerenciador) | ver o arquivo |
+| `ImagemRedonda` | imagem com cantos redondos | ver o arquivo; `aparecer: true` faz a imagem surgir com fade quando carrega |
+| `Grafico` | gráfico de linha (Gerenciador) | ver o arquivo; `suave: true` desenha em curva, desliza a cada valor novo e muda a escala devagar |
 | `FundoBalao` | fundo dos balões (lista, menu, diálogo) | `background: FundoBalao {}` |
+| `Esqueleto` | lugar do que ainda está chegando, com o brilho que passa (todos juntos, como uma luz só) | `Esqueleto { anchors.fill: parent; raio: janela.gu * 0.6; visible: !pronto }`; `cor`, `forca`, `brilho: false` (só pulsa) |
+| `BotaoSimbolo` | botão só de ícone (barra do editor, setas, o + das abas); `ligado` com fundo e borda fina | `BotaoSimbolo { icone; dica; ligado; ativo; giro: 90; redondo; pingo: "#f2c861"; lado; tamanhoIcone; focavel; onClicado }` |
+| `BotaoCirculo` | botão redondo de ícone, afunda e volta com mola; selinho no canto que pula | `BotaoCirculo { icone; dica; ligado; selo: "3"; lado; corFundo; onClicado }` |
+| `BotaoCoracao` | favoritar: o coração pula e solta faíscas; murcha ao tirar | `BotaoCoracao { ligado: fav; claro; comFundo; lado; cor; onClicado: fav = !fav }` |
+| `LinhaEscolha` | como a `LinhaOpcao`, com o controle embaixo, na largura toda (painéis estreitos) | `LinhaEscolha { icone; nome; texto; Suspensa { Layout.fillWidth: true } }` |
+| `FaixaAbas` | abas no topo do miolo (a aberta com o fundo da folha e a borda fina, sem tracinho); rola, arrasta, fecha | `FaixaAbas { modelo: listModel; atual; corFolha; onEscolher: (i); onFechar: (i); onMover: (de, para); onNova; onMenu: (i, item, x, y) }`; papéis `nome`, `modificado`, `carregando`, `dica` (ou `dicaDe: (a) => ...`) |
+
+**Nome de peça nova:** uma peça desta pasta ganha da que tem o mesmo nome na pasta do
+app (o `import "../comum"` vem antes da pasta do próprio arquivo). Antes de criar uma
+peça aqui, confira que nenhum app tem um arquivo com o mesmo nome
+(`find system_files/usr/share/matsu -name Nome.qml`). Por isso o botão de ícone se
+chama `BotaoSimbolo` (Música tem um `BotaoIcone` próprio) e o redondo, `BotaoCirculo`
+(Relógio e Calendário têm um `BotaoRedondo` próprio).

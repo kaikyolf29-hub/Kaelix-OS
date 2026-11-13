@@ -1,5 +1,6 @@
 // Miniatura com nome embaixo (tema claro ou escuro, estilo da barra, papel de
-// parede). A escolhida ganha uma borda na cor de destaque.
+// parede). A escolhida ganha uma borda na cor de destaque; com o mouse em cima,
+// a miniatura cresce um pouquinho, e apertando, afunda.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -32,9 +33,21 @@ MouseArea {
         height: Math.round(mini.largura * mini.proporcao)
         radius: Math.round(Kirigami.Units.gridUnit * 0.5)
         color: "transparent"
+        scale: mini.pressed ? 0.97 : (mini.containsMouse && !mini.escolhida ? 1.03 : 1)
         border.width: mini.escolhida ? 3 : (mini.containsMouse || mini.activeFocus ? 2 : 0)
         border.color: mini.escolhida ? Kirigami.Theme.highlightColor
                                      : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.3)
+        Behavior on scale {
+            NumberAnimation {
+                duration: 160
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on border.color {
+            ColorAnimation {
+                duration: Kirigami.Units.shortDuration
+            }
+        }
 
         Item {
             id: quadro

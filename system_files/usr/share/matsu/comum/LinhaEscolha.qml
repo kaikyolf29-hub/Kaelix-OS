@@ -1,11 +1,11 @@
 // Linha de ajuste com o controle embaixo, ocupando a largura toda (lista suspensa,
-// seletor): para o painel estreito da Câmera, onde o controle não cabe ao lado
-// do nome. Mesmo visual da LinhaOpcao (cartão, ícone, nome e explicação).
+// seletor): para painéis estreitos, onde o controle não cabe ao lado do nome.
+// Mesmo visual da LinhaOpcao (cartão, ícone, nome e explicação); várias em
+// sequência formam um bloco só (primeira/ultima).
 //   LinhaEscolha { icone; nome; texto; Suspensa { Layout.fillWidth: true ... } }
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import "../comum"
 
 Cartao {
     id: linha

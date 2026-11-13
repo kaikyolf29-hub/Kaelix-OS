@@ -15,6 +15,19 @@ Uso:
   ajudante.py atualizacao [--agora]  se o sistema (e o driver junto) tem versão nova
   ajudante.py servico             fica rodando: liga o modo jogo e o perfil quando um jogo abre
   ajudante.py sobreposicao        refaz o arquivo da sobreposição (MangoHud) pela configuração
+  ajudante.py fps [on|off|alternar] [--avisar]
+                                  liga, desliga ou troca o FPS no jogo (a mesma chave da página
+                                  Sobreposição, da Central de controle e do atalho Meta+Alt+F)
+  ajudante.py controles           os controles pareados e ligados, com a bateria (JSON)
+  ajudante.py controle desconectar|conectar|esquecer <MAC>
+  ajudante.py bluetooth-ligar     tira o bloqueio e liga o Bluetooth
+  ajudante.py parear [tipo] [segundos]
+                                  procura um controle em modo de parear e pareia (uma linha JSON por etapa)
+  ajudante.py testar <eventN> [tipo]
+                                  os botões e os direcionais do controle, ao vivo (uma linha JSON por mudança)
+  ajudante.py drivers [--agora]   as placas, o driver de cada uma, Mesa, Vulkan, OpenGL e a imagem (JSON)
+  ajudante.py trocar-imagem [outra]  troca para a imagem do Matsu que combina com a placa (com ou sem NVIDIA);
+                                     "outra" vai para a outra versão mesmo sem a placa pedir (o caminho de volta)
 """
 import glob
 import importlib.util
@@ -38,7 +51,17 @@ def _carregar_tarefas():
     return modulo
 
 
+def _carregar(nome, variavel):
+    caminho = os.environ.get(variavel) or os.path.join(AQUI, nome + ".py")
+    spec = importlib.util.spec_from_file_location("matsu_jogos_" + nome, caminho)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
 T = _carregar_tarefas()
+C = _carregar("controles", "MATSU_JOGOS_CONTROLES")
+D = _carregar("drivers", "MATSU_JOGOS_DRIVERS")
 ler, ler_int = T.ler, T.ler_int
 PROC, SYS = T.PROC, T.SYS
 MEU_UID = T.MEU_UID
@@ -46,24 +69,38 @@ MEU_UID = T.MEU_UID
 # ----- os perfis gráficos -----
 # energia: manter | economia | equilibrado | desempenho (o perfil de energia do sistema)
 # placa:   auto | maximo | economia (o nível da placa AMD; na NVIDIA o driver cuida)
+#          "economia" prende a placa na velocidade mais baixa: bom para jogo leve,
+#          por isso o perfil Economia deixa no automático e segura o FPS (a placa
+#          desce sozinha quando sobra folga).
 # fps:     0 (sem limite) ou o limite
 # vsync:   jogo (o que o jogo escolher) | ligada | desligada
 # af:      0 (o do jogo) ou 2, 4, 8, 16 (filtro anisotrópico, texturas nítidas de lado)
 # modo_jogo: liga o GameMode (prioridade para o jogo, tela não apaga)
+# latencia: baixa latência (o "Anti-Lag" do jeito que existe no Linux): o DXVK
+#          (jogos DirectX 9, 10 e 11 pelo Proton) segura só 1 quadro na fila
+#          (dxgi/d3d9.maxFrameLatency = 1) e, com limite de FPS, o MangoHud segura
+#          o quadro antes do jogo ler os comandos (fps_limit_method=early).
 PERFIS = {
-    "padrao": {"energia": "manter", "placa": "auto", "fps": 0, "vsync": "jogo", "af": 0, "modo_jogo": True},
+    "padrao": {"energia": "manter", "placa": "auto", "fps": 0, "vsync": "jogo", "af": 0, "modo_jogo": True,
+               "latencia": False},
     "desempenho": {"energia": "desempenho", "placa": "maximo", "fps": 0, "vsync": "desligada", "af": 0,
-                   "modo_jogo": True},
+                   "modo_jogo": True, "latencia": True},
     "qualidade": {"energia": "desempenho", "placa": "auto", "fps": 0, "vsync": "ligada", "af": 16,
-                  "modo_jogo": True},
-    "economia": {"energia": "economia", "placa": "economia", "fps": 60, "vsync": "ligada", "af": 0,
-                 "modo_jogo": False},
+                  "modo_jogo": True, "latencia": False},
+    "economia": {"energia": "economia", "placa": "auto", "fps": 60, "vsync": "ligada", "af": 0,
+                 "modo_jogo": False, "latencia": False},
 }
 NOMES_PERFIS = ("padrao", "desempenho", "qualidade", "economia", "personalizado")
 ENERGIA_PPD = {"economia": "power-saver", "equilibrado": "balanced", "desempenho": "performance"}
 NIVEL_AMD = {"auto": "auto", "maximo": "high", "economia": "low"}
 FPS_VALIDOS = (0, 30, 40, 45, 60, 75, 90, 120, 144, 165, 240)
 AF_VALIDOS = (0, 2, 4, 8, 16)
+
+# As teclas que o MangoHud tem de fábrica (todas desligadas: veja texto_mangohud).
+TECLAS_MANGOHUD = ("toggle_hud", "toggle_hud_position", "toggle_preset", "reset_fps_metrics", "toggle_fps_limit",
+                   "toggle_logging", "reload_cfg", "upload_log", "upload_logs")
+# O atalho do KDE que liga e desliga o FPS no jogo (build_files/jogos.sh registra).
+ATALHO_FPS = "Meta+Alt+F"
 
 # O que a sobreposição pode mostrar, na ordem em que aparece no jogo.
 ITENS = ("fps", "grafico", "cpu", "gpu", "ram", "vram", "temperatura", "frequencia", "consumo", "hora")
@@ -169,6 +206,7 @@ def limpar_ajustes(a, base=None):
         "vsync": _escolha(a.get("vsync"), ("jogo", "ligada", "desligada"), base["vsync"]),
         "af": af if af in AF_VALIDOS else base["af"],
         "modo_jogo": bool(a.get("modo_jogo", base["modo_jogo"])),
+        "latencia": bool(a.get("latencia", base["latencia"])),
     }
 
 
@@ -291,8 +329,12 @@ def texto_mangohud(c, ajustes=None, mostrar=False):
         "fps_color=f0609e,f5c36b,ffffff",
         "offset_x=12",
         "offset_y=12",
-        "toggle_hud=Shift_R+F12",
-    ]
+        # Sem as teclas próprias do MangoHud (Shift+F12 só esconderia neste jogo e
+        # deixaria a chave da Central mentindo; Shift+F1 trocaria o limite de FPS do
+        # perfil; Shift+F3 mandaria o registro para a internet): quem mostra e
+        # esconde é o atalho Meta+Alt+F do KDE, que muda este arquivo, e o MangoHud
+        # do jogo aberto relê na hora.
+    ] + [f"{tecla}=" for tecla in TECLAS_MANGOHUD]
     if s["compacta"]:
         # Uma pílula só do tamanho do texto (sem esticar até a ponta da tela).
         linhas += ["horizontal", "horizontal_stretch=0", "horizontal_separator_color=55555c",
@@ -306,6 +348,8 @@ def texto_mangohud(c, ajustes=None, mostrar=False):
     if ajustes:
         if ajustes["fps"]:
             linhas.append(f"fps_limit={ajustes['fps']}")
+            # Baixa latência: espera antes do jogo ler os comandos, não depois.
+            linhas.append("fps_limit_method=" + ("early" if ajustes.get("latencia") else "late"))
         if ajustes["vsync"] == "ligada":
             linhas += ["vsync=3", "gl_vsync=1"]
         elif ajustes["vsync"] == "desligada":
@@ -330,6 +374,57 @@ def escrever_mangohud(c=None, estado=None):
         with open(caminho, "w", encoding="utf-8") as f:
             f.write(texto)
     return texto
+
+
+# ----- baixa latência nos jogos DirectX pelo Proton (DXVK) -----
+def arquivo_dxvk():
+    """O dxvk.conf da pessoa, o mesmo do DXVK_CONFIG_FILE do environment.d do Matsu.
+    Um DXVK_CONFIG_FILE escolhido pela pessoa fora de ~/.config/matsu não é mexido."""
+    if os.environ.get("MATSU_DXVK_CONF"):
+        return os.environ["MATSU_DXVK_CONF"]
+    nosso = os.path.join(config_casa(), "matsu", "jogos", "dxvk.conf")
+    escolhido = os.environ.get("DXVK_CONFIG_FILE", "")
+    if escolhido and os.path.realpath(escolhido).startswith(os.path.realpath(os.path.join(config_casa(), "matsu")) + os.sep):
+        return escolhido
+    return nosso
+
+
+def texto_dxvk(ajustes=None):
+    linhas = ["# Matsu: o DXVK (jogos DirectX 9, 10 e 11 pelo Proton) lê este arquivo quando o jogo abre.",
+              "# Quem escreve é a Central de jogos, com o perfil do jogo aberto (Baixa latência)."]
+    if ajustes and ajustes.get("latencia"):
+        linhas += ["dxgi.maxFrameLatency = 1", "d3d9.maxFrameLatency = 1"]
+    return "\n".join(linhas) + "\n"
+
+
+def escrever_dxvk(estado=None):
+    estado = estado if estado is not None else ler_json(arquivo_estado(), {}) or {}
+    jogo = estado.get("jogo")
+    texto = texto_dxvk(jogo.get("ajustes") if jogo else None)
+    caminho = arquivo_dxvk()
+    if ler(caminho) != texto:
+        gravar(caminho, texto)
+    return texto
+
+
+# ----- o FPS no jogo: a mesma chave em três lugares -----
+def fps(acao="", avisar_mudanca=False):
+    """Liga (on), desliga (off) ou troca (alternar) a sobreposição; sem ação, só diz como está."""
+    c = carregar_config()
+    ligada = c["sobreposicao"]["ligada"]
+    nova = {"on": True, "ligar": True, "off": False, "desligar": False, "alternar": not ligada}.get(acao, ligada)
+    if acao and nova != ligada:
+        c["sobreposicao"]["ligada"] = nova
+        c = salvar_config(c)
+        escrever_mangohud(c)
+        if avisar_mudanca:
+            pt = T.idioma() == "pt"
+            avisar("FPS no jogo" if pt else "In-game FPS",
+                   ("Ligado: aparece em cima do jogo" if nova else "Desligado") if pt
+                   else ("On: shows on top of the game" if nova else "Off"))
+    elif acao:
+        escrever_mangohud(c)
+    return {"ligada": c["sobreposicao"]["ligada"]}
 
 
 # ----- Steam -----
@@ -520,6 +615,17 @@ class Leitor:
         self.servico = (0.0, None)
         self.energia = (0.0, None)
         self.ajuste = ajuste_avancado()
+        self.conf = (None, False)
+
+    def fps_ligada(self):
+        """Se o FPS no jogo está ligado (o atalho e a Central de controle também mudam)."""
+        try:
+            tempo = os.path.getmtime(arquivo_config())
+        except OSError:
+            return False
+        if tempo != self.conf[0]:
+            self.conf = (tempo, bool(carregar_config()["sobreposicao"]["ligada"]))
+        return self.conf[1]
 
     def cpu(self):
         campos = ler(PROC + "/stat").split("\n", 1)[0].split()[1:]
@@ -547,6 +653,8 @@ class Leitor:
         return {"total": total, "usada": max(0, total - info.get("MemAvailable", 0))}
 
     def placas(self):
+        if os.environ.get("MATSU_JOGOS_DEMO"):
+            return [placa_demo()]
         fixos = self.tarefas.dados_fixos()
         placas = self.tarefas.ler_placas(fixos)
         for placa, p in zip(placas, fixos["placas"]):
@@ -636,7 +744,22 @@ class Leitor:
             "energia": self.perfil_energia(),
             "servico": self.servico_ativo(),
             "ajuste": self.ajuste,
+            "atalho": ATALHO_FPS,
+            "fps": self.fps_ligada(),
         }
+
+
+def placa_demo():
+    """Uma RX 6700 XT trabalhando, para as fotos da prévia (MATSU_JOGOS_DEMO=1)."""
+    import math
+    t = time.time()
+    uso = round(62 + 25 * math.sin(t / 3.1) + 6 * math.sin(t * 1.7))
+    return {"indice": 0, "nome": "AMD Radeon RX 6700 XT", "driver": "Mesa 26.0.4", "marca": "AMD", "fabricante": "amdgpu",
+            "uso": max(0, min(100, uso)), "vram_usada": int((6.2 + math.sin(t / 7)) * 1024 ** 3), "vram_total": 12 * 1024 ** 3,
+            "temp": round(64 + 6 * math.sin(t / 5)), "temp_junc": round(78 + 7 * math.sin(t / 5)),
+            "mhz": round(2400 + 180 * math.sin(t / 2.3)), "mhz_mem": 1000, "watts": round(168 + 30 * math.sin(t / 3.1), 1),
+            "watts_max": 230.0, "rpm": round(1450 + 200 * math.sin(t / 6)), "ventoinha": 42, "nivel": "auto",
+            "nivel_mudavel": True}
 
 
 def ajuste_avancado():
@@ -694,6 +817,13 @@ def placas_amd():
     return [p for p in glob.glob(SYS + "/class/drm/card*/device/power_dpm_force_performance_level")
             if re.search(r"/card\d+/device/", p)
             and os.path.basename(os.path.realpath(os.path.join(os.path.dirname(p), "driver"))) == "amdgpu"]
+
+
+def nivel_placa():
+    """O nível da primeira placa AMD agora (auto, high, low, manual...) ou vazio."""
+    for p in placas_amd():
+        return ler(p).strip()
+    return ""
 
 
 def trocar_nivel_placa(nivel):
@@ -875,8 +1005,12 @@ class Servico:
             agora = energia_atual()
             if agora and trocar_energia(ENERGIA_PPD[ajustes["energia"]]):
                 antes["energia"] = agora
-        if ajustes["placa"] != "auto" and trocar_nivel_placa(NIVEL_AMD[ajustes["placa"]]):
-            antes["placa"] = "auto"
+        if ajustes["placa"] != "auto":
+            # Se o LACT ou o CoreCtrl estão no comando (nível "manual" ou de perfil),
+            # a Central não mexe: o ajuste fino da pessoa vale mais.
+            agora = nivel_placa()
+            if agora in ("", "auto", "high", "low") and trocar_nivel_placa(NIVEL_AMD[ajustes["placa"]]):
+                antes["placa"] = agora or "auto"
         jogo = dict(jogo, perfil=perfil, ajustes=ajustes, desde=int(time.time()))
         self.estado = {"jogo": jogo, "antes": antes}
         self.registrados = set()
@@ -884,6 +1018,7 @@ class Servico:
             self.registrar(jogo["pid"])
         self.guardar()
         escrever_mangohud(self.c, self.estado)
+        escrever_dxvk(self.estado)
         if self.c["avisar"]:
             nomes = {"padrao": ("Padrão", "Default"), "desempenho": ("Desempenho", "Performance"),
                      "qualidade": ("Qualidade", "Quality"), "economia": ("Economia", "Power saving"),
@@ -901,13 +1036,14 @@ class Servico:
         if antes.get("energia"):
             trocar_energia(antes["energia"])
         if antes.get("placa"):
-            trocar_nivel_placa("auto")
+            trocar_nivel_placa(antes["placa"] if antes["placa"] in NIVEL_AMD.values() else "auto")
         for pid in self.registrados:
             gamemode("UnregisterGame", pid)
         self.registrados = set()
         self.estado = {"jogo": None}
         self.guardar()
         escrever_mangohud(self.c, self.estado)
+        escrever_dxvk(self.estado)
 
     def passo(self):
         if self.mtime() != self.c_mtime:
@@ -937,6 +1073,7 @@ class Servico:
             self.estado = {"jogo": None}
             self.guardar()
             escrever_mangohud(self.c, self.estado)
+            escrever_dxvk(self.estado)
 
         def sair(*_):
             if self.estado.get("jogo"):
@@ -993,6 +1130,45 @@ def atualizacao(agora=False):
     return r
 
 
+# ----- trocar a imagem (com ou sem o driver da NVIDIA) -----
+def trocar_imagem(qual=""):
+    """Troca para a imagem que combina com a placa (o mesmo canal), mostrando o que o
+    bootc escreve. Uma linha JSON por linha dele; no fim {"fim": código}.
+    Com qual="outra", vai para a outra versão (com ou sem o driver da NVIDIA) mesmo
+    que a placa não peça: é o caminho de volta."""
+    def emitir(d):
+        sys.stdout.write(json.dumps(d, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    if os.environ.get("MATSU_DRIVERS_DEMO"):
+        for linha in ("Conferindo a assinatura da imagem", "Baixando: 12 de 48 partes", "Baixando: 48 de 48 partes",
+                      "Preparando o sistema novo"):
+            emitir({"linha": linha})
+            time.sleep(0.8)
+        emitir({"fim": 0})
+        return 0
+    imagem = D.ler_imagem()
+    troca = D.outra_imagem(imagem) if qual == "outra" else D.troca_de_imagem(D.placas(), imagem)
+    comando = D.comando_troca(troca["alvo"]) if troca else None
+    if not comando:
+        emitir({"fim": 3, "erro": "nada"})
+        return 3
+    emitir({"alvo": troca["alvo"]})
+    try:
+        p = subprocess.Popen(comando, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
+                             env=dict(os.environ, LC_ALL="C"))
+    except OSError as e:
+        emitir({"fim": 127, "erro": str(e)})
+        return 127
+    for linha in p.stdout:
+        linha = linha.strip()
+        if linha:
+            emitir({"linha": linha[-160:]})
+    codigo = p.wait()
+    # 126/127: o pkexec não deixou (senha errada ou cancelada).
+    emitir({"fim": codigo, "erro": "" if codigo == 0 else ("cancelado" if codigo in (126, 127) else "falhou")})
+    return codigo
+
+
 # ----- a janela -----
 def vigiar(intervalo):
     leitor = Leitor()
@@ -1047,6 +1223,41 @@ def main(args):
     if comando == "servico":
         Servico().rodar()
         return 0
+    if comando == "fps":
+        acao = next((a for a in resto if a in ("on", "off", "ligar", "desligar", "alternar")), "")
+        print(json.dumps(fps(acao, "--avisar" in resto)))
+        return 0
+    pt = T.idioma() == "pt"
+    if comando == "controles":
+        print(json.dumps(C.listar(pt), ensure_ascii=False))
+        return 0
+    if comando == "controle" and len(resto) == 2:
+        r = C.acao(resto[0], resto[1])
+        print(json.dumps(r))
+        return 0 if r["ok"] else 1
+    if comando == "bluetooth-ligar":
+        ok = True if C.demo() else C.ligar_bluetooth()
+        print(json.dumps({"ok": ok}))
+        return 0 if ok else 1
+    if comando == "parear":
+        tipo = resto[0] if resto else "outro"
+        try:
+            segundos = int(resto[1]) if len(resto) > 1 else 30
+        except ValueError:
+            segundos = 30
+        return C.parear(tipo, segundos, pt)
+    if comando == "testar" and resto:
+        return C.testar(resto[0], resto[1] if len(resto) > 1 else "outro")
+    if comando == "drivers":
+        if os.environ.get("MATSU_DRIVERS_DEMO"):
+            d = D.demo()
+        else:
+            cache = os.path.join(cache_casa(), "matsu", "jogos-drivers.json")
+            d = D.tudo(T.nome_da_placa, "pt" if pt else "en", cache, agora="--agora" in resto)
+        print(json.dumps(d, ensure_ascii=False))
+        return 0
+    if comando == "trocar-imagem":
+        return trocar_imagem("outra" if "outra" in resto else "")
     print(__doc__)
     return 2
 

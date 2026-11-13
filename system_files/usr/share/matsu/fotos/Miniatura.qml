@@ -1,5 +1,5 @@
 // Uma foto na grade: carrega sem travar (no fundo, já no tamanho da miniatura),
-// com o bloco pulsando até chegar e entrando de leve. Cantos redondos, o giro que
+// com o brilho passando até chegar e entrando de leve. Cantos redondos, o giro que
 // a pessoa deu (só na exibição) e, com o mouse em cima, o nome e o coração.
 // Usa a miniatura que o KDE (Dolphin) já fez, quando ela existe e basta.
 import QtQuick

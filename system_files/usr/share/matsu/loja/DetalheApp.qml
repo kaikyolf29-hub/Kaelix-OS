@@ -1,7 +1,8 @@
 // A página de um app, por cima da página de onde veio (como na Microsoft Store):
 // a logo oficial, o nome, quem faz, o botão de obter, as fotos (clicar amplia),
 // a descrição e as informações (versão, data, licença, tamanho, de onde vem).
-// Esc ou "Voltar" fecham e a lista de baixo continua onde estava.
+// Esc ou "Voltar" fecham e a lista de baixo continua onde estava. A página entra
+// subindo de leve e, enquanto a descrição não chega, mostra as linhas em esqueleto.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -98,6 +99,9 @@ Item {
     Flickable {
         id: rolagem
         anchors.fill: parent
+        transform: Translate {
+            y: Math.round((1 - detalhe.opacity) * janela.gu * 1.4)
+        }
         contentHeight: conteudo.implicitHeight + detalhe.margem
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -281,12 +285,34 @@ Item {
                         source: foto.carregando ? "" : foto.modelData.url
                         fillMode: Image.PreserveAspectCrop
                         sombra: 0.5
+                        aparecer: true
                     }
                     MouseArea {
                         anchors.fill: parent
                         enabled: !foto.carregando
                         cursorShape: Qt.PointingHandCursor
                         onClicked: detalhe.fotoAmpliada = foto.index
+                    }
+                }
+            }
+
+            // ----- sobre (em esqueleto enquanto a descrição chega) -----
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Math.round(janela.gu * 0.55)
+                visible: detalhe.info === null && detalhe.resumo !== null
+                Esqueleto {
+                    Layout.preferredWidth: Math.round(janela.gu * 8)
+                    Layout.preferredHeight: Math.round(janela.gu * 1.1)
+                    raio: Math.round(janela.gu * 0.3)
+                }
+                Repeater {
+                    model: [1, 0.96, 0.9, 0.62]
+                    Esqueleto {
+                        required property real modelData
+                        Layout.preferredWidth: Math.round(Math.min(conteudo.width, janela.gu * 46) * modelData)
+                        Layout.preferredHeight: Math.round(janela.gu * 0.75)
+                        raio: Math.round(janela.gu * 0.25)
                     }
                 }
             }
@@ -442,6 +468,7 @@ Item {
             anchors.bottomMargin: Math.round(janela.gu * (legenda.text !== "" ? 4.5 : 3))
             raio: Math.round(janela.gu * 0.6)
             fillMode: Image.PreserveAspectFit
+            aparecer: true
             source: detalhe.fotoAmpliada >= 0 && detalhe.fotoAmpliada < detalhe.fotos.length ? detalhe.fotos[detalhe.fotoAmpliada].url : ""
         }
         Texto {

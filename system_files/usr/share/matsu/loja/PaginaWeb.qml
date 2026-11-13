@@ -141,10 +141,9 @@ Item {
                                     font.pointSize: Kirigami.Theme.defaultFont.pointSize - 0.5
                                 }
                             }
-                            QQC2.BusyIndicator {
+                            Girando {
                                 visible: cartao.trabalhando
-                                running: visible
-                                Layout.preferredWidth: Math.round(janela.gu * 1.8)
+                                Layout.preferredWidth: Math.round(janela.gu * 1.2)
                                 Layout.preferredHeight: Layout.preferredWidth
                             }
                             Botao {

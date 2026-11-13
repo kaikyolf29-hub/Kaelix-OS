@@ -1,11 +1,13 @@
-// Botão redondo de ícone da coluna da Câmera (temporizador, grade, trocar de
-// câmera, ajustes). O fundo claro aparece com o mouse em cima; ligado, fica com o
-// fundo e a borda fina (nunca colorido). Pode ter um selinho com um texto curto
-// ("3 s") que pula ao mudar.
+// Botão redondo de ícone (temporizador, grade, trocar de câmera, ajustes): o
+// fundo claro aparece com o mouse em cima, afunda no clique e volta com mola;
+// ligado, fica com o fundo e a borda fina (nunca colorido). Pode ter um selinho
+// no canto com um texto curto ("3") que pula ao mudar.
+//   BotaoCirculo { icone: "matsu-ajustes-symbolic"; dica: "Ajustes"; ligado: aberto; selo: ""; onClicado: ... }
+// (Não se chama BotaoRedondo porque o Relógio e o Calendário têm um BotaoRedondo
+// próprio, e uma peça daqui ganha da que tem o mesmo nome na pasta do app.)
 import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
-import "../comum"
 
 MouseArea {
     id: botao
@@ -15,11 +17,15 @@ MouseArea {
     property bool ligado: false
     property bool ativo: true
     property string selo: ""
+    property int lado: Math.round(janela.gu * 2.3)
+    property real tamanhoIcone: Kirigami.Units.iconSizes.small
+    // A cor do que está atrás do botão: o contorno do selo, para ele "recortar" o fundo.
+    property color corFundo: janela.escuro ? Qt.rgba(0.1, 0.1, 0.106, 1) : Qt.rgba(0.979, 0.979, 0.982, 1)
 
     signal clicado()
 
-    implicitWidth: Math.round(janela.gu * 2.3)
-    implicitHeight: implicitWidth
+    implicitWidth: lado
+    implicitHeight: lado
     hoverEnabled: true
     enabled: ativo
     cursorShape: Qt.PointingHandCursor
@@ -56,7 +62,7 @@ MouseArea {
 
         Kirigami.Icon {
             anchors.centerIn: parent
-            width: Kirigami.Units.iconSizes.small
+            width: botao.tamanhoIcone
             height: width
             source: botao.icone
             isMask: true
@@ -78,12 +84,12 @@ MouseArea {
         radius: height / 2
         color: janela.frente
         border.width: 2
-        border.color: janela.fundoPalco
+        border.color: botao.corFundo
         Texto {
             id: seloTexto
             anchors.centerIn: parent
             text: botao.selo
-            color: janela.fundoPalco
+            color: botao.corFundo
             font.pixelSize: Math.round(janela.gu * 0.55)
             font.weight: Font.Bold
         }

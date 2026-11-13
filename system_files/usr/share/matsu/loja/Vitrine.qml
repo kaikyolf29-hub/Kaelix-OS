@@ -124,6 +124,7 @@ Item {
                         horizontalAlignment: Image.AlignLeft
                         verticalAlignment: Image.AlignTop
                         source: lamina.foto
+                        aparecer: true
                     }
                 }
                 IconeApp {

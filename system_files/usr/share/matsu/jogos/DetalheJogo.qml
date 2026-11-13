@@ -412,6 +412,8 @@ Item {
                         partes.push(a.vsync === "ligada" ? janela.t("sem cortes na tela (V-Sync)", "no tearing (V-Sync)") : janela.t("V-Sync desligada", "V-Sync off"));
                     if (a.af > 0)
                         partes.push(janela.t("texturas nítidas ", "sharp textures ") + a.af + "x");
+                    if (a.latencia)
+                        partes.push(janela.t("baixa latência", "low latency"));
                     if (a.modo_jogo)
                         partes.push(janela.t("modo jogo", "game mode"));
                     var s = partes.join(" · ");

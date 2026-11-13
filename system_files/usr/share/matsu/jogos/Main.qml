@@ -1,7 +1,8 @@
 // Central de jogos do Matsu (no jeito do AMD Software do Windows): os jogos da
 // Steam com as capas de verdade, os perfis gráficos (Padrão, Desempenho,
-// Qualidade, Economia e Personalizado), a sobreposição no jogo (FPS, CPU, GPU...)
-// e a placa de vídeo com o driver. A janela de vidro é a JanelaMatsu, de ../comum.
+// Qualidade, Economia e Personalizado), a sobreposição no jogo (FPS, CPU, GPU...),
+// os controles (PlayStation, Xbox... pelo Bluetooth), a placa de vídeo e os
+// drivers. A janela de vidro é a JanelaMatsu, de ../comum.
 //
 // Aqui é só o desenho. Quem lê o sistema, a Steam e grava os ajustes é o
 // ajudante.py desta pasta; quem liga o modo jogo quando um jogo abre é o serviço
@@ -20,15 +21,19 @@ JanelaMatsu {
     iconeReserva: "applications-games"
     dicaBusca: t("Buscar nos seus jogos", "Search your games")
     paginaDaBusca: "jogos"
+    trocaSuave: true
     paginas: [
         { id: "inicio", icone: "matsu-inicio-symbolic", nome: t("Início", "Home") },
         { id: "jogos", icone: "matsu-jogos-symbolic", nome: t("Meus jogos", "My games") },
         { id: "graficos", icone: "matsu-graficos-symbolic", nome: t("Gráficos", "Graphics") },
         { id: "sobreposicao", icone: "matsu-sobreposicao-symbolic", nome: t("Sobreposição", "Overlay") },
-        { id: "placa", icone: "matsu-placa-symbolic", nome: t("Placa de vídeo", "Graphics card") }
+        { id: "controles", icone: Qt.resolvedUrl("icones/controle.svg"), nome: t("Controles", "Controllers") },
+        { id: "placa", icone: "matsu-placa-symbolic", nome: t("Placa de vídeo", "Graphics card") },
+        { id: "drivers", icone: Qt.resolvedUrl("icones/driver.svg"), nome: t("Drivers", "Drivers") }
     ]
     conteudo: Qt.resolvedUrl(({ jogos: "PaginaJogos.qml", graficos: "PaginaGraficos.qml", sobreposicao: "PaginaSobreposicao.qml",
-                                placa: "PaginaPlaca.qml" })[pagina] || "PaginaInicio.qml")
+                                controles: "PaginaControles.qml", placa: "PaginaPlaca.qml", drivers: "PaginaDrivers.qml" })[pagina]
+                             || "PaginaInicio.qml")
     width: gu * 64
     height: gu * 40
     minimumWidth: gu * 44
@@ -65,9 +70,9 @@ JanelaMatsu {
     }
     function textoPerfil(p) {
         return ({ padrao: t("O jogo decide. Só liga o modo jogo.", "The game decides. Just turns on game mode."),
-                  desempenho: t("Mais FPS e menos atraso: energia e placa no máximo.", "More FPS, less lag: power and GPU at max."),
+                  desempenho: t("Mais FPS e menos atraso: tudo no máximo.", "More FPS, less lag: everything at max."),
                   qualidade: t("Imagem mais lisa e nítida, sem cortes na tela.", "Smoother, sharper picture, no tearing."),
-                  economia: t("60 FPS, mais silencioso e mais bateria.", "60 FPS, quieter and longer battery."),
+                  economia: t("Limite de 60 FPS: mais silencioso e mais bateria.", "60 FPS cap: quieter and longer battery."),
                   personalizado: t("Você escolhe cada ajuste.", "You choose each setting.") })[p] || "";
     }
     function iconePerfil(p) {
@@ -79,12 +84,12 @@ JanelaMatsu {
         return escuro ? ({ padrao: "#45d0c1", desempenho: "#f0609e", qualidade: "#b18cf5", economia: "#7fcf6a", personalizado: "#f5b330" })[p]
                       : ({ padrao: "#0f9c8e", desempenho: "#d23f78", qualidade: "#7650dc", economia: "#3d9533", personalizado: "#c98a12" })[p];
     }
-    // O que cada perfil pronto faz (o mesmo que o ajudante usa).
+    // O que cada perfil pronto faz (o mesmo PERFIS do ajudante; o teste confere).
     readonly property var ajustesProntos: ({
-        padrao: { energia: "manter", placa: "auto", fps: 0, vsync: "jogo", af: 0, modo_jogo: true },
-        desempenho: { energia: "desempenho", placa: "maximo", fps: 0, vsync: "desligada", af: 0, modo_jogo: true },
-        qualidade: { energia: "desempenho", placa: "auto", fps: 0, vsync: "ligada", af: 16, modo_jogo: true },
-        economia: { energia: "economia", placa: "economia", fps: 60, vsync: "ligada", af: 0, modo_jogo: false }
+        padrao: { energia: "manter", placa: "auto", fps: 0, vsync: "jogo", af: 0, modo_jogo: true, latencia: false },
+        desempenho: { energia: "desempenho", placa: "maximo", fps: 0, vsync: "desligada", af: 0, modo_jogo: true, latencia: true },
+        qualidade: { energia: "desempenho", placa: "auto", fps: 0, vsync: "ligada", af: 16, modo_jogo: true, latencia: false },
+        economia: { energia: "economia", placa: "auto", fps: 60, vsync: "ligada", af: 0, modo_jogo: false, latencia: false }
     })
     function ajustesDe(p) {
         if (p === "personalizado")
@@ -99,8 +104,10 @@ JanelaMatsu {
     function copia(o) {
         return JSON.parse(JSON.stringify(o));
     }
+    property double gravadoEm: 0
     function salvar(nova) {
         conf = nova;
+        gravadoEm = Date.now();
         matsu.rodar("salvar", comando(["salvar", JSON.stringify(nova)]));
     }
     // mudar("sobreposicao.ligada", true)
@@ -138,8 +145,89 @@ JanelaMatsu {
         procurando = true;
         matsu.rodar("atualizacao", comando(["atualizacao", "--agora"]));
     }
+    // O app Atualizações do Matsu (o driver da placa vem junto com o sistema).
     function atualizarAgora() {
-        matsu.soltar(["/usr/libexec/matsu/matsu-central", "abrir", "atualizar"]);
+        matsu.soltar(["/usr/libexec/matsu/matsu-central", "abrir", "atualizacoes"]);
+    }
+    function reiniciar() {
+        matsu.soltar(["systemctl", "reboot"]);
+    }
+    function perguntar(p, sim) {
+        dialogo.perguntar(p, sim);
+    }
+
+    // ----- FPS no jogo (o mesmo liga e desliga da Central de controle e do atalho) -----
+    readonly property bool fpsLigado: conf ? conf.sobreposicao.ligada : false
+    readonly property string atalhoFps: dados && dados.atalho ? dados.atalho : "Meta+Alt+F"
+    // As teclas do atalho para mostrar na tela (Meta é a tecla com a janelinha: "Win").
+    readonly property var teclasAtalho: atalhoFps.split("+").map(function (k) { return k === "Meta" ? "Win" : k; })
+    readonly property string textoAtalho: teclasAtalho.join(" + ")
+    function ligarFps(ligada) {
+        mudar("sobreposicao.ligada", ligada);
+    }
+
+    // ----- controles -----
+    property var controles: null      // { bluetooth: {tem, ligado, programa}, controles: [...] }
+    property var pareamento: null     // a última etapa do pareamento ({ etapa, ... })
+    property bool pareando: false
+    property string tipoPareando: ""
+    property var teste: null          // o estado ao vivo do controle em teste
+    property var controleEmTeste: null
+    property string erroTeste: ""
+    property string controleOcupado: ""   // o MAC do controle com uma ação em andamento
+    property bool ligandoBluetooth: false
+    function lerControles() {
+        matsu.rodar("controles", comando(["controles"]));
+    }
+    function acaoControle(qual, mac) {
+        controleOcupado = mac;
+        matsu.rodar("controle:" + qual, comando(["controle", qual, mac]));
+    }
+    function ligarBluetooth() {
+        ligandoBluetooth = true;
+        matsu.rodar("bluetooth", comando(["bluetooth-ligar"]));
+    }
+    function parear(tipo) {
+        if (pareando)
+            return;
+        tipoPareando = tipo;
+        pareamento = { etapa: "comecando" };
+        pareando = true;
+        matsu.iniciar("parear", comando(["parear", tipo, "30"]));
+    }
+    function cancelarPareamento() {
+        matsu.parar("parear");
+        pareando = false;
+        pareamento = null;
+    }
+    function testar(c) {
+        pararTeste();
+        controleEmTeste = c;
+        teste = null;
+        erroTeste = "";
+        matsu.iniciar("teste", comando(["testar", c.evento, c.tipo]));
+    }
+    function pararTeste() {
+        matsu.parar("teste");
+        controleEmTeste = null;
+        teste = null;
+    }
+    function nomeTipo(tipo) {
+        return ({ playstation: "PlayStation", xbox: "Xbox", nintendo: "Nintendo", steam: "Steam" })[tipo] || t("Controle", "Controller");
+    }
+
+    // ----- drivers -----
+    property var drivers: null
+    property bool lendoDrivers: false
+    property var troca: null          // { linhas: [...], fim: bool, erro: código }
+    function lerDrivers(agora) {
+        lendoDrivers = true;
+        matsu.rodar("drivers", comando(agora ? ["drivers", "--agora"] : ["drivers"]));
+    }
+    // outra: vai para a outra versão (com ou sem NVIDIA) mesmo sem a placa pedir.
+    function trocarImagem(outra) {
+        troca = { linhas: [], fim: false, erro: 0, alvo: "" };
+        matsu.iniciar("troca", comando(outra ? ["trocar-imagem", "outra"] : ["trocar-imagem"]));
     }
 
     // ----- textos -----
@@ -215,6 +303,12 @@ JanelaMatsu {
             guardar(h, "ventoinha", p.rpm > 0 ? p.rpm : Math.max(0, p.ventoinha));
         }
         historico = h;
+        // O FPS no jogo mudou pelo atalho ou pela Central de controle.
+        if (conf && d.fps !== undefined && d.fps !== conf.sobreposicao.ligada && Date.now() - gravadoEm > 3000) {
+            var c = copia(conf);
+            c.sobreposicao.ligada = d.fps;
+            conf = c;
+        }
         var mudouJogo = (dados && dados.jogo ? dados.jogo.id : "") !== (d.jogo ? d.jogo.id : "");
         dados = d;
         tique++;
@@ -233,12 +327,58 @@ JanelaMatsu {
     Connections {
         target: matsu
         function onLinha(chave, texto) {
-            if (chave === "vigia")
+            if (chave === "vigia") {
                 janela.receber(texto);
+                return;
+            }
+            var d;
+            try {
+                d = JSON.parse(texto);
+            } catch (e) {
+                return;
+            }
+            if (chave === "parear") {
+                janela.pareamento = d;
+                if (d.etapa === "pronto" || d.etapa === "erro")
+                    janela.lerControles();
+            } else if (chave === "teste") {
+                if (d.erro)
+                    janela.erroTeste = d.erro;
+                else
+                    janela.teste = d;
+            } else if (chave === "troca" && janela.troca) {
+                var t = janela.copia(janela.troca);
+                if (d.alvo)
+                    t.alvo = d.alvo;
+                if (d.linha) {
+                    t.linhas.push(d.linha);
+                    if (t.linhas.length > 6)
+                        t.linhas.shift();
+                }
+                if (d.fim !== undefined) {
+                    t.fim = true;
+                    t.erro = d.fim;
+                }
+                janela.troca = t;
+            }
         }
         function onParou(chave, codigo) {
-            if (chave === "vigia")
+            if (chave === "vigia") {
                 religar.start();
+            } else if (chave === "parear") {
+                janela.pareando = false;
+                // Parou sem dizer o porquê (o programa caiu): mostra como falha.
+                if (janela.pareamento && janela.pareamento.etapa !== "pronto" && janela.pareamento.etapa !== "erro")
+                    janela.pareamento = codigo === 0 ? null : { etapa: "erro", erro: "falhou" };
+            } else if (chave === "teste") {
+                if (janela.controleEmTeste && !janela.erroTeste && codigo !== 0 && codigo !== 15)
+                    janela.erroTeste = "sumiu";
+            } else if (chave === "troca" && janela.troca && !janela.troca.fim) {
+                var t = janela.copia(janela.troca);
+                t.fim = true;
+                t.erro = codigo === 0 ? 1 : codigo;
+                janela.troca = t;
+            }
         }
         function onPronto(chave, saida, codigo) {
             var d = null;
@@ -257,6 +397,27 @@ JanelaMatsu {
                 janela.procurando = false;
                 if (d)
                     janela.atualizacao = d;
+            } else if (chave === "controles" && d) {
+                janela.controles = d;
+            } else if (chave.indexOf("controle:") === 0) {
+                var qual = chave.split(":")[1];
+                janela.controleOcupado = "";
+                if (d && d.ok)
+                    janela.avisoRapido(({ desconectar: janela.t("Controle desconectado", "Controller disconnected"),
+                                          conectar: janela.t("Controle conectado", "Controller connected"),
+                                          esquecer: janela.t("Controle esquecido", "Controller forgotten") })[qual] || "", "certo")
+                else
+                    janela.avisoRapido(janela.textoErroControle(d ? d.erro : "", qual), "erro");
+                janela.lerControles();
+            } else if (chave === "bluetooth") {
+                janela.ligandoBluetooth = false;
+                if (!d || !d.ok)
+                    janela.avisoRapido(janela.t("Não deu para ligar o Bluetooth", "Couldn't turn Bluetooth on"), "erro");
+                janela.lerControles();
+            } else if (chave === "drivers") {
+                janela.lendoDrivers = false;
+                if (d)
+                    janela.drivers = d;
             }
         }
         function onPedido(argumentos) {
@@ -269,6 +430,40 @@ JanelaMatsu {
         id: religar
         interval: 2000
         onTriggered: janela.iniciarVigia()
+    }
+    // Na página dos controles: a lista (conectado, bateria) se atualiza sozinha.
+    Timer {
+        interval: 3000
+        running: janela.active && janela.pagina === "controles" && !janela.pareando
+        repeat: true
+        onTriggered: janela.lerControles()
+    }
+    // Saiu da página dos controles: o teste e a busca param.
+    onPaginaChanged: {
+        if (pagina !== "controles") {
+            if (controleEmTeste)
+                pararTeste();
+            if (pareando)
+                cancelarPareamento();
+            pareamento = null;
+        }
+        if (pagina === "controles")
+            lerControles();
+        if (pagina === "drivers" && !drivers && !lendoDrivers)
+            lerDrivers(false);
+    }
+
+    function textoErroControle(erro, qual) {
+        return ({ "sem-adaptador": t("Este computador não tem Bluetooth", "This computer has no Bluetooth"),
+                  desligado: t("O Bluetooth está desligado", "Bluetooth is off"),
+                  tempo: t("O controle não respondeu a tempo", "The controller didn't answer in time"),
+                  sumiu: t("O controle não está mais por perto", "The controller is no longer nearby") })[erro]
+               || (qual === "esquecer" ? t("Não deu para esquecer o controle", "Couldn't forget the controller")
+                                       : t("Não deu para falar com o controle", "Couldn't reach the controller"));
+    }
+
+    Dialogo {
+        id: dialogo
     }
     // A biblioteca muda quando a pessoa instala um jogo pela Steam.
     Timer {
@@ -387,8 +582,8 @@ JanelaMatsu {
                                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                                 opacity: 0.7
                             }
-                            Texto {
-                                text: barra.modelData.texto
+                            NumeroRolante {
+                                texto: barra.modelData.texto
                                 font.pointSize: Kirigami.Theme.smallFont.pointSize
                                 font.features: { "tnum": 1 }
                                 opacity: 0.9

@@ -24,7 +24,8 @@ JanelaMatsu {
     title: (abaAtual && abaAtual.nome ? abaAtual.nome + " – " : "") + nomeApp
     icone: "org.matsu.blocodenotas"
     iconeReserva: "accessories-text-editor"
-    // Um editor não tem assuntos: a lista da esquerda some (ver Pagina.qml).
+    // Um editor não tem assuntos: sem páginas, a JanelaMatsu esconde a lista da
+    // esquerda e o miolo ocupa a largura toda.
     paginas: []
     conteudo: Qt.resolvedUrl("Pagina.qml")
 

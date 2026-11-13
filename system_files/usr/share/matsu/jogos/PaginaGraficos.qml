@@ -206,7 +206,8 @@ Flickable {
                 ultima: false
                 icone: "matsu-placa-symbolic"
                 nome: janela.t("Placa de vídeo", "Graphics card")
-                texto: pagina.amd ? janela.t("No máximo, a placa fica sempre na velocidade mais alta.", "At max, the card always runs at top speed.")
+                texto: pagina.amd ? janela.t("Máxima: sempre na velocidade mais alta. Econômica: na mais baixa, só para jogos leves.",
+                                             "Max: always at top speed. Saving: at the lowest, for light games only.")
                                   : janela.t("Nesta placa, o próprio driver cuida da velocidade.", "On this card, the driver handles the speed itself.")
                 Seletor {
                     ativo: pagina.amd
@@ -222,7 +223,8 @@ Flickable {
                 ultima: false
                 icone: "matsu-desempenho-symbolic"
                 nome: janela.t("Limite de FPS", "Frame rate limit")
-                texto: janela.t("Segura os quadros por segundo: a placa esquenta menos e faz menos barulho.", "Caps frames per second: the card runs cooler and quieter.")
+                texto: janela.t("Segura os quadros por segundo: a placa esquenta menos e faz menos barulho. Muda na hora, até com o jogo aberto.",
+                                "Caps frames per second: the card runs cooler and quieter. Changes right away, even mid-game.")
                 Passos {
                     nome: janela.t("Limite de FPS", "Frame rate limit")
                     opcoes: [{ id: 0, nome: janela.t("Sem limite", "No limit") }, { id: 30, nome: "30 FPS" }, { id: 40, nome: "40 FPS" },
@@ -238,7 +240,8 @@ Flickable {
                 ultima: false
                 icone: "matsu-sincronia-symbolic"
                 nome: janela.t("Sincronia vertical (V-Sync)", "Vertical sync (V-Sync)")
-                texto: janela.t("Ligada, a imagem não corta ao meio. Desligada, responde mais rápido.", "On, the picture never tears. Off, it responds faster.")
+                texto: janela.t("Ligada, a imagem não corta ao meio. Desligada, responde mais rápido. Vale ao abrir o jogo.",
+                                "On, the picture never tears. Off, it responds faster. Applies when the game starts.")
                 Seletor {
                     opcoes: [{ id: "jogo", nome: janela.t("Do jogo", "Game's") }, { id: "ligada", nome: janela.t("Ligada", "On") },
                              { id: "desligada", nome: janela.t("Desligada", "Off") }]
@@ -252,12 +255,27 @@ Flickable {
                 ultima: false
                 icone: "matsu-textura-symbolic"
                 nome: janela.t("Texturas nítidas", "Sharp textures")
-                texto: janela.t("Filtro anisotrópico: o chão e as paredes de lado ficam nítidos, não borrados.", "Anisotropic filtering: floors and walls at an angle stay sharp, not blurry.")
+                texto: janela.t("Filtro anisotrópico: o chão e as paredes de lado ficam nítidos, não borrados. Vale ao abrir o jogo.",
+                                "Anisotropic filtering: floors and walls at an angle stay sharp, not blurry. Applies when the game starts.")
                 Passos {
                     nome: janela.t("Texturas nítidas", "Sharp textures")
                     opcoes: [{ id: 0, nome: janela.t("Do jogo", "Game's") }, { id: 2, nome: "2x" }, { id: 4, nome: "4x" }, { id: 8, nome: "8x" }, { id: 16, nome: "16x" }]
                     escolhido: pagina.ajustes.af
                     onEscolher: (id) => pagina.ajustar("af", id)
+                }
+            }
+            LinhaOpcao {
+                Layout.fillWidth: true
+                primeira: false
+                ultima: false
+                icone: "matsu-relogio-symbolic"
+                nome: janela.t("Baixa latência", "Low latency")
+                texto: janela.t("Menos atraso entre o comando e a tela nos jogos DirectX 9, 10 e 11 pelo Proton (vale ao abrir o jogo). Com limite de FPS, o limite segura o quadro do jeito com menos atraso.",
+                                "Less delay between input and screen in DirectX 9, 10 and 11 games through Proton (applies when the game starts). With a frame rate limit, the limit holds frames the lowest-latency way.")
+                Chave {
+                    ligada: pagina.ajustes.latencia === true
+                    nome: janela.t("Baixa latência", "Low latency")
+                    onTrocada: (ligada) => pagina.ajustar("latencia", ligada)
                 }
             }
             LinhaOpcao {

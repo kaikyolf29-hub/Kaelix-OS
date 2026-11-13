@@ -5,6 +5,8 @@
 // Aqui é só o desenho. Quem lê e muda o sistema é /usr/libexec/matsu/matsu-central
 // (que por sua vez usa "matsu vidro" e "matsu barra"). O que é mais raro de
 // mexer abre a tela de ajustes do KDE daquele assunto.
+// Acabamento: o fundo do assunto escolhido desliza na lista, e a página nova
+// entra subindo de leve.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -335,12 +337,55 @@ PlasmoidItem {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
 
+                        // O fundo do assunto escolhido: um só, que desliza até o novo.
+                        Rectangle {
+                            id: marca
+                            readonly property Item alvo: {
+                                var _p = ajustes.pagina;
+                                var _b = ajustes.busca;
+                                for (var i = 0; i < repetidorPaginas.count; i++) {
+                                    var it = repetidorPaginas.itemAt(i);
+                                    if (it && it.escolhido)
+                                        return it;
+                                }
+                                return null;
+                            }
+                            property bool animar: false
+                            visible: alvo !== null && alvo.visible
+                            x: lista.x
+                            y: alvo ? lista.y + alvo.y : 0
+                            width: lista.width
+                            height: alvo ? alvo.height : 0
+                            radius: Math.round(janela.gu * 0.4)
+                            color: Kirigami.Theme.highlightColor
+                            Behavior on y {
+                                enabled: marca.animar
+                                NumberAnimation {
+                                    duration: 260
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                            Connections {
+                                target: ajustes
+                                function onPaginaChanged() {
+                                    marca.animar = true;
+                                    fimMarca.restart();
+                                }
+                            }
+                            Timer {
+                                id: fimMarca
+                                interval: 400
+                                onTriggered: marca.animar = false
+                            }
+                        }
+
                         ColumnLayout {
                             id: lista
                             width: parent.width
                             spacing: 2
 
                             Repeater {
+                                id: repetidorPaginas
                                 model: ajustes.paginas
 
                                 MouseArea {
@@ -367,9 +412,13 @@ PlasmoidItem {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: Math.round(janela.gu * 0.4)
-                                        color: item.escolhido ? Kirigami.Theme.highlightColor
-                                             : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b,
-                                                       item.containsMouse || item.activeFocus ? 0.07 : 0)
+                                        color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b,
+                                                       !item.escolhido && (item.containsMouse || item.activeFocus) ? 0.07 : 0)
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: Kirigami.Units.shortDuration
+                                            }
+                                        }
                                     }
 
                                     RowLayout {
@@ -402,6 +451,11 @@ PlasmoidItem {
                                             elide: Text.ElideRight
                                             color: item.escolhido ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
                                             font.weight: item.escolhido ? Font.DemiBold : Font.Normal
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: 200
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -449,6 +503,16 @@ PlasmoidItem {
                     y: Math.round(janela.gu * 1.1)
                     width: rolagem.width - Math.round(janela.gu * 2.8)
                     spacing: Math.round(janela.gu * 0.9)
+                    transform: Translate {
+                        id: deslizeCorpo
+                    }
+
+                    // A página nova entra aparecendo e subindo de leve.
+                    ParallelAnimation {
+                        id: entradaPagina
+                        NumberAnimation { target: corpo; property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: deslizeCorpo; property: "y"; from: Math.round(janela.gu * 0.9); to: 0; duration: 320; easing.type: Easing.OutCubic }
+                    }
 
                     Kirigami.Heading {
                         Layout.fillWidth: true
@@ -476,7 +540,10 @@ PlasmoidItem {
                             default: return "PaginaAparencia.qml";
                             }
                         }
-                        onLoaded: rolagem.contentY = 0
+                        onLoaded: {
+                            rolagem.contentY = 0;
+                            entradaPagina.restart();
+                        }
                     }
                 }
             }

@@ -294,12 +294,26 @@ PlasmoidItem {
                     ligado: raiz.sim("noturna")
                     onAcionado: raiz.alternar("noturna", "luz-noturna")
                 }
+                // FPS no jogo: a sobreposição da Central de jogos (a mesma chave da
+                // página Sobreposição e do atalho Meta+Alt+F). Botão direito abre a página.
+                Botao {
+                    visible: raiz.sim("fps_tem")
+                    icone: "matsu-sobreposicao-symbolic"
+                    titulo: raiz.t("FPS no jogo", "In-game FPS")
+                    detalhe: raiz.sim("fps_ligado") ? raiz.t("Aparece no jogo", "Shows in games") : raiz.t("Desligado", "Off")
+                    ligado: raiz.sim("fps_ligado")
+                    onAcionado: raiz.alternar("fps_ligado", "fps")
+                    onDetalhado: {
+                        raiz.expanded = false;
+                        raiz.fazer("abrir sobreposicao");
+                    }
+                }
                 Botao {
                     // Quando sobra um bloco sozinho na última linha (PC sem Wi-Fi e
                     // sem Bluetooth), ele ocupa a linha inteira em vez de deixar um buraco.
                     readonly property int acima: (raiz.sim("wifi_tem") ? 1 : 0)
                         + ((raiz.sim("cabo_ligado") || !raiz.sim("wifi_tem")) ? 1 : 0)
-                        + (raiz.sim("bt_tem") ? 1 : 0) + 3
+                        + (raiz.sim("bt_tem") ? 1 : 0) + (raiz.sim("fps_tem") ? 1 : 0) + 3
                     Layout.columnSpan: acima % 2 === 0 ? 2 : 1
                     icone: "matsu-barra-symbolic"
                     titulo: raiz.t("Estilo da barra", "Bar style")

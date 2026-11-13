@@ -372,8 +372,8 @@ Flickable {
                 icone: "matsu-sobreposicao-symbolic"
                 cor: janela.corPerfil("padrao")
                 nome: janela.t("Sobreposição", "Overlay")
-                texto: janela.t("FPS, CPU e GPU em cima do jogo. Shift direito + F12 mostra e esconde.",
-                                "FPS, CPU and GPU on top of the game. Right Shift + F12 shows and hides it.")
+                texto: janela.t("FPS, CPU e GPU em cima do jogo. No jogo, " + janela.textoAtalho + " liga e desliga.",
+                                "FPS, CPU and GPU on top of the game. In game, " + janela.textoAtalho + " turns it on and off.")
                 onClicado: janela.pagina = "sobreposicao"
                 Chave {
                     ligada: janela.conf ? janela.conf.sobreposicao.ligada : false

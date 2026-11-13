@@ -239,7 +239,9 @@ Item {
             Layout.rightMargin: Math.round(janela.gu * 0.5)
             spacing: Math.round(janela.gu * 0.2)
 
-            BotaoIcone {
+            BotaoSimbolo {
+                lado: Math.round(janela.gu * 1.85)
+                focavel: false
                 icone: "matsu-seta-symbolic"
                 giro: busca.substituir ? 90 : 0
                 dica: busca.substituir ? janela.t("Esconder substituir", "Hide replace") : janela.t("Substituir (Ctrl+H)", "Replace (Ctrl+H)")
@@ -270,13 +272,17 @@ Item {
                     value: rotuloContagem.implicitWidth + Math.round(janela.gu * 0.9)
                 }
             }
-            BotaoIcone {
+            BotaoSimbolo {
+                lado: Math.round(janela.gu * 1.85)
+                focavel: false
                 icone: janela.ic("cima")
                 dica: janela.t("Anterior (Shift+Enter)", "Previous (Shift+Enter)")
                 ativo: busca.achados.length > 0
                 onClicado: busca.anterior()
             }
-            BotaoIcone {
+            BotaoSimbolo {
+                lado: Math.round(janela.gu * 1.85)
+                focavel: false
                 icone: janela.ic("baixo")
                 dica: janela.t("Próximo (Enter)", "Next (Enter)")
                 ativo: busca.achados.length > 0
@@ -289,13 +295,17 @@ Item {
                 Layout.rightMargin: Math.round(janela.gu * 0.2)
                 color: janela.tinta(0.12)
             }
-            BotaoIcone {
+            BotaoSimbolo {
+                lado: Math.round(janela.gu * 1.85)
+                focavel: false
                 icone: "matsu-texto-symbolic"
                 dica: janela.t("Diferenciar maiúsculas", "Match case")
                 ligado: busca.maiusculas
                 onClicado: busca.maiusculas = !busca.maiusculas
             }
-            BotaoIcone {
+            BotaoSimbolo {
+                lado: Math.round(janela.gu * 1.85)
+                focavel: false
                 icone: janela.ic("palavra")
                 dica: janela.t("Só a palavra inteira", "Whole word")
                 ligado: busca.palavra
@@ -304,7 +314,9 @@ Item {
             Item {
                 Layout.fillWidth: true
             }
-            BotaoIcone {
+            BotaoSimbolo {
+                lado: Math.round(janela.gu * 1.85)
+                focavel: false
                 icone: "matsu-fechar-symbolic"
                 dica: janela.t("Fechar (Esc)", "Close (Esc)")
                 onClicado: busca.fechar()

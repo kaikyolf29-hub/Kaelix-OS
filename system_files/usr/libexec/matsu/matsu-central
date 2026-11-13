@@ -11,7 +11,8 @@
 #   matsu-central mudo
 #   matsu-central brilho 1..100
 #   matsu-central perfil economia|equilibrado|desempenho
-#   matsu-central abrir rede|bluetooth|som|tela|luz-noturna|energia|notificacoes|sobre|ajustes|atualizar|atualizacoes|configuracoes|barra
+#   matsu-central fps on|off                 FPS no jogo (a sobreposição da Central de jogos)
+#   matsu-central abrir rede|bluetooth|som|tela|luz-noturna|energia|notificacoes|sobre|ajustes|atualizar|atualizacoes|configuracoes|barra|sobreposicao
 #   matsu-central abrir kcm kcm_<nome>             (qualquer tela de ajustes do KDE)
 #   matsu-central bloquear | sair
 #
@@ -52,6 +53,10 @@ WALL_DIRS="${MATSU_WALL_DIRS:-${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers:/u
 WAYWALLEN_ID=org.waywallen.waywallen
 FLATPAK_DIRS="${MATSU_FLATPAK_DIRS:-/var/lib/flatpak/app:${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/app}"
 PLASMA_WALL_DIRS="${MATSU_PLASMA_WALL_DIRS:-/usr/share/plasma/wallpapers:${XDG_DATA_HOME:-$HOME/.local/share}/plasma/wallpapers}"
+# FPS no jogo: a chave mora na configuração da Central de jogos, que também
+# escreve o arquivo do MangoHud (o jogo aberto relê na hora).
+JOGOS_AJUDANTE="${MATSU_JOGOS_AJUDANTE:-/usr/share/matsu/jogos/ajudante.py}"
+JOGOS_CONFIG="${MATSU_JOGOS_CONFIG:-$CONFIG_DIR/matsu/jogos.json}"
 
 have() { command -v "$1" >/dev/null 2>&1; }
 # Nenhum comando pode travar a central: dois segundos e segue.
@@ -205,6 +210,16 @@ estado_perfil() {
   echo "perfil_desempenho=$desempenho"
 }
 
+# FPS no jogo: o item aparece quando o MangoHud e a Central de jogos estão no
+# sistema. Ligado = "ligada": true na configuração (a única chave com esse nome).
+estado_fps() {
+  local tem=0 ligado=0
+  if [[ -r $JOGOS_AJUDANTE ]] && have mangohud; then tem=1; fi
+  if [[ -r $JOGOS_CONFIG ]] && grep -Eq '"ligada":[[:space:]]*true' "$JOGOS_CONFIG"; then ligado=1; fi
+  echo "fps_tem=$tem"
+  echo "fps_ligado=$ligado"
+}
+
 escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "matsu"
   [[ -r $STATE_DIR/$1 ]] && sed -n "s/^$2=//p" "$STATE_DIR/$1" | head -n1
 }
@@ -317,6 +332,7 @@ cmd_estado() {
   estado_brilho
   estado_bateria
   estado_perfil
+  estado_fps
   estado_barra
   estado_vidro
   estado_papel
@@ -451,6 +467,13 @@ cmd_perfil() {
   curto busctl set-property $bus ActiveProfile s "$alvo"
 }
 
+cmd_fps() {
+  local acao=off
+  if liga_desliga "${1:-}"; then acao=on; fi
+  [[ -r $JOGOS_AJUDANTE ]] || { echo "a Central de jogos não está no sistema" >&2; exit 1; }
+  timeout 10 python3 -I -S "$JOGOS_AJUDANTE" fps "$acao" >/dev/null
+}
+
 solto() { # abre um programa sem prender a central, no idioma da pessoa
   (
     if [[ -n $LC_ALL_PESSOA ]]; then export LC_ALL="$LC_ALL_PESSOA"; else unset LC_ALL; fi
@@ -557,6 +580,8 @@ cmd_abrir() {
     atualizacoes)  solto kstart --application org.matsu.atualizacoes ;;
     # O jeito da barra fica nos Ajustes do Matsu (a página da barra).
     barra)         cmd_abrir ajustes barra ;;
+    # A página Sobreposição da Central de jogos (o mesmo do atalho "Sobreposição no jogo" do menu).
+    sobreposicao)  solto /usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml sobreposicao ;;
     *) echo "não sei abrir: ${1:-}" >&2; exit 2 ;;
   esac
 }
@@ -575,6 +600,7 @@ main() {
     mudo)          cmd_mudo ;;
     brilho)        cmd_brilho "$@" ;;
     perfil)        cmd_perfil "$@" ;;
+    fps)           cmd_fps "$@" ;;
     vidro)         cmd_vidro "$@" ;;
     barra)         cmd_barra "$@" ;;
     papeis)        cmd_papeis ;;

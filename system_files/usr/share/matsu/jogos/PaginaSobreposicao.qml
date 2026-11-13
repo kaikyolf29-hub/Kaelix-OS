@@ -41,33 +41,160 @@ Flickable {
         width: pagina.width - 2 * pagina.margem
         spacing: Math.round(janela.gu * 0.5)
 
-        RowLayout {
+        Texto {
+            text: janela.t("Sobreposição no jogo", "In-game overlay")
+            font.pixelSize: Math.round(janela.gu * 1.3)
+            font.weight: Font.DemiBold
+        }
+        Texto {
             Layout.fillWidth: true
-            spacing: Math.round(janela.gu * 0.8)
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-                Texto {
-                    text: janela.t("Sobreposição no jogo", "In-game overlay")
-                    font.pixelSize: Math.round(janela.gu * 1.3)
-                    font.weight: Font.DemiBold
+            text: janela.t("Os números do computador em cima do jogo, no visual do Matsu. Só aparece com um jogo aberto.",
+                           "Your computer's numbers on top of the game, in Matsu style. Only shows while a game is open.")
+            wrapMode: Text.WordWrap
+            opacity: 0.65
+        }
+
+        // ----- a chave grande: liga e desliga (a mesma da Central de controle e do atalho) -----
+        MouseArea {
+            id: heroi
+            readonly property bool ligada: pagina.s.ligada
+            readonly property color cor: janela.corPerfil("padrao")
+            Layout.fillWidth: true
+            Layout.topMargin: Math.round(janela.gu * 0.6)
+            implicitHeight: linhaHeroi.implicitHeight + Math.round(janela.gu * 1.8)
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: janela.ligarFps(!ligada)
+            Accessible.role: Accessible.CheckBox
+            Accessible.checkable: true
+            Accessible.checked: ligada
+            Accessible.name: janela.t("FPS no jogo", "In-game FPS")
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Math.round(janela.gu * 0.6)
+                color: heroi.ligada ? Qt.rgba(heroi.cor.r, heroi.cor.g, heroi.cor.b, janela.escuro ? 0.12 : 0.09)
+                                    : (heroi.containsMouse ? Qt.rgba(janela.cartao.r, janela.cartao.g, janela.cartao.b, Math.min(1, janela.cartao.a * 1.6)) : janela.cartao)
+                border.width: 1
+                border.color: heroi.ligada ? Qt.rgba(heroi.cor.r, heroi.cor.g, heroi.cor.b, 0.45) : janela.bordaCartao
+                Behavior on color {
+                    ColorAnimation { duration: Kirigami.Units.longDuration }
                 }
-                Texto {
+            }
+            RowLayout {
+                id: linhaHeroi
+                anchors.fill: parent
+                anchors.margins: Math.round(janela.gu * 0.9)
+                spacing: Math.round(janela.gu * 0.9)
+
+                Rectangle {
+                    Layout.preferredWidth: Math.round(janela.gu * 3.2)
+                    Layout.preferredHeight: Layout.preferredWidth
+                    radius: width / 2
+                    color: heroi.ligada ? heroi.cor : janela.tinta(0.07)
+                    Behavior on color {
+                        ColorAnimation { duration: Kirigami.Units.longDuration }
+                    }
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        width: Kirigami.Units.iconSizes.smallMedium
+                        height: width
+                        source: "matsu-sobreposicao-symbolic"
+                        isMask: true
+                        color: heroi.ligada ? ((0.299 * heroi.cor.r + 0.587 * heroi.cor.g + 0.114 * heroi.cor.b) > 0.6 ? "#141416" : "#ffffff") : janela.frente
+                    }
+                }
+                ColumnLayout {
                     Layout.fillWidth: true
-                    text: janela.t("Aparece só com um jogo aberto. No jogo, Shift direito + F12 mostra e esconde.",
-                                   "Only shows while a game is open. In the game, Right Shift + F12 shows and hides it.")
-                    wrapMode: Text.WordWrap
-                    opacity: 0.65
+                    spacing: Math.round(janela.gu * 0.25)
+                    Texto {
+                        text: janela.t("FPS no jogo", "In-game FPS")
+                        font.pointSize: Kirigami.Theme.defaultFont.pointSize + 3
+                        font.weight: Font.DemiBold
+                    }
+                    Texto {
+                        Layout.fillWidth: true
+                        text: heroi.ligada ? (janela.jogoAgora ? janela.t("Ligado: aparecendo em ", "On: showing in ") + janela.jogoAgora.nome
+                                                               : janela.t("Ligado: aparece quando um jogo abrir", "On: shows when a game opens"))
+                                           : janela.t("Desligado", "Off")
+                        wrapMode: Text.WordWrap
+                        opacity: 0.72
+                    }
+                    // O atalho, com as teclas desenhadas.
+                    Flow {
+                        Layout.fillWidth: true
+                        Layout.topMargin: Math.round(janela.gu * 0.2)
+                        spacing: 6
+                        Texto {
+                            height: Math.round(janela.gu * 1.45)
+                            verticalAlignment: Text.AlignVCenter
+                            text: janela.t("No jogo:", "In game:")
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            opacity: 0.65
+                        }
+                        Repeater {
+                            model: janela.teclasAtalho
+                            Row {
+                                required property string modelData
+                                required property int index
+                                spacing: 6
+                                Texto {
+                                    visible: parent.index > 0
+                                    height: Math.round(janela.gu * 1.45)
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: "+"
+                                    opacity: 0.5
+                                }
+                                Rectangle {
+                                    width: Math.max(Math.round(janela.gu * 1.45), tecla.implicitWidth + Math.round(janela.gu * 0.8))
+                                    height: Math.round(janela.gu * 1.45)
+                                    radius: 5
+                                    color: janela.tinta(janela.escuro ? 0.09 : 0.05)
+                                    border.width: 1
+                                    border.color: janela.tinta(0.18)
+                                    // A borda de baixo mais grossa, como uma tecla.
+                                    Rectangle {
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        anchors.margins: 1
+                                        height: 2
+                                        radius: 1
+                                        color: janela.tinta(0.14)
+                                    }
+                                    Texto {
+                                        id: tecla
+                                        anchors.centerIn: parent
+                                        anchors.verticalCenterOffset: -1
+                                        text: parent.parent.modelData
+                                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                        font.weight: Font.DemiBold
+                                    }
+                                }
+                            }
+                        }
+                        Texto {
+                            height: Math.round(janela.gu * 1.45)
+                            verticalAlignment: Text.AlignVCenter
+                            text: janela.t("liga e desliga, e a Central de controle tem o botão também.", "turns it on and off; the Control Center has the button too.")
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            opacity: 0.65
+                        }
+                    }
                 }
-            }
-            Texto {
-                text: pagina.s.ligada ? janela.t("Ligada", "On") : janela.t("Desligada", "Off")
-                opacity: 0.75
-            }
-            Chave {
-                ligada: pagina.s.ligada
-                nome: janela.t("Mostrar a sobreposição no jogo", "Show the overlay in games")
-                onTrocada: (ligada) => janela.mudar("sobreposicao.ligada", ligada)
+                // A chave em tamanho grande.
+                Item {
+                    Layout.preferredWidth: Math.round(chaveGrande.implicitWidth * 1.5)
+                    Layout.preferredHeight: Math.round(chaveGrande.implicitHeight * 1.5)
+                    Chave {
+                        id: chaveGrande
+                        anchors.centerIn: parent
+                        scale: 1.5
+                        ligada: heroi.ligada
+                        nome: janela.t("FPS no jogo", "In-game FPS")
+                        onTrocada: (ligada) => janela.ligarFps(ligada)
+                    }
+                }
             }
         }
 
@@ -225,7 +352,20 @@ Flickable {
                         visible: pagina.tem("fps")
                         spacing: tela.letra * 0.6
                         Rotulo { text: "FPS"; width: tela.letra * 3.2 }
-                        Rotulo { text: hud.fps; width: tela.letra * 2.6; horizontalAlignment: Text.AlignRight }
+                        Item {
+                            width: tela.letra * 2.6
+                            height: numeroFps.altura
+                            NumeroRolante {
+                                id: numeroFps
+                                anchors.right: parent.right
+                                texto: String(hud.fps)
+                                cor: "#ffffff"
+                                duracao: 380
+                                font.family: "Inter"
+                                font.pixelSize: tela.letra
+                                font.weight: Font.DemiBold
+                            }
+                        }
                         Rotulo { text: janela.num(1000 / hud.fps, 1) + " ms"; opacity: 0.85 }
                     }
                     // Gráfico do tempo de cada quadro.
@@ -491,6 +631,50 @@ Flickable {
                     onEscolher: (id) => janela.mudar("sobreposicao.compacta", id === "linha")
                 }
             }
+        }
+
+        // ----- onde ela aparece -----
+        Texto {
+            Layout.topMargin: Math.round(janela.gu * 0.9)
+            text: janela.t("Bom saber", "Good to know")
+            font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1.5
+            font.weight: Font.DemiBold
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: Math.round(janela.gu * 0.3)
+            spacing: 2
+            LinhaOpcao {
+                Layout.fillWidth: true
+                ultima: false
+                icone: "matsu-jogos-symbolic"
+                nome: janela.t("Jogos do Windows e jogos Vulkan", "Windows games and Vulkan games")
+                texto: janela.t("Aparece sozinha: quase todos os jogos da Steam, inclusive os do Windows pelo Proton.",
+                                "Shows up by itself: almost every Steam game, including Windows games through Proton.")
+            }
+            LinhaOpcao {
+                Layout.fillWidth: true
+                primeira: false
+                icone: "matsu-texto-symbolic"
+                nome: janela.t("Jogos OpenGL (nativos mais antigos)", "OpenGL games (older native ones)")
+                texto: janela.t("Na Steam, em Propriedades do jogo › Opções de inicialização, coloque: mangohud %command%",
+                                "On Steam, in the game's Properties › Launch options, enter: mangohud %command%")
+                Botao {
+                    texto: janela.t("Copiar", "Copy")
+                    icone: "matsu-papel-symbolic"
+                    onClicado: {
+                        copiador.text = "mangohud %command%";
+                        copiador.selectAll();
+                        copiador.copy();
+                        janela.avisoRapido(janela.t("Copiado: mangohud %command%", "Copied: mangohud %command%"), "certo");
+                    }
+                }
+            }
+        }
+        // Só para copiar o texto (o QtQuick não tem área de transferência sem um campo).
+        TextEdit {
+            id: copiador
+            visible: false
         }
     }
 }

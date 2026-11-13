@@ -17,28 +17,43 @@ Item {
         return busca.length === 0 || janela.simples(nome).indexOf(busca) >= 0;
     }
 
-    readonly property var baixando: {
+    // As listas passam por um texto com os ids: um texto igual não avisa ninguém,
+    // então o progresso de uma instalação não refaz as linhas (e as barrinhas
+    // e os botões continuam animando no lugar).
+    function _lista(chave) {
+        return chave === "" ? [] : chave.split("\n");
+    }
+    readonly property string _chaveBaixando: {
         var _m = janela.mudancas;
         return Object.keys(janela.tarefas).filter(function (id) {
             return id.indexOf("web:") !== 0 && pagina.combina(janela.nomeDe(id));
-        });
+        }).join("\n");
     }
-    readonly property var paraAtualizar: {
+    readonly property string _chaveAtualizar: {
         var _m = janela.mudancas;
         return Object.keys(janela.atualizacoes).filter(function (id) {
             return !janela.tarefas[id] && pagina.combina(janela.nomeDe(id));
-        }).sort(function (a, b) { return janela.nomeDe(a).localeCompare(janela.nomeDe(b)); });
+        }).sort(function (a, b) { return janela.nomeDe(a).localeCompare(janela.nomeDe(b)); }).join("\n");
     }
-    readonly property var instalados: {
+    readonly property string _chaveInstalados: {
         var _m = janela.mudancas;
         return Object.keys(janela.instalados).filter(function (id) {
             return pagina.combina(janela.nomeDe(id));
-        }).sort(function (a, b) { return janela.nomeDe(a).localeCompare(janela.nomeDe(b), janela.pt ? "pt-BR" : "en"); });
+        }).sort(function (a, b) { return janela.nomeDe(a).localeCompare(janela.nomeDe(b), janela.pt ? "pt-BR" : "en"); }).join("\n");
     }
-    readonly property var sites: {
+    readonly property string _chaveSites: {
         var _m = janela.mudancas;
-        return janela.sitesInstalados.map(function (id) { return janela.site(id); })
-            .filter(function (s) { return s !== null && pagina.combina(s.nome); });
+        return janela.sitesInstalados.filter(function (id) {
+            var s = janela.site(id);
+            return s !== null && pagina.combina(s.nome);
+        }).join("\n");
+    }
+    readonly property var baixando: _lista(_chaveBaixando)
+    readonly property var paraAtualizar: _lista(_chaveAtualizar)
+    readonly property var instalados: _lista(_chaveInstalados)
+    readonly property var sites: {
+        var _s = janela.sites;
+        return _lista(_chaveSites).map(function (id) { return janela.site(id); });
     }
 
     // Uma linha de app: logo, nome, o que está acontecendo e os botões.
@@ -182,18 +197,27 @@ Item {
                         font.pixelSize: Math.round(janela.gu * 1.3)
                         font.weight: Font.DemiBold
                     }
-                    Texto {
-                        Layout.fillWidth: true
-                        text: {
-                            var n = Object.keys(janela.instalados).length;
-                            var s = janela.sitesInstalados.length;
-                            var t = n === 1 ? janela.t("1 app instalado", "1 app installed") : janela.num(n) + janela.t(" apps instalados", " apps installed");
-                            if (s > 0)
-                                t += "  ·  " + (s === 1 ? janela.t("1 site", "1 website") : s + janela.t(" sites", " websites"));
-                            return t;
-                        }
+                    // Quantos apps: o número rola quando instala ou remove.
+                    RowLayout {
+                        id: contagem
+                        readonly property int n: Object.keys(janela.instalados).length
+                        readonly property int s: janela.sitesInstalados.length
+                        spacing: 0
                         opacity: 0.62
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        NumeroRolante {
+                            texto: janela.num(contagem.n)
+                            font: Kirigami.Theme.smallFont
+                            duracao: 420
+                        }
+                        Texto {
+                            text: {
+                                var t = contagem.n === 1 ? janela.t(" app instalado", " app installed") : janela.t(" apps instalados", " apps installed");
+                                if (contagem.s > 0)
+                                    t += "  ·  " + (contagem.s === 1 ? janela.t("1 site", "1 website") : contagem.s + janela.t(" sites", " websites"));
+                                return t;
+                            }
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        }
                     }
                 }
                 Botao {

@@ -24,48 +24,29 @@ Item {
         return i >= 0 && i < editores.count ? editores.itemAt(i) : null;
     }
 
-    // A JanelaMatsu sempre tem a lista de assuntos à esquerda (recolhida, fica a
-    // faixa com o botão de três riscos). Um editor não tem assuntos: aqui a lista
-    // some e o miolo ocupa a largura toda. (Faria mais sentido a JanelaMatsu ter
-    // isso pronto, por exemplo escondendo a lista quando "paginas" está vazia.)
-    function esconderLateral() {
-        var carregador = tela.parent;
-        var painel = carregador ? carregador.parent : null;
-        if (!painel || !painel.parent)
-            return;
-        var irmaos = painel.parent.children;
-        var lateral = null;
-        for (var i = 1; i < irmaos.length; i++)
-            if (irmaos[i] === painel)
-                lateral = irmaos[i - 1];
-        // Confere que é mesmo a lista: começa na beirada esquerda, na altura do miolo.
-        if (!lateral || lateral.x !== 0 || Math.abs(lateral.y - painel.y) > 1 || Math.abs(lateral.height - painel.height) > 2)
-            return;
-        lateral.visible = false;
-        lateral.width = 0;
-        painel.anchors.left = painel.parent.left;
-        painel.anchors.leftMargin = Qt.binding(function () {
-            return janela.cheia ? 0 : 1;
-        });
-        painel.topLeftRadius = 0;
-        painel.bottomLeftRadius = Qt.binding(function () {
-            return Math.max(0, janela.raio - 1);
-        });
-    }
-
     Component.onCompleted: {
-        esconderLateral();
         janela.tela = tela;
         janela.iniciar();
     }
 
-    BarraAbas {
+    // As abas dos arquivos (a peça FaixaAbas de ../comum): a aberta tem o fundo da
+    // folha e a borda fina; arrastar muda a ordem, o botão do meio fecha.
+    FaixaAbas {
         id: barraAbas
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+        modelo: janela.abas
+        atual: janela.atual
         corFolha: tela.corFolha
         corLinha: tela.corLinha
+        animar: janela.iniciado
+        dicaDe: (aba) => aba.caminho ? aba.caminho : janela.t("Ainda não foi salvo", "Not saved yet")
+        onEscolher: (i) => janela.irParaAba(i)
+        onFechar: (i) => janela.fecharAba(i)
+        onMover: (de, para) => janela.moverAba(de, para)
+        onNova: janela.novaAba(false)
+        onMenu: (i, item, x, y) => janela.abrirMenuAba(i, item, x, y)
     }
 
     Rectangle {

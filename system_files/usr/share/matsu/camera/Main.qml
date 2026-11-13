@@ -4,9 +4,9 @@
 // última foto (que abre no app Fotos). As fotos vão para ~/Imagens/Câmera e os
 // vídeos para ~/Vídeos/Câmera.
 //
-// A janela é a JanelaMatsu (de ../comum), sem a lista de assuntos: o palco cobre
-// a parte de baixo da janela inteira (a lista e o miolo ficam escondidos embaixo
-// dele), só a barra de título com as bolinhas continua sendo a da JanelaMatsu.
+// A janela é a JanelaMatsu (de ../comum), sem a lista de assuntos (sem páginas,
+// ela esconde a lista e o miolo ocupa a largura toda): o palco fica em cima do
+// miolo, embaixo da barra de título com as bolinhas.
 //
 // A câmera em si é o QtMultimedia (CaptureSession, Camera, ImageCapture,
 // MediaRecorder). O ajudante.py desta pasta diz a língua e o vidro, cria as
@@ -31,6 +31,8 @@ JanelaMatsu {
     icone: "org.matsu.camera"
     iconeReserva: "camera-photo"
     paginas: []
+    // O miolo com os dois cantos de cima redondos, como um palco.
+    raioMiolo: Math.round(gu * 0.5)
     width: gu * 62
     height: gu * 40
     minimumHeight: gu * 28
@@ -742,7 +744,7 @@ JanelaMatsu {
         }
     }
 
-    // ===== o palco: cobre a janela toda embaixo da barra de título =====
+    // ===== o palco: em cima do miolo da JanelaMatsu, embaixo da barra de título =====
     Item {
         id: palco
         readonly property int margem: Math.round(janela.gu * 0.9)
@@ -755,33 +757,6 @@ JanelaMatsu {
         y: Math.round(janela.gu * 2.7)
         width: janela.width - 2 * x
         height: janela.height - y - x
-
-        Rectangle {
-            anchors.fill: parent
-            color: janela.fundoPalco
-            topLeftRadius: Math.round(janela.gu * 0.5)
-            topRightRadius: Math.round(janela.gu * 0.5)
-            bottomLeftRadius: Math.max(0, janela.raio - 1)
-            bottomRightRadius: Math.max(0, janela.raio - 1)
-            border.width: 1
-            // Cor sólida: a borda do miolo da JanelaMatsu, embaixo, não aparece somada.
-            border.color: Qt.tint(janela.fundoPalco, janela.tinta(janela.escuro ? 0.07 : 0.08))
-            // A cor do vidro que a pessoa escolheu, bem de leve (como no resto da janela).
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: 1
-                radius: Math.max(0, janela.raio - 2)
-                visible: janela.vidroConf.cor !== ""
-                color: janela.vidroConf.cor || "transparent"
-                opacity: 0.05
-            }
-        }
-        // Nada passa para a lista e o miolo da JanelaMatsu, escondidos embaixo.
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.AllButtons
-            hoverEnabled: true
-        }
 
         // ----- a área do visor -----
         Item {
@@ -909,7 +884,7 @@ JanelaMatsu {
                 y: coluna.alinhar ? Math.round(coluna.topoVisor) : palco.margem
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: Math.round(janela.gu * 0.2)
-                BotaoRedondo {
+                BotaoCirculo {
                     icone: Qt.resolvedUrl("icones/temporizador.svg")
                     dica: janela.temporizador > 0 ? janela.t("Temporizador: ", "Timer: ") + janela.temporizador + " s (T)"
                                                   : janela.t("Temporizador desligado (T)", "Timer off (T)")
@@ -917,20 +892,20 @@ JanelaMatsu {
                     selo: janela.temporizador > 0 ? String(janela.temporizador) : ""
                     onClicado: janela.cicloTemporizador()
                 }
-                BotaoRedondo {
+                BotaoCirculo {
                     icone: Qt.resolvedUrl("icones/grade.svg")
                     dica: janela.t("Grade de terços (G)", "Rule of thirds grid (G)")
                     ligado: janela.grade
                     onClicado: janela.grade = !janela.grade
                 }
-                BotaoRedondo {
+                BotaoCirculo {
                     visible: janela.cameras.length > 1
                     icone: Qt.resolvedUrl("icones/trocar.svg")
                     dica: janela.t("Trocar de câmera", "Switch camera")
                     ativo: janela.estado !== "gravando"
                     onClicado: janela.trocarCamera()
                 }
-                BotaoRedondo {
+                BotaoCirculo {
                     icone: "matsu-ajustes-symbolic"
                     dica: janela.t("Ajustes (Ctrl+,)", "Settings (Ctrl+,)")
                     ligado: janela.painelAberto

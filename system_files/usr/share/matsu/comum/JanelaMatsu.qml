@@ -14,7 +14,9 @@
 //       dicaBusca: t("Buscar jogos", "Search games")
 //       paginas: [{ id: "inicio", icone: "...", nome: t("Início", "Home") }, ...]
 //       conteudo: Qt.resolvedUrl("Pagina" + ... + ".qml")
+//       trocaSuave: true     // a página nova entra aparecendo (opcional)
 //   }
+// Sem páginas (paginas: [], ou semLista: true), a lista some e o miolo ocupa tudo.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -39,6 +41,15 @@ QQC2.ApplicationWindow {
     property url conteudo
     // Algo embaixo da lista de assuntos (some com a lista recolhida).
     property Component rodapeLateral: null
+    // Sem a lista de assuntos (um editor, a Câmera): a lista some e o miolo ocupa a
+    // largura toda, com a mesma barra de título. Sozinho quando "paginas" está vazia.
+    property bool semLista: paginas.length === 0
+    // O raio dos cantos de cima do miolo. Com a lista, só o de cima à esquerda é
+    // redondo; sem a lista, o padrão é reto, colado na barra de título.
+    property real raioMiolo: semLista ? 0 : Math.round(gu * 0.5)
+    // Troca de página suave: a página nova entra aparecendo e subindo de leve (como
+    // no Windows 11). Desligado (o padrão), a troca é seca, como sempre foi.
+    property bool trocaSuave: false
     readonly property alias campoBusca: campo
 
     readonly property int gu: Kirigami.Units.gridUnit
@@ -378,7 +389,8 @@ QQC2.ApplicationWindow {
         anchors.top: titulo.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        width: Math.round(janela.gu * (janela.recolhida ? 3.4 : 12.5))
+        visible: !janela.semLista
+        width: janela.semLista ? 0 : Math.round(janela.gu * (janela.recolhida ? 3.4 : 12.5))
         Behavior on width {
             NumberAnimation {
                 duration: Kirigami.Units.longDuration
@@ -486,24 +498,44 @@ QQC2.ApplicationWindow {
     Rectangle {
         id: painel
         anchors.top: titulo.bottom
-        anchors.left: lateral.right
+        anchors.left: janela.semLista ? parent.left : lateral.right
         anchors.right: parent.right
         anchors.bottom: parent.bottom
+        anchors.leftMargin: janela.semLista && !janela.cheia ? 1 : 0
         anchors.rightMargin: janela.cheia ? 0 : 1
         anchors.bottomMargin: janela.cheia ? 0 : 1
         color: janela.miolo
-        topLeftRadius: Math.round(janela.gu * 0.5)
-        topRightRadius: 0
-        bottomLeftRadius: 0
+        topLeftRadius: janela.raioMiolo
+        topRightRadius: janela.semLista ? janela.raioMiolo : 0
+        bottomLeftRadius: janela.semLista ? Math.max(0, janela.raio - 1) : 0
         bottomRightRadius: Math.max(0, janela.raio - 1)
         border.width: 1
         border.color: janela.tinta(janela.escuro ? 0.07 : 0.08)
 
         Loader {
+            id: carregador
             anchors.fill: parent
             anchors.margins: 1
             clip: true
             source: janela.conteudo
+            transform: Translate {
+                id: deslizePagina
+            }
+            onLoaded: if (janela.trocaSuave) entradaPagina.restart()
+        }
+        // A entrada da página (com trocaSuave). Também quando a página muda e o
+        // arquivo é o mesmo (Apps e Jogos da Loja usam a mesma página).
+        Connections {
+            target: janela
+            enabled: janela.trocaSuave
+            function onPaginaChanged() {
+                entradaPagina.restart();
+            }
+        }
+        ParallelAnimation {
+            id: entradaPagina
+            NumberAnimation { target: carregador; property: "opacity"; from: 0; to: 1; duration: 240; easing.type: Easing.OutCubic }
+            NumberAnimation { target: deslizePagina; property: "y"; from: Math.round(janela.gu * 1.1); to: 0; duration: 340; easing.type: Easing.OutCubic }
         }
     }
 

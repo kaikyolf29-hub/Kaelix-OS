@@ -69,10 +69,9 @@ Item {
                     anchors.fill: parent
                     anchors.margins: Math.round(janela.gu * 0.8)
                     spacing: Math.round(janela.gu * 0.7)
-                    QQC2.BusyIndicator {
+                    Girando {
                         visible: !janela.semCatalogo
-                        running: visible
-                        Layout.preferredWidth: Math.round(janela.gu * 2)
+                        Layout.preferredWidth: Math.round(janela.gu * 1.4)
                         Layout.preferredHeight: Layout.preferredWidth
                     }
                     Kirigami.Icon {
@@ -102,8 +101,8 @@ Item {
                 ColumnLayout {
                     id: secao
                     required property var modelData
+                    // Sem depender de janela.mudancas: o progresso não refaz os cartões.
                     readonly property var lista: {
-                        var _m = janela.mudancas;
                         return modelData.apps.map(function (i) { return janela.app(i); }).filter(function (a) { return a !== null; });
                     }
                     Layout.fillWidth: true
@@ -173,23 +172,13 @@ Item {
                     readonly property int cabem: Math.max(1, Math.floor((width + spacing) / (tamanho + spacing)))
                     Repeater {
                         model: janela.sites.slice(0, fileiraSites.cabem)
-                        MouseArea {
-                            id: site
+                        CartaoClicavel {
+                            id: ladrilho
                             required property var modelData
                             width: fileiraSites.tamanho
                             height: Math.round(janela.gu * 6.2)
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            Accessible.role: Accessible.Button
                             Accessible.name: modelData.nome
                             onClicked: janela.siteInstalado(modelData.id) ? janela.abrirSite(modelData.id) : janela.irPara("web")
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: Math.round(janela.gu * 0.6)
-                                color: site.containsMouse ? (janela.escuro ? Qt.rgba(1, 1, 1, 0.075) : Qt.rgba(1, 1, 1, 0.85)) : janela.cartao
-                                border.width: 1
-                                border.color: janela.tinta(site.containsMouse ? 0.13 : (janela.escuro ? 0.07 : 0.08))
-                            }
                             ColumnLayout {
                                 anchors.centerIn: parent
                                 spacing: Math.round(janela.gu * 0.4)
@@ -197,8 +186,8 @@ Item {
                                     Layout.alignment: Qt.AlignHCenter
                                     Layout.preferredWidth: Math.round(janela.gu * 3)
                                     Layout.preferredHeight: Layout.preferredWidth
-                                    site: parent.parent.modelData
-                                    scale: parent.parent.containsMouse ? 1.06 : 1
+                                    site: ladrilho.modelData
+                                    scale: ladrilho.containsMouse ? 1.06 : 1
                                     Behavior on scale {
                                         NumberAnimation {
                                             duration: Kirigami.Units.shortDuration
@@ -208,7 +197,7 @@ Item {
                                 Texto {
                                     Layout.alignment: Qt.AlignHCenter
                                     Layout.maximumWidth: fileiraSites.tamanho - Math.round(janela.gu * 0.6)
-                                    text: parent.parent.modelData.nome
+                                    text: ladrilho.modelData.nome
                                     elide: Text.ElideRight
                                     font.pointSize: Kirigami.Theme.defaultFont.pointSize - 0.5
                                 }
@@ -236,23 +225,13 @@ Item {
                     readonly property int largura: Math.floor((width - (colunas - 1) * spacing) / colunas)
                     Repeater {
                         model: janela.ordemCategorias.filter(function (c) { return (janela.contagem[c] || 0) > 0; })
-                        MouseArea {
+                        CartaoClicavel {
                             id: categoria
                             required property string modelData
                             width: categorias.largura
                             height: Math.round(janela.gu * 3.6)
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            Accessible.role: Accessible.Button
                             Accessible.name: janela.nomeCategoria(modelData)
                             onClicked: pagina.verCategoria(modelData)
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: Math.round(janela.gu * 0.6)
-                                color: categoria.containsMouse ? (janela.escuro ? Qt.rgba(1, 1, 1, 0.075) : Qt.rgba(1, 1, 1, 0.85)) : janela.cartao
-                                border.width: 1
-                                border.color: janela.tinta(categoria.containsMouse ? 0.13 : (janela.escuro ? 0.07 : 0.08))
-                            }
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: Math.round(janela.gu * 0.7)

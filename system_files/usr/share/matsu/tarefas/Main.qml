@@ -22,6 +22,7 @@ JanelaMatsu {
     dicaBusca: t("Buscar por nome ou PID", "Search by name or PID")
     // Buscar leva para Processos.
     paginaDaBusca: "processos"
+    trocaSuave: true
     paginas: [
         { id: "processos", icone: "matsu-processos-symbolic", nome: t("Processos", "Processes") },
         { id: "desempenho", icone: "matsu-desempenho-symbolic", nome: t("Desempenho", "Performance") },
@@ -164,10 +165,10 @@ JanelaMatsu {
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
                             opacity: 0.7
                         }
-                        Texto {
-                            text: janela.porcento(resumo.modelData.valor)
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            font.features: { "tnum": 1 }
+                        // O número rola a cada leitura (como nos relógios de aeroporto).
+                        NumeroRolante {
+                            texto: janela.porcento(resumo.modelData.valor)
+                            font: Kirigami.Theme.smallFont
                             opacity: 0.9
                         }
                     }

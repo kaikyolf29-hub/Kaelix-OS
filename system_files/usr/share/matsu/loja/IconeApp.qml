@@ -1,7 +1,9 @@
 // A logo oficial de um app: o ícone que veio no catálogo (arquivo ou endereço) ou,
-// para o que já está instalado, o do tema. Enquanto chega, um bloco pulsando.
+// para o que já está instalado, o do tema. Enquanto chega, um bloco com o brilho
+// passando; quando chega, a logo aparece aos poucos.
 import QtQuick
 import org.kde.kirigami as Kirigami
+import "../comum"
 
 Item {
     id: icone
@@ -22,6 +24,13 @@ Item {
         id: imagem
         anchors.fill: parent
         visible: icone.deArquivo && status === Image.Ready
+        opacity: status === Image.Ready ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 280
+                easing.type: Easing.OutCubic
+            }
+        }
         source: icone.deArquivo ? janela.arquivo(icone.fonte) : ""
         sourceSize.width: Math.max(64, Math.round(icone.width * 2))
         sourceSize.height: Math.max(64, Math.round(icone.height * 2))

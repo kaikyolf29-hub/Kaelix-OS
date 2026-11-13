@@ -35,8 +35,14 @@ MouseArea {
         anchors.fill: parent
         anchors.margins: 3
         radius: Math.round(Kirigami.Units.gridUnit * 0.45)
-        visible: linha.abre && (linha.containsMouse || linha.activeFocus)
-        color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.06)
+        opacity: linha.abre && (linha.containsMouse || linha.activeFocus) ? 1 : 0
+        visible: opacity > 0
+        color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, linha.pressed ? 0.1 : 0.06)
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Kirigami.Units.shortDuration
+            }
+        }
     }
 
     // Risco fino entre as linhas do mesmo cartão.

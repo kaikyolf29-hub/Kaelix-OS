@@ -387,7 +387,8 @@ hmp key alt-f4
 sleep 2
 
 # Central de jogos: Início (sem jogos na máquina de teste, mostra o convite da
-# Steam), Gráficos (Ctrl+3), Sobreposição (Ctrl+4) e Placa de vídeo (Ctrl+5).
+# Steam), Gráficos (Ctrl+3), Sobreposição (Ctrl+4), Controles (Ctrl+5), Placa de
+# vídeo (Ctrl+6) e Drivers (Ctrl+7).
 hmp key ctrl-alt-t
 sleep 8
 hmp type "setsid -f /usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml </dev/null >/dev/null 2>&1; sleep 2; exit"
@@ -402,7 +403,13 @@ sleep 3
 shot "36c-jogos-sobreposicao"
 hmp key ctrl-5
 sleep 4
+shot "36e-jogos-controles"
+hmp key ctrl-6
+sleep 4
 shot "36d-jogos-placa"
+hmp key ctrl-7
+sleep 6
+shot "36f-jogos-drivers"
 hmp key alt-f4
 sleep 2
 

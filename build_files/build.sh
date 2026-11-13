@@ -370,6 +370,25 @@ for app in /usr/share/applications/org.kde.discover*.desktop /usr/share/applicat
   [[ -f $app ]] || continue
   grep -q '^NoDisplay=' "$app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$app"
 done
+# Apps do KDE que o Matsu já tem do jeito dele saem do menu, da barra e das
+# buscas (continuam na imagem para quem chamar pelo nome): Gwenview (Fotos),
+# Kate e KWrite (Bloco de notas), KCalc (Calculadora), Elisa (Música), KClock
+# (Relógio), Merkuro/KOrganizer (Calendário), KNotes (Notas), Kamoso (Câmera) e
+# o firewall-config (Central de segurança). Fica no registro quais existiam.
+for nome in org.kde.gwenview org.kde.kate org.kde.kwrite org.kde.kcalc org.kde.elisa org.kde.kclock \
+            org.kde.merkuro.calendar org.kde.korganizer org.kde.knotes org.kde.kamoso firewall-config; do
+  app="/usr/share/applications/${nome}.desktop"
+  [[ -f $app ]] || continue
+  echo "Fora do menu (o Matsu tem o dele): ${nome}"
+  sed -i --follow-symlinks '/^X-KDE-Shortcuts=/d' "$app"
+  grep -q '^NoDisplay=' "$app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$app"
+  rm -f "/usr/share/kglobalaccel/${nome}.desktop"
+done
+# A tecla Calculadora do teclado abre a Calculadora do Matsu (X-KDE-Shortcuts no .desktop).
+install -d /usr/share/kglobalaccel
+ln -sf ../applications/org.matsu.calculadora.desktop /usr/share/kglobalaccel/org.matsu.calculadora.desktop
+grep -q '^X-KDE-Shortcuts=Calculator$' /usr/share/kglobalaccel/org.matsu.calculadora.desktop \
+  || { echo "ERRO: a tecla Calculadora não ficou ligada à Calculadora do Matsu." >&2; exit 1; }
 # Pastas abrem nos Arquivos do Matsu, e os pedidos de app na Loja (em todos os
 # mimeapps.list que o KDE lê). Os apps do dia a dia do Matsu abrem os arquivos
 # deles (o MimeType= de cada .desktop): .ics no Calendário, músicas na Música,
@@ -463,6 +482,17 @@ for f in /usr/share/icons/Matsu{,-claro}/actions/16/*.svg; do
   if [[ -L $f && ! -e $f ]]; then echo "aviso: o Breeze não tem mais $(readlink "$f"), tirando a ligação"; rm -f "$f"; fi
 done
 test -f /usr/share/icons/Matsu/apps/scalable/matsu-ajuste-som.svg
+
+# ---------------------------------------------------------------------------
+# Partes com arquivo próprio: cada uma instala os pacotes, liga os serviços e
+# confere o que precisa (build_files/<parte>.sh, rodada aqui com o mesmo CTX).
+for parte in jogos seguranca; do
+  roteiro="${CTX}/build_files/${parte}.sh"
+  if [[ -f $roteiro ]]; then
+    log "Parte: ${parte}"
+    env CTX="$CTX" IMAGE_VARIANT="$IMAGE_VARIANT" IMAGE_REGISTRY="$IMAGE_REGISTRY" bash "$roteiro"
+  fi
+done
 
 # ---------------------------------------------------------------------------
 log "Ligando os serviços do Matsu"

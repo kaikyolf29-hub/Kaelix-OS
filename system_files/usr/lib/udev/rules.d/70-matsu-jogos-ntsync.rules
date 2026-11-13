@@ -1,0 +1,4 @@
+# Matsu OS: qualquer programa da pessoa (Wine, Proton) pode abrir o /dev/ntsync.
+# Cada vez que ele é aberto nasce um espaço separado, então um programa não
+# enxerga nem mexe no que é de outro (por isso o autor do ntsync propôs 0666).
+KERNEL=="ntsync", SUBSYSTEM=="misc", MODE="0666"

@@ -19,6 +19,8 @@ Keywords=calculadora;calcular;conta;contas;científica;porcentagem;raiz;converso
 StartupNotify=true
 StartupWMClass=org.matsu.calculadora
 SingleMainWindow=true
+# A tecla Calculadora do teclado (XF86Calculator) abre esta calculadora.
+X-KDE-Shortcuts=Calculator
 Actions=Cientifica;Conversor;
 
 [Desktop Action Cientifica]

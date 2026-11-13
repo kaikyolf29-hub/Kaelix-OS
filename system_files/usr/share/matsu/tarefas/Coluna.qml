@@ -1,6 +1,6 @@
 // Título de uma coluna da lista de processos, como no Windows: o total em cima
 // e o nome embaixo, com a linha fina à esquerda. Clicar ordena por ela; a
-// setinha em cima mostra o sentido.
+// setinha em cima mostra o sentido (aparece descendo e vira girando).
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -27,6 +27,11 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         color: janela.tinta(cabeca.pressed ? 0.07 : (cabeca.containsMouse ? 0.04 : 0))
+        Behavior on color {
+            ColorAnimation {
+                duration: Kirigami.Units.shortDuration
+            }
+        }
     }
     Rectangle {
         visible: cabeca.separador
@@ -36,17 +41,34 @@ MouseArea {
     }
 
     Kirigami.Icon {
-        visible: cabeca.ativa
         // Como no Windows: a setinha da ordem fica no meio, em cima do título.
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 1
+        y: cabeca.ativa ? 1 : -4
         width: 10
         height: 10
+        visible: opacity > 0
         source: "matsu-seta-symbolic"
         isMask: true
         color: janela.frente
-        opacity: 0.7
+        opacity: cabeca.ativa ? 0.7 : 0
         rotation: pagina.crescente ? -90 : 90
+        Behavior on rotation {
+            NumberAnimation {
+                duration: 260
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 180
+            }
+        }
+        Behavior on y {
+            NumberAnimation {
+                duration: 220
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     ColumnLayout {
@@ -73,6 +95,12 @@ MouseArea {
             text: cabeca.titulo
             elide: Text.ElideRight
             opacity: cabeca.ativa ? 0.95 : 0.72
+            font.weight: cabeca.ativa ? Font.DemiBold : Font.Normal
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 180
+                }
+            }
         }
     }
 }
