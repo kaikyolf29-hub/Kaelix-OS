@@ -106,6 +106,11 @@ ICONES = {
     "matsu-placa": svg(traco("M2.8 5.5h1.4v14M4.2 7.5h15.3a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1 -1.5 1.5H4.2"
                               "M11 9.3a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0 -6.4zM17 10v5M7 17.5v2M9.5 17.5v2M12 17.5v2"),
                         f'<circle {CHEIO} cx="11" cy="12.5" r="1"/>\n'),
+    # Controles e Drivers da Central de jogos (os mesmos desenhos de jogos/icones).
+    "matsu-controle": svg(traco("M7.6 8h8.8a4.4 4.4 0 0 1 4.3 3.5l1 5a2.6 2.6 0 0 1 -4.5 2.2L15.4 17H8.6l-1.8 1.7a2.6 2.6 0 0 1 -4.5 -2.2l1 -5A4.4 4.4 0 0 1 7.6 8z"
+                                 "M8.4 10.9a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0 -3.2zM15.6 10.9a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0 -3.2zM9.4 4.9a4 4 0 0 1 5.2 0")),
+    "matsu-driver": svg(traco("M8.2 6h7.6a2.2 2.2 0 0 1 2.2 2.2v7.6a2.2 2.2 0 0 1 -2.2 2.2H8.2A2.2 2.2 0 0 1 6 15.8V8.2A2.2 2.2 0 0 1 8.2 6z"
+                               "M10 10h4v4h-4zM9.5 3v3M14.5 3v3M9.5 18v3M14.5 18v3M3 9.5h3M3 14.5h3M18 9.5h3M18 14.5h3")),
     "matsu-jogar": svg('<path class="ColorScheme-Text" fill="currentColor" stroke="currentColor" stroke-width="1.6" '
                         'stroke-linejoin="round" d="M8 5.6v12.8a.8.8 0 0 0 1.2 .7l10.2 -6.4a.8.8 0 0 0 0 -1.4L9.2 4.9A.8.8 0 0 0 8 5.6z"/>\n'),
     "matsu-perfil-padrao": svg(traco("M3.8 16.5a8.2 8.2 0 0 1 16.4 0M12 16.5l3.2 -4.6"),

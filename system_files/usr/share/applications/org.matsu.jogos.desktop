@@ -15,11 +15,11 @@ Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main
 Icon=org.matsu.jogos
 Terminal=false
 Categories=Game;Settings;HardwareSettings;Qt;KDE;
-Keywords=jogos;games;steam;fps;sobreposição;overlay;mangohud;modo jogo;gamemode;placa de vídeo;gpu;driver;amd;nvidia;radeon;desempenho;performance;perfil;gráficos;graphics;
+Keywords=jogos;games;steam;fps;controle;controles;controller;gamepad;joystick;ps4;ps5;dualshock;dualsense;xbox;bluetooth;sobreposição;overlay;mangohud;modo jogo;gamemode;placa de vídeo;gpu;driver;amd;nvidia;radeon;desempenho;performance;perfil;gráficos;graphics;
 StartupNotify=true
 StartupWMClass=org.matsu.jogos
 SingleMainWindow=true
-Actions=Jogos;Sobreposicao;Placa;
+Actions=Jogos;Sobreposicao;Controles;Drivers;Placa;
 
 [Desktop Action Jogos]
 Name=My games
@@ -34,6 +34,20 @@ Name[pt_BR]=Sobreposição no jogo
 Name[pt]=Sobreposição no jogo
 Icon=matsu-sobreposicao-symbolic
 Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml sobreposicao
+
+[Desktop Action Controles]
+Name=Controllers
+Name[pt_BR]=Controles
+Name[pt]=Comandos
+Icon=matsu-controle-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml controles
+
+[Desktop Action Drivers]
+Name=Drivers
+Name[pt_BR]=Drivers
+Name[pt]=Controladores
+Icon=matsu-driver-symbolic
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.jogos /usr/share/matsu/jogos/Main.qml drivers
 
 [Desktop Action Placa]
 Name=Graphics card
