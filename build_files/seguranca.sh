@@ -126,6 +126,13 @@ if command -v systemd-analyze >/dev/null; then
   systemd-analyze verify --man=no \
     /usr/lib/systemd/system/matsu-escudo-clamd.service /usr/lib/systemd/system/matsu-escudo-atualizar.service 2>&1 | head -20 || true
 fi
+# Dois cliques num programa nos Arquivos: no lugar da pergunta "Executar?" do KIO
+# (que roda direto, sem olhar de onde veio), o arquivo vai para o app do tipo dele.
+# Os programas passam pelo tratador da Central de segurança, que abre direto o que
+# não veio da internet e mostra o aviso para o que veio; os scripts abrem no Bloco
+# de notas, como antes.
+kwriteconfig6 --file /etc/xdg/kiorc --group "Executable scripts" --key behaviourOnLaunch open
+grep -q '^behaviourOnLaunch=open$' /etc/xdg/kiorc || erro "o kiorc não ficou com behaviourOnLaunch=open"
 # O tratador dos executáveis baixados entra no cache de tipos de arquivo.
 update-desktop-database -q /usr/share/applications 2>/dev/null || true
 grep -q 'org.matsu.seguranca.aviso.desktop' /usr/share/applications/mimeinfo.cache \

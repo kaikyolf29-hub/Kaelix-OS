@@ -440,9 +440,12 @@ sleep 3
 shot "38f-seguranca-historico"
 hmp key alt-f4
 sleep 2
+# Abre como o navegador abre um download (pelo GIO, que segue o app padrão do
+# tipo de arquivo). O xdg-open do KDE (kioclient) recusa qualquer executável
+# antes de olhar o app padrão; nos Arquivos, o kiorc do Matsu manda para o aviso.
 hmp key ctrl-alt-t
 sleep 8
-hmp type "d=\$(xdg-user-dir DOWNLOAD); printf '#!/bin/sh\\necho oi\\n' > \"\$d/programa-teste.AppImage\"; python3 -c 'import os,sys; os.setxattr(sys.argv[1], \"user.xdg.origin.url\", b\"https://exemplo.com.br/programa-teste.AppImage\")' \"\$d/programa-teste.AppImage\"; setsid -f xdg-open \"\$d/programa-teste.AppImage\" </dev/null >/dev/null 2>&1; sleep 2; exit"
+hmp type "d=\$(xdg-user-dir DOWNLOAD); printf '#!/bin/sh\\necho oi\\n' > \"\$d/programa-teste.AppImage\"; python3 -c 'import os,sys; os.setxattr(sys.argv[1], \"user.xdg.origin.url\", b\"https://exemplo.com.br/programa-teste.AppImage\")' \"\$d/programa-teste.AppImage\"; setsid -f gio open \"\$d/programa-teste.AppImage\" </dev/null >/dev/null 2>&1; sleep 2; exit"
 hmp key ret
 sleep 12
 shot "38g-seguranca-aviso-de-programa-baixado"

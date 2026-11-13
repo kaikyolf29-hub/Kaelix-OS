@@ -144,8 +144,20 @@ def ler_zona_padrao(texto):
     return ""
 
 
+def firewall_diz(*args):
+    """Uma pergunta ao firewalld pelo firewall-cmd (só leitura: a pessoa pode, sem senha).
+    O /etc/firewalld só o administrador lê, então o que vale é a resposta do firewalld."""
+    codigo, saida = rodar(["firewall-cmd", *args], 8)
+    saida = (saida or "").strip()
+    return saida if codigo == 0 and saida else None
+
+
 def zona_padrao():
-    # O firewalld novo pode guardar o padrão em /usr/lib; o de /etc, se existir, vale mais.
+    nome = firewall_diz("--get-default-zone")
+    if nome:
+        return nome
+    # Firewall desligado: pelos arquivos. O firewalld novo pode guardar o padrão em
+    # /usr/lib; o de /etc, se der para ler, vale mais.
     for base in (FIREWALLD_ETC, FIREWALLD_USR):
         nome = ler_zona_padrao(ler(os.path.join(base, "firewalld.conf")))
         if nome:
@@ -180,10 +192,19 @@ def rede():
             _, z = rodar(["nmcli", "-g", "connection.zone", "connection", "show", c["uuid"]], 8)
             z = z.strip()
             c["zona"] = z
-            c["efetiva"] = z or padrao
+            # Sem zona própria, a rede fica na zona que o firewalld der ao aparelho dela.
+            na_hora = firewall_diz("--get-zone-of-interface=" + c["dispositivo"]) if c["dispositivo"] and not z else None
+            c["efetiva"] = z or na_hora or padrao
             c["rede"] = tipo_da_zona(c["efetiva"])
             conexoes.append(c)
     casa_z = zona(ZONA_CASA) or {"servicos": [], "mudada": False}
+    # O que o firewalld guardou para a rede de casa (vale mais que os arquivos, que a
+    # pessoa nem sempre pode ler).
+    guardados = firewall_diz("--permanent", "--zone=" + ZONA_CASA, "--list-services")
+    if guardados is not None:
+        lista = guardados.split()
+        original = (ler_zona_xml(ler(os.path.join(FIREWALLD_USR, "zones", ZONA_CASA + ".xml"))) or {}).get("servicos", [])
+        casa_z = {"servicos": lista, "mudada": sorted(lista) != sorted(original)}
     servicos = []
     for s in SERVICOS_CASA:
         servicos.append({"id": s["id"], "nome": _texto(s["nome"]), "texto": _texto(s["texto"]),

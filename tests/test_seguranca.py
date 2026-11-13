@@ -436,6 +436,36 @@ class TestFirewall(Base):
         self.assertEqual(ligados, {"kdeconnect", "ssh"}, "lê a cópia mudada em /etc")
         self.assertTrue(r["casaMudada"])
 
+    def test_rede_pelo_firewalld_quando_o_etc_nao_se_le(self):
+        # No sistema de verdade o /etc/firewalld é só do administrador: a página pergunta
+        # ao firewalld (firewall-cmd, só leitura) a zona padrão, a da placa e a da casa.
+        S = self.S
+        etc = Path(self.tmp.name) / "etc-fechado"
+        etc.mkdir()
+        usr = Path(__file__).resolve().parents[1] / "system_files/usr/lib/firewalld"
+        respostas = {
+            ("systemctl", "is-active"): (0, "active\n"),
+            ("nmcli", "-t"): (0, "Conexão cabeada 1:8c2a6a3e-6f0b-4e7a-9c1d-2b9f0d4f1a77:802-3-ethernet:enp0s2\n"),
+            ("nmcli", "-g"): (0, "\n"),
+            ("firewall-cmd", "--get-default-zone"): (0, "matsu-publica\n"),
+            ("firewall-cmd", "--get-zone-of-interface=enp0s2"): (0, "matsu-publica\n"),
+            ("firewall-cmd", "--permanent"): (0, "mdns samba-client kdeconnect steam-streaming dhcpv6-client ws-discovery-client llmnr-client\n"),
+        }
+
+        def falso(args, tempo=30, entrada=None):
+            return respostas.get(tuple(args[:2]), (1, ""))
+
+        with mock.patch.object(S, "FIREWALLD_ETC", str(etc)), mock.patch.object(S, "FIREWALLD_USR", str(usr)), \
+                mock.patch.object(S, "rodar", falso):
+            r = S.rede()
+        self.assertEqual(r["padrao"], "matsu-publica")
+        self.assertTrue(r["padraoMatsu"])
+        self.assertEqual(r["conexoes"][0]["efetiva"], "matsu-publica")
+        self.assertEqual(r["conexoes"][0]["rede"], "publica")
+        ligados = {s["id"] for s in r["servicos"] if s["ligado"]}
+        self.assertIn("kdeconnect", ligados)
+        self.assertNotIn("ssh", ligados)
+
     def test_servico_desconhecido_recusado(self):
         with mock.patch.object(self.S, "rodar") as rodar:
             self.assertFalse(self.S.servico_casa("telnet", True)["ok"])
