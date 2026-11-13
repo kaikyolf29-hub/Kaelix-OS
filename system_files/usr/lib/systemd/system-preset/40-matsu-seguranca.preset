@@ -1,0 +1,12 @@
+# Central de segurança do Matsu: só o escudo do Matsu baixa a lista de ameaças
+# (matsu-escudo-atualizar.timer) e liga o clamd quando precisa
+# (matsu-escudo-clamd.service). As unidades do ClamAV do Fedora ficam desligadas
+# mesmo quando o systemd aplica os padrões no primeiro boot.
+enable matsu-escudo-atualizar.timer
+enable firewalld.service
+disable clamav-freshclam.service
+disable clamav-freshclam-once.timer
+disable clamav-freshclam-once.service
+disable clamav-clamonacc.service
+disable clamonacc.service
+disable clamd@.service

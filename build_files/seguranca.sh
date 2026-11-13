@@ -43,7 +43,8 @@ fi
 getent passwd clamupdate
 # Só o escudo do Matsu baixa a lista e liga o clamd (sob demanda): as unidades
 # do Fedora ficam desligadas para não haver dois freshclam nem um clamd sempre ligado.
-for unidade in clamav-freshclam.service clamav-clamonacc.service clamd@scan.service; do
+for unidade in clamav-freshclam.service clamav-freshclam-once.timer clamav-freshclam-once.service \
+               clamav-clamonacc.service clamonacc.service clamd@scan.service; do
   if systemctl list-unit-files "$unidade" >/dev/null 2>&1; then
     systemctl disable "$unidade" >/dev/null 2>&1 || true
   fi
