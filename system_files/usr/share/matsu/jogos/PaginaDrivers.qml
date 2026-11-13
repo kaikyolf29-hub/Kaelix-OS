@@ -388,8 +388,10 @@ Flickable {
                             }
                         }
                         Situacao {
-                            visible: placa.p.tipo === "integrada" || placa.p.tipo === "dedicada"
-                            texto: placa.p.tipo === "integrada" ? janela.t("Integrada", "Integrated") : janela.t("Dedicada", "Dedicated")
+                            visible: placa.p.tipo === "integrada" || placa.p.tipo === "dedicada" || placa.p.tipo === "virtual"
+                            texto: placa.p.tipo === "integrada" ? janela.t("Integrada", "Integrated")
+                                 : placa.p.tipo === "virtual" ? janela.t("Máquina virtual", "Virtual machine")
+                                 : janela.t("Dedicada", "Dedicated")
                             cor: placa.p.tipo === "dedicada" ? placa.cor : janela.tinta(0.6)
                         }
                     }

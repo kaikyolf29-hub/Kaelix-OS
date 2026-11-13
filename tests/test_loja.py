@@ -88,6 +88,7 @@ CATALOGO = {
     "web": [{"id": "instagram", "nome": "Instagram", "url": "https://www.instagram.com/", "cor": "#E1306C",
              "resumo": {"pt": "Fotos", "en": "Photos"}}],
     "no_sistema": {"com.valvesoftware.Steam": "steam.desktop"},
+    "resumos": {"com.heroicgameslauncher.hgl": "Jogue os jogos da Epic e da GOG", "com.nao.Existe": "Some"},
 }
 
 FLATPAK = r"""#!/usr/bin/bash
@@ -162,6 +163,8 @@ def main():
         check("o resumo da lista não traz a descrição", "descricao" not in disc)
         hero = next(a for a in d["apps"] if a["id"] == "com.heroicgameslauncher.hgl")
         check("jogo cai em jogos", hero["categoria"] == "jogos")
+        check("resumo em português escrito pelo Matsu", hero["resumo"] == "Jogue os jogos da Epic e da GOG")
+        check("a busca acha pelo resumo do Matsu", "epic" in hero["busca"])
         check("ícone achado pelo tamanho", hero["icone"].endswith("128x128/com.heroicgameslauncher.hgl.png"))
         check("destaque que existe, em português", d["destaques"] == [{"id": "com.discordapp.Discord", "titulo": "Discord PT", "texto": "Texto PT", "cores": ["#111111", "#222222"]}])
         check("seção só com os que existem", d["secoes"] == [{"id": "jogar", "titulo": "Para jogar", "texto": "", "apps": ["com.heroicgameslauncher.hgl", "com.valvesoftware.Steam"]}])
@@ -179,6 +182,8 @@ def main():
         d_en = json.loads(saida_en)
         disc_en = next(a for a in d_en["apps"] if a["id"] == "com.discordapp.Discord")
         check("resumo em inglês", disc_en["resumo"] == "Messaging, voice and video client")
+        hero_en = next(a for a in d_en["apps"] if a["id"] == "com.heroicgameslauncher.hgl")
+        check("em inglês fica o resumo do Flathub", hero_en["resumo"] != "Jogue os jogos da Epic e da GOG")
         check("destaque em inglês", d_en["destaques"][0]["titulo"] == "Discord EN")
 
         # detalhes

@@ -8,11 +8,11 @@
 APPS=(
   org.matsu.arquivos org.matsu.relogio org.matsu.calendario org.matsu.notas org.matsu.calculadora
   org.matsu.blocodenotas org.matsu.fotos org.matsu.camera org.matsu.musica org.matsu.atualizacoes
-  org.kde.ark org.kde.kate org.kde.kwrite org.kde.filelight org.kde.kfind
+  org.kde.ark org.kde.filelight org.kde.kfind
   org.kde.kcharselect org.kde.plasma.emojier org.kde.spectacle org.kde.kinfocenter org.kde.khelpcenter
   org.kde.plasma-systemmonitor org.kde.partitionmanager org.kde.kwalletmanager org.kde.kmenuedit
   org.kde.kjournaldbrowser org.kde.drkonqi.coredump.gui org.kde.kdebugsettings org.kde.kdeconnect.app
-  org.kde.krfb org.kde.discover org.kde.plasma-welcome firewall-config org.corectrl.CoreCtrl
+  org.kde.krfb org.kde.discover org.kde.plasma-welcome org.corectrl.CoreCtrl
   org.mozilla.firefox com.microsoft.VSCode
 )
 if [[ ${1:-} == --lista ]]; then

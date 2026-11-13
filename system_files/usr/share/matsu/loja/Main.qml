@@ -284,9 +284,23 @@ JanelaMatsu {
         if (!detalhes[id])
             matsu.rodar("detalhes:" + id, comando(["detalhes", id]));
     }
+    // O link appstream://com.brave.Browser chega com o id em minúsculas (o Qt trata o
+    // id como nome de site): aqui ele volta a ser o do catálogo.
+    function idCerto(id) {
+        if (!id || porId[id] || instalados[id])
+            return id;
+        var baixo = id.toLowerCase();
+        for (var k in porId)
+            if (k.toLowerCase() === baixo)
+                return k;
+        for (var k2 in instalados)
+            if (k2.toLowerCase() === baixo)
+                return k2;
+        return id;
+    }
     function abrirApp(id) {
-        appAberto = id;
-        carregarDetalhes(id);
+        appAberto = idCerto(id);
+        carregarDetalhes(appAberto);
     }
     function lerInstalados() {
         matsu.rodar("instalados", comando(["instalados"]));
@@ -411,6 +425,9 @@ JanelaMatsu {
                 var ordem = d.apps.map(function (x, n) { return { app: x, n: n, peso: escolha[x.id] ? 0 : (x.verificado ? 1 : 2) }; });
                 ordem.sort(function (x, y) { return x.peso - y.peso || x.n - y.n; });
                 janela.porId = mapa;
+                // Página pedida antes do catálogo chegar: acerta o id (maiúsculas) agora.
+                if (janela.appAberto && janela.idCerto(janela.appAberto) !== janela.appAberto)
+                    janela.abrirApp(janela.appAberto);
                 janela.escolhidos = escolha;
                 janela.apps = ordem.map(function (x) { return x.app; });
                 janela.destaques = d.destaques;
@@ -500,8 +517,8 @@ JanelaMatsu {
         if (/\.flatpakref$/i.test(a)) {
             irPara("inicio");
             matsu.rodar("ref", comando(["ref", a]));
-        } else if (a.indexOf("appstream://") === 0) {
-            abrirApp(a.substring(12).replace(/\.desktop$/, ""));
+        } else if (/^appstream:/i.test(a)) {
+            abrirApp(a.replace(/^appstream:(\/\/)?/i, "").replace(/\/+$/, "").replace(/\.desktop$/, ""));
         } else if (a === "app" && args.length > 1) {
             abrirApp(args[1]);
         } else {

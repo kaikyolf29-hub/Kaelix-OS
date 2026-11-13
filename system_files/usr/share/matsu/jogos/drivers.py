@@ -28,6 +28,9 @@ RAIZ = os.environ.get("MATSU_RAIZ", "")  # "/" de mentira nos testes
 INFO_IMAGEM = os.environ.get("MATSU_IMAGE_INFO", "/usr/share/matsu/image-info.json")
 
 FORNECEDORES = {"1002": "AMD", "10de": "NVIDIA", "8086": "Intel"}
+# Placas de máquina virtual: Red Hat (virtio/QXL), VMware, VirtualBox e o Bochs.
+FORNECEDORES_VIRTUAIS = {"1af4", "1b36", "15ad", "80ee", "1234"}
+DRIVERS_VIRTUAIS = {"virtio-pci", "virtio_gpu", "virtio-gpu", "qxl", "vmwgfx", "vboxvideo", "bochs", "bochs-drm"}
 NOMES_DRIVER = {
     "amdgpu": "amdgpu", "radeon": "radeon (antigo)", "i915": "i915", "xe": "xe", "nvidia": "nvidia",
     "nouveau": "nouveau (livre)", "vfio-pci": "vfio-pci", "": "",
@@ -37,6 +40,7 @@ DRIVER_VULKAN = {  # nome do arquivo ICD -> nome do driver Vulkan
     "nvidia": "NVIDIA", "lvp": "lavapipe (sem placa)", "virtio": "Venus (máquina virtual)",
     "asahi": "Honeykrisp (Mesa)", "freedreno": "Turnip (Mesa)", "panfrost": "PanVK (Mesa)",
 }
+ICDS_DE_PC = {"radeon", "intel", "intel_hasvk", "nouveau", "nvidia"}
 
 
 def r(caminho):
@@ -92,7 +96,10 @@ def placas(nome_da_placa=None, lingua="pt"):
 def tipo_placa(p):
     """integrada ou dedicada, quando o Vulkan não diz: a da Intel no barramento 00 é a
     integrada (as Arc ficam fora dele); a da AMD com até 2 GiB de memória própria é a
-    do processador (a parte que a BIOS separa da RAM)."""
+    do processador (a parte que a BIOS separa da RAM). As de máquina virtual (virtio,
+    VMware, VirtualBox, QXL) são "virtual"."""
+    if p["fornecedor"] in FORNECEDORES_VIRTUAIS or p.get("driver") in DRIVERS_VIRTUAIS:
+        return "virtual"
     if p["fornecedor"] == "8086":
         partes = p["pci"].split(":")
         return "integrada" if len(partes) > 1 and partes[1] == "00" else "dedicada"
@@ -159,7 +166,12 @@ def vulkan32(lista_icds=None):
     """O Vulkan de 32 bits: o carregador (libvulkan.so.1 em /usr/lib) e um driver de 32 bits."""
     lista_icds = icds() if lista_icds is None else lista_icds
     carregador = os.path.exists(r("/usr/lib/libvulkan.so.1"))
-    drivers = sorted({i["nome"] for i in lista_icds if i["bits"] == 32 and i["existe"]})
+    de32 = [i for i in lista_icds if i["bits"] == 32 and i["existe"]]
+    # Na tela vão os drivers das placas de PC (AMD, Intel, NVIDIA); os de celular e
+    # placa ARM que a Mesa também instala (Turnip, PanVK, broadcom...) só entram se
+    # não houver nenhum de PC.
+    drivers = (sorted({i["nome"] for i in de32 if i["chave"] in ICDS_DE_PC})
+               or sorted({i["nome"] for i in de32 if i["chave"] in DRIVER_VULKAN}))
     # O ICD da NVIDIA serve aos dois tamanhos: o de 32 bits é a biblioteca em /usr/lib.
     if any(i["chave"] == "nvidia" for i in lista_icds) and os.path.exists(r("/usr/lib/libGLX_nvidia.so.0")):
         drivers.append("NVIDIA")
@@ -189,9 +201,10 @@ def ler_glxinfo(texto):
 
 def versao_mesa():
     for pacote in ("mesa-vulkan-drivers", "mesa-dri-drivers", "mesa-libGL"):
-        saida = rodar(["rpm", "-q", "--qf", "%{VERSION}", pacote], 5)
+        # Com o de 32 e o de 64 bits instalados, o rpm responde uma linha para cada.
+        saida = rodar(["rpm", "-q", "--qf", "%{VERSION}\n", pacote], 5)
         if saida and saida.strip() and "not installed" not in saida:
-            return saida.strip()
+            return saida.strip().splitlines()[0].strip()
     return ""
 
 

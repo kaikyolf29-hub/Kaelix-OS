@@ -52,7 +52,7 @@ compgen -G '/usr/share/vulkan/implicit_layer.d/MangoHud*.json' >/dev/null \
 command -v vulkaninfo >/dev/null || aviso "sem o vulkaninfo: a página Drivers mostra o Vulkan pelos arquivos ICD"
 # Para o registro: o anti-lag da AMD (VK_AMD_anti_lag) chega com o RADV do Mesa
 # 26.3; o vkd3d-proton (DirectX 12 pelo Proton) usa sozinho quando o driver tem.
-echo "    Mesa: $(rpm -q --qf '%{VERSION}' mesa-vulkan-drivers 2>/dev/null || echo '?')"
+echo "    Mesa: $(rpm -q --qf '%{VERSION} (%{ARCH})\n' mesa-vulkan-drivers 2>/dev/null | paste -sd ' ' || echo '?')"
 
 if [[ $IMAGE_VARIANT == nvidia ]]; then
   passo "driver da NVIDIA (só conferência: ele vem da base kinoite-nvidia)"

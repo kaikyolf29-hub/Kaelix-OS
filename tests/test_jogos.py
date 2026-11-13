@@ -976,6 +976,21 @@ class Drivers(Base):
         self.placa_pci("0000:0e:00.0", "1002", "164e", "amdgpu", 0, vram=512 * 1024 ** 2)
         amd = [p for p in self.D.placas() if p["fornecedor"] == "1002"][0]
         self.assertEqual(self.D.tipo_placa(amd), "integrada")
+        # A placa da máquina virtual (virtio-gpu do QEMU) não é "dedicada".
+        self.placa_pci("0000:00:01.0", "1af4", "1050", "virtio-pci", 1)
+        vm = [p for p in self.D.placas() if p["fornecedor"] == "1af4"][0]
+        self.assertEqual(self.D.tipo_placa(vm), "virtual")
+
+    def test_versao_mesa_com_32_e_64_bits(self):
+        with mock.patch.object(self.D, "rodar", lambda args, tempo=30: "26.2.6\n26.2.6\n"):
+            self.assertEqual(self.D.versao_mesa(), "26.2.6")
+
+    def test_vulkan_32_bits_so_os_drivers_de_pc_na_tela(self):
+        raiz = self.mundo.raiz / "raiz"
+        escrever(raiz / "usr/lib/libvulkan.so.1", b"")
+        for chave in ("radeon", "intel", "broadcom", "freedreno", "powervr_mesa"):
+            self.icd(f"{chave}_icd.i686.json", f"/usr/lib/libvulkan_{chave}.so")
+        self.assertEqual(self.D.vulkan32()["drivers"], ["ANV (Mesa)", "RADV (Mesa)"])
 
     def test_imagem_e_troca(self):
         D = self.D

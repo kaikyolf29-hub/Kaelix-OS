@@ -366,6 +366,15 @@ def todos_os_apps():
         for app in lista:
             # O mesmo app em dois repositórios: vale o primeiro (o do sistema, o Flathub).
             apps.setdefault(app["id"], app)
+    if pt:
+        # A maioria dos apps do Flathub só tem o resumo em inglês: os mais procurados
+        # ganham um resumo em português escrito pelo Matsu (catalogo.json, "resumos").
+        for app_id, texto in catalogo_matsu().get("resumos", {}).items():
+            if app_id in apps and texto:
+                app = dict(apps[app_id])
+                app["resumo"] = texto
+                app["busca"] = (app.get("busca", "") + " " + simples(texto)).strip()
+                apps[app_id] = app
     return apps
 
 
