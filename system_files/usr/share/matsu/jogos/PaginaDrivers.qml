@@ -115,8 +115,8 @@ Flickable {
                 }
                 Texto {
                     Layout.fillWidth: true
-                    text: janela.t("O que faz a placa de vídeo funcionar nos jogos. No Matsu, eles chegam junto com as atualizações do sistema.",
-                                   "What makes the graphics card work in games. On Matsu, they arrive with the system updates.")
+                    text: janela.t("Chegam junto com as atualizações do sistema.",
+                                   "They arrive with the system updates.")
                     wrapMode: Text.WordWrap
                     opacity: 0.65
                 }
@@ -458,8 +458,8 @@ Flickable {
                 ultima: false
                 icone: Qt.resolvedUrl("icones/driver.svg")
                 nome: "Mesa"
-                texto: janela.t("O driver livre das placas AMD e Intel (e o NVK, das NVIDIA). Vem completo no Matsu.",
-                                "The free driver for AMD and Intel cards (and NVK, for NVIDIA). Comes complete on Matsu.")
+                texto: janela.t("O driver das placas AMD e Intel.",
+                                "The driver for AMD and Intel cards.")
                 Valor { text: pagina.d ? pagina.d.mesa : "" }
             }
             LinhaOpcao {
@@ -478,8 +478,8 @@ Flickable {
                 ultima: false
                 icone: "matsu-jogos-symbolic"
                 nome: "Vulkan"
-                texto: janela.t("Os jogos do Windows rodam em Vulkan, pelo Proton da Steam (DXVK e VKD3D-Proton).",
-                                "Windows games run on Vulkan, through Steam's Proton (DXVK and VKD3D-Proton).")
+                texto: janela.t("Os jogos do Windows rodam nele (Proton).",
+                                "Windows games run on it (Proton).")
                 Valor {
                     text: pagina.d && pagina.d.vulkan.instancia ? pagina.d.vulkan.instancia
                         : (pagina.d && !pagina.d.vulkan.tem_vulkaninfo ? janela.t("Sem como conferir", "Can't check") : "—")

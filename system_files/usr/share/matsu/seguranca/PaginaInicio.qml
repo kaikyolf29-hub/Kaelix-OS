@@ -56,16 +56,16 @@ Item {
                 return janela.t("Última verificação ", "Last scan ") + janela.quando(u.data)
                        + (u.ameacas > 0 ? (u.ameacas === 1 ? janela.t(": 1 ameaça na quarentena.", ": 1 threat quarantined.") : janela.t(": " + u.ameacas + " ameaças na quarentena.", ": " + u.ameacas + " threats quarantined."))
                                         : janela.t(", nada encontrado.", ", nothing found."));
-            return janela.t("O escudo confere sozinho cada arquivo que chega em Downloads e na Área de trabalho.",
-                            "The shield checks every file that arrives in Downloads and on the Desktop.");
+            return janela.t("Cada arquivo baixado é conferido sozinho.",
+                            "Every downloaded file is checked automatically.");
         case "pausado":
             if (esc && esc.pausaReiniciar)
                 return janela.t("Ele volta quando você reiniciar o computador.", "It comes back when you restart the computer.");
             return esc ? janela.t("Ele volta sozinho em " + janela.falta(esc.pausaAte) + ", às " + janela.hora(esc.pausaAte) + ".",
                                   "It comes back by itself in " + janela.falta(esc.pausaAte) + ", at " + janela.hora(esc.pausaAte) + ".") : "";
         case "atencao":
-            return janela.t("O arquivo foi trancado e não pode fazer nada. Veja o que era e decida se apaga de vez.",
-                            "The file was locked away and can't do anything. See what it was and decide whether to delete it.");
+            return janela.t("O arquivo foi trancado e não faz nada.",
+                            "The file was locked away and can't do anything.");
         case "parado":
             return janela.t("Os arquivos novos não estão sendo conferidos agora.", "New files aren't being checked right now.");
         case "desligado":

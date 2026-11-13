@@ -34,6 +34,9 @@ Veja o começo de `JanelaMatsu.qml`. Também tem:
   sem a lista, os dois; o padrão sem a lista é 0, colado na barra de título).
 - `trocaSuave: true`: a página nova entra aparecendo e subindo de leve (também quando
   duas páginas usam o mesmo arquivo). Desligado por padrão.
+- `alerta: true`: janela de alerta pequena, como as do Mac (o aviso de programa
+  baixado): some com as bolinhas, o nome do app e o miolo, e o conteúdo fica direto
+  no vidro. Use botões um embaixo do outro e textos centralizados.
 
 - `janela.avisoRapido(texto, tipo, acao, funcao)`: aviso que sobe embaixo e some
   sozinho; `tipo` "" / "certo" / "erro"; com `acao` aparece um botão ("Desfazer").

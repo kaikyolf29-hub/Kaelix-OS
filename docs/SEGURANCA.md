@@ -120,10 +120,13 @@ Por onde ele é chamado:
 
 - Se o arquivo **veio da internet** e não está na lista de liberados, a janela
   `Aviso.qml` abre. Saber que veio da internet usa a marca que o navegador grava
-  (`user.xdg.origin.url`) ou o fato de estar em Downloads. A janela mostra o nome,
-  o site, a assinatura digital, o SHA-256 e o que o escudo achou.
-- O botão principal é o mais seguro: **Não abrir**. Também dá para **Mover para a
-  quarentena**.
+  (`user.xdg.origin.url`) ou o fato de estar em Downloads. A janela é pequena, no
+  jeito dos alertas do Mac (`JanelaMatsu` com `alerta: true`, sem as bolinhas):
+  o ícone do arquivo com o selo do escudo, a pergunta "Abrir “nome”?", o site numa
+  frase e o que o escudo achou numa linha. Tipo, assinatura digital, pasta e SHA-256
+  ficam em "Mais informações".
+- Os botões ficam um embaixo do outro. O principal é o mais seguro: **Não abrir**.
+  O segundo é **Pôr na quarentena**.
 - **Abrir mesmo assim** fica em "Mais informações" e pede a senha da própria pessoa
   (`pkcheck`, ação `org.matsu.seguranca.liberar`, `auth_self`). Não é a senha de
   administrador, e o objetivo é fazer a pessoa parar e pensar. Depois o arquivo

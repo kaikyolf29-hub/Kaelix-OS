@@ -118,11 +118,11 @@ Item {
                             Layout.fillWidth: true
                             visible: !pagina.lendo
                             text: pagina.firewall === "ligado"
-                                ? (pagina.r.padraoMatsu ? janela.t("Toda rede nova começa como pública: nada de fora entra até você dizer que é a rede de casa.",
-                                                                   "Every new network starts as public: nothing gets in until you say it's your home network.")
+                                ? (pagina.r.padraoMatsu ? janela.t("Toda rede nova começa como pública.",
+                                                                   "Every new network starts as public.")
                                                         : janela.t("Ligado, mas a rede nova não começa como pública (zona padrão: ", "On, but new networks don't start as public (default zone: ") + pagina.r.padrao + ").")
-                                : pagina.firewall === "desligado" ? janela.t("Qualquer aparelho da rede pode tentar entrar nos programas que escutam conexões.",
-                                                                             "Any device on the network can try to reach programs listening for connections.")
+                                : pagina.firewall === "desligado" ? janela.t("Aparelhos da rede podem tentar entrar.",
+                                                                             "Devices on the network can try to get in.")
                                 : pagina.firewall === "indisponivel" ? janela.t("O firewalld não está instalado aqui.", "firewalld isn't installed here.")
                                 : janela.t("O ajudante não conseguiu ler o estado do firewalld.", "The helper couldn't read firewalld's state.")
                             opacity: 0.68
@@ -148,8 +148,8 @@ Item {
             // ----- as redes ligadas agora -----
             Secao {
                 titulo: janela.t("Redes ligadas agora", "Connected networks")
-                texto: janela.t("Diga onde você está. Dá para trocar quando quiser; o Matsu lembra de cada rede.",
-                                "Say where you are. You can change it anytime; Matsu remembers each network.")
+                texto: janela.t("O Matsu lembra a escolha de cada rede.",
+                                "Matsu remembers the choice for each network.")
             }
             Cartao {
                 Layout.fillWidth: true
@@ -232,11 +232,11 @@ Item {
                             Repeater {
                                 model: [
                                     { id: "publica", icone: "cafe", nome: janela.t("Rede pública", "Public network"),
-                                      texto: janela.t("Café, aeroporto, hotel, faculdade. Ninguém da rede vê nem entra neste computador.",
-                                                      "Café, airport, hotel, campus. Nobody on the network can see or reach this computer.") },
+                                      texto: janela.t("Café, aeroporto, hotel. Ninguém entra.",
+                                                      "Café, airport, hotel. Nobody gets in.") },
                                     { id: "casa", icone: "casa", nome: janela.t("Rede de casa", "Home network"),
-                                      texto: janela.t("Onde você confia nos aparelhos. Impressora, TV, celular e a Steam encontram este computador.",
-                                                      "Where you trust the devices. Printer, TV, phone and Steam can find this computer.") }
+                                      texto: janela.t("Impressora, TV e celular encontram você.",
+                                                      "Printer, TV and phone can find you.") }
                                 ]
                                 MouseArea {
                                     id: opcaoRede
@@ -333,8 +333,8 @@ Item {
             Secao {
                 visible: pagina.servicos.length > 0 && !pagina.falhou
                 titulo: janela.t("Na rede de casa, deixar entrar", "On home networks, allow")
-                texto: janela.t("Só vale nas redes de casa. Na rede pública nada disso entra. Mudar pede a senha de administrador.",
-                                "Only applies on home networks. On public networks none of this gets in. Changing asks for the administrator password.")
+                texto: janela.t("Na rede pública nada disso entra.",
+                                "On public networks none of this gets in.")
             }
             ColumnLayout {
                 Layout.fillWidth: true

@@ -363,8 +363,8 @@ Item {
                         }
                         Texto {
                             Layout.fillWidth: true
-                            text: janela.t("Os que vêm com o sistema ou instalados por fora (pacotes RPM) podem usar tudo o que você usa: arquivos, câmera, microfone. Por isso eles não aparecem na lista. Quando houver, prefira a versão da Loja.",
-                                           "Those that ship with the system or were installed separately (RPM packages) can use everything you can: files, camera, microphone. That's why they're not on the list. When available, prefer the Store version.")
+                            text: janela.t("Os do sistema e os instalados por fora podem usar tudo o que você usa. Quando houver, prefira a versão da Loja.",
+                                           "System apps and ones installed separately can use everything you can. When available, prefer the Store version.")
                             font.pointSize: Kirigami.Theme.smallFont.pointSize
                             opacity: 0.68
                             wrapMode: Text.WordWrap

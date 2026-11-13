@@ -2,10 +2,14 @@
 // tenta abrir um programa que veio da internet e não está na lista de liberados
 // (o tratador org.matsu.seguranca.aviso.desktop chama "ajudante.py abrir").
 //
+// Pequeno e centrado, no jeito dos alertas do Mac: o ícone do arquivo com o selo
+// do escudo, uma pergunta, uma frase e os botões um embaixo do outro. O resto
+// (tipo, assinatura, pasta, SHA-256) fica escondido em "Mais informações".
+//
 // O que fazer de mais seguro é o botão principal ("Não abrir"). "Abrir mesmo
-// assim" fica escondido em "Mais informações" e pede a senha da própria pessoa
-// (polkit, auth_self); depois o arquivo abre do jeito esperado (AppImage roda,
-// script abre no terminal, programa do Windows no Bottles...).
+// assim" fica em "Mais informações" e pede a senha da própria pessoa (polkit,
+// auth_self); depois o arquivo abre do jeito esperado (AppImage roda, script abre
+// no terminal, programa do Windows no Bottles...).
 // Com uma ameaça encontrada, não há "Abrir mesmo assim": só a quarentena.
 //
 // Roda como org.matsu.seguranca.aviso (uma janela só; outro arquivo entra na fila).
@@ -22,12 +26,19 @@ JanelaMatsu {
     title: t("Arquivo baixado", "Downloaded file")
     icone: "org.matsu.seguranca"
     iconeReserva: "matsu-escudo-symbolic"
-    width: gu * 34
-    // A altura acompanha o conteúdo (cresce ao abrir "Mais informações").
-    height: Math.min(gu * 36, Math.max(gu * 16, painel.implicitHeight + Math.round(gu * 2.7) + Math.round(gu * 1.4) + 2))
-    minimumWidth: gu * 28
-    minimumHeight: gu * 16
     paginas: []
+    alerta: true
+
+    readonly property int margem: Math.round(gu * 1.4)
+    // Tamanho fixo; a altura acompanha o conteúdo (cresce ao abrir "Mais informações").
+    readonly property int larguraCerta: Math.round(gu * 18.5)
+    readonly property int alturaCerta: Math.min(Math.round(gu * 34), Math.round(painel.implicitHeight) + margem + Math.round(gu * 1.6))
+    width: larguraCerta
+    height: alturaCerta
+    minimumWidth: larguraCerta
+    maximumWidth: larguraCerta
+    minimumHeight: alturaCerta
+    maximumHeight: alturaCerta
 
     readonly property string ajudante: decodeURIComponent(String(Qt.resolvedUrl("ajudante.py")).replace("file://", ""))
     function comando(args) {
@@ -45,7 +56,7 @@ JanelaMatsu {
     property var info: null
     // aviso, ameaca, pacote, biblioteca, sumiu, sem-windows, sem-java
     property string modo: info ? info.modo : ""
-    // "", conferindo, OK, FOUND, SEMLISTA, INDISPONIVEL
+    // "", conferindo, OK, FOUND, SEMLISTA, PAUSADO, INDISPONIVEL
     property string escudo: ""
     property string ameaca: ""
     property bool detalhes: false
@@ -53,7 +64,8 @@ JanelaMatsu {
     property bool feito: false
     property bool trancando: false
 
-    readonly property color corModo: modo === "ameaca" ? coral : (modo === "aviso" ? ambar : frente)
+    readonly property bool deRisco: modo === "aviso" || modo === "ameaca"
+    readonly property color corSelo: feito ? verde : (modo === "ameaca" ? coral : ambar)
 
     function carregar() {
         info = null;
@@ -99,23 +111,42 @@ JanelaMatsu {
         areaCopia.copy();
         avisoRapido(t("Copiado", "Copied"), "certo");
     }
+    // Nome comprido vira "começo…fim", para a pergunta caber em duas linhas.
+    function curto(nome) {
+        nome = String(nome || "");
+        return nome.length > 34 ? nome.slice(0, 20) + "…" + nome.slice(-11) : nome;
+    }
+
+    readonly property string nome: info ? curto(info.nome) : ""
+    readonly property string site: info && info.origem && info.origem.site ? String(info.origem.site) : ""
+
+    readonly property string iconeArquivo: {
+        var tipo = info ? info.tipo || "" : "";
+        if (tipo === "deb" || tipo === "rpm")
+            return "matsu-tipo-pacote";
+        if (tipo === "script")
+            return "matsu-tipo-codigo";
+        if (tipo === "biblioteca" || modo === "sumiu" || tipo === "")
+            return "matsu-tipo-generico";
+        return "matsu-tipo-executavel";
+    }
 
     readonly property string titulo: {
         switch (modo) {
         case "aviso":
-            return t("Abrir um programa baixado da internet?", "Open a program downloaded from the internet?");
+            return t("Abrir “" + nome + "”?", "Open “" + nome + "”?");
         case "ameaca":
-            return t("Este arquivo tem uma ameaça", "This file contains a threat");
+            return t("“" + nome + "” tem uma ameaça", "“" + nome + "” contains a threat");
         case "pacote":
             return t("Os apps do Matsu vêm da Loja", "Matsu apps come from the Store");
         case "biblioteca":
-            return t("Isto é uma peça de outro programa", "This is a piece of another program");
+            return t("Isto é parte de outro programa", "This is part of another program");
         case "sumiu":
             return t("O arquivo não está mais lá", "The file is no longer there");
         case "sem-windows":
-            return t("Para programas do Windows, falta o Bottles", "Windows programs need Bottles");
+            return t("Programas do Windows precisam do Bottles", "Windows programs need Bottles");
         case "sem-java":
-            return t("Falta o Java para abrir este arquivo", "Java is needed to open this file");
+            return t("Este programa precisa do Java", "This program needs Java");
         default:
             return t("Conferindo o arquivo…", "Checking the file…");
         }
@@ -123,32 +154,36 @@ JanelaMatsu {
     readonly property string texto: {
         switch (modo) {
         case "aviso":
-            return t("Programas baixados podem ter vírus ou mexer nos seus arquivos. Só abra se você confia em quem fez e no site de onde veio.",
-                     "Downloaded programs can carry viruses or tamper with your files. Only open it if you trust who made it and the site it came from.");
+            return (site ? t("Baixado de " + site + ".", "Downloaded from " + site + ".") : t("Veio da internet.", "It came from the internet."))
+                + " " + t("Só abra se você confia em quem fez.", "Only open it if you trust who made it.");
         case "ameaca":
-            return t("O escudo achou " + ameaca + " nele. Não abra: na quarentena ele fica trancado e não faz nada.",
-                     "The shield found " + ameaca + " in it. Don't open it: in quarantine it's locked away and can't do anything.");
+            return t("O escudo achou " + ameaca + ". Na quarentena ele fica trancado e não faz nada.",
+                     "The shield found " + ameaca + ". In quarantine it's locked away and can't do anything.");
         case "pacote":
             return info && info.tipo === "deb"
-                ? t("Arquivos .deb são feitos para o Debian e o Ubuntu e não instalam no Matsu. Procure o app na Loja: quase tudo está lá, com atualização automática.",
-                    ".deb files are made for Debian and Ubuntu and don't install on Matsu. Look for the app in the Store: almost everything is there, with automatic updates.")
-                : t("O sistema do Matsu é uma imagem assinada e não muda por pacotes soltos. Procure o app na Loja: quase tudo está lá, com atualização automática.",
-                    "Matsu's system is a signed image and doesn't change through loose packages. Look for the app in the Store: almost everything is there, with automatic updates.");
+                ? t("Pacotes .deb são do Debian e do Ubuntu e não instalam aqui. Procure o app na Loja.",
+                    ".deb packages are for Debian and Ubuntu and don't install here. Look for the app in the Store.")
+                : t("O Matsu não instala pacotes soltos. Procure o app na Loja.",
+                    "Matsu doesn't install loose packages. Look for the app in the Store.");
         case "biblioteca":
-            return t("Arquivos .so são partes que outros programas usam. Eles não abrem sozinhos: abra o programa que veio junto.",
-                     ".so files are parts other programs use. They don't open by themselves: open the program that came with it.");
+            return t("Ela não abre sozinha. Abra o programa que veio junto.", "It doesn't open by itself. Open the program that came with it.");
         case "sumiu":
-            return t("Ele foi apagado ou mudou de lugar antes de abrir.", "It was deleted or moved before opening.");
+            return t("Ele foi apagado ou mudou de lugar.", "It was deleted or moved.");
         case "sem-windows":
-            return t("O Bottles roda muitos programas do Windows numa caixa separada. Ele está na Loja, de graça.",
-                     "Bottles runs many Windows programs in a separate box. It's free in the Store.");
+            return t("O Bottles roda programas do Windows e é grátis na Loja.", "Bottles runs Windows programs and is free in the Store.");
         case "sem-java":
-            return t("Este é um programa em Java e o Java não está instalado. Veja se o app existe na Loja.",
-                     "This is a Java program and Java isn't installed. Check whether the app is in the Store.");
+            return t("Veja se o app existe na Loja.", "Check whether the app is in the Store.");
         default:
             return "";
         }
     }
+    readonly property string textoEscudo: ({
+        conferindo: t("Conferindo com o escudo…", "Checking with the shield…"),
+        OK: t("O escudo não achou ameaças", "The shield found no threats"),
+        SEMLISTA: t("O escudo ainda não tem a lista de ameaças", "The shield has no threat list yet"),
+        PAUSADO: t("O escudo está pausado", "The shield is paused"),
+        INDISPONIVEL: t("O escudo não conseguiu conferir", "The shield couldn't check it")
+    })[escudo] || ""
 
     Connections {
         target: matsu
@@ -169,16 +204,19 @@ JanelaMatsu {
                         matsu.rodar("verificar", janela.comando(["aviso-verificar", janela.caminho]));
                     }
                 }
+                entrada.restart();
             } else if (chave === "verificar") {
                 janela.escudo = r ? r.resultado : "INDISPONIVEL";
                 if (r && r.resultado === "FOUND") {
                     janela.ameaca = r.ameaca;
                     janela.modo = "ameaca";
+                    pulo.restart();
                 }
             } else if (chave === "liberar") {
                 janela.abrindo = false;
                 if (r && r.ok && r.acao === "aberto") {
                     janela.feito = true;
+                    pulo.restart();
                     fechar.restart();
                 } else if (r && (r.acao === "sem-windows" || r.acao === "sem-java" || r.acao === "pacote")) {
                     janela.modo = r.acao;
@@ -191,6 +229,7 @@ JanelaMatsu {
                 janela.trancando = false;
                 if (r && r.ok) {
                     janela.feito = true;
+                    pulo.restart();
                     janela.avisoRapido(janela.t("Trancado na quarentena", "Locked away in quarantine"), "certo");
                     fechar.restart();
                 } else {
@@ -222,309 +261,370 @@ JanelaMatsu {
 
     Component.onCompleted: carregar()
 
-    // ----- o miolo (sem a lista de assuntos, por cima do fundo da janela) -----
+    // Botão de segunda opção: a mesma forma do principal, num cinza de vidro.
+    component BotaoCalmo: MouseArea {
+        id: calmo
+        property string texto: ""
+        property bool ativo: true
+        property string dica: ""
+        signal clicado()
+        Layout.fillWidth: true
+        implicitHeight: Math.round(janela.gu * 2)
+        hoverEnabled: true
+        cursorShape: ativo ? Qt.PointingHandCursor : Qt.ArrowCursor
+        activeFocusOnTab: ativo
+        Accessible.role: Accessible.Button
+        Accessible.name: texto
+        onClicked: if (ativo) calmo.clicado()
+        Keys.onReturnPressed: if (ativo) calmo.clicado()
+        Keys.onSpacePressed: if (ativo) calmo.clicado()
+        Rectangle {
+            anchors.fill: parent
+            radius: Math.round(janela.gu * 0.35)
+            scale: calmo.pressed && calmo.ativo ? 0.97 : 1
+            color: janela.tinta(!calmo.ativo ? 0.05 : (calmo.pressed ? 0.16 : (calmo.containsMouse ? 0.12 : 0.08)))
+            border.width: calmo.activeFocus ? 1.5 : 0
+            border.color: janela.frente
+            Behavior on color {
+                ColorAnimation { duration: Kirigami.Units.shortDuration }
+            }
+            Behavior on scale {
+                NumberAnimation { duration: 120 }
+            }
+        }
+        Texto {
+            anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width - janela.gu)
+            text: calmo.texto
+            elide: Text.ElideRight
+            opacity: calmo.ativo ? 1 : 0.4
+        }
+        QQC2.ToolTip.visible: dica.length > 0 && containsMouse
+        QQC2.ToolTip.text: dica
+        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+    }
+
+    // Uma linha de "Mais informações": o nome do dado à esquerda, o valor à direita.
+    component LinhaDado: RowLayout {
+        property string nome: ""
+        property string valor: ""
+        Layout.fillWidth: true
+        spacing: Math.round(janela.gu * 0.6)
+        Texto {
+            text: parent.nome
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            opacity: 0.55
+        }
+        Texto {
+            Layout.fillWidth: true
+            text: parent.valor
+            horizontalAlignment: Text.AlignRight
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            elide: Text.ElideMiddle
+        }
+    }
+
+    // O ícone entra crescendo de leve; o selo pula quando muda (ameaça, aberto).
+    ParallelAnimation {
+        id: entrada
+        NumberAnimation { target: icone; property: "scale"; from: 0.82; to: 1; duration: 420; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
+        NumberAnimation { target: icone; property: "opacity"; from: 0; to: 1; duration: 220 }
+    }
+    SequentialAnimation {
+        id: pulo
+        NumberAnimation { target: selo; property: "scale"; to: 1.3; duration: 140; easing.type: Easing.OutQuad }
+        NumberAnimation { target: selo; property: "scale"; to: 1; duration: 320; easing.type: Easing.OutBack; easing.overshoot: 2.4 }
+    }
+
+    // ----- o miolo, direto no vidro -----
     ColumnLayout {
         id: painel
         parent: janela.contentItem
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: Math.round(janela.gu * 2.7) + Math.round(janela.gu * 1.4)
-        anchors.leftMargin: Math.round(janela.gu * 1.6)
-        anchors.rightMargin: Math.round(janela.gu * 1.6)
-        spacing: Math.round(janela.gu * 0.8)
+        anchors.topMargin: janela.margem
+        anchors.leftMargin: janela.margem
+        anchors.rightMargin: janela.margem
+        spacing: 0
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Math.round(janela.gu * 1)
+        // O arquivo, com o selo do escudo no canto.
+        Item {
+            id: icone
+            Layout.alignment: Qt.AlignHCenter
+            implicitWidth: Math.round(janela.gu * 3.6)
+            implicitHeight: implicitWidth
+            Kirigami.Icon {
+                anchors.fill: parent
+                source: janela.iconeArquivo
+                fallback: janela.ic("arquivo")
+            }
             Rectangle {
-                Layout.alignment: Qt.AlignTop
-                Layout.preferredWidth: Math.round(janela.gu * 3.4)
-                Layout.preferredHeight: Layout.preferredWidth
+                id: selo
+                visible: janela.deRisco || janela.feito
+                width: Math.round(janela.gu * 1.55)
+                height: width
                 radius: width / 2
-                color: Qt.rgba(janela.corModo.r, janela.corModo.g, janela.corModo.b, janela.escuro ? 0.16 : 0.12)
-                Behavior on color {
-                    ColorAnimation { duration: 300 }
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: -Math.round(janela.gu * 0.25)
+                anchors.bottomMargin: -Math.round(janela.gu * 0.1)
+                color: janela.escuro ? "#2a2a2e" : "#ffffff"
+                border.width: 1
+                border.color: janela.tinta(0.1)
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    radius: width / 2
+                    color: Qt.rgba(janela.corSelo.r, janela.corSelo.g, janela.corSelo.b, janela.escuro ? 0.22 : 0.15)
+                    Behavior on color {
+                        ColorAnimation { duration: 300 }
+                    }
                 }
                 Kirigami.Icon {
                     anchors.centerIn: parent
-                    width: Math.round(parent.width * 0.52)
+                    width: Math.round(parent.width * 0.56)
                     height: width
                     isMask: true
-                    color: janela.corModo
-                    source: janela.feito ? "matsu-certo-symbolic"
-                          : janela.modo === "ameaca" ? janela.ic("escudo-alerta")
-                          : janela.modo === "aviso" ? janela.ic("escudo-busca")
-                          : janela.modo === "pacote" || janela.modo === "sem-windows" || janela.modo === "sem-java" ? "matsu-apps-symbolic"
-                          : "matsu-info-symbolic"
-                }
-                // Um pulinho quando muda (ameaça achada, tudo certo).
-                scale: 1
-                Behavior on scale {
-                    NumberAnimation { duration: 380; easing.type: Easing.OutBack; easing.overshoot: 2 }
-                }
-            }
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Math.round(janela.gu * 0.3)
-                Texto {
-                    Layout.fillWidth: true
-                    text: janela.titulo
-                    font.pixelSize: Math.round(janela.gu * 1.3)
-                    font.weight: Font.DemiBold
-                    wrapMode: Text.WordWrap
-                }
-                Texto {
-                    Layout.fillWidth: true
-                    visible: text.length > 0
-                    text: janela.texto
-                    opacity: 0.72
-                    wrapMode: Text.WordWrap
+                    color: janela.corSelo
+                    source: janela.feito ? "matsu-certo-symbolic" : janela.ic(janela.modo === "ameaca" ? "escudo-alerta" : "escudo-busca")
                 }
             }
         }
 
-        // ----- o arquivo -----
-        Cartao {
+        Texto {
             Layout.fillWidth: true
-            visible: !!janela.info && janela.modo !== "sumiu"
-            implicitHeight: colunaArquivo.implicitHeight + Math.round(janela.gu * 1.6)
-            Behavior on implicitHeight {
-                NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
-            }
-            ColumnLayout {
-                id: colunaArquivo
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Math.round(janela.gu * 0.8)
-                anchors.leftMargin: Math.round(janela.gu * 1)
-                anchors.rightMargin: Math.round(janela.gu * 1)
-                spacing: Math.round(janela.gu * 0.5)
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Math.round(janela.gu * 0.6)
-                    Kirigami.Icon {
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
-                        Layout.preferredHeight: Layout.preferredWidth
-                        source: janela.ic("arquivo")
-                        isMask: true
-                        color: janela.frente
-                        opacity: 0.8
-                    }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-                        Texto {
-                            Layout.fillWidth: true
-                            text: janela.info ? janela.info.nome || "" : ""
-                            font.weight: Font.DemiBold
-                            elide: Text.ElideMiddle
-                        }
-                        Texto {
-                            Layout.fillWidth: true
-                            text: janela.info ? (janela.info.tipoNome || "") + (janela.info.tamanho ? " · " + janela.bytes(janela.info.tamanho) : "") : ""
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            opacity: 0.6
-                            elide: Text.ElideRight
-                        }
-                    }
-                }
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 1
-                    color: janela.tinta(0.07)
-                    visible: janela.modo === "aviso" || janela.modo === "ameaca"
-                }
-                // De onde veio, a assinatura e o que o escudo achou.
-                GridLayout {
-                    Layout.fillWidth: true
-                    visible: janela.modo === "aviso" || janela.modo === "ameaca"
-                    columns: 2
-                    columnSpacing: Math.round(janela.gu * 0.8)
-                    rowSpacing: Math.round(janela.gu * 0.35)
-
-                    Texto {
-                        text: janela.t("Baixado de", "Downloaded from")
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        opacity: 0.6
-                    }
-                    Texto {
-                        Layout.fillWidth: true
-                        readonly property var o: janela.info && janela.info.origem ? janela.info.origem : ({})
-                        text: o.site ? o.site : (o.downloads ? janela.t("Pasta Downloads (o site não foi gravado)", "Downloads folder (site not recorded)") : janela.t("Não se sabe", "Unknown"))
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        font.weight: Font.DemiBold
-                        elide: Text.ElideMiddle
-                    }
-                    Texto {
-                        text: janela.t("Assinatura", "Signature")
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        opacity: 0.6
-                    }
-                    Texto {
-                        Layout.fillWidth: true
-                        readonly property string a: janela.info ? janela.info.assinatura || "" : ""
-                        text: a === "sim" ? janela.t("Tem assinatura digital (o Matsu não conhece quem assinou)", "Digitally signed (Matsu doesn't know the signer)")
-                            : a === "nao" ? janela.t("Sem assinatura: não dá para saber quem fez", "Unsigned: no way to know who made it")
-                            : janela.t("Este tipo de arquivo não tem assinatura", "This file type has no signature")
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        wrapMode: Text.WordWrap
-                    }
-                    Texto {
-                        text: janela.t("Escudo", "Shield")
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        opacity: 0.6
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Math.round(janela.gu * 0.35)
-                        Girando {
-                            Layout.preferredWidth: Math.round(janela.gu * 0.8)
-                            Layout.preferredHeight: Layout.preferredWidth
-                            visible: janela.escudo === "conferindo"
-                        }
-                        Rectangle {
-                            visible: janela.escudo !== "conferindo"
-                            Layout.preferredWidth: Math.round(janela.gu * 0.45)
-                            Layout.preferredHeight: Layout.preferredWidth
-                            radius: width / 2
-                            color: janela.escudo === "OK" ? janela.verde : janela.escudo === "FOUND" ? janela.coral : janela.ambar
-                        }
-                        Texto {
-                            Layout.fillWidth: true
-                            text: ({
-                                conferindo: janela.t("Conferindo…", "Checking…"),
-                                OK: janela.t("Nenhuma ameaça conhecida (isso não garante que é seguro)", "No known threat (that doesn't mean it's safe)"),
-                                FOUND: janela.ameaca,
-                                SEMLISTA: janela.t("Ainda sem a lista de ameaças: não conferido", "No threat list yet: not checked"),
-                                PAUSADO: janela.t("Pausado: não conferido", "Paused: not checked"),
-                                INDISPONIVEL: janela.t("Não deu para conferir agora", "Couldn't check right now")
-                            })[janela.escudo] || ""
-                            color: janela.escudo === "FOUND" ? janela.coral : janela.frente
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
-
-                // Mais informações: o caminho, o SHA-256 e "Abrir mesmo assim".
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    visible: janela.detalhes && (janela.modo === "aviso" || janela.modo === "ameaca")
-                    spacing: Math.round(janela.gu * 0.35)
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 1
-                        color: janela.tinta(0.07)
-                    }
-                    Texto {
-                        Layout.fillWidth: true
-                        text: janela.info ? String(janela.info.pasta || "").replace(/^\/home\/[^\/]+/, "~") : ""
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        opacity: 0.6
-                        elide: Text.ElideMiddle
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Math.round(janela.gu * 0.3)
-                        Texto {
-                            Layout.fillWidth: true
-                            text: "SHA-256  " + (janela.info ? janela.info.sha256 || "" : "")
-                            font.family: "monospace"
-                            font.pointSize: Kirigami.Theme.smallFont.pointSize - 0.5
-                            opacity: 0.6
-                            wrapMode: Text.WrapAnywhere
-                        }
-                        BotaoSimbolo {
-                            icone: janela.ic("copiar")
-                            dica: janela.t("Copiar o SHA-256", "Copy SHA-256")
-                            lado: Math.round(janela.gu * 1.6)
-                            onClicado: janela.copiar(janela.info.sha256 || "")
-                        }
-                    }
-                    Texto {
-                        Layout.fillWidth: true
-                        visible: janela.modo === "aviso"
-                        text: janela.t("Abrir pede a sua senha. O arquivo entra na lista de liberados e não será mais avisado.",
-                                       "Opening asks for your password. The file joins the allowed list and won't be flagged again.")
-                        font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        opacity: 0.6
-                        wrapMode: Text.WordWrap
-                    }
-                    Botao {
-                        visible: janela.modo === "aviso"
-                        texto: janela.abrindo ? janela.t("Esperando a senha…", "Waiting for password…") : janela.t("Abrir mesmo assim", "Open anyway")
-                        icone: janela.ic("abrir-fora")
-                        ativo: !janela.abrindo && !janela.feito && janela.escudo !== "conferindo"
-                        dica: janela.escudo === "conferindo" ? janela.t("Espere o escudo terminar de conferir", "Wait for the shield to finish") : ""
-                        onClicado: janela.abrirMesmoAssim()
-                    }
-                }
-            }
+            Layout.topMargin: Math.round(janela.gu * 0.9)
+            text: janela.titulo
+            horizontalAlignment: Text.AlignHCenter
+            font.pixelSize: Math.round(janela.gu * 0.85)
+            font.weight: Font.Bold
+            wrapMode: Text.Wrap
+            maximumLineCount: 3
+            elide: Text.ElideRight
+        }
+        Texto {
+            Layout.fillWidth: true
+            Layout.topMargin: Math.round(janela.gu * 0.35)
+            visible: text.length > 0
+            text: janela.texto
+            horizontalAlignment: Text.AlignHCenter
+            font.pointSize: Kirigami.Theme.smallFont.pointSize + 0.5
+            opacity: 0.68
+            wrapMode: Text.Wrap
         }
 
-        // ----- os botões -----
+        // O que o escudo achou, numa linha só.
         RowLayout {
-            Layout.fillWidth: true
-            Layout.topMargin: Math.round(janela.gu * 0.2)
-            Layout.bottomMargin: Math.round(janela.gu * 1.2)
-            spacing: Math.round(janela.gu * 0.5)
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: Math.round(janela.gu * 0.6)
+            visible: janela.modo === "aviso" && janela.textoEscudo.length > 0
+            spacing: Math.round(janela.gu * 0.35)
+            Girando {
+                Layout.preferredWidth: Math.round(janela.gu * 0.7)
+                Layout.preferredHeight: Layout.preferredWidth
+                visible: janela.escudo === "conferindo"
+            }
+            Rectangle {
+                visible: janela.escudo !== "conferindo"
+                Layout.preferredWidth: Math.round(janela.gu * 0.4)
+                Layout.preferredHeight: Layout.preferredWidth
+                radius: width / 2
+                color: janela.escudo === "OK" ? janela.verde : janela.ambar
+            }
+            Texto {
+                Layout.maximumWidth: painel.width - janela.gu
+                text: janela.textoEscudo
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                opacity: 0.8
+                elide: Text.ElideRight
+            }
+        }
 
-            Botao {
-                visible: janela.modo === "aviso" || janela.modo === "ameaca"
-                texto: janela.detalhes ? janela.t("Menos informações", "Less info") : janela.t("Mais informações", "More info")
-                icone: "matsu-seta-symbolic"
-                iconeNoFim: true
-                onClicado: janela.detalhes = !janela.detalhes
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            Botao {
-                visible: janela.modo === "aviso"
-                texto: janela.t("Mover para a quarentena", "Move to quarantine")
-                icone: janela.ic("quarentena")
-                ativo: !janela.trancando && !janela.feito
-                onClicado: janela.trancar()
-            }
+        // ----- os botões, um embaixo do outro -----
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: Math.round(janela.gu * 1.1)
+            spacing: Math.round(janela.gu * 0.45)
+            visible: !!janela.info
+
+            // Aviso: não abrir (o seguro) e quarentena.
             BotaoDestaque {
+                Layout.fillWidth: true
                 visible: janela.modo === "aviso"
                 texto: janela.t("Não abrir", "Don't open")
                 estado: janela.feito ? "feito" : ""
                 textoFeito: janela.t("Abrindo", "Opening")
                 onClicado: janela.naoAbrir()
             }
-            Botao {
-                visible: janela.modo === "ameaca"
-                texto: janela.t("Fechar", "Close")
-                onClicado: janela.proximo()
+            BotaoCalmo {
+                visible: janela.modo === "aviso"
+                texto: janela.t("Pôr na quarentena", "Quarantine it")
+                ativo: !janela.trancando && !janela.feito
+                onClicado: janela.trancar()
             }
+            // Ameaça: só a quarentena ou fechar.
             BotaoDestaque {
+                Layout.fillWidth: true
                 visible: janela.modo === "ameaca"
-                texto: janela.t("Mover para a quarentena", "Move to quarantine")
-                icone: janela.ic("quarentena")
+                texto: janela.t("Pôr na quarentena", "Quarantine it")
                 estado: janela.trancando ? "carregando" : (janela.feito ? "feito" : "")
                 textoFeito: janela.t("Trancado", "Locked away")
                 onClicado: janela.trancar()
             }
-            Botao {
-                visible: janela.modo === "pacote" || janela.modo === "sem-windows" || janela.modo === "sem-java" || janela.modo === "biblioteca" || janela.modo === "sumiu"
-                texto: janela.t("Fechar", "Close")
-                onClicado: janela.proximo()
-            }
+            // Os outros casos: a Loja ou o Bottles, e fechar.
             BotaoDestaque {
+                Layout.fillWidth: true
                 visible: janela.modo === "pacote" || janela.modo === "sem-java"
                 texto: janela.t("Abrir a Loja", "Open the Store")
-                icone: "matsu-apps-symbolic"
                 onClicado: janela.abrirLoja("inicio")
             }
             BotaoDestaque {
+                Layout.fillWidth: true
                 visible: janela.modo === "sem-windows"
                 texto: janela.t("Instalar o Bottles", "Install Bottles")
-                icone: "matsu-baixar-symbolic"
                 onClicado: janela.abrirLoja("com.usebottles.bottles")
+            }
+            BotaoDestaque {
+                Layout.fillWidth: true
+                visible: janela.modo === "biblioteca" || janela.modo === "sumiu"
+                texto: "OK"
+                onClicado: janela.proximo()
+            }
+            BotaoCalmo {
+                visible: janela.modo === "ameaca" || janela.modo === "pacote" || janela.modo === "sem-java" || janela.modo === "sem-windows"
+                texto: janela.t("Fechar", "Close")
+                onClicado: janela.proximo()
+            }
+        }
+
+        // "Mais informações", discreto, no meio.
+        MouseArea {
+            id: mais
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: Math.round(janela.gu * 0.55)
+            visible: janela.deRisco
+            implicitWidth: linhaMais.implicitWidth + Math.round(janela.gu * 0.8)
+            implicitHeight: Math.round(janela.gu * 1.4)
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            activeFocusOnTab: true
+            Accessible.role: Accessible.Button
+            Accessible.name: textoMais.text
+            onClicked: janela.detalhes = !janela.detalhes
+            Keys.onReturnPressed: janela.detalhes = !janela.detalhes
+            Keys.onSpacePressed: janela.detalhes = !janela.detalhes
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                color: janela.tinta(mais.containsMouse ? 0.06 : 0)
+                border.width: mais.activeFocus ? 1 : 0
+                border.color: janela.frente
+            }
+            Row {
+                id: linhaMais
+                anchors.centerIn: parent
+                spacing: Math.round(janela.gu * 0.25)
+                Texto {
+                    id: textoMais
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: janela.detalhes ? janela.t("Menos informações", "Less info") : janela.t("Mais informações", "More info")
+                    font.pointSize: Kirigami.Theme.smallFont.pointSize
+                    opacity: mais.containsMouse ? 0.9 : 0.6
+                }
+                Kirigami.Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.round(janela.gu * 0.7)
+                    height: width
+                    source: "matsu-seta-symbolic"
+                    isMask: true
+                    color: janela.frente
+                    opacity: textoMais.opacity
+                    rotation: janela.detalhes ? -90 : 90
+                    Behavior on rotation {
+                        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    }
+                }
+            }
+        }
+
+        // ----- mais informações -----
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.topMargin: Math.round(janela.gu * 0.45)
+            visible: janela.detalhes && janela.deRisco
+            spacing: Math.round(janela.gu * 0.45)
+
+            Cartao {
+                Layout.fillWidth: true
+                implicitHeight: dados.implicitHeight + Math.round(janela.gu * 1.1)
+                ColumnLayout {
+                    id: dados
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.leftMargin: Math.round(janela.gu * 0.8)
+                    anchors.rightMargin: Math.round(janela.gu * 0.5)
+                    spacing: Math.round(janela.gu * 0.3)
+                    LinhaDado {
+                        nome: janela.t("Tipo", "Type")
+                        valor: janela.info ? (janela.info.tipoNome || "") + (janela.info.tamanho ? " · " + janela.bytes(janela.info.tamanho) : "") : ""
+                    }
+                    LinhaDado {
+                        visible: janela.modo === "aviso"
+                        readonly property string a: janela.info ? janela.info.assinatura || "" : ""
+                        nome: janela.t("Assinatura", "Signature")
+                        valor: a === "sim" ? janela.t("Assinado (quem assinou é desconhecido)", "Signed (unknown signer)")
+                             : a === "nao" ? janela.t("Sem assinatura", "Unsigned")
+                             : janela.t("Não tem", "None")
+                    }
+                    LinhaDado {
+                        nome: janela.t("Pasta", "Folder")
+                        valor: janela.info ? String(janela.info.pasta || "").replace(/^\/home\/[^\/]+/, "~") : ""
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(janela.gu * 0.6)
+                        Texto {
+                            text: "SHA-256"
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            opacity: 0.55
+                        }
+                        Texto {
+                            Layout.fillWidth: true
+                            text: janela.info ? janela.info.sha256 || "" : ""
+                            horizontalAlignment: Text.AlignRight
+                            font.family: "monospace"
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize - 0.5
+                            opacity: 0.7
+                            elide: Text.ElideMiddle
+                        }
+                        BotaoSimbolo {
+                            icone: janela.ic("copiar")
+                            dica: janela.t("Copiar o SHA-256", "Copy SHA-256")
+                            lado: Math.round(janela.gu * 1.4)
+                            onClicado: janela.copiar(janela.info.sha256 || "")
+                        }
+                    }
+                }
+            }
+
+            BotaoCalmo {
+                visible: janela.modo === "aviso"
+                texto: janela.abrindo ? janela.t("Esperando a senha…", "Waiting for password…") : janela.t("Abrir mesmo assim", "Open anyway")
+                ativo: !janela.abrindo && !janela.feito && janela.escudo !== "conferindo"
+                dica: janela.escudo === "conferindo" ? janela.t("Espere o escudo terminar de conferir", "Wait for the shield to finish") : ""
+                onClicado: janela.abrirMesmoAssim()
+            }
+            Texto {
+                Layout.fillWidth: true
+                visible: janela.modo === "aviso"
+                text: janela.t("Pede a sua senha. Depois este arquivo não é mais avisado.",
+                               "Asks for your password. This file won't be flagged again.")
+                horizontalAlignment: Text.AlignHCenter
+                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                opacity: 0.5
+                wrapMode: Text.Wrap
             }
         }
     }

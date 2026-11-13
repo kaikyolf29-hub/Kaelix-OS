@@ -50,6 +50,10 @@ QQC2.ApplicationWindow {
     // Troca de página suave: a página nova entra aparecendo e subindo de leve (como
     // no Windows 11). Desligado (o padrão), a troca é seca, como sempre foi.
     property bool trocaSuave: false
+    // Janela de alerta (o aviso de programa baixado): pequena, sem as bolinhas, sem o
+    // nome do app e sem o miolo; o conteúdo fica direto no vidro, como os alertas do
+    // Mac. Dá para arrastar pela parte de cima e Esc fica a cargo do app.
+    property bool alerta: false
     readonly property alias campoBusca: campo
 
     readonly property int gu: Kirigami.Units.gridUnit
@@ -248,12 +252,13 @@ QQC2.ApplicationWindow {
                 onActiveChanged: if (active) janela.startSystemMove()
             }
             TapHandler {
-                onDoubleTapped: janela.alternarCheia()
+                onDoubleTapped: if (!janela.alerta) janela.alternarCheia()
             }
         }
 
         Row {
             id: bolinhas
+            visible: !janela.alerta
             anchors.left: parent.left
             anchors.leftMargin: Math.round(janela.gu * 0.75)
             anchors.verticalCenter: parent.verticalCenter
@@ -287,6 +292,7 @@ QQC2.ApplicationWindow {
 
         Row {
             id: nomeApp
+            visible: !janela.alerta
             anchors.left: bolinhas.right
             anchors.leftMargin: Math.round(janela.gu * 0.9)
             anchors.verticalCenter: parent.verticalCenter
@@ -497,6 +503,7 @@ QQC2.ApplicationWindow {
     // ----- o miolo, uma camada mais funda com o canto de cima arredondado -----
     Rectangle {
         id: painel
+        visible: !janela.alerta
         anchors.top: titulo.bottom
         anchors.left: janela.semLista ? parent.left : lateral.right
         anchors.right: parent.right

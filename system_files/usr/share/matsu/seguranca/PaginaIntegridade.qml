@@ -198,8 +198,8 @@ Item {
             // ----- conferir os arquivos do sistema -----
             Secao {
                 titulo: janela.t("Verificar os arquivos do sistema", "Verify system files")
-                texto: janela.t("Confere, um por um, se os arquivos do sistema são exatamente os da versão assinada. Leva alguns minutos e pede a senha de administrador.",
-                                "Checks, one by one, that system files are exactly those of the signed version. Takes a few minutes and asks for the administrator password.")
+                texto: janela.t("Confere se cada arquivo é o da versão assinada. Pede a senha de administrador.",
+                                "Checks each file against the signed version. Asks for the administrator password.")
             }
             Cartao {
                 Layout.fillWidth: true
