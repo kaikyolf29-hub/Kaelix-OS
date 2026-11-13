@@ -72,5 +72,36 @@ class Bloqueio(unittest.TestCase):
             self.assertIn(nome, bloco)
 
 
+SAIR = RAIZ / "system_files/usr/share/plasma/look-and-feel/org.matsu.escuro.desktop/contents/logout"
+TELAS = RAIZ / "system_files/usr/share/matsu/telas"
+
+
+class Sair(unittest.TestCase):
+    """A tela de sair do Matsu entra no lugar da Logout.qml da Breeze (Plasma 6.6)."""
+
+    def test_tem_os_sinais_que_o_kde_liga(self):
+        tela = (SAIR / "Logout.qml").read_text(encoding="utf-8")
+        for sinal in ("logoutRequested()", "haltRequested()", "haltUpdateRequested()", "suspendRequested(int spdMethod)",
+                      "rebootRequested()", "rebootRequested2(int opt)", "rebootUpdateRequested()", "cancelRequested()",
+                      "lockScreenRequested()", "cancelSoftwareUpdateRequested()"):
+            self.assertIn("signal " + sinal, tela)
+        # O que o KDE passa para a tela continua sendo usado.
+        for nome in ("sdtype", "maysd", "spdMethods", "canLogout", "softwareUpdatePending", "screenGeometry",
+                     "rebootToFirmwareSetup", "rebootToBootLoaderMenu", "rebootToBootLoaderEntry"):
+            self.assertIn(nome, tela)
+        self.assertTrue((SAIR / "timer.js").is_file())
+
+    def test_pecas_existem(self):
+        tela = (SAIR / "Logout.qml").read_text(encoding="utf-8")
+        qmldir = (TELAS / "qmldir").read_text(encoding="utf-8")
+        for peca in sorted(set(__import__("re").findall(r"Matsu\.([A-Z]\w+)", tela))):
+            with self.subTest(peca):
+                self.assertIn(f"{peca} 1.0 {peca}.qml", qmldir)
+                self.assertTrue((TELAS / f"{peca}.qml").is_file())
+        icones = RAIZ / "system_files/usr/share/icons/Matsu/status/symbolic"
+        for icone in ("matsu-lua", "matsu-hibernar", "matsu-reiniciar", "matsu-desligar", "matsu-sair"):
+            self.assertTrue((icones / f"{icone}-symbolic.svg").is_file(), icone)
+
+
 if __name__ == "__main__":
     unittest.main()

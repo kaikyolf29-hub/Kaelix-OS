@@ -581,6 +581,13 @@ python3 "$CTX/build_files/telas-kde.py"
 # A tela de bloqueio inteira no jeito do Mac (hora grande, foto, senha em pílula):
 # o MatsuBloco.qml veio do system_files; o script liga ele no LockScreenUi do KDE.
 python3 "$CTX/build_files/telas-matsu.py"
+# Tela de sair (Desligar, Reiniciar, Sair): a do Matsu está no visual escuro; o
+# visual claro usa a mesma (o fundo escurecido é igual nos dois).
+LNF=/usr/share/plasma/look-and-feel
+if [[ -f $LNF/org.matsu.escuro.desktop/contents/logout/Logout.qml ]]; then
+  cp -a "$LNF/org.matsu.escuro.desktop/contents/logout" "$LNF/org.matsu.claro.desktop/contents/"
+  echo "Tela de sair do Matsu nos visuais escuro e claro"
+fi
 
 log "Tipos de arquivo em português"
 # Depois de todos os pacotes (cada um pode trazer tipos novos).

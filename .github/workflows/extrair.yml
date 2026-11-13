@@ -10,6 +10,7 @@ on:
     branches: [main]
     paths:
       - "tests/extrair.txt"
+      - "tests/extrair-qrc.py"
       - ".github/workflows/extrair.yml"
 
 permissions:
@@ -32,16 +33,23 @@ jobs:
       - name: Copiar os arquivos da imagem
         env:
           IMG: ghcr.io/${{ github.repository_owner }}/matsu-os:teste
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # A imagem tem mais camadas do que o docker aceita ("max depth exceeded"):
+        # o podman lê, como no prints.yml.
         run: |
           mkdir -p /tmp/extraidos
-          docker pull -q "$IMG"
-          docker run --rm --entrypoint /usr/bin/bash \
-            -v "$PWD/tests/extrair.txt:/lista:ro" -v /tmp/extraidos:/saida "$IMG" -c '
+          echo "$TOKEN" | sudo podman login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          sudo podman pull -q "$IMG"
+          sudo podman run --rm --entrypoint /usr/bin/bash \
+            -v "$PWD/tests/extrair.txt:/lista:ro" -v "$PWD/tests/extrair-qrc.py:/qrc.py:ro" \
+            -v /tmp/extraidos:/saida "$IMG" -c '
             set -u
-            mkdir -p /saida/arquivos
-            { rpm -q plasma-workspace plasma-desktop kwin kscreenlocker plasma-login-manager plasma-setup polkit-kde kf6-kirigami qt6-qtbase 2>&1
+            mkdir -p /saida/arquivos /saida/qrc
+            { rpm -q plasma-workspace plasma-desktop kwin kscreenlocker plasma-login-manager plasma-setup \
+                polkit-kde polkit-qt6-1 kf6-kirigami qt6-qtbase qt6-qt5compat qt6-qtdeclarative 2>&1
               cat /etc/os-release | grep -E "^(NAME|VERSION)="; } > /saida/VERSOES.txt
             : > /tmp/lista
+            : > /tmp/binarios
             while read -r linha; do
               [[ -z $linha || $linha == \#* ]] && continue
               if [[ $linha == rpm:* ]]; then
@@ -49,6 +57,8 @@ jobs:
                 rpm -ql "$pacote" > "/saida/lista-$pacote.txt" 2>&1 || continue
                 grep -E "\.(qml|js|json|conf|desktop|xml|ini|svg|sh|service|rules|policy|kcfg)$" "/saida/lista-$pacote.txt" \
                   | grep -v "/locale/" >> /tmp/lista || true
+                # Programas e bibliotecas do pacote: o QML de dentro (qrc) sai em /saida/qrc.
+                grep -E "^/usr/(bin|libexec|lib64)/" "/saida/lista-$pacote.txt" >> /tmp/binarios || true
               else
                 for p in $linha; do
                   [[ -e $p ]] && find "$p" -type f -size -1M >> /tmp/lista
@@ -57,8 +67,13 @@ jobs:
             done < /lista
             sort -u /tmp/lista | while read -r f; do [[ -f $f ]] && echo "$f"; done > /tmp/lista2
             tar -cf - -T /tmp/lista2 2>/dev/null | tar -xf - -C /saida/arquivos
-            echo "$(wc -l < /tmp/lista2) arquivos copiados"'
+            echo "$(wc -l < /tmp/lista2) arquivos copiados"
+            sort -u /tmp/binarios | while read -r f; do
+              [[ -f $f && ! -L $f ]] && python3 -I /qrc.py "$f" /saida/qrc
+            done'
           sudo chown -R "$(id -u):$(id -g)" /tmp/extraidos
+          cat /tmp/extraidos/VERSOES.txt
+          find /tmp/extraidos/qrc -type f | head -80
 
       - name: Publicar no ramo "extraidos"
         run: |

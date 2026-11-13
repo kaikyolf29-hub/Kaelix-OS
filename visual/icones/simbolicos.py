@@ -83,6 +83,9 @@ ICONES = {
     "matsu-trocar-usuario": svg(traco("M9.5 4a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0 -7zM3.5 20a6 6 0 0 1 10.2 -4.3"
                                        "M15.5 14.5h5.5M18.8 12.3l2.2 2.2 -2.2 2.2M21 19.5h-5.5M17.7 17.3l-2.2 2.2 2.2 2.2")),
     "matsu-outra-pessoa": svg(traco("M10 4a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0 -7zM4 20a6 6 0 0 1 9.4 -4.9M18 14v6M15 17h6")),
+    # Tela de sair: sair da conta (a porta com a seta) e hibernar (a lua com o disco).
+    "matsu-sair": svg(traco("M14 4.5h3.5a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2H14M10 8l-4 4 4 4M6 12h9.5")),
+    "matsu-hibernar": svg(traco("M17 13.5A6.5 6.5 0 0 1 9 5.5a6.5 6.5 0 1 0 8 8zM4 20.5h16")),
     "matsu-teclado": svg(traco("M4.5 6h15a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-15a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2z"
                                 "M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M8 14h8")),
     # Ajustes do Matsu (a janela de ajustes, como a do Mac).

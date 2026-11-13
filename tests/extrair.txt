@@ -3,7 +3,8 @@
 # Serve para ler as peças do KDE/Fedora que o Matsu troca (este ambiente de
 # trabalho não baixa pacotes do Fedora). Uma linha por item:
 #   caminho ou padrão (glob): copia os arquivos (pastas inteiras, até 1 MB cada)
-#   rpm:<pacote>: a lista de arquivos do pacote e os de texto (qml, js, json...)
+#   rpm:<pacote>: a lista de arquivos do pacote, os de texto (qml, js, json...) e o
+#     QML compilado dentro dos programas do pacote (em qrc/, por tests/extrair-qrc.py)
 # Mudar só esta lista não monta imagem nova (tests/** fica fora do build.yml).
 
 # Telas de login (Plasma Login Manager) e bloqueio
