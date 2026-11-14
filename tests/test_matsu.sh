@@ -339,8 +339,7 @@ echo "arquivos do sistema"
 OUT="$(find "$ROOT/system_files" "$ROOT/installer" -xtype l 2>/dev/null | while IFS= read -r l; do
   [[ $l == */icons/Matsu*/actions/16/* && $(readlink "$l") == /usr/share/icons/breeze*/actions/16/* ]] || echo "$l"; done)"
 check "nenhum link quebrado nos arquivos do sistema" test -z "$OUT"
-# (O endereço do repositório no GitHub ainda é Kaelix-OS até o criador renomear.)
-OUT="$(grep -rIn -i 'kaelix' "$ROOT/system_files" 2>/dev/null | grep -v 'github.com/kaikyolf29-hub/Kaelix-OS'; find "$ROOT/system_files" -iname '*kaelix*' 2>/dev/null)"
+OUT="$(grep -rIn -i 'kaelix' "$ROOT/system_files" "$ROOT/build_files" "$ROOT/site/src" "$ROOT/site/index.html" 2>/dev/null; find "$ROOT/system_files" -iname '*kaelix*' 2>/dev/null)"
 check "nenhum arquivo do sistema com o nome antigo (Kaelix)" test -z "$OUT"
 
 echo

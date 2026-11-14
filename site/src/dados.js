@@ -6,7 +6,7 @@ export const NOME = `Matsu ${EDICAO} OS`;
 
 // Onde moram o código e as versões publicadas (o fluxo "Publicar versão
 // estável" cria um Release com as duas ISOs: ...-amd.iso e ...-nvidia.iso).
-export const REPO = 'kaikyolf29-hub/kaelix-os';
+export const REPO = 'kaikyolf29-hub/Matsu-OS';
 export const LINKS = {
   codigo: `https://github.com/${REPO}`,
   versoes: `https://github.com/${REPO}/releases`,

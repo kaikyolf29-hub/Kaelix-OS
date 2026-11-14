@@ -124,7 +124,7 @@ sed "0,/^_Em preparação_\$/s//_Montada em ${HOJE}_/" "${CTX}/NOVIDADES.md" > /
 chmod 0644 /usr/share/matsu/novidades.md
 python3 /usr/share/matsu/atualizacoes/ajudante.py --arquivo /usr/share/matsu/novidades.md resumo "$VERSAO" >/dev/null
 OWNER="${IMAGE_REGISTRY#*/}"
-REPO_URL="https://github.com/${OWNER}/Kaelix-OS"
+REPO_URL="https://github.com/${OWNER}/Matsu-OS"
 # O nome do Fedora não aparece para a pessoa: o sistema se apresenta como
 # Matsu em tudo (Sobre, menu de boot, terminal, nome do computador). O ID e o
 # VERSION_ID continuam os do Fedora, porque programas como o dnf e o toolbox
