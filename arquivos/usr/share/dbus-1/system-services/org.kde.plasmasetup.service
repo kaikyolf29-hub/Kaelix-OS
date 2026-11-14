@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.kde.plasmasetup
+Exec=/usr/libexec/kf6/kauth/plasma-setup-auth-helper
+User=root

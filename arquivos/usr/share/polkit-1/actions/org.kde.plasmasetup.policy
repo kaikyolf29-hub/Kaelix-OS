@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE policyconfig PUBLIC
+"-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+<vendor>Plasma Setup</vendor>
+<vendor_url>https://invent.kde.org/plasma/plasma-setup</vendor_url>
+<icon_name>kauth-example</icon_name>
+   <action id="org.kde.plasmasetup.createflagfile" >
+      <description xml:lang="ar">أنشئ ملف علامة الإكمال</description>
+      <description xml:lang="ca">Crea un fitxer d'indicadors de compleció</description>
+      <description xml:lang="cs">Vytvořit soubor s doplňovacími přepínači</description>
+      <description xml:lang="de">Datei als Nachweis der Fertigstellung erstellen</description>
+      <description xml:lang="el">Δημιουργία αρχείου σήμανσης ολοκλήρωσης</description>
+      <description>Create Completion Flag File</description>
+      <description xml:lang="es">Crear archivo indicador de compleción</description>
+      <description xml:lang="eu">Sortu osatu dela adierazteko fitxategia</description>
+      <description xml:lang="fi">Kirjoita valmistumismerkkitiedosto</description>
+      <description xml:lang="fr">Créer un fichier d'indicateurs d'achèvement</description>
+      <description xml:lang="he">יצירת קובץ דגלון השלמה</description>
+      <description xml:lang="hu">Befejezési jelzőfájl létrehozása</description>
+      <description xml:lang="ia">Crea File de bandiera (flag) de completion</description>
+      <description xml:lang="it">Crea il file di flag di completamento</description>
+      <description xml:lang="ka">დასრულების ალმის ფაილის შექმნა</description>
+      <description xml:lang="ko">완료 플래그 파일 생성</description>
+      <description xml:lang="lt">Sukurti užbaigimo vėliavėlės failą</description>
+      <description xml:lang="lv">Izveidot pabeigšanas karodziņa datni</description>
+      <description xml:lang="nb">Lag en fil som bevis på fullføring</description>
+      <description xml:lang="nl">Vlagbestand van voltooiing aanmaken</description>
+      <description xml:lang="nn">Lag filer som indikerer fullføring</description>
+      <description xml:lang="pa">ਪੂਰਨ ਹੋਣ ਦੇ ਚਿੰਨ੍ਹ ਵਾਲੀ ਫ਼ਾਇਲ ਬਣਾਓ</description>
+      <description xml:lang="pl">Utwórz plik flagowy uzupełnień</description>
+      <description xml:lang="pt_BR">Criar arquivo de marcador de completude</description>
+      <description xml:lang="ro">Creează fișier cu fanionul de completare</description>
+      <description xml:lang="ru">Создание файла-метки завершения</description>
+      <description xml:lang="sk">Vytvoriť súbor príznaku dokončenia</description>
+      <description xml:lang="sl">Ustvari datoteko z zastavicami za dokončanje</description>
+      <description xml:lang="sr">Направи фајл ознаке завршетка</description>
+      <description xml:lang="sv">Skapa fil för markering av slutfört</description>
+      <description xml:lang="tr">Tamamlanma Bayrağı Dosyası Oluştur</description>
+      <description xml:lang="uk">Створити файл прапорця завершення</description>
+      <description xml:lang="zh_CN">创建补全标志文件</description>
+      <description xml:lang="zh_TW">建立完成旗標檔案</description>
+      <message xml:lang="ar">اكتب علامة /etc/plasma-setup-done لمنع إعادة تشغيل الإعداد</message>
+      <message xml:lang="ca">Escriu el marcador /etc/plasma-setup-done per a evitar tornar a executar la configuració</message>
+      <message xml:lang="cs">Zapsat značku /etc/plasma-setup-done pro prevenci nového spuštění úvodního nastavení</message>
+      <message xml:lang="de"></message>
+      <message>Write the /etc/plasma-setup-done marker to prevent rerunning setup</message>
+      <message xml:lang="es">Escribir el marcador /etc/plasma-setup-done para no repetir la configuración</message>
+      <message xml:lang="eu">Idatzi /etc/plasma-setup-done marka ezarpena berriz exekutatzea saihesteko</message>
+      <message xml:lang="fi"></message>
+      <message xml:lang="fr">Écrivez le marqueur « /etc/plasma-setup-done » pour éviter une nouvelle application de la configuration</message>
+      <message xml:lang="he">לכתוב את הסמן ‎/etc/plasma-setup-done כדי למנוע את הרצת תוכנית ההתקנה שוב</message>
+      <message xml:lang="hu">Létrehozza az /etc/plasma-setup-done jelölőt a beállítás újra futtatásának megelőzésére</message>
+      <message xml:lang="ia">Scribe le marcator de /etc/plasma-setup-done perprevenir re-executar setup (le configurar)</message>
+      <message xml:lang="it">Scrivi il marcatore /etc/plasma-setup-done per evitare di eseguire nuovamente l'installazione</message>
+      <message xml:lang="ka">/etc/plasma-setup-dome ფაილის ჩაწერა მორგების პროგრამის თავიდან გაშვების თავიდან ასაცილებლად</message>
+      <message xml:lang="ko">/etc/plasma-setup-done 마커를 생성하여 설정이 다시 실행되는 것을 방지함</message>
+      <message xml:lang="lt"></message>
+      <message xml:lang="lv"></message>
+      <message xml:lang="nb">Skriv «/etc/plasma-setup-done»-markøren for å hindre at oppsettet gjentas</message>
+      <message xml:lang="nl">Schrijf de /etc/plasma-setup-done markering om opzet opnieuw uit te voeren te voorkomen</message>
+      <message xml:lang="nn">Lagra fila /etc/plasma-setup-done for å hindra at vegvisaren vert køyrd på nytt</message>
+      <message xml:lang="pa">ਸੈਟਅੱਪ ਦੇ ਦੁਬਾਰਾ ਚਲਾਉਣ ਤੋਂ ਰੋਕਣ ਵਾਸਤੇ  /etc/plasma-setup-done ਨਿਸ਼ਾਨ ਬਣਾਓ</message>
+      <message xml:lang="pl">Zapisz znacznik w /etc/plasma-setup-done aby uniemożliwić ponowne otwieranie ustawień</message>
+      <message xml:lang="pt_BR">Escreve o marcador /etc/plasma-setup-done para prevenir a reexecução da configuração</message>
+      <message xml:lang="ro">Scrie marcatorul /etc/plasma-setup-done pentru a preveni repetarea configurării</message>
+      <message xml:lang="ru"></message>
+      <message xml:lang="sk">Zapísať značku /etc/plasma-setup-done na zabránenie opätovného spustenia nastavenia</message>
+      <message xml:lang="sl"></message>
+      <message xml:lang="sr">Упиши маркер /etc/plasma-setup-done да се подешавање Плазме не би поново покретало</message>
+      <message xml:lang="sv">Skriv markören /etc/plasma-setup-done för att förhindra att inställning utförs igen</message>
+      <message xml:lang="tr">Kurulumu yeniden çalıştırmayı önlemek için /etc/plasma-setup-done imleyicisini yazın</message>
+      <message xml:lang="uk">Записати позначку /etc/plasma-setup-done для запобігання повторному запуску налаштовування</message>
+      <message xml:lang="zh_CN">写入 /etc/plasma-setup-done 标志以防止反复运行初始设置向导</message>
+      <message xml:lang="zh_TW">寫入 /etc/plasma-setup-done 檔案來標記設定已完成，以避免重複執行初始設定</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.createnewuserautostarthook" >
+      <description xml:lang="ar">إنشاء خطاف بدء آلي لمستخدم جديد</description>
+      <description xml:lang="az">Yeni istifadəçi avtobaşlatma qoşması yaradın</description>
+      <description xml:lang="ca">Ganxo d'inici automàtic de creació d'usuari nou</description>
+      <description xml:lang="cs">Vytvořit háček pro automatické spuštění nového uživatele</description>
+      <description xml:lang="de">„Neuer Benutzer“-Autostart-Hook erstellen</description>
+      <description xml:lang="el">Δημιουργία μηχανισμού αυτόματης εκκίνησης για νέο χρήστη</description>
+      <description>Create New User Autostart Hook</description>
+      <description xml:lang="es">Crear nuevo gancho de inicio automático para nuevo usuario</description>
+      <description xml:lang="eu">Sortu erabiltzaile berriaren abio automatikorako kakoa</description>
+      <description xml:lang="fi">Luo uudelle käyttäjälle automaattikäynnistyskoukku</description>
+      <description xml:lang="fr">Créer un nouveau script final pour démarrage de démarrage automatique de l'utilisateur</description>
+      <description xml:lang="he">יצירת התליית התחלה אוטומטית למשתמש חדש</description>
+      <description xml:lang="hu">Új automatikus indítási beavatkozási pont létrehozása</description>
+      <description xml:lang="ia">Crea puncto de ancorage (hook) de startar automatic de nove usator</description>
+      <description xml:lang="it">Crea hook di avvio automatico per il nuovo utente</description>
+      <description xml:lang="ka">ახალი მომხმარებლის ავტოგაშვების კაუჭის შექმნა</description>
+      <description xml:lang="ko">새 사용자 자동 시작 후크 생성</description>
+      <description xml:lang="lt">Sukurti naujo naudotojo automatinio paleidimo gaudyklę</description>
+      <description xml:lang="lv">Izveidot jauna lietotāja automātiskās palaišanas āķi</description>
+      <description xml:lang="nb">Lag ny bruker autostart-krok</description>
+      <description xml:lang="nl">Autostart-hook van nieuwe gebruiker aanmaken</description>
+      <description xml:lang="nn">Legg til autostart-krok for ny brukar</description>
+      <description xml:lang="pa">ਨਵਾਂ ਵਰਤੋਂਕਾਰ ਆਟੋ-ਸਟਾਰਟ Autostart ਹੁਕ ਬਣਾਓ</description>
+      <description xml:lang="pl">Utwórz nowy haczyk wykonywany na starcie</description>
+      <description xml:lang="pt_BR">Criar gancho de inicialização automática de novo usuário</description>
+      <description xml:lang="ro">Creează cârlig de pornire automată pentru noul utilizator</description>
+      <description xml:lang="ru">Создание обработчика автозапуска для нового пользователя</description>
+      <description xml:lang="sk">Vytvoriť háčik automatického spustenia pre nového používateľa</description>
+      <description xml:lang="sl">Ustvari nov kavelj za samodejni zagon uporabnika</description>
+      <description xml:lang="sr">Направи куку самопокретања за новог корисника</description>
+      <description xml:lang="sv">Skapa automatisk startinkoppling för ny användare</description>
+      <description xml:lang="tr">Yeni Kullanıcı Kendiliğinden Başlatma Kancası Oluştur</description>
+      <description xml:lang="uk">Скрипт автозапуску для нового користувача</description>
+      <description xml:lang="zh_CN">创建新用户自动启动钩子</description>
+      <description xml:lang="zh_TW">建立新使用者自動啟動掛鉤</description>
+      <message xml:lang="ar">إنشاء خطاف بدء آلي للمستخدم المنشأ حديثًا</message>
+      <message xml:lang="az">Yeni istifadəçi üçün avtobaşlatma qoşması yaratmaq</message>
+      <message xml:lang="ca">Crea un ganxo d'inici automàtic per al nou usuari creat</message>
+      <message xml:lang="cs">Vytvořit háček pro automatické spuštění nově vytvořeného uživatele</message>
+      <message xml:lang="de">Einen Autostart-Hook für den neuen Benutzer erstellen</message>
+      <message xml:lang="el">Δημιουργία μηχανισμού αυτόματης εκκίνησης για τον νέο χρήστη</message>
+      <message>Create an autostart hook for the newly created user</message>
+      <message xml:lang="es">Crear un gancho de inicio automático para el usuario recién creado</message>
+      <message xml:lang="eu">Sortu berriki sortutako erabiltzailearentzako abio automatikorako kako bat</message>
+      <message xml:lang="fi">Luo vasta luodulle käyttäjälle automaattikäynnistyskoukku</message>
+      <message xml:lang="fr">Créer un script final pour démarrage automatique de l'utilisateur nouvellement créé</message>
+      <message xml:lang="he">יצירת התליית התחלה אוטומטית למשתמש החדש שנוצר</message>
+      <message xml:lang="hu">Létrehoz egy automatikus indítási beavatkozási pontot az újonnan létrehozott felhasználónak</message>
+      <message xml:lang="ia">Crea un puncto de ancorage (hook) de startar automatic per le usator create recentemente</message>
+      <message xml:lang="it">Crea un hook di avvio automatico per l'utente appena creato</message>
+      <message xml:lang="ka">ავტოგაშვების კაუჭის შექმნა ახლად შექმნილი მომხმარებლისთვის</message>
+      <message xml:lang="ko">새로 생성된 사용자의 자동 시작 후크 생성</message>
+      <message xml:lang="lt">Sukurti naujai sukurtam naudotojui automatinio paleidimo gaudyklę</message>
+      <message xml:lang="lv">Izveidot automātiskās palaišanas āķi no jauna izveidotam lietotājam</message>
+      <message xml:lang="nb">Lag en autostart-krok for den nylig opprettede brukeren</message>
+      <message xml:lang="nl">Een autostart-hook voor de nieuw aangemaakte gebruiker aanmaken</message>
+      <message xml:lang="nn">Legg til ein autostart-krok for den nye brukaren</message>
+      <message xml:lang="pa">ਨਵੇਂ ਬਣਾਏ ਵਰਤੋਂਕਾਰ ਲਈ ਆਟੋ-ਸਟਾਰਟ ਹੁਕ ਬਣਾਓ</message>
+      <message xml:lang="pl">Utwórz nowy haczyk wykonywany na starcie dla nowo utworzonego użytkownika</message>
+      <message xml:lang="pt_BR">Criar um gancho de inicialização automática para o usuário recém-criado</message>
+      <message xml:lang="ro">Creează un cârlig de pornire automată pentru utilizatorul proaspăt creat</message>
+      <message xml:lang="ru">Создание обработчика автозапуска для только что созданного пользователя</message>
+      <message xml:lang="sk">Vytvoriť háčik automatického spustenia pre novo vytvoreného používateľa</message>
+      <message xml:lang="sl">Ustvari kavelj za samodejni zagon za novo ustvarjenega uporabnika</message>
+      <message xml:lang="sr">Направи куку самопокретања за новонаправљеног корисника</message>
+      <message xml:lang="sv">Skapa en automatisk startinkoppling för den nyskapade användaren</message>
+      <message xml:lang="tr">Yeni oluşturulan kullanıcı için bir kendiliğinden başlatma kancası oluşturun</message>
+      <message xml:lang="uk">Створити скрипт автозапуску для новоствореного користувача</message>
+      <message xml:lang="zh_CN">为新创建的用户创建一个自动启动钩子</message>
+      <message xml:lang="zh_TW">為新建立的使用者建立自動啟動掛鉤</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.createuser" >
+      <description xml:lang="ar">أنشئ مستخدِم</description>
+      <description xml:lang="ca">Creació d'un usuari</description>
+      <description xml:lang="cs">Vytvořit uživatele</description>
+      <description xml:lang="de">Benutzer erstellen</description>
+      <description>Create User</description>
+      <description xml:lang="es">Crear usuario</description>
+      <description xml:lang="eu">Sortu erabiltzailea</description>
+      <description xml:lang="fi">Luo käyttäjä</description>
+      <description xml:lang="fr">Créer un utilisateur</description>
+      <description xml:lang="ga">Cruthaigh Úsáideoir</description>
+      <description xml:lang="he">יצירת משתמש</description>
+      <description xml:lang="hu">Felhasználó létrehozása</description>
+      <description xml:lang="ia">Crea usator</description>
+      <description xml:lang="it">Crea utente</description>
+      <description xml:lang="ka">მომხმარებლის შექმნა</description>
+      <description xml:lang="ko">사용자 만들기</description>
+      <description xml:lang="lt">Sukurti naudotoją</description>
+      <description xml:lang="lv">Izveidot lietotāju</description>
+      <description xml:lang="nb">Legg til bruker</description>
+      <description xml:lang="nl">Gebruiker aanmaken</description>
+      <description xml:lang="nn">Legg til brukar</description>
+      <description xml:lang="pa">ਵਰਤੋਂਕਾਰ ਬਣਾਓ</description>
+      <description xml:lang="pl">Utwórz użytkownika</description>
+      <description xml:lang="pt_BR">Criar usuário</description>
+      <description xml:lang="ro">Creează utilizator</description>
+      <description xml:lang="ru">Создание пользователя</description>
+      <description xml:lang="sk">Vytvoriť používateľa</description>
+      <description xml:lang="sl">Ustvari uporabnika</description>
+      <description xml:lang="sr">Направи корисника</description>
+      <description xml:lang="sv">Skapa användare</description>
+      <description xml:lang="ta">பயனரை உருவாக்கு</description>
+      <description xml:lang="tr">Kullanıcı Oluştur</description>
+      <description xml:lang="ug">ئىشلەتكۈچى قۇر</description>
+      <description xml:lang="uk">Створення запису користувача</description>
+      <description xml:lang="zh_CN">创建用户</description>
+      <description xml:lang="zh_TW">建立使用者</description>
+      <message xml:lang="ar">أنشئ حساب المستخدم الأول</message>
+      <message xml:lang="ca">Crea el compte d'usuari inicial</message>
+      <message xml:lang="cs">Vytvořit úvodní uživatelský účet</message>
+      <message xml:lang="de">Das erste Benutzerkonto erstellen</message>
+      <message>Create the initial user account</message>
+      <message xml:lang="es">Crear la cuenta inicial del usuario</message>
+      <message xml:lang="eu">Sortu hasierako erabiltzaile-kontua</message>
+      <message xml:lang="fi">Luo alustava käyttäjätunnus</message>
+      <message xml:lang="fr">Créer le compte utilisateur initial</message>
+      <message xml:lang="ga">Cruthaítear cuntas an chéad úsáideoir</message>
+      <message xml:lang="he">יצירת חשבון המשתמש הראשוני</message>
+      <message xml:lang="hu">Létrehozza az első felhasználói fiókot</message>
+      <message xml:lang="ia">Crea le conto initial del usator</message>
+      <message xml:lang="it">Crea l'account utente iniziale</message>
+      <message xml:lang="ka">საწყისი მომხმარებლის ანგარიშის შექმნა</message>
+      <message xml:lang="ko">초기 사용자 계정 만들기</message>
+      <message xml:lang="lt">Sukurti pradinę naudotojo paskyrą</message>
+      <message xml:lang="lv">Izveidot sākotnējā lietotāja kontu</message>
+      <message xml:lang="nb">Lag den første brukerkontoen</message>
+      <message xml:lang="nl">Maak het initiële gebruikersaccount aan</message>
+      <message xml:lang="nn">Legg til første brukarkonto</message>
+      <message xml:lang="pa">ਸ਼ੁਰੂਆਤੀ ਵਰਤੋਂਕਾਰ ਖਾਤਾ ਬਣਾਓ</message>
+      <message xml:lang="pl">Utwórz konto pierwszego użytkownika</message>
+      <message xml:lang="pt_BR">Cria a conta de usuário inicial</message>
+      <message xml:lang="ro">Creează contul de utilizator inițial</message>
+      <message xml:lang="ru">Создание начальной учётной записи пользователя</message>
+      <message xml:lang="sk">Vytvoriť počiatočný používateľský účet</message>
+      <message xml:lang="sl">Ustvari začetni uporabnikov račun</message>
+      <message xml:lang="sr">Направи почетни кориснички налог</message>
+      <message xml:lang="sv">Skapa det ursprungliga användarkontot</message>
+      <message xml:lang="tr">İlk kullanıcı hesabını oluşturun</message>
+      <message xml:lang="uk">Створення початкового запису користувача</message>
+      <message xml:lang="zh_CN">创建初始用户账户</message>
+      <message xml:lang="zh_TW">建立初始使用者帳號</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.removeautologin" >
+      <description xml:lang="ar">إزالة الولوج الآلي</description>
+      <description xml:lang="az">Avtogirişi silin</description>
+      <description xml:lang="ca">Elimina l'inici de sessió automàtic</description>
+      <description xml:lang="cs">Odstranit automatické přihlášení</description>
+      <description xml:lang="de">Automatische Anmeldung entfernen</description>
+      <description>Remove Autologin</description>
+      <description xml:lang="es">Eliminar inicio de sesión automático</description>
+      <description xml:lang="eu">Kendu saioan automatikoki sartzea</description>
+      <description xml:lang="fi">Poista automaattikirjautuminen</description>
+      <description xml:lang="fr">Supprimer la connexion automatique</description>
+      <description xml:lang="he">הסרת כניסה אוטומטית</description>
+      <description xml:lang="hu">Automatikus bejelentkezés kikapcsolása</description>
+      <description xml:lang="ia">Remove Autologin (accesso automatic)</description>
+      <description xml:lang="it">Rimuovi l'accesso automatico</description>
+      <description xml:lang="ka">ავტოშესვლის წაშლა</description>
+      <description xml:lang="ko">자동 로그인 삭제</description>
+      <description xml:lang="lt">Šalinti automatinį prisijungimą</description>
+      <description xml:lang="lv">Noņemt automātisko ierakstīšanos</description>
+      <description xml:lang="nb">Fjern automatisk innlogging</description>
+      <description xml:lang="nl">Automatisch aanmelden verwijderen</description>
+      <description xml:lang="nn">Fjern automatisk innlogging</description>
+      <description xml:lang="pa">ਆਟੋ-ਲਾਗਇਨ ਨੂੰ ਹਟਾਓ</description>
+      <description xml:lang="pl">Usuń autologowanie</description>
+      <description xml:lang="pt_BR">Remover o login automático</description>
+      <description xml:lang="ro">Elimină autentificarea automată</description>
+      <description xml:lang="ru">Отключение автоматического входа</description>
+      <description xml:lang="sk">Odstrániť automatické prihlásenie</description>
+      <description xml:lang="sl">Odstrani Autologin</description>
+      <description xml:lang="sr">Уклони аутоматско пријављивање</description>
+      <description xml:lang="sv">Ta bort automatisk inloggning</description>
+      <description xml:lang="tr">Kendiliğinden Oturum Açmayı Kaldır</description>
+      <description xml:lang="uk">Вилучити автоматичний вхід до системи</description>
+      <description xml:lang="zh_CN">移除自动登录</description>
+      <description xml:lang="zh_TW">移除自動登入</description>
+      <message xml:lang="ar">إزالة إعداد الولوج الآلي لمدير العرض</message>
+      <message xml:lang="ca">Elimina la configuració d'inici de sessió automàtic del gestor de pantalla</message>
+      <message xml:lang="cs">Odstranit konfiguraci správce obrazovky při automatickém přihlášení</message>
+      <message xml:lang="de">Einstellung für die automatische Anmeldung des Display-Managers entfernen</message>
+      <message>Remove Display Manager autologin configuration</message>
+      <message xml:lang="es">Eliminar la configuración de inicio de sesión automático del gestor de pantalla</message>
+      <message xml:lang="eu">Kendu pantaila-kudeatzailearen saio-hasiera automatikoa</message>
+      <message xml:lang="fi">Poista kirjautumisenhallinnan automaattikirjautumismääritys</message>
+      <message xml:lang="fr">Supprimer la configuration de connexion automatique du gestionnaire d'affichage</message>
+      <message xml:lang="he">הסרת הגדרות כניסה אוטומטית של מנהל התצוגה</message>
+      <message xml:lang="hu">Eltávolítja a bejelentkezéskezelő automatikus bejelentkezési konfigurációját</message>
+      <message xml:lang="ia">Remove aonfiguration de autologin de Gerente de Monstrator</message>
+      <message xml:lang="it">Rimuovi la configurazione di accesso automatico del display manager</message>
+      <message xml:lang="ka">ეკრანის მმართველის ავტოშესვლის კონფიგურაციის წაშლა</message>
+      <message xml:lang="ko">디스플레이 관리자 자동 로그인 설정 삭제</message>
+      <message xml:lang="lt">Šalinti monitoriaus tvarkytuvės automatinio prisijungimo konfigūraciją</message>
+      <message xml:lang="lv">Attālā displeja pārvaldnieka automātiskās ierakstīšanās konfigurācija</message>
+      <message xml:lang="nb">Fjern automatisk innloggingoppsett for innloggingsvinduet</message>
+      <message xml:lang="nl">Configuratie van automatisch aanmelden van schermbeheerder verwijderen</message>
+      <message xml:lang="nn">Fjern oppsettet for automatisk innlogging frå innloggingshandsamaren</message>
+      <message xml:lang="pa">ਡਿਸਪਲੇਅ ਮੈਨੇਜਰ ਆਟੋ-ਲਾਗਇਨ ਸੰਰਚਨਾ ਨੂੰ ਹਟਾਓ</message>
+      <message xml:lang="pl">Usuń ustawienia autologowania z zarządzania wyświetlaniem</message>
+      <message xml:lang="pt_BR">Remover configuração de login automático do gerenciador de login</message>
+      <message xml:lang="ro">Elimină configurările de autentificare automată din gestionarul de autentificare</message>
+      <message xml:lang="ru">Удаление параметров автоматического входа из конфигурации диспетчера входа</message>
+      <message xml:lang="sk">Odstrániť konfiguráciu automatického prihlásenia správcu displeja</message>
+      <message xml:lang="sl">Odstrani konfiguracijo samodejne prijave upravljalnika prikaza</message>
+      <message xml:lang="sr">Уклони поставу аутоматског пријављивања из менаџера пријављивања</message>
+      <message xml:lang="sv">Ta bort skärmhanteringens automatiska inloggningsinställning</message>
+      <message xml:lang="tr">Görüntü yöneticisinin kendiliğinden oturum açma yapılandırmasını kaldırın</message>
+      <message xml:lang="uk">Вилучити налаштування автозапуску засобу керування дисплеєм</message>
+      <message xml:lang="zh_CN">移除显示管理器自动登录配置</message>
+      <message xml:lang="zh_TW">移除登入畫面的自動登入配置</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.setnewuserdisplayscaling" >
+      <description xml:lang="ar">عيّن مقياس عرض المستخدم الجديد</description>
+      <description xml:lang="az">Yeni istifdəçi üçün ekran miqyası</description>
+      <description xml:lang="ca">Estableix l'escalat de pantalla d'usuari nou</description>
+      <description xml:lang="cs">Nastavit měřítko displeje pro nového uživatele</description>
+      <description xml:lang="de">Anzeigeskalierung für den neuen Benutzer festlegen</description>
+      <description xml:lang="el">Ορισμός κλιμάκωσης οθόνης για τον νέο χρήστη</description>
+      <description>Set New User Display Scaling</description>
+      <description xml:lang="es">Definir escalado de pantalla para nuevo usuario</description>
+      <description xml:lang="eu">Ezarri erabiltzaile berriaren bistaratzaile-eskala</description>
+      <description xml:lang="fi">Aseta uuden käyttäjän näyttömittakaava</description>
+      <description xml:lang="fr">Définir le dimensionnement pour le nouvel utilisateur</description>
+      <description xml:lang="he">קנה מידה לתצוגה של משתמש חדש</description>
+      <description xml:lang="hu">Képernyőméretezés beállítása</description>
+      <description xml:lang="ia">Assigna le Scalar de monstrator de Nove Usator</description>
+      <description xml:lang="it">Imposta il ridimensionamento dello schermo del nuovo utente</description>
+      <description xml:lang="ka">ახალი მომხმარებლის ეკრანის მასშტაბის დაყენება</description>
+      <description xml:lang="ko">새 사용자 디스플레이 크기 조정 설정</description>
+      <description xml:lang="lt">Nustatyti naujam naudotojui atvaizdavimo mastelį</description>
+      <description xml:lang="lv">Iestatīt jaunā lietotāja displeja mērogojumu</description>
+      <description xml:lang="nb">Velg skjermskalering for den nye brukeren</description>
+      <description xml:lang="nl">Zet beeldschermschaal van de nieuwe gebruiker</description>
+      <description xml:lang="nn">Vel skjermskalering for ny brukar</description>
+      <description xml:lang="pa">ਨਵੇਂ ਵਰਤੋਂਕਾਰ ਲਈ ਡਿਸਪਲੇਅ ਸਕੇਲਿੰਗ ਲਾਓ</description>
+      <description xml:lang="pl">Ustaw skalowanie wyświetlacza nowego użytkownika</description>
+      <description xml:lang="pt_BR">Definir nova escala de exibição do usuário</description>
+      <description xml:lang="ro">Stabilește scalarea afișajului pentru noul utilizator</description>
+      <description xml:lang="ru">Масштабирование экрана для нового пользователя</description>
+      <description xml:lang="sk">Nastaviť mierku displeja pre nového používateľa</description>
+      <description xml:lang="sl">Nastavi novemu uporabniku povečavo zaslona</description>
+      <description xml:lang="sr">Постави скалирање екрана новог корисника</description>
+      <description xml:lang="sv">Ställ in bildskärmsskalning för ny användare</description>
+      <description xml:lang="tr">Yeni Kullanıcı Görüntü Ölçeklendirmesini Ayarla</description>
+      <description xml:lang="uk">Встановити масштабування дисплея для нового користувача</description>
+      <description xml:lang="zh_CN">设置新用户显示缩放</description>
+      <description xml:lang="zh_TW">設定新使用者顯示器縮放</description>
+      <message xml:lang="ar">عيّن مقياس العرض للمستخدم الجديد</message>
+      <message xml:lang="az">Yeni istifadəçi üçün ekran miqyasını təyin etmək</message>
+      <message xml:lang="ca">Estableix l'escalat de pantalla per a l'usuari nou</message>
+      <message xml:lang="cs">Nastavit měřítko displeje pro nového uživatele</message>
+      <message xml:lang="de">Die Anzeigeskalierung für den neuen Benutzer festlegen</message>
+      <message>Set display scaling for the new user</message>
+      <message xml:lang="es">Definir el escalado de pantalla para el nuevo usuario</message>
+      <message xml:lang="eu">Ezarri erabiltzaile berriaren bistaratzailearen eskala</message>
+      <message xml:lang="fi">Aseta uuden käyttäjän näyttömittakaava</message>
+      <message xml:lang="fr">Définir le dimensionnement de l'écran pour le nouvel utilisateur</message>
+      <message xml:lang="he">הגדרת קנה מידה לתצוגה של המשתמש החדש</message>
+      <message xml:lang="hu">Beállítja az új felhasználó képernyőméretezését</message>
+      <message xml:lang="ia">Assigna le Scalar de monstrator per le nove usator</message>
+      <message xml:lang="it">Imposta il ridimensionamento dello schermo per il nuovo utente</message>
+      <message xml:lang="ka">ეკრანის მასშტაბის დაყენება ახალი მომხმარებლისთვის</message>
+      <message xml:lang="ko">새 사용자의 디스플레이 크기 조정 설정</message>
+      <message xml:lang="lt">Nustatyti naujam naudotojui atvaizdavimo mastelį</message>
+      <message xml:lang="lv">Iestatīt jaunā lietotāja displeja mērogojumu</message>
+      <message xml:lang="nb">Velg en tilpasset skjermskalering for brukeren</message>
+      <message xml:lang="nl">Zet beeldschermschaal voor de nieuwe gebruiker</message>
+      <message xml:lang="nn">Vel skjermskalering for den nye brukaren</message>
+      <message xml:lang="pl">Ustaw skalowanie wyświetlacza dla nowego użytkownika</message>
+      <message xml:lang="pt_BR">Definir escala de exibição para o novo usuário</message>
+      <message xml:lang="ro">Stabilește scalarea afișajului pentru noul utilizator</message>
+      <message xml:lang="ru">Установка масштаба экрана для нового пользователя</message>
+      <message xml:lang="sk">Nastaviť mierku displeja pre nového používateľa</message>
+      <message xml:lang="sl">Nastavit povečavo zaslona za novega uporabnika</message>
+      <message xml:lang="sr">Постави скалирање екрана за новог корисника</message>
+      <message xml:lang="sv">Ställ in bildskärmsskalningen för den nya användaren</message>
+      <message xml:lang="tr">Yeni kullanıcı için görüntü ölçeklendirmesini ayarlayın</message>
+      <message xml:lang="uk">Встановити масштабування дисплея для нового користувача</message>
+      <message xml:lang="zh_CN">设置新用户的显示缩放</message>
+      <message xml:lang="zh_TW">為新建立的使用者建立顯示器縮放</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.setnewuserglobaltheme" >
+      <description xml:lang="ar">عيِّن سمة عامة جديدة للمستخدم</description>
+      <description xml:lang="az">Yeni istifadəçi üçün xarici görünüş</description>
+      <description xml:lang="ca">Estableix el tema global d'usuari nou</description>
+      <description xml:lang="cs">Nastavit globální téma nového uživatele</description>
+      <description xml:lang="de">Globales Design für den neuen Benutzer festlegen</description>
+      <description xml:lang="el">Ορισμός καθολικού θέματος για τον νέο χρήστη</description>
+      <description>Set New User Global Theme</description>
+      <description xml:lang="es">Definir tema global para nuevo usuario</description>
+      <description xml:lang="eu">Ezarri Erabiltzaile berriaren gai globala</description>
+      <description xml:lang="fi">Aseta uuden käyttäjän yleisteema</description>
+      <description xml:lang="fr">Définir un nouveau thème global d'utilisateur</description>
+      <description xml:lang="he">הגדרת ערכת עיצוב מקיפה למשתמש חדש</description>
+      <description xml:lang="hu">Globális téma beállítása</description>
+      <description xml:lang="ia">Assigna Thema Global de Nove Usator</description>
+      <description xml:lang="it">Imposta il tema globale del nuovo utente</description>
+      <description xml:lang="ka">ახალი მომხმარებლის გლობალური თემის დაყენება</description>
+      <description xml:lang="ko">새 사용자 전역 테마 설정</description>
+      <description xml:lang="lt">Nustatyti naujam naudotojui visuotinį apipavidalinimą</description>
+      <description xml:lang="lv">Iestatīt jauna lietotāja globālo motīvu</description>
+      <description xml:lang="nb">Velg nytt bruker globalt tema</description>
+      <description xml:lang="nl">Zet nieuw globaal thema van gebruiker</description>
+      <description xml:lang="nn">Vel globalt tema for ny brukar</description>
+      <description xml:lang="pa">ਨਵਾਂ ਵਰਤੋਂਕਾਰ ਗਲੋਬਲ ਥੀਮ ਲਾਓ</description>
+      <description xml:lang="pl">Ustaw globalny wygląd nowego użytkownika</description>
+      <description xml:lang="pt_BR">Definir novo tema global do usuário</description>
+      <description xml:lang="ro">Stabilește tematica globală pentru noul utilizator</description>
+      <description xml:lang="ru">Установка оформления рабочей среды нового пользователя</description>
+      <description xml:lang="sk">Nastaviť globálnu tému pre nového používateľa</description>
+      <description xml:lang="sl">Nastavi novemu uporabniku globalno temo</description>
+      <description xml:lang="sr">Постави глобалну тему новог корисника</description>
+      <description xml:lang="sv">Ställ in globalt tema för ny användare</description>
+      <description xml:lang="tr">Yeni Kullanıcı Global Teması Ayarla</description>
+      <description xml:lang="uk">Встановити загальну тему для нового користувача</description>
+      <description xml:lang="zh_CN">设置新用户全局主题</description>
+      <description xml:lang="zh_TW">設定新使用者的全域主題</description>
+      <message xml:lang="ar">عيّن السمة العامة للمستخدم الجديد</message>
+      <message xml:lang="az">Yeni istifadəçi üçün ümumi xarici görünüş tərzi təyin etmək</message>
+      <message xml:lang="ca">Estableix el tema global per a l'usuari nou</message>
+      <message xml:lang="cs">Nastavit globální téma nového uživatele</message>
+      <message xml:lang="de">Das globale Design für den neuen Benutzer festlegen</message>
+      <message>Set the global theme for the new user</message>
+      <message xml:lang="es">Definir el tema global para el nuevo usuario</message>
+      <message xml:lang="eu">Ezarri erabiltzaile berriaren gai globala</message>
+      <message xml:lang="fi">Aseta uuden käyttäjän yleisteema</message>
+      <message xml:lang="fr">Définir le thème global pour le nouvel utilisateur</message>
+      <message xml:lang="he">הגדרת ערכת העיצוב המקיפה למשתמש החדש</message>
+      <message xml:lang="hu">Beállítja az új felhasználó globális témáját</message>
+      <message xml:lang="ia">Assigna le thema global per le nove usator</message>
+      <message xml:lang="it">Imposta il tema globale per il nuovo utente</message>
+      <message xml:lang="ka">გლობალური თემის დაყენება ახალი მომხმარებლისთვის</message>
+      <message xml:lang="ko">새 사용자의 전역 테마 설정</message>
+      <message xml:lang="lt">Nustatyti naujam naudotojui visuotinį apipavidalinimą</message>
+      <message xml:lang="lv">Iestatīt globālo motīvu jaunajam lietotājam</message>
+      <message xml:lang="nb">Velg det globale temaet for den nye brukeren</message>
+      <message xml:lang="nl">Zet het globale thema voor de nieuwe gebruiker</message>
+      <message xml:lang="nn">Vel det globale temaet for den nye brukaren</message>
+      <message xml:lang="pa">ਨਵੇਂ ਵਰਤੋਂਕਾਰ ਲਈ ਗਲੋਬਲ ਥੀਮ ਲਾਓ</message>
+      <message xml:lang="pl">Ustaw globalny wygląd dla nowego użytkownika</message>
+      <message xml:lang="pt_BR">Definir o tema global para o novo usuário</message>
+      <message xml:lang="ro">Stabilește tematica globală pentru noul utilizator</message>
+      <message xml:lang="ru">Установка оформления рабочей среды для нового пользователя</message>
+      <message xml:lang="sk">Nastaviť globálnu tému pre nového používateľa</message>
+      <message xml:lang="sl">Nastavi globalno temo za novega uporabnika</message>
+      <message xml:lang="sr">Постави глобалну тему за новог корисника</message>
+      <message xml:lang="sv">Ställ in det globala temat för den nya användaren</message>
+      <message xml:lang="tr">Yeni kullanıcı için global temayı ayarlayın</message>
+      <message xml:lang="uk">Встановити загальну тему для нового користувача</message>
+      <message xml:lang="zh_CN">设置新用户的全局主题</message>
+      <message xml:lang="zh_TW">為新建立的使用者設定全域主題</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.setnewuserhomedirectoryownership" >
+      <description xml:lang="ar">تعيين ملكية مجلد البيت للمستخدمين الجدد</description>
+      <description xml:lang="az">Yeni istifadəçi üçün ev qovluğu sahibliyi</description>
+      <description xml:lang="ca">Estableix la propietat del directori d'inici d'usuari nou</description>
+      <description xml:lang="cs">Nastavit vlastnictví domovského adresáře pro nového uživatele</description>
+      <description xml:lang="de">Die Eigentumsrechte des persönlichen Ordners für den neuen Benutzer festlegen</description>
+      <description xml:lang="el">Ορισμός ιδιοκτησίας του προσωπικού φακέλου του νέου χρήστη</description>
+      <description>Set New User Home Directory Ownership</description>
+      <description xml:lang="es">Definir el propietario del directorio personal de nuevo usuario</description>
+      <description xml:lang="eu">Ezarri Etxeko karpetaren jabetza berria</description>
+      <description xml:lang="fi">Aseta uuden käyttäjän kotikansion omistajuus</description>
+      <description xml:lang="fr">Définir la propriété du dossier personnel du nouvel utilisateur</description>
+      <description xml:lang="he">הגדרת בעלות תיקייה בית של משתמשים חדשים</description>
+      <description xml:lang="hu">Saját mappa tulajdonjogának beállítása</description>
+      <description xml:lang="ia">Assigna Proprietate de Directorio Initial(home) deNove Usator</description>
+      <description xml:lang="it">Imposta la proprietà della cartella home del nuovo utente</description>
+      <description xml:lang="ka">ახალი მომხმარებლის საწყისი საქაღალდის მფლობელობის დაყენება</description>
+      <description xml:lang="ko">새 사용자 홈 디렉터리 소유권 설정</description>
+      <description xml:lang="lt">Nustatyti naujo naudotojo namų katalogo nuosavybę</description>
+      <description xml:lang="lv">Iestatīt jaunā lietotāja mājas mapes īpašnieku</description>
+      <description xml:lang="nb">Velg eierskapstillatelser for hjemmemappa til brukeren</description>
+      <description xml:lang="nl">Persoonlijke map van nieuwe gebruiker instellen op eigendom</description>
+      <description xml:lang="nn">Vel eigarskap til heimemappa for ny brukar</description>
+      <description xml:lang="pa">ਨਵੇਂ ਵਰਤੋਂਕਾਰ ਲਈ ਹੋਮ ਡਾਇਰੈਕਟਰੀ ਮਾਲਕੀਅਤ ਸੈੱਟ ਕਰੋ</description>
+      <description xml:lang="pl">Ustaw właściciela katalogu nowego użytkownika</description>
+      <description xml:lang="pt_BR">Definir propriedade do diretório inicial do novo usuário</description>
+      <description xml:lang="ro">Stabilește proprietatea asupra dosarului Acasă al noului utilizator</description>
+      <description xml:lang="ru">Назначение владельца домашней папки нового пользователя</description>
+      <description xml:lang="sk">Nastaviť vlastníctvo domovského priečinka nového používateľa</description>
+      <description xml:lang="sl">Nastavi lastništvo domačega imenika novega uporabnika</description>
+      <description xml:lang="sr">Постави власништво над домаћом фасциклом новог корисника</description>
+      <description xml:lang="sv">Ställ in ägare av hemkatalog för ny användare</description>
+      <description xml:lang="tr">Yeni Kullanıcı Ana Klasör Sahipliğini Ayarla</description>
+      <description xml:lang="uk">Встановити права власності на домашній каталог нового користувача</description>
+      <description xml:lang="zh_CN">设置新用户主目录所有权</description>
+      <description xml:lang="zh_TW">設定新使用者家目錄擁有者</description>
+      <message xml:lang="ar">تعيين ملكية مجلد البيت للمستخدمين الجدد</message>
+      <message xml:lang="az">Ən yeni yaradılmış istifadəçi üçün yeni ev qovluğuna sahibliyi təyin etmək</message>
+      <message xml:lang="ca">Estableix la propietat del directori d'inici dels usuaris nous a l'usuari creat nou</message>
+      <message xml:lang="cs">Nastavit vlastnictví domovského adresáře pro nového uživatele na nového uživatele</message>
+      <message xml:lang="de">Die Eigentumsrechte des persönlichen Ordners werden auf den neu erstellten Benutzer übertragen</message>
+      <message xml:lang="el">Ανάθεση της ιδιοκτησίας του προσωπικού φακέλου στον νέο χρήστη</message>
+      <message>Set ownership of the new users home directory to the newly created user</message>
+      <message xml:lang="es">Definir el propietario del directorio personal de los nuevos usuarios al usuario recién creado</message>
+      <message xml:lang="eu">Ezarri erabiltzaileen etxeko direktorio berriaren jabetza berriki sortutako erabiltzaileari</message>
+      <message xml:lang="fi">Aseta uusien käyttäjien kotikansion omistajuus heille</message>
+      <message xml:lang="fr">Définissez la propriété du dossier personnel des nouveaux utilisateurs sur l'utilisateur nouvellement créé</message>
+      <message xml:lang="he">הגדרת בעלות על תיקיית הבית של המשתמשים החדשים לטובת המשתמשים החדשים</message>
+      <message xml:lang="hu">Beállítja az új felhasználót a saját mappája tulajdonosának</message>
+      <message xml:lang="ia">Assigna proprietate del directorio initial (home) de nove usator al usator create recentemente</message>
+      <message xml:lang="it">Imposta la proprietà della cartella home del nuovo utente sull'utente appena creato</message>
+      <message xml:lang="ka">ახალი მომხმარებლების საწყისი საქაღალდის მფლობელობის დაყენება ახლად შექმნილ მომხმარებელზე</message>
+      <message xml:lang="ko">새로 생성된 사용자의 홈 디렉터리의 소유권 설정</message>
+      <message xml:lang="lt">Nustatyti naujai sukurtam naudotojui naujų naudotojų namų katalogo nuosavybę</message>
+      <message xml:lang="lv">Iestatīt īpašnieku jaunā lietotāja mājas mapei uz no jauna izveidojamo lietotāju</message>
+      <message xml:lang="nb">Velg eierskapet av hjemmemappa til den nylige opprettede brukeren</message>
+      <message xml:lang="nl">Eigendom van de nieuwe persoonlijke map van de gebruiker instellen op de nieuw aangemaakte gebruiker</message>
+      <message xml:lang="nn">Vel eigarskapen til heimemappa for den nye brukaren</message>
+      <message xml:lang="pl">Ustaw właściciela katalogu domowego dla nowo utworzonego użytkownika</message>
+      <message xml:lang="pt_BR">Definir a propriedade do diretório inicial (home) dos novos usuários para o usuário recém-criado</message>
+      <message xml:lang="ro">Stabilește proprietatea asupra dosarului Acasă astfel încât să fie deținut de către noul utilizator</message>
+      <message xml:lang="ru">Передача домашней папки во владение только что созданному пользователю</message>
+      <message xml:lang="sk">Nastaviť vlastníctvo domovského priečinka nového používateľa na novo vytvoreného používateľa</message>
+      <message xml:lang="sl">Nastavi lastništvo domačega imenika novega uporabnika na novo ustvarjenega uporabnika</message>
+      <message xml:lang="sr">Додели новонаправљеном кориснику власништво над његовом домаћом фасциклом</message>
+      <message xml:lang="sv">Ställ in ägare av den nya användarens hemkatalog till den nyskapade användaren</message>
+      <message xml:lang="tr">Yeni kullanıcının ana klasör sahipliğini yeni oluşturulan kullanıcıya verin</message>
+      <message xml:lang="uk">Встановити права власності на домашній каталог нових користувачів для новоствореного користувача</message>
+      <message xml:lang="zh_CN">将新用户的主目录所有权设置为新建用户所有</message>
+      <message xml:lang="zh_TW">將新使用者的家目錄的擁有者設為該新使用者</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+   <action id="org.kde.plasmasetup.setnewusertempautologin" >
+      <description xml:lang="ar">تعيين الولوج الآلي المؤقت للمستخدمين الجدد</description>
+      <description xml:lang="az">Yeni istifadəçi üçün müvəqqəti avtogiriş</description>
+      <description xml:lang="ca">Estableix l'inici de sessió automàtic temporal d'usuari nou</description>
+      <description xml:lang="cs">Nastavit dočasné automatické přihlašování pro nového uživatele</description>
+      <description xml:lang="de">Automatische Anmeldung des neuen Benutzers temporär aktivieren</description>
+      <description xml:lang="el">Ρύθμιση προσωρινής αυτόματης σύνδεσης για τον νέο χρήστη</description>
+      <description>Set New User Temporary Autologin</description>
+      <description xml:lang="es">Definir el inicio de sesión temporal de nuevo usuario</description>
+      <description xml:lang="eu">Ezarri erabiltzaile berriaren aldi baterako saio sarrera automatikoa</description>
+      <description xml:lang="fi">Aseta uudelle käyttäjälle tilapäinen automaattikirjautuminen</description>
+      <description xml:lang="fr">Définir la connexion automatique temporaire du nouvel utilisateur</description>
+      <description xml:lang="he">הגדרת כניסה אוטומטית זמנית למשתמשים חדשים</description>
+      <description xml:lang="hu">Ideiglenes automatikus bejelentkezés beállítása</description>
+      <description xml:lang="ia">Assigna Autologin Temporanee de Nove Usator</description>
+      <description xml:lang="it">Imposta l'accesso automatico temporaneo del nuovo utente</description>
+      <description xml:lang="ka">ახალი მომხმარებლის დროებითი ავტოშესვლის დაყენება</description>
+      <description xml:lang="ko">새 사용자의 임시 자동 로그인 설정</description>
+      <description xml:lang="lt">Nustatyti naujo naudotojo laikiną automatinį prisijungimą</description>
+      <description xml:lang="lv">Iestatīt jaunā lietotāja pagaidu automātisko ierakstīšanos</description>
+      <description xml:lang="nb">Velg nytt midlertidig automatisk innlogging for brukeren</description>
+      <description xml:lang="nl">Tijdelijke automatisch aanmelden van nieuwe gebruiker instellen</description>
+      <description xml:lang="nn">Vel mellombels automatisk innlogging for ny brukar</description>
+      <description xml:lang="pl">Ustaw tymczasowe autologowanie nowego użytkownika</description>
+      <description xml:lang="pt_BR">Definir login automático temporário para novo usuário</description>
+      <description xml:lang="ro">Stabilește autentificarea automată temporară pentru noul utilizator</description>
+      <description xml:lang="ru">Временный автоматический вход для нового пользователя</description>
+      <description xml:lang="sk">Nastaviť dočasné automatické prihlásenie nového používateľa</description>
+      <description xml:lang="sl">Nastavi začasno samodejno prijavo za novega uporabnika</description>
+      <description xml:lang="sr">Постави привремено аутоматско пријављивање новог корисника</description>
+      <description xml:lang="sv">Ställ in tillfällig automatisk inloggning för ny användare</description>
+      <description xml:lang="tr">Yeni Kullanıcı Geçici Kendliğinden Oturum Açmayı Ayarla</description>
+      <description xml:lang="uk">Встановити тимчасовий автовхід для нового користувача</description>
+      <description xml:lang="zh_CN">设置新用户临时自动登录</description>
+      <description xml:lang="zh_TW">設定新使用者暫時性自動登入</description>
+      <message xml:lang="ar">تعيين إعداد الولوج الآلي المؤقتة لمدير العرض للمستخدم المنشأ حديثًا</message>
+      <message xml:lang="ca">Estableix la configuració de l'inici de sessió automàtic temporal del gestor de pantalla per a l'usuari creat nou</message>
+      <message xml:lang="cs">Nastavit na správci obrazovky dočasně automatické přihlašování pro nově vytvořeného uživatele</message>
+      <message xml:lang="de">Automatische Anmeldung des Display-Managers für den neu erstellen Benutzer temporär festlegen</message>
+      <message xml:lang="el">Ρύθμιση προσωρινής αυτόματης σύνδεσης του νέου χρήστη στον διαχειριστή σύνδεσης</message>
+      <message>Set display manager temporary autologin configuration for the newly created user</message>
+      <message xml:lang="es">Definir la configuración de inicio de sesión temporal del gestor de pantalla para el usuario recién creado</message>
+      <message xml:lang="eu">Ezarri erabiltzaile sortu berriarentzat pantaila-kudeatzailearen aldi baterako saio-hasiera automatikoa</message>
+      <message xml:lang="fi">Aseta kirjautumisenhallintaan tilapäinen automaattikirjautuminen vasta luodulle käyttäjälle</message>
+      <message xml:lang="fr">Définir une configuration temporaire de connexion automatique pour le gestionnaire d'affichage pour l'utilisateur nouvellement créé</message>
+      <message xml:lang="he">הגדרת תצורת כניסה אוטומטית זמנית במנהל התצוגה למשתמשים החדשים שנוצרים</message>
+      <message xml:lang="hu">Beállítja az ideiglenes bejelentkezést az új felhasználónak a bejelentkezéskezelőben</message>
+      <message xml:lang="ia">Assigna configuration de autologin temporanee de gerente de monstrator per le usator create recentemente</message>
+      <message xml:lang="it">Imposta la configurazione di accesso automatico temporaneo del display manager per l'utente appena creato</message>
+      <message xml:lang="ka">ეკრანის მმართველის დროებითი ავტოშესვლის კონფიგურაციის დაყენება ახლად შექმნილი მომხმარებლისთვის</message>
+      <message xml:lang="ko">새로 생성된 사용자의 디스플레이 관리자 임시 자동 로그인 설정</message>
+      <message xml:lang="lt">Nustatyti naujam naudotojui monitoriaus tvarkytuvės laikiną automatinio prisijungimo konfigūraciją</message>
+      <message xml:lang="lv">Iestatīt displeja pārvaldnieka pagaidu automātiskās ierakstīšanās konfigurāciju no jauna izveidotajam lietotājam</message>
+      <message xml:lang="nb">Velg midlertidig oppsett av automatisk innlogging for innloggingsvinduet for den nylige opprettede brukeren</message>
+      <message xml:lang="nl">Tijdelijke configuratie voor automatisch aanmelden van schermbeheerder voor de nieuw aangemaakte gebruiker instellen</message>
+      <message xml:lang="nn">Vel mellombels automatisk innlogging for den nye brukaren i innloggingshandsamaren</message>
+      <message xml:lang="pl">Ustaw tymczasowe autologowanie w zarządzaniu wyświetlaniem dla nowo utworzonego użytkownika</message>
+      <message xml:lang="pt_BR">Definir a configuração de login automático temporário do gerenciador de login para o usuário recém-criado</message>
+      <message xml:lang="ro">Stabilește configurări de autentificare automată temporară în gestionarul de autentificare pentru noul utilizator</message>
+      <message xml:lang="ru">Настройка временного автоматического входа в диспетчере входа для только что созданного пользователя</message>
+      <message xml:lang="sk">Nastaviť dočasnú konfiguráciu automatického prihlásenia správcu displeja pre novo vytvoreného používateľa</message>
+      <message xml:lang="sl">Nastavi začasno konfiguracijo samodejne prijave za novo ustvarjenega uporabnika</message>
+      <message xml:lang="sr">Постави у менаџеру пријављивања привремену поставу аутоматског пријављивања за новонаправљеног корисника</message>
+      <message xml:lang="sv">Ställ in skärmhanteringens tillfälliga automatiska inloggningsinställning för den nyskapade användaren</message>
+      <message xml:lang="tr">Yeni oluşturulan kullanıcı için görüntü yöneticisi geçici kendiliğinden oturum açma yapılandırmasını ayarlayın</message>
+      <message xml:lang="uk">Встановити налаштування тимчасового автоматичного входу засобу керування дисплеєм для новоствореного користувача</message>
+      <message xml:lang="zh_CN">设置新建用户的显示管理器临时自动登录配置</message>
+      <message xml:lang="zh_TW">為新建立的使用者設定登入畫面的暫時性自動登入配置</message>
+      <defaults>
+         <allow_inactive>no</allow_inactive>
+         <allow_active>no</allow_active>
+      </defaults>
+   </action>
+</policyconfig>

@@ -1,0 +1,16 @@
+plasma-workspace-6.8.2-1.fc44.x86_64
+plasma-desktop-6.8.2-1.fc44.x86_64
+kwin-6.8.2-3.fc44.x86_64
+kscreenlocker-6.8.2-1.fc44.x86_64
+plasma-login-manager-6.8.2-1.fc44.x86_64
+plasma-setup-6.8.2-1.fc44.x86_64
+polkit-kde-6.8.2-1.fc44.x86_64
+polkit-qt6-1-0.201.1-1.fc44.x86_64
+kf6-kirigami-6.31.0-1.fc44.x86_64
+qt6-qtbase-6.11.2-3.fc44.x86_64
+qt6-qt5compat-6.11.2-1.fc44.x86_64
+qt6-qtdeclarative-6.11.2-2.fc44.x86_64
+mangohud-0.8.3~rc1-2.fc44.x86_64
+mangohud-0.8.3~rc1-2.fc44.i686
+NAME="Matsu OS"
+VERSION="27 (Edição 2027)"

@@ -1,0 +1,15 @@
+module org.kde.breeze.components
+linktarget components
+plugin components
+classname org_kde_breeze_componentsPlugin
+typeinfo components.qmltypes
+RejectPasswordAnimation 254.0 RejectPasswordAnimation.qml
+RejectPasswordPathAnimation 254.0 RejectPasswordPathAnimation.qml
+ActionButton 254.0 ActionButton.qml
+Battery 254.0 Battery.qml
+Clock 254.0 Clock.qml
+SessionManagementScreen 254.0 SessionManagementScreen.qml
+UserDelegate 254.0 UserDelegate.qml
+UserList 254.0 UserList.qml
+WallpaperFader 254.0 WallpaperFader.qml
+
