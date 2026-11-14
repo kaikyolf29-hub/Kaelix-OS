@@ -8,6 +8,7 @@ Uso:
   hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _ |)
   hmp.py <socket> click <x> <y> [largura altura]   clica com o mouse num ponto da tela (padrão 1920x1080)
   hmp.py <socket> rclick <x> <y> [largura altura]  o mesmo, com o botão direito
+  hmp.py <socket> cmd <comando do monitor>         manda um comando qualquer (ex.: eject -f cdrom0)
   hmp.py <socket> segurar <mantida> <tecla> <segundos> <arquivo.png>
                                           segura uma tecla (ex.: alt), aperta outra (tab) e tira
                                           o print antes de soltar (para ver o Alt+Tab)
@@ -122,6 +123,8 @@ def main():
         clique(sock_path, *[int(a) for a in args], botao="right")
     elif action == "mover":
         mover(sock_path, *[int(a) for a in args])
+    elif action == "cmd":
+        send(sock_path, " ".join(args))
     elif action == "segurar":
         segurar(sock_path, args[0], args[1], float(args[2]), args[3])
     else:

@@ -1,8 +1,11 @@
 # Monta a ISO de instalação do Matsu OS.
 #
-# É um instalador de rede (cerca de 1 GB): ele usa o instalador oficial do Fedora
-# e baixa a imagem assinada do Matsu direto do ghcr.io durante a instalação.
-# Assim a pessoa sempre instala a versão mais nova do canal escolhido.
+# É um instalador de rede (cerca de 1 GB): ele baixa a imagem assinada do Matsu
+# direto do ghcr.io durante a instalação, então a pessoa sempre instala a versão
+# mais nova do canal escolhido. As telas são as do instalador do Matsu (no jeito
+# das Boas-vindas, em installer/marca/usr/share/matsu-instalador); por baixo,
+# quem instala é o instalador oficial do Fedora, que também abre inteiro pelo
+# botão "Instalador avançado".
 #
 # Rodado à mão: gera a ISO do canal escolhido e deixa para baixar na página do fluxo.
 # Chamado pelo "Publicar versão estável": anexa a ISO ao Release.
@@ -36,7 +39,8 @@ jobs:
   iso:
     name: ISO ${{ matrix.suffix }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # A instalação de verdade na máquina virtual leva uns 30 minutos.
+    timeout-minutes: 110
     strategy:
       fail-fast: false
       matrix:
@@ -90,18 +94,34 @@ jobs:
           CANAL: ${{ inputs.canal }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          # As imagens e o estilo vêm de installer/marca (visual/instalador/gerar.py).
-          # O .buildstamp troca o nome "Fedora" por "Matsu 27 OS" nas telas do instalador.
+          # As telas do instalador do Matsu, a cara do instalador avançado
+          # (visual/instalador/gerar.py) e os ícones e o logo do sistema, juntos
+          # por installer/montar-updates.sh. O updates.img sai no passo da ISO,
+          # que põe também a fonte Inter.
+          # O .buildstamp troca o nome "Fedora" por "Matsu 27 OS" nas telas do instalador avançado.
           VERSAO="${RELEASE_TAG#v}"
           [ -n "$VERSAO" ] || VERSAO="$CANAL"
-          rm -rf marca && cp -a installer/marca marca
+          bash installer/montar-updates.sh marca
           printf '%s\n' "[Main]" "Product=${NOME_SISTEMA}" "Version=${VERSAO}" "IsFinal=True" \
             "BugURL=https://github.com/${GITHUB_REPOSITORY}/issues" "Variant=Everything" > marca/.buildstamp
           cat marca/.buildstamp
-          # Tudo como root e sem a entrada "." (ela trocaria o dono da raiz do
-          # instalador pelo usuário do GitHub quando ele aplica a atualização).
-          (cd marca && find . -mindepth 1 -print | cpio --quiet -o -H newc -R 0:0 | gzip -9) > updates.img
-          ls -l updates.img
+          # O tamanho da imagem do Matsu (o que a instalação baixa), para a barra
+          # de progresso mostrar "1,2 GB de 4,3 GB". Sem ele, a barra anda sozinha.
+          INFO=marca/usr/share/matsu-instalador/imagem.json
+          python3 - "$IMAGE_REF" > "$INFO" <<'PY' || echo '{}' > "$INFO"
+          import json, subprocess, sys
+          ref = sys.argv[1]
+          def manifesto(r):
+              saida = subprocess.run(["skopeo", "inspect", "--raw", "docker://" + r], check=True,
+                                     capture_output=True, text=True, timeout=180).stdout
+              return json.loads(saida)
+          m = manifesto(ref)
+          if "manifests" in m:
+              d = next(x for x in m["manifests"] if x.get("platform", {}).get("architecture") == "amd64")
+              m = manifesto(ref.rsplit(":", 1)[0] + "@" + d["digest"])
+          print(json.dumps({"ref": ref, "bytes": sum(c["size"] for c in m["layers"])}))
+          PY
+          cat "$INFO"
 
       - name: Montar a ISO
         run: |
@@ -110,7 +130,19 @@ jobs:
           # acento (nem todo PC mostra acento nessa tela).
           cat > mkiso.sh <<EOF
           set -euo pipefail
-          dnf -y install lorax xorriso isomd5sum > /dev/null
+          dnf -y install lorax xorriso isomd5sum cpio > /dev/null
+          # A fonte das telas do Matsu (Inter), que o instalador do Fedora não tem.
+          mkdir -p /work/marca/usr/share/fonts/matsu-instalador
+          if dnf -y install rsms-inter-fonts > /dev/null; then
+            cp -a /usr/share/fonts/rsms-inter-fonts/. /work/marca/usr/share/fonts/matsu-instalador/
+          else
+            echo "aviso: sem a fonte Inter, as telas usam a fonte do instalador"
+          fi
+          ls /work/marca/usr/share/fonts/matsu-instalador
+          # Tudo como root e sem a entrada "." (ela trocaria o dono da raiz do
+          # instalador pelo usuário do GitHub quando ele aplica a atualização).
+          (cd /work/marca && find . -mindepth 1 -print | cpio --quiet -o -H newc -R 0:0 | gzip -9) > /work/updates.img
+          ls -l /work/updates.img
           mkksiso --ks /work/matsu.ks --updates /work/updates.img \\
             -R 'Test this media & install Fedora ${FEDORA_VERSION}' 'Conferir o pendrive e instalar o ${NOME_SISTEMA}' \\
             -R 'Install Fedora ${FEDORA_VERSION} in basic graphics mode' 'Instalar o ${NOME_SISTEMA} em modo simples' \\
@@ -144,9 +176,10 @@ jobs:
             sleep 30
           done
 
-      # Liga a ISO numa máquina virtual e tira prints do menu de boot e do
-      # instalador (não instala nada). Um problema aqui não segura a ISO.
-      - name: Testar a ISO na máquina virtual
+      # Liga a ISO numa máquina virtual e instala o Matsu de verdade pelas telas
+      # do instalador, com print de cada uma, e depois liga pelo disco (login e
+      # Boas-vindas). Um problema aqui não segura a ISO.
+      - name: Testar a ISO na máquina virtual (instalação completa)
         if: matrix.suffix == 'amd'
         continue-on-error: true
         run: bash tests/vm/run-iso.sh "out/${ISO_NAME}" prints-iso

@@ -48,6 +48,7 @@ Para jogar, programar, estudar cibersegurança e usar no dia a dia.
 | [`build_files/build.sh`](build_files/build.sh) | Instala os pacotes e configura a imagem |
 | [`system_files/`](system_files) | Arquivos próprios do Matsu copiados para o sistema (comando `matsu`, serviços) |
 | [`installer/matsu.ks.in`](installer/matsu.ks.in) | Configuração do instalador |
+| [`installer/marca/usr/share/matsu-instalador/`](installer/marca/usr/share/matsu-instalador) | As telas do instalador da ISO, no jeito das Boas-vindas |
 | [`.github/workflows/`](.github/workflows) | Montagem da imagem, da ISO, publicação e testes |
 | [`docs/PLANO.md`](docs/PLANO.md) | O plano completo do projeto |
 | [`docs/ACOMPANHAMENTO.md`](docs/ACOMPANHAMENTO.md) | O que já foi feito e provado, e o que falta |

@@ -1,0 +1,129 @@
+#!/usr/bin/python3
+"""Começa o instalador do Matsu no lugar do anaconda.
+
+O tmux.conf do instalador (installer/marca/usr/share/anaconda/tmux.conf) chama
+este arquivo onde antes chamava o anaconda. Ele liga a tela (gnome-kiosk, do
+mesmo jeito que o anaconda liga) e abre as telas do Matsu (instalador.py).
+
+Cai no anaconda de sempre quando:
+  - a pessoa pede o "Instalador avançado" (as telas saem com o código 10);
+  - o boot pede outro jeito (inst.text, inst.vnc, inst.rdp, inst.matsu=avancado);
+  - a tela não liga ou as telas do Matsu fecham com erro.
+"""
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+TELAS = "/usr/share/matsu-instalador/instalador.py"
+SOQUETE = "wl-sysinstall-0"
+REGISTRO = "/tmp/matsu-instalador.log"
+SAIR_PARA_O_AVANCADO = 10
+
+
+def anotar(texto):
+    with open(REGISTRO, "a", encoding="utf-8") as f:
+        f.write(time.strftime("%H:%M:%S ") + texto + "\n")
+
+
+def abrir_anaconda(motivo):
+    """Troca este processo pelo anaconda de sempre, com o kickstart da ISO."""
+    anotar("abrindo o anaconda: " + motivo)
+    base = "/run/matsu/base.ks"
+    if os.path.exists(base):
+        try:
+            shutil.copyfile(base, "/run/install/ks.cfg")
+        except OSError:
+            pass
+    os.execvp("anaconda", ["anaconda"])
+
+
+def kiosk_aceita_vt():
+    try:
+        r = subprocess.run(["gnome-kiosk", "--help"], capture_output=True, text=True, timeout=5)
+        return "--enable-vt-switch" in (r.stdout or "") + (r.stderr or "")
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def ligar_tela():
+    """Liga o gnome-kiosk na tela 6, como o anaconda faz (pyanaconda/display.py)."""
+    dados = os.environ.get("ANACONDA_DATADIR", "/usr/share/anaconda")
+    env = dict(os.environ)
+    env["XDG_DATA_DIRS"] = dados + "/window-manager:" + env.get("XDG_DATA_DIRS", "/usr/share")
+    env["XDG_CONFIG_DIRS"] = dados + (":" + env["XDG_CONFIG_DIRS"] if env.get("XDG_CONFIG_DIRS") else "")
+    env["XDG_SESSION_TYPE"] = "wayland"
+    cmd = ["/usr/libexec/anaconda/run-in-new-session", "--user", "root", "--service", "anaconda",
+           "--session-type", "wayland", "--session-class", "user", "--vt", "6",
+           "gnome-kiosk", "--wayland", "--wayland-display", SOQUETE]
+    if kiosk_aceita_vt():
+        cmd.append("--enable-vt-switch")
+    registro = open(REGISTRO, "a", encoding="utf-8")
+    processo = subprocess.Popen(cmd, env=env, stdout=registro, stderr=registro, start_new_session=True)
+    pasta = env.get("XDG_RUNTIME_DIR", "/run/user/0")
+    for _ in range(600):
+        if os.path.exists(os.path.join(pasta, SOQUETE)):
+            return processo, env
+        if processo.poll() is not None:
+            break
+        time.sleep(0.1)
+    processo.terminate()
+    return None, env
+
+
+def desligar_tela(processo, env):
+    if processo is None:
+        return
+    processo.terminate()
+    try:
+        processo.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        processo.kill()
+    # O anaconda espera achar o soquete livre para ligar a tela dele.
+    pasta = env.get("XDG_RUNTIME_DIR", "/run/user/0")
+    for nome in (SOQUETE, SOQUETE + ".lock"):
+        try:
+            os.remove(os.path.join(pasta, nome))
+        except OSError:
+            pass
+
+
+def main():
+    os.makedirs("/run/matsu", exist_ok=True)
+    # Guarda o kickstart da ISO: o instalador avançado volta a usar ele.
+    if os.path.exists("/run/install/ks.cfg") and not os.path.exists("/run/matsu/base.ks"):
+        shutil.copyfile("/run/install/ks.cfg", "/run/matsu/base.ks")
+
+    try:
+        cmdline = open("/proc/cmdline", encoding="utf-8").read().split()
+    except OSError:
+        cmdline = []
+    pedidos = [x for x in cmdline if x.split("=")[0] in ("inst.text", "inst.vnc", "inst.rdp", "inst.cmdline")
+               or x == "inst.matsu=avancado"]
+    if pedidos:
+        abrir_anaconda("o boot pediu " + " ".join(pedidos))
+
+    kiosk, env = ligar_tela()
+    if kiosk is None:
+        abrir_anaconda("a tela não ligou")
+
+    env_telas = dict(env)
+    env_telas.update(WAYLAND_DISPLAY=SOQUETE, GDK_BACKEND="wayland", LANG="pt_BR.UTF-8",
+                     LC_ALL="pt_BR.UTF-8", NO_AT_BRIDGE="1")
+    anotar("abrindo as telas do Matsu")
+    with open(REGISTRO, "a", encoding="utf-8") as registro:
+        codigo = subprocess.call([sys.executable, TELAS], env=env_telas, stdout=registro, stderr=registro)
+    anotar(f"as telas fecharam com o código {codigo}")
+    desligar_tela(kiosk, env)
+    if codigo == SAIR_PARA_O_AVANCADO:
+        abrir_anaconda("a pessoa pediu o instalador avançado")
+    elif codigo != 0:
+        abrir_anaconda("as telas do Matsu fecharam com erro")
+    # Código 0: as telas já mandaram reiniciar.
+    while True:
+        time.sleep(60)
+
+
+if __name__ == "__main__":
+    main()

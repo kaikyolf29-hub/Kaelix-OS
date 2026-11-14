@@ -1,0 +1,427 @@
+/* Instalador do Matsu: o mesmo jeito das Boas-vindas. Cartão claro por cima do
+   papel de parede, texto quase preto, botão principal escuro com letra branca
+   (nunca texto escuro em cor escura) e vermelho só para apagar. */
+
+@define-color frente #1a1a1e;
+@define-color suave #6f6f79;
+@define-color linha_fundo rgba(255, 255, 255, 0.92);
+@define-color borda rgba(26, 26, 30, 0.09);
+@define-color perigo #d93036;
+
+* {
+    font-family: "Inter", "Inter Variable", "Cantarell", sans-serif;
+    -gtk-outline-radius: 8px;
+    outline-color: alpha(@frente, 0.45);
+}
+
+window {
+    background-color: #2d2a55;
+}
+
+.fundo {
+    background-color: #2d2a55;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.cartao {
+    background-color: #f5f5f7;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 28px 80px rgba(16, 12, 44, 0.42), 0 3px 10px rgba(16, 12, 44, 0.16);
+}
+
+.cartao scrolledwindow,
+.cartao viewport,
+.cartao stack {
+    background-color: transparent;
+    border: none;
+}
+
+/* ----- textos ----- */
+
+.pagina {
+    padding: 0 40px;
+}
+
+.titulo {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: @frente;
+    margin-top: 6px;
+}
+
+.titulo-menor {
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: @frente;
+    margin-top: 6px;
+}
+
+.subtitulo {
+    font-size: 14px;
+    color: alpha(@frente, 0.66);
+    margin-top: 6px;
+}
+
+.ola {
+    font-size: 52px;
+    font-weight: 600;
+    letter-spacing: -1.2px;
+    color: @frente;
+    margin-top: 18px;
+}
+
+.logo {
+    margin-bottom: 2px;
+}
+
+.secao {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: alpha(@frente, 0.55);
+    margin-left: 4px;
+}
+
+.miolo {
+    margin-top: 26px;
+}
+
+.destaque-texto {
+    font-size: 16px;
+    font-weight: 600;
+    color: @frente;
+    margin-top: 4px;
+}
+
+.aviso {
+    font-size: 13px;
+    color: @perigo;
+    margin-top: 10px;
+}
+
+/* ----- lista agrupada (como nos Ajustes) ----- */
+
+.lista {
+    background-color: @linha_fundo;
+    border: 1px solid @borda;
+    border-radius: 10px;
+}
+
+.divisa {
+    min-height: 1px;
+    background-color: @borda;
+    margin-left: 14px;
+}
+
+.linha {
+    padding: 9px 14px;
+    min-height: 26px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: @frente;
+    transition: background-color 160ms ease-out;
+}
+
+button.linha:hover {
+    background-color: alpha(@frente, 0.04);
+}
+
+button.linha:active {
+    background-color: alpha(@frente, 0.08);
+}
+
+button.linha:disabled,
+button.linha:disabled label {
+    color: alpha(@frente, 0.42);
+}
+
+.linha.escolhida {
+    background-color: alpha(@frente, 0.055);
+}
+
+.linha.primeira {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.linha.ultima {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.linha-titulo {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.linha-detalhe {
+    font-size: 12.5px;
+    color: alpha(@frente, 0.6);
+}
+
+button.linha:disabled .linha-detalhe {
+    color: alpha(@frente, 0.5);
+}
+
+.linha-valor {
+    font-size: 13.5px;
+    color: alpha(@frente, 0.72);
+}
+
+/* ----- campos ----- */
+
+entry.campo {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(26, 26, 30, 0.16);
+    background-color: #ffffff;
+    background-image: none;
+    box-shadow: none;
+    color: @frente;
+    font-size: 14px;
+    transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+entry.campo selection {
+    background-color: alpha(@frente, 0.16);
+    color: @frente;
+}
+
+entry.campo:focus {
+    border-color: @frente;
+    box-shadow: 0 0 0 3px alpha(@frente, 0.12);
+}
+
+.campo-nome {
+    font-size: 13.5px;
+    color: alpha(@frente, 0.7);
+}
+
+combobox.suspensa button {
+    min-height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(26, 26, 30, 0.16);
+    background-color: #ffffff;
+    background-image: none;
+    box-shadow: none;
+    color: @frente;
+    padding: 0 10px;
+}
+
+/* ----- botões ----- */
+
+button.destaque {
+    min-height: 36px;
+    padding: 0 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: @frente;
+    background-image: none;
+    box-shadow: none;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: none;
+    transition: background-color 160ms ease-out;
+}
+
+button.destaque label {
+    color: #ffffff;
+}
+
+button.destaque:hover {
+    background-color: #33333a;
+}
+
+button.destaque:active {
+    background-color: #000000;
+}
+
+button.destaque:disabled {
+    background-color: alpha(@frente, 0.12);
+}
+
+button.destaque:disabled label {
+    color: alpha(@frente, 0.38);
+}
+
+button.destaque.perigo {
+    background-color: @perigo;
+}
+
+button.destaque.perigo:hover {
+    background-color: #e5484d;
+}
+
+button.simples {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: @frente;
+    font-size: 14px;
+    text-shadow: none;
+}
+
+button.simples:hover {
+    background-color: alpha(@frente, 0.06);
+}
+
+button.simples.pequeno {
+    min-height: 28px;
+    min-width: 28px;
+    padding: 0 6px;
+}
+
+button.link {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 4px 10px;
+    color: alpha(@frente, 0.55);
+    font-size: 13px;
+}
+
+button.link:hover {
+    color: @frente;
+    background-color: alpha(@frente, 0.05);
+    border-radius: 8px;
+}
+
+/* ----- rodapé ----- */
+
+.rodape {
+    min-height: 64px;
+    padding: 0 18px;
+    border-top: 1px solid alpha(@frente, 0.08);
+}
+
+.ponto {
+    min-width: 7px;
+    min-height: 7px;
+    border-radius: 99px;
+    background-color: alpha(@frente, 0.18);
+    transition: min-width 260ms ease-out, background-color 260ms ease-out;
+}
+
+.ponto.feito {
+    background-color: alpha(@frente, 0.4);
+}
+
+.ponto.atual {
+    min-width: 22px;
+    background-color: alpha(@frente, 0.85);
+}
+
+/* ----- selos redondos (internet, pronto, erro) ----- */
+
+.selo {
+    min-width: 76px;
+    min-height: 76px;
+    border-radius: 99px;
+    background-color: alpha(@frente, 0.06);
+    margin-bottom: 10px;
+}
+
+.selo-ok {
+    background-color: #1f8a54;
+    box-shadow: 0 10px 28px rgba(31, 138, 84, 0.35);
+}
+
+.selo-erro {
+    background-color: rgba(217, 48, 54, 0.1);
+}
+
+.avatar {
+    min-width: 76px;
+    min-height: 76px;
+    border-radius: 99px;
+    background-image: linear-gradient(160deg, #8a5d80, #2a1a31);
+    box-shadow: 0 6px 18px rgba(42, 26, 49, 0.3);
+    margin-bottom: 6px;
+}
+
+.avatar-letra {
+    font-size: 32px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* ----- resumo ----- */
+
+.alerta {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background-color: rgba(217, 48, 54, 0.08);
+    border: 1px solid rgba(217, 48, 54, 0.22);
+}
+
+.alerta-texto {
+    font-size: 13.5px;
+    color: #a3191e;
+}
+
+/* ----- instalando ----- */
+
+progressbar.barra trough {
+    min-height: 6px;
+    border-radius: 99px;
+    border: none;
+    background-color: alpha(@frente, 0.1);
+    box-shadow: none;
+}
+
+progressbar.barra progress {
+    min-height: 6px;
+    border-radius: 99px;
+    border: none;
+    background-color: @frente;
+    background-image: none;
+    box-shadow: none;
+}
+
+.estado {
+    font-size: 14px;
+    font-weight: 500;
+    color: @frente;
+}
+
+.dica {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid @borda;
+}
+
+.dica-texto {
+    font-size: 13px;
+    color: alpha(@frente, 0.72);
+}
+
+/* ----- erro ----- */
+
+expander.detalhes title {
+    color: alpha(@frente, 0.6);
+    font-size: 13px;
+}
+
+textview.registro,
+textview.registro text {
+    background-color: #ffffff;
+    color: alpha(@frente, 0.8);
+    font-size: 11.5px;
+    padding: 8px;
+}
+
+scrollbar {
+    background: transparent;
+    border: none;
+}
