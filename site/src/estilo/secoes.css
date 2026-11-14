@@ -2,9 +2,15 @@
    em código, os estilos da barra, os apps, a instalação, baixar e o fim. */
 
 /* ---------- papel de parede em pixel art ---------- */
+.papel-quadro {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
 .papel {
   position: absolute;
   inset: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -29,31 +35,43 @@
   isolation: isolate;
   background: #1e1b3a;
 }
-.topo__papel {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
+.topo > .wrap {
+  position: relative;
+  z-index: 1;
 }
 /* Só o lado do texto escurece um pouco, para as letras ficarem legíveis sobre o
    pôr do sol; o sol e o lago ficam como no sistema. */
-.topo::before {
+.topo::after {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
+  pointer-events: none;
   background: linear-gradient(98deg, rgba(16, 15, 26, 0.62) 0%, rgba(16, 15, 26, 0.42) 34%, rgba(16, 15, 26, 0) 60%);
-  transition: opacity var(--dur-media) var(--curva-saida);
 }
 :root[data-tema='claro'] .topo {
   background: #c9cdf3;
 }
-:root[data-tema='claro'] .topo::before {
+:root[data-tema='claro'] .topo::after {
   background: linear-gradient(98deg, rgba(246, 246, 252, 0.62) 0%, rgba(246, 246, 252, 0.4) 34%, rgba(246, 246, 252, 0) 60%);
 }
+.topo__wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .topo__texto {
+  flex: 1;
   padding-top: calc(var(--nav) + clamp(40px, 9svh, 112px));
-  padding-bottom: 120px;
+  padding-bottom: 48px;
   color: var(--sobre-papel);
+}
+.topo__pe {
+  padding-bottom: 24px;
+}
+/* O botão de vidro ganha fundo sobre o papel, para o texto não sumir no sol. */
+.topo .btn--secundario {
+  background: color-mix(in srgb, var(--chao) 52%, transparent);
 }
 .topo__h1 {
   margin: 0;
@@ -100,8 +118,7 @@
 
 /* A entrada: uma vez, quando a página abre. O papel assenta, o nome sai do
    desfoque palavra por palavra (BlurText) e o resto sobe junto. */
-.js .topo__papel .papel--escuro,
-.js .topo__papel .papel--claro {
+.js .topo .papel {
   animation: papel-assenta 1.6s var(--curva-saida) both;
 }
 @keyframes papel-assenta {
@@ -133,17 +150,22 @@
 }
 
 @media (max-width: 639px) {
-  .topo__texto {
-    padding-bottom: 104px;
+  /* No celular a barra de cima é sólida e o papel começa embaixo dela. */
+  .topo > .papel-quadro,
+  .topo::after {
+    top: var(--nav);
+  }
+  .topo {
+    background: var(--chao);
   }
   .topo__nome {
     font-size: clamp(48px, 14.5vw, 64px);
   }
-  .topo::before {
-    background: linear-gradient(180deg, rgba(16, 15, 26, 0.58) 0%, rgba(16, 15, 26, 0.34) 58%, rgba(16, 15, 26, 0) 84%);
+  .topo::after {
+    background: linear-gradient(180deg, rgba(16, 15, 26, 0.7) 0%, rgba(16, 15, 26, 0.62) 66%, rgba(16, 15, 26, 0) 92%);
   }
-  :root[data-tema='claro'] .topo::before {
-    background: linear-gradient(180deg, rgba(246, 246, 252, 0.62) 0%, rgba(246, 246, 252, 0.38) 58%, rgba(246, 246, 252, 0) 84%);
+  :root[data-tema='claro'] .topo::after {
+    background: linear-gradient(180deg, rgba(246, 246, 252, 0.78) 0%, rgba(246, 246, 252, 0.68) 66%, rgba(246, 246, 252, 0) 92%);
   }
   .topo__texto .btn-linha .btn {
     flex: 1 1 100%;
@@ -444,9 +466,10 @@ a.barra__app[data-balao]:focus-visible::after {
   }
 }
 
-/* No topo a barra é a de verdade, em tamanho de tela. */
-.topo__barra {
-  z-index: 3;
+/* No topo a barra é a de verdade, em tamanho de tela, nas linhas da página. */
+.barra.topo__barra {
+  position: relative;
+  padding: 0;
 }
 @media (max-width: 1180px) {
   .topo__barra .barra__busca {
@@ -495,8 +518,10 @@ a.barra__app[data-balao]:focus-visible::after {
   background: #1e1b3a;
   box-shadow: 0 0 0 1px var(--linha-forte), var(--sombra);
 }
-.palco__papel {
+.palco > .papel-quadro {
   z-index: -1;
+}
+.palco__papel {
   object-position: 62% 72%;
 }
 .palco__barra {
@@ -628,7 +653,7 @@ a.barra__app[data-balao]:focus-visible::after {
 .cartao-app__janela {
   position: relative;
   margin-top: 24px;
-  aspect-ratio: 16 / 8.4;
+  aspect-ratio: 16 / 7;
   overflow: hidden;
 }
 .cartao-app__janela img {
@@ -648,123 +673,83 @@ a.barra__app[data-balao]:focus-visible::after {
     gap: 16px;
   }
 }
+/* No celular, dois por linha: o ícone, o nome e a janela. */
 @media (max-width: 639px) {
   .grade-apps {
-    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
   .cartao-app.spotlight-card {
-    padding: 20px 20px 0;
+    padding: 14px 14px 0;
+    border-radius: 16px;
+  }
+  .cartao-app__topo {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cartao-app__topo img {
+    width: 28px;
+    height: 28px;
+  }
+  .cartao-app__topo b {
+    font-size: 15px;
+  }
+  .cartao-app__topo span span {
+    display: none;
+  }
+  .cartao-app__janela {
+    margin-top: 12px;
+    aspect-ratio: 16 / 10;
+  }
+  .cartao-app__janela img {
+    border-radius: 6px 6px 0 0;
   }
 }
 
-/* ---------- como instalar: os passos presos na tela ---------- */
-.secao--instalar {
-  --h: 2.2;
-  display: block;
-  padding: 0;
+/* ---------- como instalar: o momento "pinned-chapters" do Taste Skill ----------
+   O CSS do kit (public/moments/pinned-chapters/moment.css) faz o comportamento;
+   aqui entram o número de cada passo, o quadro com a cara das janelas do Matsu
+   e as imagens em 16:10. */
+#instalar .mo-pc__step h3 {
+  font-size: 18px;
 }
-.instalar__fixo {
-  position: sticky;
-  top: 0;
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: var(--padt) 0 var(--padb);
-}
-.passos {
-  position: relative;
-  margin-top: 32px;
-  display: grid;
-}
-/* A linha que liga os números. */
-.passos::before {
-  content: '';
-  position: absolute;
-  left: 21px;
-  top: 28px;
-  bottom: 28px;
-  width: 1px;
-  background: var(--linha-forte);
-}
-.passo {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 16px;
-  align-items: start;
-  width: 100%;
-  padding: 14px 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-}
-.passo__numero {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  background: var(--chao);
-  box-shadow: inset 0 0 0 1px var(--linha-forte);
-  color: var(--tinta-2);
-  font-family: var(--fonte-titulo);
-  font-size: 17px;
-  font-weight: 500;
+.passo__n {
+  display: inline-block;
+  min-width: 1.2em;
   font-variant-numeric: tabular-nums;
-  transition:
-    background-color var(--dur-padrao) var(--curva-saida),
-    color var(--dur-padrao) var(--curva-saida),
-    box-shadow var(--dur-padrao) var(--curva-saida);
+  color: var(--sakura);
 }
-.passo__texto {
-  padding-top: 9px;
+/* Preso na tela, o conteúdo começa na mesma altura das outras partes. */
+main #instalar.is-live > .mo-pc__grid {
+  align-content: start;
+  padding-top: var(--padt);
 }
-.passo__texto b {
-  display: block;
-  font-size: 17px;
-  font-weight: 500;
-  line-height: 1.35;
-  color: var(--tinta-2);
-  transition: color var(--dur-padrao) var(--curva-saida);
-}
-.passo__texto span {
-  display: block;
-  margin-top: 4px;
-  max-width: 30em;
+#instalar .mo-pc__step p {
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--tinta-2);
 }
-.passos li[data-ativo='true'] .passo__numero {
-  background: var(--botao);
-  color: var(--botao-tinta);
+#instalar .mo-pc__visual {
+  background: var(--chao-2);
+  box-shadow: 0 0 0 1px var(--linha-forte);
+}
+#instalar .mo-pc__visual > img,
+#instalar .mo-pc__visual--lit {
+  aspect-ratio: 16 / 10;
+}
+#instalar.is-live .mo-pc__visuals {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: var(--r-janela);
+  background: var(--chao-2);
+  box-shadow: 0 0 0 1px var(--linha-forte), var(--sombra);
+}
+#instalar.is-live .mo-pc__visual {
   box-shadow: none;
 }
-.passos li[data-ativo='true'] .passo__texto b,
-.passo:hover .passo__texto b {
-  color: var(--tinta);
-}
-.passo__visual-celular {
-  display: none;
-}
-
-.quadro--passos {
-  display: grid;
-  aspect-ratio: 16 / 10;
-  background: var(--chao-2);
-}
-.quadro__camada {
-  grid-area: 1 / 1;
-  display: grid;
-  place-items: center;
-  min-width: 0;
-}
-.quadro--passos .quadro__foto {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@media (max-width: 639px) {
+  #instalar .mo-pc__visual--lit {
+    aspect-ratio: auto;
+  }
 }
 
 /* Passo 1: a ISO indo para o pendrive. */
@@ -772,11 +757,7 @@ a.barra__app[data-balao]:focus-visible::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0;
   width: 100%;
-  height: 100%;
-  min-height: 240px;
-  padding: 32px;
 }
 .gravar__arquivo {
   flex: none;
@@ -848,18 +829,12 @@ a.barra__app[data-balao]:focus-visible::after {
   background: var(--botao);
   color: var(--botao-tinta);
 }
-.troca-foto[data-ativa='false'] .gravar__fio span {
-  animation-play-state: paused;
-}
 
 /* Passo 3: o resumo do instalador. */
 .resumo {
   display: grid;
   place-items: center;
   width: 100%;
-  height: 100%;
-  min-height: 240px;
-  padding: 32px;
 }
 .resumo__lista {
   width: min(100%, 420px);
@@ -915,53 +890,7 @@ a.barra__app[data-balao]:focus-visible::after {
   background: var(--sakura);
 }
 
-@media (max-width: 1023px) {
-  .secao--instalar {
-    --h: 1;
-    padding: var(--padt) 0 var(--padb);
-  }
-  .instalar__fixo {
-    position: static;
-    min-height: 0;
-    padding: 0;
-  }
-  .quadro--passos {
-    display: none;
-  }
-  .passos::before {
-    bottom: auto;
-    height: 0;
-  }
-  .passos li {
-    padding-bottom: 24px;
-  }
-  .passos li .passo__numero {
-    background: var(--botao);
-    color: var(--botao-tinta);
-    box-shadow: none;
-  }
-  .passos li .passo__texto b {
-    color: var(--tinta);
-  }
-  .passo {
-    cursor: default;
-  }
-  .passo__visual-celular {
-    display: block;
-    margin: 8px 0 0 60px;
-  }
-  .passo__visual-celular .quadro {
-    background: var(--chao-2);
-  }
-}
 @media (max-width: 639px) {
-  .passo__visual-celular {
-    margin-left: 0;
-  }
-  .gravar {
-    padding: 24px 16px;
-    min-height: 200px;
-  }
   .gravar__arquivo {
     width: 172px;
     padding: 18px 10px 14px;
@@ -984,19 +913,25 @@ a.barra__app[data-balao]:focus-visible::after {
     width: 72px;
     height: 44px;
   }
-  .resumo {
-    padding: 16px;
-    min-height: 0;
-  }
   .resumo__lista li {
-    grid-template-columns: 32px auto 1fr 20px;
+    grid-template-columns: 28px auto 1fr 18px;
     gap: 10px;
+    min-height: 40px;
     padding: 0 8px;
-    font-size: 14px;
+    font-size: 13px;
   }
   .resumo__icone {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+}
+@media (max-width: 379px) {
+  .gravar__arquivo {
+    width: 148px;
+  }
+  .gravar__corpo {
+    width: 56px;
   }
 }
 
@@ -1011,7 +946,7 @@ a.barra__app[data-balao]:focus-visible::after {
   min-height: 1.6em;
   color: var(--tinta-2);
 }
-.cartao-baixar .btn--grande {
+.cartao-baixar .btn--baixar {
   margin-top: 24px;
 }
 .cartao-baixar__arquivo {
@@ -1064,7 +999,7 @@ a.barra__app[data-balao]:focus-visible::after {
 }
 
 .requisitos {
-  padding: 28px 0 0;
+  padding: 0;
 }
 .requisitos h3 {
   margin-bottom: 16px;
@@ -1085,16 +1020,11 @@ a.barra__app[data-balao]:focus-visible::after {
 .requisitos dd {
   font-weight: 500;
 }
-@media (min-width: 1024px) {
-  .requisitos {
-    padding-top: 138px;
-  }
-}
 @media (max-width: 639px) {
   .cartao-baixar.spotlight-card {
     padding: 20px;
   }
-  .cartao-baixar .btn--grande {
+  .cartao-baixar .btn--baixar {
     width: 100%;
     white-space: normal;
     text-align: center;
@@ -1103,41 +1033,46 @@ a.barra__app[data-balao]:focus-visible::after {
 
 /* ---------- o fim ---------- */
 .rodape {
-  padding: 120px 0 calc(40px + env(safe-area-inset-bottom));
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--padt) 0 calc(var(--padb) + env(safe-area-inset-bottom));
   background: var(--chao-2);
   border-top: 1px solid var(--linha);
 }
 .rodape__wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 64px;
+}
+.rodape__chamada {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: 24px;
-  row-gap: 64px;
-}
-.rodape__fecho {
-  grid-column: 1 / span 6;
-}
-.rodape__logo {
-  width: 88px;
-  height: 88px;
+  row-gap: 48px;
+  align-items: start;
 }
 .rodape__nome {
-  margin-top: 24px;
-  font-size: clamp(44px, 4vw + 12px, 80px);
-  letter-spacing: -0.04em;
-  line-height: 0.98;
+  grid-column: 1 / -1;
+  font-size: var(--t-h1);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+}
+.rodape__fecho {
+  grid-column: 1 / span 5;
+}
+.rodape__fecho .sub {
+  margin-top: 0;
 }
 .rodape__fecho .btn-linha {
   margin-top: 32px;
 }
-.rodape__diretorio {
-  grid-column: 8 / span 5;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 48px;
-}
 .rodape__colunas {
   display: grid;
+  grid-column: 6 / span 7;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
@@ -1166,22 +1101,23 @@ a.barra__app[data-balao]:focus-visible::after {
 }
 @media (max-width: 1023px) {
   .rodape__fecho,
-  .rodape__diretorio {
+  .rodape__colunas {
     grid-column: 1 / -1;
   }
 }
 @media (max-width: 639px) {
   .rodape {
-    padding-top: 80px;
     padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  .rodape__nome {
+    font-size: clamp(48px, 14.5vw, 64px);
   }
 }
 
 /* ---------- reduzir movimento ---------- */
 @media (prefers-reduced-motion: reduce) {
   .js .entra,
-  .js .topo__papel .papel--escuro,
-  .js .topo__papel .papel--claro,
+  .js .topo .papel,
   .gravar__fio span {
     animation: none !important;
   }
@@ -1195,5 +1131,18 @@ a.barra__app[data-balao]:focus-visible::after {
   .barra__apps--ampliar .barra__app:hover,
   .barra__apps--ampliar li .barra__app {
     transform: none !important;
+  }
+}
+
+/* No celular os quatro passos ficam um pouco mais juntos. */
+@media (max-width: 639px) {
+  #instalar .mo-pc__text {
+    gap: 24px;
+  }
+  #instalar .mo-pc__steps {
+    gap: 16px;
+  }
+  #instalar .mo-pc__visual {
+    margin-top: 12px;
   }
 }

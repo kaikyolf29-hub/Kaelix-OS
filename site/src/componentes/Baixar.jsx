@@ -123,7 +123,13 @@ function Soma({ url }) {
 }
 
 export default function Baixar() {
-  const [placa, setPlaca] = useState(0);
+  const [placa, setPlacaAgora] = useState(0);
+  // O texto só faz a troca com desfoque depois que a pessoa escolhe a placa.
+  const [trocou, setTrocou] = useState(false);
+  const setPlaca = i => {
+    setTrocou(true);
+    setPlacaAgora(i);
+  };
   const versao = useVersao();
   const atual = PLACAS[placa];
   const arquivo = versao.fase === 'pronta' ? versao.arquivos[atual.id] : null;
@@ -135,7 +141,7 @@ export default function Baixar() {
 
   return (
     <section className="secao" id="baixar" aria-labelledby="baixar-titulo">
-      <div className="wrap divisao divisao--7-5">
+      <div className="wrap divisao divisao--5-7">
         <div className="divisao__texto">
           <h2 id="baixar-titulo">Baixar o Matsu {EDICAO}</h2>
           <p className="sub">É de graça, sem cadastro e sem propaganda. Escolha a ISO pela sua placa de vídeo.</p>
@@ -173,17 +179,17 @@ export default function Baixar() {
                 </button>
               ))}
             </div>
-            <p className="cartao-baixar__placa troca-texto" key={atual.id}>
+            <p className={`cartao-baixar__placa${trocou ? ' troca-texto' : ''}`} key={atual.id}>
               {atual.texto}
             </p>
 
             {versao.fase === 'pronta' && arquivo ? (
               <>
-                <a className="btn btn--primario btn--grande" href={arquivo.url}>
+                <a className="btn btn--primario btn--baixar" href={arquivo.url}>
                   <Icone nome="baixar" tamanho={20} />
                   Baixar o {nomeVersao}
                 </a>
-                <p className="cartao-baixar__arquivo troca-texto" key={arquivo.nome}>
+                <p className={`cartao-baixar__arquivo${trocou ? ' troca-texto' : ''}`} key={arquivo.nome}>
                   {arquivo.nome}, {tamanho(arquivo.bytes)}
                   {data && <>. Publicada em {data}.</>}
                 </p>
@@ -191,7 +197,7 @@ export default function Baixar() {
               </>
             ) : (
               <>
-                <a className="btn btn--primario btn--grande" href={LINKS.versoes} aria-describedby="aviso-versao">
+                <a className="btn btn--primario btn--baixar" href={LINKS.versoes} aria-describedby="aviso-versao">
                   <Icone nome="baixar" tamanho={20} />
                   Baixar o {nomeVersao}
                 </a>
@@ -215,7 +221,7 @@ export default function Baixar() {
           </SpotlightCard>
         </div>
         <div className="requisitos">
-          <h3>O que o PC precisa ter</h3>
+          <h3>Requisitos do PC</h3>
           <dl>
             <div>
               <dt>Processador</dt>

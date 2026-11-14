@@ -1,7 +1,10 @@
 import { hydrateRoot, createRoot } from 'react-dom/client';
-import App from './App.jsx';
+import { RAIZES } from './App.jsx';
 
-const raiz = document.getElementById('app');
-// No build a página já vem desenhada (prerender); no "npm run dev" ela começa vazia.
-if (raiz.hasChildNodes()) hydrateRoot(raiz, <App />);
-else createRoot(raiz).render(<App />);
+// No build cada parte já vem desenhada (prerender); no "npm run dev" começa vazia.
+for (const [id, Parte] of Object.entries(RAIZES)) {
+  const el = document.getElementById(id);
+  if (!el) continue;
+  if (el.firstElementChild) hydrateRoot(el, <Parte />);
+  else createRoot(el).render(<Parte />);
+}

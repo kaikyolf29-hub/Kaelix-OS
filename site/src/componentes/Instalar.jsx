@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Icone from './Icone.jsx';
 import { EDICAO, TAMANHO_ISO } from '../dados.js';
 
@@ -7,7 +7,7 @@ function Gravar() {
   return (
     <div className="gravar" role="img" aria-label={`O arquivo da ISO do Matsu ${EDICAO} sendo gravado num pendrive`}>
       <div className="gravar__arquivo">
-        <img src="img/logo.svg" alt="" width="56" height="56" />
+        <img src="img/logo.svg" alt="" width="56" height="56" loading="lazy" />
         <b>matsu-os-{EDICAO}-amd.iso</b>
         <span>Imagem de disco, {TAMANHO_ISO}</span>
       </div>
@@ -61,6 +61,7 @@ const PASSOS = [
   },
   {
     titulo: 'Ligue o PC pelo pendrive',
+    tamanhos: [640, 1280],
     texto: `Aperte a tecla do menu de boot (F12, F11 ou Esc, depende do PC) e escolha Instalar o Matsu ${EDICAO} OS.`,
     foto: 'passo-boot',
     alt: `A tela de carregar do Matsu ${EDICAO} OS, com o logo do bonsai`
@@ -74,92 +75,69 @@ const PASSOS = [
     titulo: 'Escolha a aparência e comece',
     texto: 'Nas boas-vindas você escolhe o tema, o papel de parede e o navegador: Brave, Chrome ou os dois.',
     foto: 'passo-boasvindas',
+    tamanhos: [800, 1600],
     alt: 'As boas-vindas do Matsu na página Escolha a aparência, com os temas escuro e claro'
   }
 ];
 
+// Um passo com foto mostra a foto; os desenhados ficam no fundo claro do quadro.
 function Visual({ passo }) {
-  if (passo.visual) return passo.visual;
-  return <img className="quadro__foto" src={`img/${passo.foto}.webp`} alt={passo.alt} width="1600" height="900" loading="lazy" />;
+  if (passo.visual) return <figure className="mo-pc__visual mo-pc__visual--lit">{passo.visual}</figure>;
+  return (
+    <figure className="mo-pc__visual">
+      <img
+        src={`img/${passo.foto}.webp`}
+        srcSet={`img/${passo.foto}-${passo.tamanhos[0]}.webp ${passo.tamanhos[0]}w, img/${passo.foto}.webp ${passo.tamanhos[1]}w`}
+        sizes="(max-width: 1023px) 90vw, 628px"
+        alt={passo.alt}
+        width="1600"
+        height="900"
+        loading="lazy"
+      />
+    </figure>
+  );
 }
 
-// Os quatro passos ficam presos na tela por duas telas de rolagem: o passo da
-// esquerda acende e a imagem da direita troca. No celular, cada passo vem com
-// a sua imagem, um embaixo do outro.
+// Os quatro passos usam o momento "pinned-chapters" do Taste Skill (public/moments):
+// no PC a parte fica presa por uma tela de rolagem, o passo da vez abre à esquerda
+// e o quadro da direita troca a imagem. No celular, num tablet, com "reduzir
+// movimento" ou sem script, cada passo fica parado com a sua imagem.
 export default function Instalar() {
   const secao = useRef(null);
-  const [ativo, setAtivo] = useState(0);
 
   useEffect(() => {
-    const el = secao.current;
-    if (!el) return undefined;
-    let quadro = 0;
-    const medir = () => {
-      quadro = 0;
-      const caixa = el.getBoundingClientRect();
-      const percurso = caixa.height - window.innerHeight;
-      if (percurso <= 0) return;
-      const p = Math.min(1, Math.max(0, -caixa.top / percurso));
-      setAtivo(Math.min(PASSOS.length - 1, Math.floor(p * PASSOS.length)));
-    };
-    const pedir = () => {
-      if (!quadro) quadro = requestAnimationFrame(medir);
-    };
-    medir();
-    window.addEventListener('scroll', pedir, { passive: true });
-    window.addEventListener('resize', pedir);
+    let vivo = true;
+    // O script do momento mexe no DOM desta parte depois que o React já desenhou;
+    // esta parte não tem estado, então o React não volta a mexer nela.
+    import(/* @vite-ignore */ new URL('moments/moments.js', document.baseURI).href)
+      .then(m => vivo && secao.current && m.mount(secao.current))
+      .catch(() => {});
     return () => {
-      cancelAnimationFrame(quadro);
-      window.removeEventListener('scroll', pedir);
-      window.removeEventListener('resize', pedir);
+      vivo = false;
     };
   }, []);
 
-  // Clicar num passo rola até o ponto em que ele acende.
-  const irPara = i => {
-    const el = secao.current;
-    const percurso = el.offsetHeight - window.innerHeight;
-    if (percurso <= 0) return;
-    const topo = el.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: topo + ((i + 0.5) / PASSOS.length) * percurso, behavior: 'auto' });
-  };
-
   return (
-    <section className="secao secao--instalar" id="instalar" ref={secao} data-moment="pinned-chapters" aria-labelledby="instalar-titulo">
-      <div className="instalar__fixo">
-        <div className="wrap divisao divisao--5-7">
-          <div className="divisao__texto">
+    <section className="secao" id="instalar" ref={secao} data-moment="pinned-chapters" aria-labelledby="instalar-titulo">
+      <div className="wrap mo-pc__grid">
+        <div className="mo-pc__text">
+          <div>
             <h2 id="instalar-titulo">Como instalar o Matsu</h2>
             <p className="sub">São quatro passos. Antes, faça uma cópia dos arquivos que importam.</p>
-            <ol className="passos">
-              {PASSOS.map((p, i) => (
-                <li key={p.titulo} data-ativo={i === ativo}>
-                  <button type="button" className="passo" onClick={() => irPara(i)} aria-current={i === ativo ? 'step' : undefined}>
-                    <span className="passo__numero" aria-hidden="true">
-                      {i + 1}
-                    </span>
-                    <span className="passo__texto">
-                      <b>{p.titulo}</b>
-                      <span>{p.texto}</span>
-                    </span>
-                  </button>
-                  <div className="passo__visual-celular">
-                    <div className="quadro">
-                      <Visual passo={p} />
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
           </div>
-          <div className="quadro quadro--passos" aria-hidden="true">
+          <ol className="mo-pc__steps">
             {PASSOS.map((p, i) => (
-              <div key={p.titulo} className="troca-foto quadro__camada" data-ativa={i === ativo}>
+              <li key={p.titulo} className="mo-pc__step">
+                <h3>
+                  <span className="passo__n">{i + 1}</span> {p.titulo}
+                </h3>
+                <p>{p.texto}</p>
                 <Visual passo={p} />
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
+        <div className="mo-pc__visuals" />
       </div>
     </section>
   );

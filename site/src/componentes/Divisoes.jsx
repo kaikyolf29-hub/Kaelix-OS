@@ -36,7 +36,7 @@ function Linhas({ itens }) {
             {it.marcas ? (
               <span className="marcas">
                 {it.marcas.map(m => (
-                  <img key={m.nome} src={m.icone} alt={m.nome} width="22" height="22" />
+                  <img key={m.nome} src={m.icone} alt={m.nome} width="22" height="22" loading="lazy" />
                 ))}
               </span>
             ) : (
@@ -121,8 +121,8 @@ export function Seguranca() {
   return (
     <Divisao
       id="seguranca"
-      titulo="Seguro e sempre atualizado"
-      sub="A Central de segurança mostra num lugar só o escudo, a rede e o que cada app pode usar."
+      titulo="Segurança e atualizações do Matsu"
+      sub="Mostra num lugar só o escudo, a rede e o que cada app pode usar. O sistema se atualiza sozinho."
       foto="janela-seguranca"
       largura={1113}
       altura={717}

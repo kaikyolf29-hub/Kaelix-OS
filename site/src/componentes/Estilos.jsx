@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import BarraVidro from './BarraVidro.jsx';
+import { PAPEL } from './Topo.jsx';
 
 const ESTILOS = [
   { id: 'fusao', nome: 'Matsu', texto: 'Três ilhas de vidro: o menu e a busca, os apps e o relógio.' },
@@ -28,7 +29,7 @@ export default function Estilos() {
       <div className="wrap">
         <div className="cabeca">
           <div>
-            <h2 id="barra-titulo">A barra do jeito que você gosta</h2>
+            <h2 id="barra-titulo">Barra no estilo Matsu, Windows ou Mac</h2>
             <p className="sub">Escolha o estilo nos Ajustes do Matsu e troque quando quiser. Os apps fixados vão junto.</p>
           </div>
           <div className="segmentos" role="tablist" aria-label="Estilo da barra" ref={botoes} onKeyDown={teclado}>
@@ -49,8 +50,33 @@ export default function Estilos() {
           </div>
         </div>
         <div className="palco" id="barra-palco" role="tabpanel" aria-label={`Barra no estilo ${ESTILOS[ativo].nome}. ${ESTILOS[ativo].texto}`}>
-          <img ref={fundo} className="palco__papel papel papel--escuro" src="img/papel-escuro.png" alt="" width="640" height="360" loading="lazy" />
-          <img className="palco__papel papel papel--claro" src="img/papel-claro.png" alt="" width="640" height="360" loading="lazy" />
+          <picture className="papel-quadro">
+            <source media="(max-width: 639px)" srcSet="img/papel-escuro-quadrado.webp" width="720" height="720" />
+            <img
+              ref={fundo}
+              className="palco__papel papel papel--escuro"
+              src="img/papel-escuro-1920.webp"
+              srcSet={PAPEL('escuro')}
+              sizes="(min-width: 1360px) 1280px, 100vw"
+              alt=""
+              width="1920"
+              height="1080"
+              loading="lazy"
+            />
+          </picture>
+          <picture className="papel-quadro">
+            <source media="(max-width: 639px)" srcSet="img/papel-claro-quadrado.webp" width="720" height="720" />
+            <img
+              className="palco__papel papel papel--claro"
+              src="img/papel-claro-1920.webp"
+              srcSet={PAPEL('claro')}
+              sizes="(min-width: 1360px) 1280px, 100vw"
+              alt=""
+              width="1920"
+              height="1080"
+              loading="lazy"
+            />
+          </picture>
           {ESTILOS.map((e, i) => (
             <div key={e.id} className="palco__barra" data-ativo={i === ativo} inert={i === ativo ? undefined : true}>
               <BarraVidro estilo={e.id} vidro={i === ativo} fundo={fundo} />

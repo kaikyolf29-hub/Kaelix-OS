@@ -40,8 +40,8 @@ function Ilha({ vidro, fundo, className, children, raio = 18 }) {
   );
 }
 
-function Logo() {
-  return <img className="barra__logo" src="img/logo.svg" alt="" width="40" height="40" />;
+function Logo({ cedo = false }) {
+  return <img className="barra__logo" src="img/logo.svg" alt="" width="40" height="40" loading={cedo ? 'eager' : 'lazy'} />;
 }
 
 function Busca() {
@@ -56,11 +56,12 @@ function Busca() {
 function AppsDaBarra({ comLixeira = true, links = true, ampliar = false }) {
   return (
     <ul className={`barra__apps${ampliar ? ' barra__apps--ampliar' : ''}`}>
-      {APPS_BARRA.map(app => (
+      {APPS_BARRA.map((app, i) => (
         <li key={app.nome}>
           {links ? (
             <a className="barra__app" href={app.ir} aria-label={app.nome} data-balao={app.nome}>
-              <img src={app.icone} alt="" width="36" height="36" loading="eager" />
+              {/* No celular o topo mostra só os seis primeiros; os outros esperam. */}
+              <img src={app.icone} alt="" width="36" height="36" loading={i < 6 ? 'eager' : 'lazy'} />
             </a>
           ) : (
             <span className="barra__app" data-balao={app.nome}>
@@ -123,7 +124,7 @@ export default function BarraVidro({ estilo = 'fusao', vidro = false, fundo, lin
     return (
       <div className={`barra barra--mac ${className}`} aria-hidden={links ? undefined : 'true'}>
         <div className="mac-topo">
-          <img src="img/logo.svg" alt="" width="20" height="20" />
+          <img src="img/logo.svg" alt="" width="20" height="20" loading="lazy" />
           <b>Arquivos</b>
           <span>Arquivo</span>
           <span>Editar</span>
@@ -148,7 +149,7 @@ export default function BarraVidro({ estilo = 'fusao', vidro = false, fundo, lin
   return (
     <div className={`barra barra--fusao ${className}`} aria-hidden={links ? undefined : 'true'}>
       <Ilha vidro={vidro} fundo={fundo} className="ilha--inicio">
-        <Logo />
+        <Logo cedo={links} />
         <Busca />
       </Ilha>
       <Ilha vidro={vidro} fundo={fundo} className="ilha--apps">

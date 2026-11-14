@@ -47,7 +47,7 @@ export default function Telas() {
 
   return (
     <section className="secao" id="sistema" aria-labelledby="sistema-titulo">
-      <div className="wrap divisao divisao--4-8">
+      <div className="wrap divisao divisao--5-7">
         <div className="divisao__texto">
           <h2 id="sistema-titulo">Fácil para quem vem do Windows</h2>
           <p className="sub">
@@ -82,7 +82,7 @@ export default function Telas() {
               data-ativa={i === ativa}
               src={`img/${a.foto}.webp`}
               srcSet={`img/${a.foto}-800.webp 800w, img/${a.foto}.webp 1600w`}
-              sizes="(min-width: 1024px) 845px, 100vw"
+              sizes="(min-width: 1024px) 737px, 100vw"
               width="1600"
               height="900"
               alt={i === ativa ? a.alt : ''}

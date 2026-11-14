@@ -18,7 +18,8 @@
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="preload" href="fontes/FunnelDisplay.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fontes/FunnelSans.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="img/papel-escuro.png" as="image">
+  <link rel="preload" as="image" type="image/webp" media="(min-width: 640px)" imagesrcset="img/papel-escuro-1920.webp 1920w, img/papel-escuro-3840.webp 3840w" imagesizes="(max-aspect-ratio: 16/9) 178vh, 100vw" fetchpriority="high">
+  <link rel="preload" as="image" type="image/webp" media="(max-width: 639px)" href="img/papel-escuro-celular.webp" fetchpriority="high">
   <script>
     // O tema escolhido (escuro ou claro) entra antes de desenhar, sem piscar.
     try {
@@ -30,7 +31,10 @@
   <noscript><style>.entrada, .entrada * { opacity: 1 !important; filter: none !important; transform: none !important; }</style></noscript>
 </head>
 <body>
-  <div id="app"><!--app--></div>
+  <header class="nav" id="raiz-nav"><!--raiz-nav--></header>
+  <main id="conteudo"><!--conteudo--></main>
+  <footer class="rodape closing" id="raiz-rodape" aria-labelledby="rodape-titulo"><!--raiz-rodape--></footer>
+  <nav class="barra-celular actionbar" id="raiz-celular" aria-label="Baixar" data-mostrar="false" inert><!--raiz-celular--></nav>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

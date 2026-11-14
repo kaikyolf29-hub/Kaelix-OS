@@ -7,8 +7,12 @@ import path from 'node:path';
 const raiz = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const modelo = await readFile(path.join(raiz, 'dist/index.html'), 'utf8');
 const { render } = await import(path.join(raiz, 'dist-ssr/entry-server.js'));
-const html = modelo.replace('<!--app-->', render());
-if (html === modelo) throw new Error('index.html sem o marcador <!--app-->');
+let html = modelo;
+for (const [id, parte] of Object.entries(render())) {
+  const marca = `<!--${id}-->`;
+  if (!html.includes(marca)) throw new Error(`index.html sem o marcador ${marca}`);
+  html = html.replace(marca, parte);
+}
 await writeFile(path.join(raiz, 'dist/index.html'), html);
 await rm(path.join(raiz, 'dist-ssr'), { recursive: true, force: true });
 console.log('página desenhada em dist/index.html');

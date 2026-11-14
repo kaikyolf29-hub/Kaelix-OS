@@ -15,23 +15,27 @@ import './estilo/secoes.css';
 
 // Uma página só, uma parte por tela: o topo (a área de trabalho), o sistema, os
 // jogos, a barra, a loja, os apps, a segurança, a instalação, baixar e o fim.
-export default function App() {
+// O index.html já tem o header, o main, o footer e a barra do celular; cada um
+// é uma raiz do React, para a página ser só essas quatro partes.
+function Conteudo() {
   return (
     <>
-      <Navegacao />
-      <main id="conteudo">
-        <Topo />
-        <Telas />
-        <Jogos />
-        <Estilos />
-        <Loja />
-        <Apps />
-        <Seguranca />
-        <Instalar />
-        <Baixar />
-      </main>
-      <Rodape />
-      <BarraCelular />
+      <Topo />
+      <Telas />
+      <Jogos />
+      <Estilos />
+      <Loja />
+      <Apps />
+      <Seguranca />
+      <Instalar />
+      <Baixar />
     </>
   );
 }
+
+export const RAIZES = {
+  'raiz-nav': Navegacao,
+  conteudo: Conteudo,
+  'raiz-rodape': Rodape,
+  'raiz-celular': BarraCelular
+};

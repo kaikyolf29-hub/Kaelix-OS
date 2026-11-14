@@ -3,17 +3,49 @@ import BlurText from '../reactbits/BlurText.jsx';
 import BarraVidro from './BarraVidro.jsx';
 import { EDICAO, TAMANHO_ISO } from '../dados.js';
 
+// O papel de parede é pixel art de 640x360 aumentado 3 e 6 vezes sem borrar
+// (WebP sem perda: os dois juntos pesam menos que o PNG pequeno). No celular vai
+// um recorte em pé (o pedaço do sol), para não baixar a imagem larga inteira.
+// Com object-fit: cover, numa tela mais estreita que 16:9 a imagem fica com a
+// largura de 16/9 da altura (cortada dos lados): é essa largura que vai no sizes.
+const TAMANHO_PAPEL = '(max-aspect-ratio: 16/9) 178vh, 100vw';
+export const PAPEL = tema => `img/papel-${tema}-1920.webp 1920w, img/papel-${tema}-3840.webp 3840w`;
+
 // A primeira tela é a área de trabalho do Matsu: o papel de parede em pixel art
 // do sistema (o mesmo do primeiro boot) e a barra de vidro em três ilhas.
 export default function Topo() {
   const escuro = useRef(null);
   return (
     <section className="topo" id="inicio" data-enter aria-labelledby="topo-titulo">
-      <div className="topo__papel" aria-hidden="true">
-        <img ref={escuro} className="papel papel--escuro" src="img/papel-escuro.png" alt="" width="640" height="360" fetchPriority="high" />
-        <img className="papel papel--claro" src="img/papel-claro.png" alt="" width="640" height="360" loading="lazy" />
-      </div>
-      <div className="wrap topo__texto">
+      <picture className="papel-quadro">
+        <source media="(max-width: 639px)" srcSet="img/papel-escuro-celular.webp" width="540" height="1080" />
+        <img
+          ref={escuro}
+          className="papel papel--escuro"
+          src="img/papel-escuro-1920.webp"
+          srcSet={PAPEL('escuro')}
+          sizes={TAMANHO_PAPEL}
+          alt=""
+          width="1920"
+          height="1080"
+          fetchPriority="high"
+        />
+      </picture>
+      <picture className="papel-quadro">
+        <source media="(max-width: 639px)" srcSet="img/papel-claro-celular.webp" width="540" height="1080" />
+        <img
+          className="papel papel--claro"
+          src="img/papel-claro-1920.webp"
+          srcSet={PAPEL('claro')}
+          sizes={TAMANHO_PAPEL}
+          alt=""
+          width="1920"
+          height="1080"
+          fetchPriority="low"
+        />
+      </picture>
+      <div className="wrap topo__wrap">
+        <div className="hero-text topo__texto">
         <h1 id="topo-titulo" className="topo__h1">
           <BlurText
             as="span"
@@ -45,8 +77,11 @@ export default function Topo() {
         <p className="topo__fato entra" style={{ '--atraso': '600ms' }}>
           Instalador de {TAMANHO_ISO}, para PCs com placa AMD, Intel ou NVIDIA.
         </p>
+        </div>
+        <div className="topo__pe">
+          <BarraVidro estilo="fusao" vidro fundo={escuro} links className="topo__barra entra" />
+        </div>
       </div>
-      <BarraVidro estilo="fusao" vidro fundo={escuro} links className="topo__barra entra" />
     </section>
   );
 }

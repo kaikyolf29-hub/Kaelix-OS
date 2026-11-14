@@ -1,6 +1,7 @@
-# Publica o site do Matsu (a pasta site/) no GitHub Pages. Por enquanto só à mão
-# (Actions > Publicar o site > Run workflow): o GitHub Pages precisa estar ligado
-# em Settings > Pages, com a origem "GitHub Actions".
+# Publica o site do Matsu no GitHub Pages: monta o site/ (Vite + React, desenhado
+# no build) e sobe a pasta site/dist. Por enquanto só à mão (Actions > Publicar o
+# site > Run workflow): o GitHub Pages precisa estar ligado em Settings > Pages,
+# com a origem "GitHub Actions".
 name: Publicar o site
 
 on:
@@ -23,16 +24,29 @@ jobs:
       url: ${{ steps.publicar.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
-      - name: Conferir o site
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Montar o site
+        working-directory: site
         run: |
-          test -f site/index.html
-          # Toda foto e arquivo que a página pede existe na pasta.
-          grep -oE '(src|href)="(img|fontes)/[^"]+"' site/index.html | sed -E 's/^[a-z]+="//; s/"$//' | sort -u | while read -r f; do
-            if [[ ! -f site/$f ]]; then echo "falta site/$f"; exit 1; fi
+          npm ci
+          npm run build
+      - name: Conferir o site
+        working-directory: site/dist
+        run: |
+          test -f index.html
+          grep -q 'id="topo-titulo"' index.html   # a página saiu desenhada
+          # Toda foto, ícone e arquivo que a página pede existe na pasta.
+          grep -oE '(src|href|srcset)="[^"#:]+' index.html | sed -E 's/^[a-z]+="//' | tr ',' '\n' | awk '{print $1}' \
+            | grep -E '^(img|icones|fontes|assets|moments)/' | sort -u | while read -r f; do
+            if [[ ! -f "$f" ]]; then echo "falta $f"; exit 1; fi
           done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: site/dist
       - id: publicar
         uses: actions/deploy-pages@v4

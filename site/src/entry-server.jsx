@@ -1,6 +1,7 @@
 import { renderToString } from 'react-dom/server';
-import App from './App.jsx';
+import { RAIZES } from './App.jsx';
 
+// Cada raiz vira o HTML que vai dentro do seu elemento no index.html.
 export function render() {
-  return renderToString(<App />);
+  return Object.fromEntries(Object.entries(RAIZES).map(([id, Parte]) => [id, renderToString(<Parte />)]));
 }

@@ -55,6 +55,23 @@
   --t-lead: clamp(18px, 0.3vw + 16px, 20px);
   --t-corpo: 16px;
   --t-pequeno: 14px;
+
+  /* Os nomes que o CSS dos momentos do Taste Skill usa, ligados às cores do Matsu. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --gutter: 24px;
+  --line: var(--linha-forte);
+  --ink: var(--tinta);
+  --muted: var(--tinta-2);
+  --accent: var(--sakura);
+  --font-text: var(--fonte);
+  --r-md: var(--r-janela);
+  --ground-bg: var(--chao-2);
 }
 
 :root[data-tema='claro'] {
@@ -655,13 +672,14 @@ h3 {
   }
 }
 
-/* Abas na vertical (Você já sabe usar). */
+/* Abas na vertical (Fácil para quem vem do Windows): linhas como as listas da
+   página, e o traço rosa desliza para a linha escolhida. */
 .abas {
   --aba-h: 84px;
   position: relative;
   display: grid;
-  gap: 4px;
   margin-top: 32px;
+  border-bottom: 1px solid var(--linha);
 }
 .aba {
   position: relative;
@@ -670,9 +688,9 @@ h3 {
   align-content: center;
   gap: 2px;
   height: var(--aba-h);
-  padding: 0 18px 0 20px;
+  padding: 0;
   border: 0;
-  border-radius: var(--r-ctrl);
+  border-top: 1px solid var(--linha);
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -694,22 +712,16 @@ h3 {
 }
 .abas__marca {
   position: absolute;
+  z-index: 2;
   left: 0;
   right: 0;
   top: 0;
-  height: var(--aba-h);
-  border-radius: var(--r-ctrl);
-  background: var(--cartao-2);
-  box-shadow: inset 0 0 0 1px var(--linha);
-  transform: translateY(calc(var(--i, 0) * (var(--aba-h) + 4px)));
+  height: 2px;
+  background: var(--sakura);
+  transform: translateY(calc(var(--i, 0) * var(--aba-h)));
 }
-.abas__marca::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 22px;
-  bottom: 22px;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--tinta);
+@media (max-width: 639px) {
+  .nav {
+    background: var(--chao);
+  }
 }

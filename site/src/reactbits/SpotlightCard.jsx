@@ -277,7 +277,7 @@ const SpotlightCard = ({
       {...rest}
     >
       <span ref={lightRef} className="spotlight-card__light" aria-hidden="true" />
-      <span ref={grainRef} className="spotlight-card__grain" style={{ backgroundImage: NOISE }} aria-hidden="true" />
+      <span ref={grainRef} className="spotlight-card__grain" style={grain > 0 ? { backgroundImage: NOISE } : undefined} aria-hidden="true" />
       {children}
       <span className="spotlight-card__border" aria-hidden="true" />
       <span ref={edgeRef} className="spotlight-card__edge" aria-hidden="true" />

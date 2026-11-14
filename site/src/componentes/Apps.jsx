@@ -41,7 +41,15 @@ export default function Apps() {
                   </span>
                 </div>
                 <div className="cartao-app__janela">
-                  <img src={`img/${app.foto}.webp`} alt={`O app ${app.nome} do Matsu`} width={app.l} height={app.a} loading="lazy" />
+                  <img
+                    src={`img/${app.foto}-640.webp`}
+                    srcSet={`img/${app.foto}-320.webp 320w, img/${app.foto}-640.webp 640w, img/${app.foto}.webp ${app.l}w`}
+                    sizes="(max-width: 639px) 45vw, (max-width: 1023px) 46vw, 362px"
+                    alt={`O app ${app.nome} do Matsu`}
+                    width={app.l}
+                    height={app.a}
+                    loading="lazy"
+                  />
                 </div>
               </SpotlightCard>
             </li>

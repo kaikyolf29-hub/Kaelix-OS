@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Icone from './Icone.jsx';
 import { NOME, SECOES } from '../dados.js';
 
@@ -40,6 +40,7 @@ export function BotaoTema() {
   );
 }
 
+// O <header class="nav"> está no index.html; o React desenha o que vai dentro.
 export default function Navegacao() {
   const [aberto, setAberto] = useState(false);
 
@@ -55,7 +56,7 @@ export default function Navegacao() {
   }, [aberto]);
 
   return (
-    <header className="nav">
+    <>
       <div className="wrap nav__linha">
         <a className="pular" href="#conteudo">Pular para o conteúdo</a>
         <a className="nav__marca" href="#inicio" aria-label={`${NOME}, início`}>
@@ -103,14 +104,22 @@ export default function Navegacao() {
           </li>
         </ul>
       </div>
-    </header>
+    </>
   );
 }
 
 // A barra de baixo do celular: aparece só quando o botão do topo já saiu da tela
 // e some de novo perto da parte de baixar, para nunca mostrar o botão duas vezes.
+// O <nav class="barra-celular"> está no index.html; aqui vai o botão e o liga/desliga.
 export function BarraCelular() {
   const [mostrar, setMostrar] = useState(false);
+  const botao = useRef(null);
+  useEffect(() => {
+    const barra = botao.current?.parentElement;
+    if (!barra) return;
+    barra.dataset.mostrar = String(mostrar);
+    barra.inert = !mostrar;
+  }, [mostrar]);
   useEffect(() => {
     const alvos = ['#botao-topo', '#baixar', '#rodape-baixar'].map(s => document.querySelector(s)).filter(Boolean);
     const vistos = new Set();
@@ -127,10 +136,8 @@ export function BarraCelular() {
     return () => obs.disconnect();
   }, []);
   return (
-    <nav className="barra-celular" data-mostrar={mostrar} aria-label="Baixar" inert={mostrar ? undefined : true}>
-      <a className="btn btn--primario" href="#baixar" tabIndex={mostrar ? undefined : -1}>
-        Baixar o Matsu {NOME.split(' ')[1]}
-      </a>
-    </nav>
+    <a className="btn btn--primario" href="#baixar" ref={botao} tabIndex={mostrar ? undefined : -1}>
+      Baixar o Matsu {NOME.split(' ')[1]}
+    </a>
   );
 }
