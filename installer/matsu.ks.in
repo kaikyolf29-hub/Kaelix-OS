@@ -17,4 +17,9 @@ ostreecontainer --url=@IMAGE_REF@ --transport=registry --no-signature-verificati
 %post --erroronfail
 # A partir daqui o sistema só aceita atualizações assinadas com a chave do Matsu.
 bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry @IMAGE_REF@
+# Se a conta já foi criada na instalação, o assistente de primeiro uso (que
+# pede para criar uma conta) não abre: o sistema liga direto na tela de login.
+if awk -F: '$3 >= 1000 && $3 < 60000 { achou = 1 } END { exit !achou }' /etc/passwd; then
+  touch /etc/plasma-setup-done
+fi
 %end

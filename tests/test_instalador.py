@@ -151,6 +151,8 @@ class Kickstart(unittest.TestCase):
         self.assertIn("network --hostname=matsu-kaiky", ks)
         # Sem isto o sistema liga só no modo texto (o anaconda roda sem tela).
         self.assertEqual(ks.count("xconfig --startxonboot"), 1)
+        # A conta já foi criada aqui: o assistente de primeiro uso do KDE não abre.
+        self.assertIn("touch /etc/plasma-setup-done", ks)
         self.assertIn("keyboard --vckeymap=br-abnt2 --xlayouts='br'", ks)
         self.assertIn("timezone America/Sao_Paulo --utc", ks)
 
