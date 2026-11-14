@@ -4,6 +4,7 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import org.kde.kirigami as Kirigami
+import "foto.js" as Foto
 
 Item {
     id: pessoa
@@ -15,7 +16,9 @@ Item {
     property bool mostrarNome: true
     signal clicada()
 
-    readonly property bool temFoto: foto !== "" && imagem.status === Image.Ready
+    // O rosto genérico do KDE não conta como foto (foto.js): vira a letra do nome.
+    readonly property string fotoDeVerdade: Foto.deVerdade(foto)
+    readonly property bool temFoto: fotoDeVerdade !== "" && imagem.status === Image.Ready
     readonly property string inicial: nome.trim().length > 0 ? nome.trim().charAt(0).toUpperCase() : "?"
 
     implicitWidth: Math.max(lado, rotulo.implicitWidth)
@@ -67,7 +70,7 @@ Item {
         Image {
             id: imagem
             anchors.fill: parent
-            source: pessoa.foto
+            source: pessoa.fotoDeVerdade
             sourceSize.width: Math.round(pessoa.lado * 2)
             sourceSize.height: Math.round(pessoa.lado * 2)
             fillMode: Image.PreserveAspectCrop

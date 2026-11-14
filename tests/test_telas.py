@@ -6,6 +6,9 @@ Quando o Plasma da imagem mudar, ponha o arquivo novo ao lado (o fluxo
 "Extrair arquivos da imagem" copia ele para o ramo "extraidos").
 """
 import importlib.util
+import json
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -261,6 +264,33 @@ class Login(unittest.TestCase):
             K.PASTA, K.NOSSAS, K.ORIGINAIS = Path(d) / "nada", BREEZE_MATSU, Path(d) / "originais"
             self.assertEqual(K.main(), 0)
             self.assertFalse((Path(d) / "originais").exists())
+
+
+class Foto(unittest.TestCase):
+    """O foto.js da Pessoa.qml: o rosto genérico do KDE vira a letra do nome."""
+
+    def deVerdade(self, caminhos):
+        if not shutil.which("node"):
+            self.skipTest("sem node")
+        codigo = (RAIZ / "system_files/usr/share/matsu/telas/foto.js").read_text(encoding="utf-8")
+        script = codigo.replace(".pragma library", "") + "\nconsole.log(JSON.stringify(" + json.dumps(caminhos) + ".map(deVerdade)));"
+        saida = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True).stdout
+        return json.loads(saida)
+
+    def test_rosto_generico_vira_letra(self):
+        genericos = ["", "qrc:/qt/qml/org/kde/plasma/login/.face.icon", ":/faces/.face.icon",
+                     "image://icon/user-identity", "/usr/share/plasmalogin/faces/.face.icon",
+                     "file:///usr/share/sddm/faces/.face.icon"]
+        self.assertEqual(self.deVerdade(genericos), [""] * len(genericos))
+
+    def test_foto_escolhida_fica(self):
+        fotos = ["/var/lib/AccountsService/icons/matsu", "file:///home/matsu/.face.icon", "/home/matsu/.face"]
+        self.assertEqual(self.deVerdade(fotos), fotos)
+
+    def test_pessoa_usa(self):
+        texto = (RAIZ / "system_files/usr/share/matsu/telas/Pessoa.qml").read_text(encoding="utf-8")
+        self.assertIn('import "foto.js" as Foto', texto)
+        self.assertIn("source: pessoa.fotoDeVerdade", texto)
 
 
 if __name__ == "__main__":

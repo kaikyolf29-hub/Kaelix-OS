@@ -42,7 +42,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         lado: wrapper.isCurrent ? wrapper.faceSize : Math.round(wrapper.faceSize * 0.82)
         nome: wrapper.name || wrapper.userName
-        // Só a foto de verdade; o ícone genérico do KDE vira a letra do nome.
+        // Só a foto de verdade: o rosto genérico do greeter vira a letra (Pessoa.qml, foto.js).
         foto: wrapper.avatarPath
         escolhida: wrapper.isCurrent
         mostrarNome: false
