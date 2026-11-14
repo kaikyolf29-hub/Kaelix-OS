@@ -149,6 +149,8 @@ class Kickstart(unittest.TestCase):
         self.assertIn("user --name=kaiky --gecos=\"Kaiky Oliveira\" --groups=wheel --iscrypted "
                       "--password='$6$sal$cifrada'", ks)
         self.assertIn("network --hostname=matsu-kaiky", ks)
+        # Sem isto o sistema liga só no modo texto (o anaconda roda sem tela).
+        self.assertEqual(ks.count("xconfig --startxonboot"), 1)
         self.assertIn("keyboard --vckeymap=br-abnt2 --xlayouts='br'", ks)
         self.assertIn("timezone America/Sao_Paulo --utc", ks)
 

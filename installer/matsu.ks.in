@@ -9,6 +9,9 @@ lang pt_BR.UTF-8
 keyboard --vckeymap=br-abnt2 --xlayouts='br'
 timezone America/Sao_Paulo
 
+# Liga na tela de login também quando a instalação foi feita em modo texto.
+xconfig --startxonboot
+
 ostreecontainer --url=@IMAGE_REF@ --transport=registry --no-signature-verification
 
 %post --erroronfail

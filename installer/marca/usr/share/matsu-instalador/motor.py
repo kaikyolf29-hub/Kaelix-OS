@@ -432,6 +432,9 @@ def gerar_kickstart(base_ks, escolhas, senha_cifrada):
     else:
         raise ValueError("sem senha cifrada")
     linhas.append(f"network --hostname={nome_do_computador(escolhas['usuario'])}")
+    # O anaconda roda sem tela (--cmdline) e, sem isto, deixa o sistema ligando
+    # só no modo texto (multi-user.target): visto no teste na VM.
+    linhas.append("xconfig --startxonboot")
     texto = "\n".join(linhas) + "\n\n" + linhas_da_base(base_ks)
     texto += (
         "\n%post --erroronfail\n"
