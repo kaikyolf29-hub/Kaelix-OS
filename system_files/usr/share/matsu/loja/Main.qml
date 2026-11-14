@@ -79,6 +79,8 @@ JanelaMatsu {
     // Aviso que aparece embaixo por alguns segundos (um erro ao instalar, por exemplo).
     property string aviso: ""
     property int avisoN: 0
+    // Aviso de que deu certo (visto verde, some mais rápido) ou de problema (alerta laranja).
+    property bool avisoCerto: false
     // ----- apps pagos (comprados fora, liberados com um código) -----
     property var licencas: ({})       // id -> { valida, motivo, plano, expira }
     property bool restaurando: false
@@ -112,8 +114,9 @@ JanelaMatsu {
         var s = id.indexOf("web:") === 0 ? site(id.substring(4)) : null;
         return s ? s.nome : id;
     }
-    function avisar(texto) {
+    function avisar(texto, certo) {
         aviso = texto;
+        avisoCerto = !!certo;
         avisoN++;
     }
     function site(id) {
@@ -599,7 +602,7 @@ JanelaMatsu {
                     var n = (d.apps || []).length;
                     janela.avisar(n === 0 ? janela.t("Nenhuma compra resgatada neste computador ainda.", "No purchases redeemed on this computer yet.")
                                           : (n === 1 ? janela.t("1 compra restaurada.", "1 purchase restored.")
-                                                     : janela.t(n + " compras restauradas.", n + " purchases restored.")));
+                                                     : janela.t(n + " compras restauradas.", n + " purchases restored.")), n > 0);
                 } else {
                     janela.avisar(d && d.mensagem ? d.mensagem : janela.t("Não deu para restaurar agora. Tente de novo daqui a pouco.", "Could not restore right now. Try again in a moment."));
                 }
@@ -783,7 +786,7 @@ JanelaMatsu {
         }
         Timer {
             id: esconder
-            interval: 8000
+            interval: janela.avisoCerto ? 3500 : 8000
         }
         Connections {
             target: janela
@@ -800,10 +803,10 @@ JanelaMatsu {
             Kirigami.Icon {
                 implicitWidth: Kirigami.Units.iconSizes.small
                 implicitHeight: implicitWidth
-                source: "matsu-alerta-symbolic"
-                fallback: "dialog-warning-symbolic"
+                source: janela.avisoCerto ? "matsu-certo-symbolic" : "matsu-alerta-symbolic"
+                fallback: janela.avisoCerto ? "emblem-ok-symbolic" : "dialog-warning-symbolic"
                 isMask: true
-                color: janela.escuro ? "#f5b26b" : "#b8621b"
+                color: janela.avisoCerto ? (janela.escuro ? "#5fd394" : "#1d7f4e") : (janela.escuro ? "#f5b26b" : "#b8621b")
             }
             Texto {
                 Layout.fillWidth: true
