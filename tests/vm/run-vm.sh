@@ -228,10 +228,13 @@ sleep 5
 hmp key meta_l-pgup
 sleep 4
 shot "13c-doca-some-com-app-maximizado"
-hmp mover 960 1079 || true
-sleep 1
-hmp mover 962 1079 || true
-sleep 3
+# Um mouse de verdade continua empurrando a borda; aqui são vários toques
+# seguidos (um toque só acende o brilho da borda e não mostra a doca).
+for x in 950 954 958 962 966 970 974; do
+  hmp mover "$x" 1079 || true
+  sleep 0.2
+done
+sleep 2
 shot "13d-doca-volta-com-mouse-embaixo"
 hmp mover 960 500 || true
 sleep 2
