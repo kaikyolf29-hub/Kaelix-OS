@@ -102,7 +102,8 @@ $(t "Exemplos" "Examples"):
   matsu seguranca remover       $(t "(apaga o contêiner do Kali)" "(deletes the Kali container)")
   matsu barra windows           $(t "(uma barra só embaixo, como no Windows)" "(a single bar at the bottom, like Windows)")
   matsu barra --tamanho grande  $(t "(barra maior; também pequena e media)" "(bigger bar; also pequena and media)")
-  matsu barra --esconder sim    $(t "(a barra se esconde e aparece com o mouse)" "(the bar hides and shows up with the mouse)")
+  matsu barra --esconder maximizado  $(t "(a barra some com um app maximizado e volta com o mouse na borda; também sempre e nao)" "(the bar hides behind a maximized app and comes back with the mouse at the edge; also sempre and nao)")
+  matsu barra --esconder-topo sempre $(t "(estilo Mac: a barra de cima também some; o padrão é tela-cheia)" "(Mac style: the top bar hides too; default is tela-cheia)")
   matsu barra --busca meio      $(t "(a busca vai para a ilha do meio, junto dos apps; também esquerda e nao)" "(search moves to the middle island, next to the apps; also esquerda and nao)")
   matsu barra --menu meio       $(t "(o menu também vai para o meio, como no Windows 11)" "(the menu moves to the middle too, like Windows 11)")
   matsu barra --telas principal $(t "(com várias telas, a barra só na principal; o padrão é todas)" "(with several screens, the bar only on the main one; default is todas)")
@@ -453,12 +454,15 @@ bar_reply_lines() {
 
 # As escolhas da pessoa, como variáveis no começo do roteiro da barra (veja
 # o começo de /usr/share/matsu/barra/comum.js).
+# A barra de cima do estilo Mac se esconde como em BAR_ESCONDER_TOPO (quem
+# chama põe o valor novo) ou como está guardado.
 bar_vars() { # bar_vars <tamanho> <esconder> <busca> <menu> <telas> <abertos> [estilo]
-  local scale esconde=false
+  local scale esconde topo
   case "$1" in pequena) scale=2.25 ;; grande) scale=3.25 ;; media) scale=2.75 ;; *) scale="$(bar_scale "$1")" ;; esac
-  [[ $2 == sim ]] && esconde=true
-  printf 'var matsuEscala = %s;\nvar matsuEsconder = %s;\nvar matsuBusca = "%s";\nvar matsuMenu = "%s";\nvar matsuTelas = "%s";\nvar matsuAbertos = "%s";\n' \
-    "$scale" "$esconde" "$3" "$4" "$5" "$6"
+  esconde="$(bar_hide_mode "$2")" || esconde=nao
+  topo="$(bar_hide_top_mode "${BAR_ESCONDER_TOPO:-$(bar_saved esconder_topo tela-cheia)}")" || topo=tela-cheia
+  printf 'var matsuEscala = %s;\nvar matsuEsconder = "%s";\nvar matsuEsconderTopo = "%s";\nvar matsuBusca = "%s";\nvar matsuMenu = "%s";\nvar matsuTelas = "%s";\nvar matsuAbertos = "%s";\n' \
+    "$scale" "$esconde" "$topo" "$3" "$4" "$5" "$6"
   if [[ ${7:-} =~ ^(fusao|mac|windows)$ ]]; then printf 'var matsuEstilo = "%s";\n' "$7"; fi
   bar_dock_vars
 }
@@ -488,9 +492,32 @@ bar_dock_vars() {
 }
 
 # Guarda tudo o que a pessoa escolheu para a barra (e para a doca).
-bar_write_state() { # bar_write_state <estilo> <tamanho> <esconder> <busca> <menu> <telas> <abertos> <ampliacao> <nivel> <indicadores> <animar> <posicao>
-  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\ntelas=%s\nabertos=%s\nampliacao=%s\nampliacao_nivel=%s\nindicadores=%s\nanimar=%s\nposicao=%s\n' \
+bar_write_state() { # bar_write_state <estilo> <tamanho> <esconder> <busca> <menu> <telas> <abertos> <ampliacao> <nivel> <indicadores> <animar> <posicao> <esconder_topo>
+  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\ntelas=%s\nabertos=%s\nampliacao=%s\nampliacao_nivel=%s\nindicadores=%s\nanimar=%s\nposicao=%s\nesconder_topo=%s\n' \
     "$@" > "$STATE_DIR/barra"
+}
+
+# Quando a barra (no estilo Mac, a doca) se esconde sozinha: nao, maximizado
+# (some quando uma janela encosta nela, como um app maximizado) ou sempre. Nos
+# dois, ela volta quando o mouse encosta na borda da tela. "sim" era o "sempre".
+bar_hide_mode() {
+  case "${1,,}" in
+    nao|não|n|no|off|false|0|nunca|never)                                   printf 'nao' ;;
+    maximizado|maximizada|maximized|max|janela|janelas|windows|dodge|cobrir) printf 'maximizado' ;;
+    sempre|always|sim|s|yes|y|on|true|1|auto)                               printf 'sempre' ;;
+    *) return 1 ;;
+  esac
+}
+
+# A barra de cima do estilo Mac: some só com um app em tela cheia (o padrão,
+# como no Mac), com um app maximizado ou sempre.
+bar_hide_top_mode() {
+  case "${1,,}" in
+    tela-cheia|telacheia|cheia|fullscreen|nao|não|n|no|off|false|0|nunca|never) printf 'tela-cheia' ;;
+    maximizado|maximizada|maximized|max|janela|janelas|windows|dodge|cobrir)     printf 'maximizado' ;;
+    sempre|always|sim|s|yes|y|on|true|1|auto)                                   printf 'sempre' ;;
+    *) return 1 ;;
+  esac
 }
 
 # Um "sim/não" das opções da doca.
@@ -907,7 +934,7 @@ cmd_bar() {
   case "${1:-}" in
     apps|fixados|pinned|fixar|pin|tirar|unpin|desafixar|remover|ordem|order) cmd_bar_apps "$@"; return ;;
   esac
-  local style="" size="" hide="" busca="" menu="" telas="" abertos="" details=0 novas=0 arg
+  local style="" size="" hide="" hide_top="" busca="" menu="" telas="" abertos="" details=0 novas=0 arg
   local amp="" nivel="" ind="" ani="" pos=""
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift
@@ -920,6 +947,8 @@ cmd_bar() {
       --tamanho=*|--size=*) size="${arg#*=}" ;;
       --esconder|--autohide) hide="${1:-}"; shift || true ;;
       --esconder=*|--autohide=*) hide="${arg#*=}" ;;
+      --esconder-topo|--autohide-top) hide_top="${1:-}"; shift || true ;;
+      --esconder-topo=*|--autohide-top=*) hide_top="${arg#*=}" ;;
       --busca|--search)     busca="${1:-}"; shift || true ;;
       --busca=*|--search=*) busca="${arg#*=}" ;;
       --menu)               menu="${1:-}"; shift || true ;;
@@ -973,12 +1002,14 @@ cmd_bar() {
     direita|right)          pos=direita ;;
     *) fail "Use --posicao embaixo, esquerda ou direita." "Use --position embaixo, esquerda or direita." ;;
   esac
-  case "${hide,,}" in
-    "") ;;
-    sim|s|yes|y|on|true|1)      hide=sim ;;
-    nao|não|n|no|off|false|0)   hide=nao ;;
-    *) fail "Use --esconder sim ou --esconder nao." "Use --autohide on or --autohide off." ;;
-  esac
+  if [[ -n $hide ]]; then
+    hide="$(bar_hide_mode "$hide")" \
+      || fail "Use --esconder nao, maximizado ou sempre." "Use --autohide nao, maximizado or sempre."
+  fi
+  if [[ -n $hide_top ]]; then
+    hide_top="$(bar_hide_top_mode "$hide_top")" \
+      || fail "Use --esconder-topo tela-cheia, maximizado ou sempre." "Use --autohide-top tela-cheia, maximizado or sempre."
+  fi
   # Onde fica a pílula da busca (na fusão): junto do menu, na ilha do meio ou sem ela.
   case "${busca,,}" in
     "") ;;
@@ -1026,12 +1057,16 @@ cmd_bar() {
   amp="${amp:-$cur_amp}"; nivel="${nivel:-$cur_nivel}"; ind="${ind:-$cur_ind}"; ani="${ani:-$cur_ani}"
   cur_style="$(bar_saved estilo fusao)"
   cur_size="$(bar_saved tamanho media)"
-  cur_hide="$(bar_saved esconder nao)"
+  cur_hide="$(bar_hide_mode "$(bar_saved esconder nao)")" || cur_hide=nao
+  local cur_hide_top
+  cur_hide_top="$(bar_hide_top_mode "$(bar_saved esconder_topo tela-cheia)")" || cur_hide_top=tela-cheia
   cur_busca="$(bar_saved busca esquerda)"
   cur_menu="$(bar_saved menu esquerda)"
   cur_telas="$(bar_saved telas todas)"
   cur_abertos="$(bar_saved abertos tela)"
   hide="${hide:-$cur_hide}"
+  hide_top="${hide_top:-$cur_hide_top}"
+  export BAR_ESCONDER_TOPO="$hide_top"
   [[ $cur_busca =~ ^(esquerda|meio|nao)$ ]] || cur_busca=esquerda
   [[ $cur_menu =~ ^(esquerda|meio)$ ]] || cur_menu=esquerda
   [[ $cur_telas =~ ^(todas|principal)$ ]] || cur_telas=todas
@@ -1047,15 +1082,34 @@ cmd_bar() {
   fi
 
   local layout_same=0
-  if [[ -z $style && -z $size && $hide == "$cur_hide" && $busca == "$cur_busca" && $menu == "$cur_menu" \
+  if [[ -z $style && -z $size && $busca == "$cur_busca" && $menu == "$cur_menu" \
         && $telas == "$cur_telas" && $abertos == "$cur_abertos" && ( -z $pos || $pos == "$cur_pos" ) ]]; then
     layout_same=1
   fi
   pos="${pos:-$cur_pos}"
+  # Só o jeito de esconder mudou: vale na hora, nas barras que já estão na
+  # tela, sem montar a barra de novo.
+  if [[ $layout_same == 1 && ( $hide != "$cur_hide" || $hide_top != "$cur_hide_top" ) ]]; then
+    bar_write_state "$cur_style" "$cur_size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos" "$hide_top"
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v busctl >/dev/null 2>&1 && [[ -r $BAR_DIR/esconder.js ]]; then
+      bar_script "$(bar_vars "$cur_size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$cur_style"; cat "$BAR_DIR/comum.js" "$BAR_DIR/esconder.js")" >/dev/null 2>&1 || true
+    fi
+    if [[ $dock_changed == 1 && -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v busctl >/dev/null 2>&1 && [[ -r $BAR_DIR/doca-ajustes.js ]]; then
+      bar_script "$(bar_dock_vars; cat "$BAR_DIR/comum.js" "$BAR_DIR/doca-ajustes.js")" >/dev/null 2>&1 || true
+    fi
+    case "$hide" in
+      maximizado) ok "A barra some com um app maximizado e volta quando o mouse encosta na borda." \
+                     "The bar hides behind a maximized app and comes back when the mouse touches the edge." ;;
+      sempre)     ok "A barra fica escondida e aparece quando o mouse encosta na borda." \
+                     "The bar stays hidden and shows up when the mouse touches the edge." ;;
+      *)          ok "A barra fica sempre na tela." "The bar always stays on screen." ;;
+    esac
+    return 0
+  fi
   # Só os ajustes da doca mudaram: valem na hora, nas docas que já estão na
   # tela, sem montar a barra de novo.
   if [[ $layout_same == 1 && $dock_changed == 1 ]]; then
-    bar_write_state "$cur_style" "$cur_size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos"
+    bar_write_state "$cur_style" "$cur_size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos" "$hide_top"
     if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v busctl >/dev/null 2>&1 && [[ -r $BAR_DIR/doca-ajustes.js ]]; then
       bar_script "$(bar_dock_vars; cat "$BAR_DIR/comum.js" "$BAR_DIR/doca-ajustes.js")" >/dev/null 2>&1 || true
     fi
@@ -1081,8 +1135,8 @@ cmd_bar() {
       say "Estilo atual da barra: $cur_style, tamanho $cur_size." "Current bar style: $cur_style, size $cur_size."
       say "Busca: $cur_busca. Menu: $cur_menu." "Search: $cur_busca. Menu: $cur_menu."
       say "Telas: $cur_telas. Apps abertos: $cur_abertos." "Screens: $cur_telas. Open apps: $cur_abertos."
-      say "Para trocar: matsu barra <fusao|mac|windows> [--tamanho pequena|media|grande] [--esconder sim|nao] [--busca esquerda|meio|nao] [--menu esquerda|meio] [--telas todas|principal] [--abertos tela|todas|principal]" \
-          "To change: matsu bar <fusao|mac|windows> [--size pequena|media|grande] [--autohide on|off] [--search esquerda|meio|nao] [--menu esquerda|meio] [--screens todas|principal] [--open-apps tela|todas|principal]"
+      say "Para trocar: matsu barra <fusao|mac|windows> [--tamanho pequena|media|grande] [--esconder nao|maximizado|sempre] [--busca esquerda|meio|nao] [--menu esquerda|meio] [--telas todas|principal] [--abertos tela|todas|principal]" \
+          "To change: matsu bar <fusao|mac|windows> [--size pequena|media|grande] [--autohide nao|maximizado|sempre] [--search esquerda|meio|nao] [--menu esquerda|meio] [--screens todas|principal] [--open-apps tela|todas|principal]"
       return 0
     fi
   fi
@@ -1144,7 +1198,7 @@ cmd_bar() {
   fi
   # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
   if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
-  bar_write_state "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos"
+  bar_write_state "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos" "$hide_top"
   # A barra nova é menor que a de antes: os apps que passaram do limite ficam
   # guardados (e a pessoa fica sabendo quais).
   local cortados

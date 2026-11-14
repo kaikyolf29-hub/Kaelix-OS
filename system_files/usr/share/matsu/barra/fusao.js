@@ -17,6 +17,7 @@ function ilha(tela, alinhamento) {
                                                  : Math.round(screenGeometry(tela).width * 0.6);
     p.floating = true;
     p.hiding = esconder();
+    vidroDaBarra(p);
     return p;
 }
 

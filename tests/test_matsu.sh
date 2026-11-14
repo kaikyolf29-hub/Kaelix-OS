@@ -186,12 +186,25 @@ check "sem --detalhes não mostra a resposta da área de trabalho" bash -c "! gr
 run barra fusao --detalhes
 check "--detalhes mostra a resposta da área de trabalho" has "resposta da area de trabalho"
 run barra fusao --esconder sim
-check "a barra pode se esconder sozinha" called "var matsuEsconder = true;"
-check "lembra que a barra se esconde" grep -qx "esconder=sim" "$WORK/state/barra"
+check "a barra pode se esconder sozinha (sim vale sempre)" called 'var matsuEsconder = "sempre";'
+check "lembra que a barra se esconde" grep -qx "esconder=sempre" "$WORK/state/barra"
+check "o roteiro da barra marca o vidro das ilhas" called 'vidroDaBarra(p);'
+GUI=:0 run barra --esconder maximizado
+check "só mudar o esconder vale na hora, sem montar a barra" bash -c "grep -qF 'var matsuEsconder = \"maximizado\";' '$CALLS' && grep -qF 'matsu-esconder:' '$CALLS' && ! grep -qF 'matsu-peca-velha' '$CALLS'"
+check "lembra o esconder com app maximizado" grep -qx "esconder=maximizado" "$WORK/state/barra"
+check "avisa como a barra volta" has "volta quando o mouse encosta na borda"
+GUI=:0 run barra --esconder-topo sempre
+check "a barra de cima do Mac também pode se esconder" bash -c "grep -qF 'var matsuEsconderTopo = \"sempre\";' '$CALLS' && grep -qx 'esconder_topo=sempre' '$WORK/state/barra'"
+check "mudar a de cima mantém o esconder da doca" grep -qx "esconder=maximizado" "$WORK/state/barra"
 run barra --esconder nao
-check "só desligar o esconder também troca a barra" called "var matsuEsconder = false;"
+check "desligar o esconder fica guardado" grep -qx "esconder=nao" "$WORK/state/barra"
 run barra fusao --esconder talvez
 check "esconder com valor estranho é recusado" test "$CODE" -ne 0
+run barra --esconder-topo talvez
+check "esconder a de cima com valor estranho é recusado" test "$CODE" -ne 0
+run barra mac
+check "o estilo Mac usa o vidro do Mac na barra de cima e na doca" bash -c "grep -qF 'vidroDaBarra(topo);' '$CALLS' && grep -qF 'vidroDaBarra(doca);' '$CALLS' && grep -qF 'var matsuEsconderTopo = \"sempre\";' '$CALLS'"
+run barra fusao --esconder-topo tela-cheia
 run barra linux
 check "estilo desconhecido é recusado" test "$CODE" -ne 0
 run barra --tamanho enorme

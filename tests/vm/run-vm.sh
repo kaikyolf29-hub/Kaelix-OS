@@ -220,6 +220,26 @@ hmp mover 960 500 || true
 hmp type "matsu barra --posicao embaixo"
 hmp key ret
 sleep 10
+# A doca some quando um app fica maximizado e volta com o mouse na borda de
+# baixo (como a barra do Windows escondida e a doca do Mac).
+hmp type "clear; matsu barra --esconder maximizado"
+hmp key ret
+sleep 5
+hmp key meta_l-pgup
+sleep 4
+shot "13c-doca-some-com-app-maximizado"
+hmp mover 960 1079 || true
+sleep 1
+hmp mover 962 1079 || true
+sleep 3
+shot "13d-doca-volta-com-mouse-embaixo"
+hmp mover 960 500 || true
+sleep 2
+hmp key meta_l-pgup
+sleep 2
+hmp type "clear; matsu barra --esconder nao"
+hmp key ret
+sleep 5
 hmp type "matsu barra fusao --tamanho grande --detalhes"
 hmp key ret
 sleep 10

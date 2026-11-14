@@ -16,6 +16,9 @@ São três versões do mesmo desenho, que o Plasma escolhe sozinho:
   translucent/  quando a placa de vídeo faz o desfoque atrás (vidro de verdade)
   widgets/      quando não há desfoque
   opaque/       quando não há efeitos de tela
+E o vidro do estilo Mac (a doca e a barra de cima), em solid/ (o fundo que o
+Plasma usa nas barras marcadas como opacas, e o "matsu barra" marca assim só
+as do Mac) e translucent/solid/ (o mesmo com o desfoque).
 """
 import argparse
 import json
@@ -73,10 +76,21 @@ def camadas(opacidade):
             'fill="%s" opacity="%s"' % (cor, round(t, 3)))
 
 
-def fundo(opacidade, borda, r=R):
-    """As nove peças do fundo (canto, lado, miolo), com a linha clara na borda."""
+def fundo(opacidade, borda, r=R, pre="", oy=0):
+    """As nove peças do fundo (canto, lado, miolo), com a linha clara na borda.
+
+    borda é um número (a mesma linha em volta) ou (cima, lados, baixo): o vidro
+    do Mac tem a linha mais clara em cima, como a luz batendo de cima. pre põe um
+    prefixo no nome das peças (ex.: "north-", a barra de cima) e oy desce o
+    desenho na folha, para não ficar por cima das outras peças."""
     f, k = camadas(opacidade)
-    l = 'fill="#ffffff" opacity="%s"' % borda
+    if not isinstance(borda, (tuple, list)):
+        borda = (borda, borda, borda)
+    b_cima, b_lado, b_baixo = borda
+
+    def linha(op):
+        return 'fill="#ffffff" opacity="%s"' % op
+    l = linha(b_lado)
 
     def cheio(forma, *medidas):
         """A mesma forma pintada com o fundo e, se houver, com a cor escolhida."""
@@ -85,46 +99,51 @@ def fundo(opacidade, borda, r=R):
         extra = medidas[0]
         return "".join('<rect %s%s/>' % (a, extra) for a in (f, k) if a)
     c, n = C, r - 1
-    x1, x2, y1, y2 = r, r + c, Y0 + r, Y0 + r + c
+    y0 = Y0 + oy
+    x1, x2, y1, y2 = r, r + c, y0 + r, y0 + r + c
     p = []
     # Cantos: um quarto de disco e, por cima, um anel fino claro (a borda).
     # Tudo desenhado com preenchimento, sem traço: o traço faz o Plasma medir a
     # peça maior do que ela é e aparece uma emenda no canto.
+    # Os cantos de cima levam a linha de cima; os de baixo, a de baixo.
     cantos = {
-        "topleft": (0, Y0, "M0,%d H%d V0 A%d,%d 0 0 0 0,%d Z" % (r, r, r, r, r),
+        "topleft": (0, y0, b_cima, "M0,%d H%d V0 A%d,%d 0 0 0 0,%d Z" % (r, r, r, r, r),
                     "M0,%d A%d,%d 0 0 1 %d,0 V1 A%d,%d 0 0 0 1,%d Z" % (r, r, r, r, n, n, r)),
-        "topright": (x2, Y0, "M0,0 V%d H%d A%d,%d 0 0 0 0,0 Z" % (r, r, r, r),
+        "topright": (x2, y0, b_cima, "M0,0 V%d H%d A%d,%d 0 0 0 0,0 Z" % (r, r, r, r),
                      "M0,0 A%d,%d 0 0 1 %d,%d H%d A%d,%d 0 0 0 0,1 Z" % (r, r, r, r, n, n, n)),
-        "bottomleft": (0, y2, "M0,0 H%d V%d A%d,%d 0 0 1 0,0 Z" % (r, r, r, r),
+        "bottomleft": (0, y2, b_baixo, "M0,0 H%d V%d A%d,%d 0 0 1 0,0 Z" % (r, r, r, r),
                        "M%d,%d A%d,%d 0 0 1 0,0 H1 A%d,%d 0 0 0 %d,%d Z" % (r, r, r, r, n, n, r, n)),
-        "bottomright": (x2, y2, "M0,0 H%d A%d,%d 0 0 1 0,%d Z" % (r, r, r, r),
+        "bottomright": (x2, y2, b_baixo, "M0,0 H%d A%d,%d 0 0 1 0,%d Z" % (r, r, r, r),
                         "M%d,0 A%d,%d 0 0 1 0,%d V%d A%d,%d 0 0 0 %d,0 Z" % (r, r, r, r, n, n, n, n)),
     }
-    for nome, (x, y, disco, anel) in cantos.items():
-        p.append('<g id="%s" transform="translate(%d,%d)"><rect fill="#000000" opacity="0.001" width="%d" height="%d"/>%s<path %s d="%s"/></g>' % (nome, x, y, r, r, cheio("path", disco), l, anel))
-    p.append('<g id="top" transform="translate(%d,%d)">%s<rect %s width="%d" height="1"/></g>' % (x1, Y0, cheio("rect", ' width="%d" height="%d"' % (c, r)), l, c))
-    p.append('<g id="bottom" transform="translate(%d,%d)">%s<rect %s y="%d" width="%d" height="1"/></g>' % (x1, y2, cheio("rect", ' width="%d" height="%d"' % (c, r)), l, r - 1, c))
-    p.append('<g id="left" transform="translate(0,%d)">%s<rect %s width="1" height="%d"/></g>' % (y1, cheio("rect", ' width="%d" height="%d"' % (r, c)), l, c))
-    p.append('<g id="right" transform="translate(%d,%d)">%s<rect %s x="%d" width="1" height="%d"/></g>' % (x2, y1, cheio("rect", ' width="%d" height="%d"' % (r, c)), l, r - 1, c))
-    p.append('<g id="center" transform="translate(%d,%d)">%s</g>' % (x1, y1, cheio("rect", ' width="%d" height="%d"' % (c, c))))
+    for nome, (x, y, op, disco, anel) in cantos.items():
+        p.append('<g id="%s%s" transform="translate(%d,%d)"><rect fill="#000000" opacity="0.001" width="%d" height="%d"/>%s<path %s d="%s"/></g>' % (pre, nome, x, y, r, r, cheio("path", disco), linha(op), anel))
+    p.append('<g id="%stop" transform="translate(%d,%d)">%s<rect %s width="%d" height="1"/></g>' % (pre, x1, y0, cheio("rect", ' width="%d" height="%d"' % (c, r)), linha(b_cima), c))
+    p.append('<g id="%sbottom" transform="translate(%d,%d)">%s<rect %s y="%d" width="%d" height="1"/></g>' % (pre, x1, y2, cheio("rect", ' width="%d" height="%d"' % (c, r)), linha(b_baixo), r - 1, c))
+    p.append('<g id="%sleft" transform="translate(0,%d)">%s<rect %s width="1" height="%d"/></g>' % (pre, y1, cheio("rect", ' width="%d" height="%d"' % (r, c)), l, c))
+    p.append('<g id="%sright" transform="translate(%d,%d)">%s<rect %s x="%d" width="1" height="%d"/></g>' % (pre, x2, y1, cheio("rect", ' width="%d" height="%d"' % (r, c)), l, r - 1, c))
+    p.append('<g id="%scenter" transform="translate(%d,%d)">%s</g>' % (pre, x1, y1, cheio("rect", ' width="%d" height="%d"' % (c, c))))
     return p
 
 
-def dicas(r=R, mv=4, mh=8, grosso=True):
+def dicas(r=R, mv=4, mh=8, grosso=True, pre="", oy=0):
     """Margens de dentro (mv em cima e embaixo, mh dos lados) e as peças que o Plasma procura pelo nome."""
-    x1, y1 = r, Y0 + r
+    y0 = Y0 + oy
+    x1, y1 = r, y0 + r
     R = r
     pecas = [
-        '<rect id="hint-tile-center" width="5" height="5" fill="#ff6600"/>',
-        '<rect id="hint-top-margin" x="%d" y="%d" width="4" height="%d" fill="#ff00ff"/>' % (x1 + 8, Y0, mv),
-        '<rect id="hint-bottom-margin" x="%d" y="%d" width="4" height="%d" fill="#ff00ff"/>' % (x1 + 8, Y0 + 2 * R + C - mv, mv),
-        '<rect id="hint-left-margin" x="0" y="%d" width="%d" height="4" fill="#ff00ff"/>' % (y1 + 8, mh),
-        '<rect id="hint-right-margin" x="%d" y="%d" width="%d" height="4" fill="#ff00ff"/>' % (2 * R + C - mh, y1 + 8, mh),
-        '<rect id="hint-top-inset" x="%d" y="%d" width="4" height="0.00000001" fill="#00ff00"/>' % (x1 + 16, Y0),
-        '<rect id="hint-bottom-inset" x="%d" y="%d" width="4" height="0.00000001" fill="#00ff00"/>' % (x1 + 16, Y0 + 2 * R + C),
-        '<rect id="hint-left-inset" x="0" y="%d" width="0.00000001" height="4" fill="#00ff00"/>' % (y1 + 16),
-        '<rect id="hint-right-inset" x="%d" y="%d" width="0.00000001" height="4" fill="#00ff00"/>' % (2 * R + C, y1 + 16),
+        '<rect id="%shint-top-margin" x="%d" y="%d" width="4" height="%d" fill="#ff00ff"/>' % (pre, x1 + 8, y0, mv),
+        '<rect id="%shint-bottom-margin" x="%d" y="%d" width="4" height="%d" fill="#ff00ff"/>' % (pre, x1 + 8, y0 + 2 * R + C - mv, mv),
+        '<rect id="%shint-left-margin" x="0" y="%d" width="%d" height="4" fill="#ff00ff"/>' % (pre, y1 + 8, mh),
+        '<rect id="%shint-right-margin" x="%d" y="%d" width="%d" height="4" fill="#ff00ff"/>' % (pre, 2 * R + C - mh, y1 + 8, mh),
+        '<rect id="%shint-top-inset" x="%d" y="%d" width="4" height="0.00000001" fill="#00ff00"/>' % (pre, x1 + 16, y0),
+        '<rect id="%shint-bottom-inset" x="%d" y="%d" width="4" height="0.00000001" fill="#00ff00"/>' % (pre, x1 + 16, y0 + 2 * R + C),
+        '<rect id="%shint-left-inset" x="0" y="%d" width="0.00000001" height="4" fill="#00ff00"/>' % (pre, y1 + 16),
+        '<rect id="%shint-right-inset" x="%d" y="%d" width="0.00000001" height="4" fill="#00ff00"/>' % (pre, 2 * R + C, y1 + 16),
     ]
+    if pre:
+        return pecas
+    pecas.insert(0, '<rect id="hint-tile-center" width="5" height="5" fill="#ff6600"/>')
     if not grosso:
         return pecas
     return pecas + [
@@ -136,20 +155,22 @@ def dicas(r=R, mv=4, mh=8, grosso=True):
     ]
 
 
-def mascara(x0, r=R):
+def mascara(x0, r=R, pre="", oy=0):
     """A forma cheia do painel, que o Plasma usa para recortar o desfoque."""
     c = C
-    x1, x2, y1, y2 = x0 + r, x0 + r + c, Y0 + r, Y0 + r + c
+    y0 = Y0 + oy
+    x1, x2, y1, y2 = x0 + r, x0 + r + c, y0 + r, y0 + r + c
+    m = "mask-" + pre
     return [
-        '<path id="mask-topleft" d="M%d,%d H%d V%d A%d,%d 0 0 0 %d,%d Z"/>' % (x0, y1, x1, Y0, r, r, x0, y1),
-        '<path id="mask-topright" d="M%d,%d V%d H%d A%d,%d 0 0 0 %d,%d Z"/>' % (x2, Y0, y1, x2 + r, r, r, x2, Y0),
-        '<path id="mask-bottomleft" d="M%d,%d H%d V%d A%d,%d 0 0 1 %d,%d Z"/>' % (x0, y2, x1, y2 + r, r, r, x0, y2),
-        '<path id="mask-bottomright" d="M%d,%d H%d A%d,%d 0 0 1 %d,%d Z"/>' % (x2, y2, x2 + r, r, r, x2, y2 + r),
-        '<rect id="mask-top" x="%d" y="%d" width="%d" height="%d"/>' % (x1, Y0, c, r),
-        '<rect id="mask-bottom" x="%d" y="%d" width="%d" height="%d"/>' % (x1, y2, c, r),
-        '<rect id="mask-left" x="%d" y="%d" width="%d" height="%d"/>' % (x0, y1, r, c),
-        '<rect id="mask-right" x="%d" y="%d" width="%d" height="%d"/>' % (x2, y1, r, c),
-        '<rect id="mask-center" x="%d" y="%d" width="%d" height="%d"/>' % (x1, y1, c, c),
+        '<path id="%stopleft" d="M%d,%d H%d V%d A%d,%d 0 0 0 %d,%d Z"/>' % (m, x0, y1, x1, y0, r, r, x0, y1),
+        '<path id="%stopright" d="M%d,%d V%d H%d A%d,%d 0 0 0 %d,%d Z"/>' % (m, x2, y0, y1, x2 + r, r, r, x2, y0),
+        '<path id="%sbottomleft" d="M%d,%d H%d V%d A%d,%d 0 0 1 %d,%d Z"/>' % (m, x0, y2, x1, y2 + r, r, r, x0, y2),
+        '<path id="%sbottomright" d="M%d,%d H%d A%d,%d 0 0 1 %d,%d Z"/>' % (m, x2, y2, x2 + r, r, r, x2, y2 + r),
+        '<rect id="%stop" x="%d" y="%d" width="%d" height="%d"/>' % (m, x1, y0, c, r),
+        '<rect id="%sbottom" x="%d" y="%d" width="%d" height="%d"/>' % (m, x1, y2, c, r),
+        '<rect id="%sleft" x="%d" y="%d" width="%d" height="%d"/>' % (m, x0, y1, r, c),
+        '<rect id="%sright" x="%d" y="%d" width="%d" height="%d"/>' % (m, x2, y1, r, c),
+        '<rect id="%scenter" x="%d" y="%d" width="%d" height="%d"/>' % (m, x1, y1, c, c),
     ]
 
 
@@ -180,8 +201,12 @@ def sombra(x0, r=R):
     ]
 
 
-def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra"):
-    """Uma folha completa: fundo, margens, sombra e máscara. Serve para a barra, os balões e as dicas."""
+def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra", extras=()):
+    """Uma folha completa: fundo, margens, sombra e máscara. Serve para a barra, os balões e as dicas.
+
+    extras são desenhos a mais na mesma folha, cada um (prefixo, opacidade,
+    borda): o Plasma usa "north-" nas barras presas no alto da tela e "west-" e
+    "east-" nas de pé, nos lados (veja painel_mac)."""
     R = r
     k = R / float(S + R)
     estilo = ESTILO % {
@@ -189,10 +214,38 @@ def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="F
         "rad": paradas([(0, 0), (round(k, 4), 0), (round(k + 0.0001, 4), forca_sombra), (round(k + (1 - k) * 0.25, 4), round(forca_sombra * 0.4, 3)), (round(k + (1 - k) * 0.55, 4), round(forca_sombra * 0.12, 3)), (1, 0)]),
     }
     pecas = fundo(opacidade, borda, r) + dicas(r, mv, mh, grosso) + sombra(80, r) + mascara(200, r)
+    for i, (pre, op, b) in enumerate(extras):
+        oy = OY_TOPO * (i + 1)
+        pecas += fundo(op, b, r, pre=pre, oy=oy) + dicas(r, mv, mh, pre=pre, oy=oy) + mascara(200, r, pre=pre, oy=oy)
+    altura = 180 + OY_TOPO * len(extras)
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<!-- %s do Matsu. Gerado por usr/share/matsu/vidro/gerar.py: não editar à mão. -->\n' % nome
-            + '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="180" viewBox="0 0 280 180">\n'
+            + '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="%d" viewBox="0 0 280 %d">\n' % (altura, altura)
             + estilo + "\n" + "\n".join(pecas) + "\n</svg>\n")
+
+
+# O vidro do estilo Mac (a doca e a barra de cima): mais fino e transparente que
+# o das ilhas, com a linha clara mais forte em cima, como a luz batendo de cima.
+# Quanto o fundo cobre, por nível: (com desfoque, sem desfoque).
+NIVEIS_MAC = {
+    "mais":   {"doca": (0.26, 0.58), "topo": (0.30, 0.62)},
+    "normal": {"doca": (0.40, 0.70), "topo": (0.45, 0.74)},
+    "menos":  {"doca": (0.62, 0.84), "topo": (0.66, 0.86)},
+    "sem":    {"doca": (1, 1), "topo": (1, 1)},
+}
+# Quanto desce, na folha, cada desenho a mais (a barra de cima, a doca de pé).
+OY_TOPO = 200
+
+
+def painel_mac(op_doca, op_topo, borda_doca, borda_topo, forca_sombra):
+    """A folha do vidro do Mac: a doca (sem prefixo e de pé, "west-" e "east-")
+    e a barra de cima ("north-").
+
+    O Plasma usa esta folha (solid/widgets/panel-background) nas barras marcadas
+    como opacas; o comando "matsu barra" marca assim só as do estilo Mac, então
+    as ilhas da fusão e a barra do Windows continuam com o vidro de sempre."""
+    return painel(op_doca, borda_doca, forca_sombra, nome="Vidro do estilo Mac (doca e barra de cima)",
+                  extras=(("north-", op_topo, borda_topo), ("west-", op_doca, borda_doca), ("east-", op_doca, borda_doca)))
 
 
 ESTILO_TAREFAS = """<defs>
@@ -325,15 +378,34 @@ def main():
     raiz = opcoes.pasta
     (ilha_vidro, ilha_sem), (balao_vidro, balao_sem) = nivel["ilha"], nivel["balao"]
 
-    versoes = {"translucent/widgets": (ilha_vidro, 0.20, 0.22), "widgets": (ilha_sem, 0.16, 0.22), "opaque/widgets": (1, 0.12, 0)}
-    for pasta, (op, borda, somb) in versoes.items():
+    # O vidro do Mac: a doca e a barra de cima do estilo Mac (veja painel_mac).
+    mac = NIVEIS_MAC[opcoes.transparencia]
+    (doca_vidro, doca_sem), (topo_vidro, topo_sem) = mac["doca"], mac["topo"]
+    # Só o estilo Mac tem barra no alto e doca de pé: na folha de sempre, esses
+    # lugares já levam o vidro do Mac (mesmo se o Plasma não usar a folha "solid").
+    versoes = {"translucent/widgets": (ilha_vidro, 0.20, 0.22, topo_vidro, doca_vidro, (0, 0, 0.12), (0.34, 0.22, 0.14)),
+               "widgets": (ilha_sem, 0.16, 0.22, topo_sem, doca_sem, (0, 0, 0.10), (0.28, 0.18, 0.12)),
+               "opaque/widgets": (1, 0.12, 0, 1, 1, 0.12, 0.12)}
+    for pasta, (op, borda, somb, op_topo, op_pe, borda_topo, borda_pe) in versoes.items():
         os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
         with open(os.path.join(raiz, pasta, "panel-background.svg"), "w") as f:
-            f.write(painel(op, borda, somb))
+            f.write(painel(op, borda, somb, extras=(("north-", op_topo, borda_topo), ("west-", op_pe, borda_pe), ("east-", op_pe, borda_pe))))
+    versoes_mac = {
+        "translucent/solid/widgets": (doca_vidro, topo_vidro, (0.34, 0.22, 0.14), (0, 0, 0.12)),
+        "solid/widgets": (doca_sem, topo_sem, (0.28, 0.18, 0.12), (0, 0, 0.10)),
+    }
+    for pasta, (op_doca, op_topo, borda_doca, borda_topo) in versoes_mac.items():
+        os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
+        with open(os.path.join(raiz, pasta, "panel-background.svg"), "w") as f:
+            f.write(painel_mac(op_doca, op_topo, borda_doca, borda_topo, 0.18))
     with open(os.path.join(raiz, "widgets", "tasks.svg"), "w") as f:
         f.write(tarefas())
     # Balões (menu, bandeja, avisos, a escolha de telas do Meta+P): mesmos cantos e borda das ilhas.
-    baloes = {"translucent/dialogs": (balao_vidro, 0.18, 0.26), "dialogs": (balao_sem, 0.14, 0.26), "solid/dialogs": (1, 0.12, 0.26), "opaque/dialogs": (1, 0.12, 0)}
+    # Os balões que saem das barras do Mac (marcadas como opacas) o Plasma pede
+    # "sólidos": aqui eles também são de vidro (sólidos só sem o efeito vidro).
+    baloes = {"translucent/dialogs": (balao_vidro, 0.18, 0.26), "dialogs": (balao_sem, 0.14, 0.26),
+              "translucent/solid/dialogs": (balao_vidro, 0.18, 0.26), "solid/dialogs": (balao_sem, 0.14, 0.26),
+              "opaque/dialogs": (1, 0.12, 0)}
     for pasta, (op, borda, somb) in baloes.items():
         os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
         with open(os.path.join(raiz, pasta, "background.svg"), "w") as f:
@@ -360,6 +432,10 @@ def main():
         f.write("\n")
     with open(os.path.join(raiz, "plasmarc"), "w") as f:
         f.write("[AdaptiveTransparency]\nenabled=true\n")
+        # As cores atrás do vidro ficam mais vivas, como no Mac (só com o efeito
+        # vidro; contraste e brilho 1 = sem mudar, só a saturação sobe).
+        if opcoes.transparencia != "sem":
+            f.write("\n[ContrastEffect]\nenabled=true\ncontrast=1\nintensity=1\nsaturation=1.5\n")
     print("tema Plasma do Matsu em", raiz)
 
 

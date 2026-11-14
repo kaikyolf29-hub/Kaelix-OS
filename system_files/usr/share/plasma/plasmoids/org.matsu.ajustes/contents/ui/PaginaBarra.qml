@@ -1,6 +1,7 @@
 // Barra e doca: o estilo da barra (fusão, Mac ou Windows), o tamanho (no Mac,
-// uma régua livre, como no Mac), onde ficam a busca e o menu, se a barra se
-// esconde sozinha, a doca (ampliar os ícones embaixo do mouse, quanto, o lado
+// uma régua livre, como no Mac), onde ficam a busca e o menu, quando a barra
+// some sozinha (nunca, com um app maximizado ou sempre; no Mac, também a barra
+// de cima), a doca (ampliar os ícones embaixo do mouse, quanto, o lado
 // da tela no Mac, os pontinhos dos apps abertos e o pulo ao abrir), os apps
 // fixados nela (tirar, mudar a ordem e pôr outros) e, com mais de uma tela, se
 // a barra aparece em todas e onde ficam os apps abertos (como no Windows).
@@ -17,7 +18,22 @@ ColumnLayout {
 
     readonly property string estilo: ajustes.texto("barra") || "fusao"
     readonly property string tamanho: ajustes.texto("barra_tamanho") || "media"
-    readonly property bool esconde: ajustes.sim("barra_esconder")
+    // Quando a barra (no Mac, a doca) some sozinha: "nao", "maximizado" ou
+    // "sempre" ("1" era o sempre de antes). A barra de cima do Mac: "tela-cheia",
+    // "maximizado" ou "sempre".
+    readonly property string esconde: {
+        var v = ajustes.texto("barra_esconder");
+        return v === "1" || v === "sim" || v === "sempre" ? "sempre" : (v === "maximizado" ? v : "nao");
+    }
+    readonly property string escondeTopo: {
+        var v = ajustes.texto("barra_esconder_topo");
+        return v === "maximizado" || v === "sempre" ? v : "tela-cheia";
+    }
+    // A borda onde o mouse traz a barra (ou a doca) de volta.
+    readonly property string borda: pagina.estilo !== "mac" || pagina.posicao === "embaixo"
+                                    ? ajustes.t("embaixo da tela", "the bottom of the screen")
+                                    : (pagina.posicao === "esquerda" ? ajustes.t("na esquerda da tela", "the left of the screen")
+                                                                      : ajustes.t("na direita da tela", "the right of the screen"))
     readonly property string busca: ajustes.texto("barra_busca") || "esquerda"
     readonly property string menu: ajustes.texto("barra_menu") || "esquerda"
     readonly property bool todasAsTelas: ajustes.texto("barra_telas") !== "principal"
@@ -90,12 +106,12 @@ ColumnLayout {
         }
         ajustes.definir("barra", estilo);
         ajustes.definir("barra_tamanho", tamanho);
-        ajustes.definir("barra_esconder", esconde ? "1" : "0");
+        ajustes.definir("barra_esconder", esconde);
         ajustes.definir("barra_busca", b);
         ajustes.definir("barra_menu", m);
         ajustes.definir("barra_telas", t);
         ajustes.definir("barra_abertos", a);
-        ajustes.fazer("barra " + estilo + " " + tamanho + " " + (esconde ? "sim" : "nao") + " " + b + " " + m + " " + t + " " + a);
+        ajustes.fazer("barra " + estilo + " " + tamanho + " " + esconde + " " + b + " " + m + " " + t + " " + a);
     }
 
     Grupo {
@@ -214,17 +230,51 @@ ColumnLayout {
             }
         }
 
+        // Quando a barra some: nunca, quando um app maximizado encosta nela
+        // (o que o Windows e o Mac fazem com apps em tela cheia, aqui também
+        // com os maximizados) ou sempre (o "ocultar automaticamente" dos dois).
+        // Ela volta quando o mouse encosta na borda. Vale na hora.
         Linha {
-            nome: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
-            detalhe: pagina.estilo === "mac"
-                     ? (pagina.posicao === "esquerda" ? ajustes.t("A doca aparece quando o mouse encosta na esquerda; a barra de cima fica.", "The dock shows up when the mouse touches the left edge; the top bar stays.")
-                      : pagina.posicao === "direita" ? ajustes.t("A doca aparece quando o mouse encosta na direita; a barra de cima fica.", "The dock shows up when the mouse touches the right edge; the top bar stays.")
-                      : ajustes.t("A doca aparece quando o mouse encosta embaixo; a barra de cima fica.", "The dock shows up when the mouse touches the bottom; the top bar stays."))
-                                              : ajustes.t("Ela aparece quando o mouse encosta embaixo da tela.", "It shows up when the mouse touches the bottom of the screen.")
-            PlasmaComponents.Switch {
-                checked: pagina.esconde
-                onToggled: pagina.trocar(pagina.estilo, pagina.tamanho, checked)
-                Accessible.name: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
+            nome: pagina.estilo === "mac" ? ajustes.t("Esconder a doca", "Hide the dock")
+                                          : ajustes.t("Esconder a barra", "Hide the bar")
+            detalhe: pagina.esconde === "maximizado"
+                     ? ajustes.t("Some quando um app maximizado encosta nela e volta com o mouse ", "Hides when a maximized app touches it and comes back with the mouse at ") + pagina.borda + "."
+                     : pagina.esconde === "sempre"
+                       ? ajustes.t("Fica escondida e aparece quando o mouse encosta ", "Stays hidden and shows up when the mouse touches ") + pagina.borda + "."
+                       : ajustes.t("Fica sempre na tela; só um app em tela cheia cobre.", "Always stays on screen; only a full-screen app covers it.")
+
+            Segmentado {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 15
+                atual: pagina.esconde
+                opcoes: [
+                    { valor: "nao", nome: ajustes.t("Nunca", "Never") },
+                    { valor: "maximizado", nome: ajustes.t("Maximizado", "Maximized") },
+                    { valor: "sempre", nome: ajustes.t("Sempre", "Always") }
+                ]
+                onEscolhido: valor => pagina.doca("barra_esconder", "esconder", valor)
+            }
+        }
+
+        // A barra de cima do Mac: como no Mac, some só com um app em tela cheia;
+        // também pode sumir com um app maximizado ou sempre.
+        Linha {
+            visible: pagina.estilo === "mac"
+            nome: ajustes.t("Esconder a barra de cima", "Hide the top bar")
+            detalhe: pagina.escondeTopo === "maximizado"
+                     ? ajustes.t("Some quando um app maximizado encosta nela e volta com o mouse no alto da tela.", "Hides when a maximized app touches it and comes back with the mouse at the top of the screen.")
+                     : pagina.escondeTopo === "sempre"
+                       ? ajustes.t("Fica escondida e aparece quando o mouse encosta no alto da tela.", "Stays hidden and shows up when the mouse touches the top of the screen.")
+                       : ajustes.t("Some só com um app em tela cheia, como no Mac.", "Hides only behind a full-screen app, like on a Mac.")
+
+            Segmentado {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 15
+                atual: pagina.escondeTopo
+                opcoes: [
+                    { valor: "tela-cheia", nome: ajustes.t("Tela cheia", "Full screen") },
+                    { valor: "maximizado", nome: ajustes.t("Maximizado", "Maximized") },
+                    { valor: "sempre", nome: ajustes.t("Sempre", "Always") }
+                ]
+                onEscolhido: valor => pagina.doca("barra_esconder_topo", "esconder-topo", valor)
             }
         }
     }

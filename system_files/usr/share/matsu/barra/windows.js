@@ -12,6 +12,7 @@ function montarTela(tela) {
     barra.lengthMode = "fill";
     barra.floating = false;
     barra.hiding = esconder();
+    vidroDaBarra(barra);
     // Numa barra só, a busca fica sempre ao lado do menu (ou some, se a pessoa pediu).
     porMenu(barra, ondeBusca() !== "nao", principal);
     porApps(barra, tela);

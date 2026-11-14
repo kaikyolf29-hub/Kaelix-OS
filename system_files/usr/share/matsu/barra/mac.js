@@ -34,7 +34,8 @@ function montarBarraDeCima(tela, principal) {
     topo.height = alturaDaBarraDeCima();
     topo.lengthMode = "fill";
     topo.floating = false;
-    topo.hiding = "none";
+    topo.hiding = esconderTopo();
+    vidroDaBarra(topo);
     porMenu(topo, false, principal);
     porMenusDoApp(topo);
     topo.addWidget("org.kde.plasma.panelspacer");
@@ -58,6 +59,7 @@ function montarTela(tela) {
     doca.maximumLength = Math.round(lado === "embaixo" ? geo.width * 0.8 : (geo.height - alturaDaBarraDeCima()) * 0.86);
     doca.floating = true;
     doca.hiding = esconder();
+    vidroDaBarra(doca);
     var apps = porApps(doca, tela);
     if (principal) {
         porLixeira(doca, apps);

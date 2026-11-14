@@ -216,6 +216,14 @@ PlasmoidItem {
             repetidorSobre.model = tarefas;
             arrumarAbertos.restart();
         }
+        // As janelas que já estavam abertas podem chegar depois que a doca
+        // ficou pronta (no Plasma 6.8 chegam): cada vez que um app abre ou
+        // fecha, a ordem é conferida de novo.
+        onCountChanged: {
+            if (raiz.pronto) {
+                arrumarAbertos.restart();
+            }
+        }
     }
     property bool pronto: false
 
@@ -223,6 +231,7 @@ PlasmoidItem {
     // KDE põe esses apps antes dos fixados, fora do lugar de cada um. Aqui cada
     // app volta para a ordem dos fixados (o aberto de um app fixado fica no
     // lugar dele) e os abertos que não estão fixados vão para o fim, como no Mac.
+    // Só mexe quando algo está fora do lugar.
     Timer {
         id: arrumarAbertos
         interval: 300

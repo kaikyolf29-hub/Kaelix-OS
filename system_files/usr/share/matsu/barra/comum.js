@@ -3,7 +3,13 @@
 // Variáveis opcionais que o comando "matsu barra" define antes:
 //   matsuEscala   tamanho da barra (2.25 pequena, 2.75 média, 3.25 grande)
 //   matsuFixados  lista dos apps que a pessoa já tinha fixado
-//   matsuEsconder true para a barra se esconder sozinha (aparece com o mouse)
+//   matsuEsconder quando a barra (no estilo Mac, a doca) se esconde sozinha:
+//                  "nao", "maximizado" (some quando uma janela encosta nela,
+//                  como um app maximizado) ou "sempre" (some sempre). Ela volta
+//                  quando o mouse encosta na borda da tela. true vale "sempre".
+//   matsuEsconderTopo  a barra de cima do estilo Mac: "tela-cheia" (some só
+//                  com um app em tela cheia, o padrão, como no Mac),
+//                  "maximizado" ou "sempre"
 //   matsuBusca    onde fica a pílula da busca: "esquerda" (junto do menu),
 //                  "meio" (na ilha do meio, junto dos apps) ou "nao"
 //   matsuMenu     onde fica o botão do menu: "esquerda" ou "meio" (Windows 11)
@@ -54,9 +60,33 @@ function ajustarDoca(doca) {
     doca.writeConfig("animarAbertura", (typeof matsuAnimar !== "undefined") ? !!matsuAnimar : true);
 }
 
-// "autohide" quando a pessoa pediu para a barra se esconder sozinha.
+// Como a barra se esconde, no jeito do Plasma: "none" (fica sempre), "dodgewindows"
+// (some quando uma janela encosta nela, como um app maximizado, e volta com o
+// mouse na borda) ou "autohide" (some sempre e volta com o mouse na borda).
+// Um app em tela cheia sempre cobre a barra, em qualquer um dos três.
+function modoDeEsconder(v) {
+    if (v === true || v === "sempre" || v === "sim") {
+        return "autohide";
+    }
+    return v === "maximizado" ? "dodgewindows" : "none";
+}
+
 function esconder() {
-    return (typeof matsuEsconder !== "undefined" && matsuEsconder) ? "autohide" : "none";
+    return modoDeEsconder(typeof matsuEsconder !== "undefined" ? matsuEsconder : "nao");
+}
+
+// A barra de cima do estilo Mac (no Mac ela some só em tela cheia).
+function esconderTopo() {
+    return modoDeEsconder(typeof matsuEsconderTopo !== "undefined" ? matsuEsconderTopo : "tela-cheia");
+}
+
+// O vidro de cada barra. Na fusão e no Windows, o vidro das ilhas, que continua
+// de vidro mesmo com uma janela encostada (como a barra do Windows 11). No
+// estilo Mac, a barra de cima e a doca usam o vidro do Mac, mais fino e mais
+// transparente: o tema do Matsu guarda esse desenho no fundo que o Plasma usa
+// nas barras marcadas como opacas (veja usr/share/matsu/vidro/gerar.py).
+function vidroDaBarra(p) {
+    p.opacity = estiloDaBarra() === "mac" ? "opaque" : "translucent";
 }
 
 // O Plasma numera as telas a partir da principal: a tela 0 é a principal. Só

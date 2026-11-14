@@ -18,11 +18,13 @@
 #
 # Usados pelos Ajustes do Matsu (a janela de ajustes, como a do Mac):
 #   matsu-central vidro <cor> mais|normal|menos|sem (chama "matsu vidro")
-#   matsu-central barra fusao|mac|windows pequena|media|grande [sim|nao] [busca] [menu] [todas|principal] [tela|todas|principal]
-#                                        (chama "matsu barra"; sim = esconder sozinha; os dois últimos são das várias telas)
+#   matsu-central barra fusao|mac|windows pequena|media|grande [nao|maximizado|sempre] [busca] [menu] [todas|principal] [tela|todas|principal]
+#                                        (chama "matsu barra"; maximizado = some com app maximizado; os dois últimos são das várias telas)
 #   matsu-central doca ampliacao|indicadores|animar sim|nao   (a doca do Matsu; vale na hora)
 #   matsu-central doca ampliacao-nivel 0..100      quanto os apps crescem ao passar o mouse
 #   matsu-central doca posicao embaixo|esquerda|direita   (a doca do estilo Mac)
+#   matsu-central doca esconder nao|maximizado|sempre   quando a barra (no Mac, a doca) some
+#   matsu-central doca esconder-topo tela-cheia|maximizado|sempre   a barra de cima do Mac
 #   matsu-central papeis                            lista os papéis de parede: papel|pasta|nome|miniatura
 #   matsu-central papel <pasta ou imagem>|escolher|animado
 #   matsu-central pagina-pedida                     a página pedida por "abrir ajustes <página>"
@@ -236,7 +238,7 @@ escolha() { # escolha <arquivo> <chave>: o valor guardado pelo comando "matsu"
 }
 
 estado_barra() {
-  local estilo tamanho esconder=0 busca menu telas abertos amp=1 nivel ind=1 ani=1 pos
+  local estilo tamanho esconder topo busca menu telas abertos amp=1 nivel ind=1 ani=1 pos
   estilo="$(escolha barra estilo)"
   tamanho="$(escolha barra tamanho)"
   case "$estilo" in mac|windows) ;; *) estilo=fusao ;; esac
@@ -245,7 +247,12 @@ estado_barra() {
      && ! { [[ $tamanho =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk -v v="$tamanho" 'BEGIN { exit !(v >= 1.8 && v <= 4.2) }'; }; then
     tamanho=media
   fi
-  [[ "$(escolha barra esconder)" == sim ]] && esconder=1
+  # Quando a barra se esconde: nao, maximizado ou sempre ("sim" era o sempre);
+  # a barra de cima do Mac: tela-cheia, maximizado ou sempre.
+  esconder="$(escolha barra esconder)"
+  case "$esconder" in sim|sempre) esconder=sempre ;; maximizado) ;; *) esconder=nao ;; esac
+  topo="$(escolha barra esconder_topo)"
+  case "$topo" in sempre|maximizado) ;; *) topo=tela-cheia ;; esac
   busca="$(escolha barra busca)"
   menu="$(escolha barra menu)"
   case "$busca" in meio|nao) ;; *) busca=esquerda ;; esac
@@ -257,6 +264,7 @@ estado_barra() {
   echo "barra=$estilo"
   echo "barra_tamanho=$tamanho"
   echo "barra_esconder=$esconder"
+  echo "barra_esconder_topo=$topo"
   echo "barra_busca=$busca"
   echo "barra_menu=$menu"
   echo "barra_telas=$telas"
@@ -523,7 +531,7 @@ cmd_vidro() {
 
 cmd_barra() {
   local estilo="${1:-}" tamanho="${2:-media}" esconder="${3:-}" busca="${4:-}" menu="${5:-}" telas="${6:-}" abertos="${7:-}"
-  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [sim|nao] [esquerda|meio|nao] [esquerda|meio] [todas|principal] [tela|todas|principal]" >&2; exit 2 ;; esac
+  case "$estilo" in fusao|mac|windows) ;; *) echo "use: barra fusao|mac|windows [pequena|media|grande] [nao|maximizado|sempre] [esquerda|meio|nao] [esquerda|meio] [todas|principal] [tela|todas|principal]" >&2; exit 2 ;; esac
   timeout 60 "$MATSU_BIN" barra "$estilo" --tamanho "$tamanho" ${esconder:+--esconder "$esconder"} \
     ${busca:+--busca "$busca"} ${menu:+--menu "$menu"} ${telas:+--telas "$telas"} ${abertos:+--abertos "$abertos"} >/dev/null 2>&1
 }
@@ -538,7 +546,12 @@ cmd_doca() {
       valor="$(numero "$valor" 0 100)" || exit 2 ;;
     posicao)
       [[ $valor =~ ^(embaixo|esquerda|direita)$ ]] || { echo "use: doca posicao embaixo|esquerda|direita" >&2; exit 2; } ;;
-    *) echo "use: doca ampliacao|ampliacao-nivel|indicadores|animar|posicao <valor>" >&2; exit 2 ;;
+    # Quando a barra (no Mac, a doca) se esconde e, no Mac, a barra de cima.
+    esconder)
+      [[ $valor =~ ^(nao|maximizado|sempre)$ ]] || { echo "use: doca esconder nao|maximizado|sempre" >&2; exit 2; } ;;
+    esconder-topo)
+      [[ $valor =~ ^(tela-cheia|maximizado|sempre)$ ]] || { echo "use: doca esconder-topo tela-cheia|maximizado|sempre" >&2; exit 2; } ;;
+    *) echo "use: doca ampliacao|ampliacao-nivel|indicadores|animar|posicao|esconder|esconder-topo <valor>" >&2; exit 2 ;;
   esac
   timeout 60 "$MATSU_BIN" barra "--$chave" "$valor" >/dev/null 2>&1
 }

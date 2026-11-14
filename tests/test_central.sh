@@ -167,7 +167,13 @@ printf 'estilo=mac\ntamanho=grande\nesconder=sim\n' > "$WORK/state/barra"
 printf 'cor=roxo\ntransparencia=mais\n' > "$WORK/state/vidro"
 printf '[Containments][1][Wallpaper][org.kde.image][General]\nImage=file:///usr/share/wallpapers/Matsu/\n' > "$WORK/config/plasma-org.kde.plasma.desktop-appletsrc"
 run estado
-check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\" && grep -qx 'barra_esconder=1' <<<\"\$0\"" "$OUT"
+check "lê o tamanho da barra escolhido (o sim de antes vira sempre)" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\" && grep -qx 'barra_esconder=sempre' <<<\"\$0\" && grep -qx 'barra_esconder_topo=tela-cheia' <<<\"\$0\"" "$OUT"
+printf 'estilo=mac\nesconder=maximizado\nesconder_topo=sempre\n' > "$WORK/state/barra"
+run estado
+check "lê o esconder com app maximizado e o da barra de cima" bash -c "grep -qx 'barra_esconder=maximizado' <<<\"\$0\" && grep -qx 'barra_esconder_topo=sempre' <<<\"\$0\"" "$OUT"
+printf 'estilo=mac\nesconder=;rm\nesconder_topo=x\n' > "$WORK/state/barra"
+run estado
+check "esconder estranho volta ao padrão" bash -c "grep -qx 'barra_esconder=nao' <<<\"\$0\" && grep -qx 'barra_esconder_topo=tela-cheia' <<<\"\$0\"" "$OUT"
 printf 'estilo=fusao\ntamanho=media\nesconder=nao\nbusca=meio\nmenu=meio\n' > "$WORK/state/barra"
 run estado
 check "a doca vem com a ampliação, os pontinhos e o pulo ligados, embaixo" bash -c "grep -qx 'barra_ampliacao=1' <<<\"\$0\" && grep -qx 'barra_ampliacao_nivel=50' <<<\"\$0\" && grep -qx 'barra_indicadores=1' <<<\"\$0\" && grep -qx 'barra_animar=1' <<<\"\$0\" && grep -qx 'barra_posicao=embaixo' <<<\"\$0\"" "$OUT"
@@ -213,6 +219,14 @@ run doca ampliacao-nivel 900
 check "doca: nível fora da faixa fica no máximo" called "matsu barra --ampliacao-nivel 100"
 run doca posicao esquerda
 check "doca: a doca do Mac pode ir para a esquerda" called "matsu barra --posicao esquerda"
+run doca esconder maximizado
+check "doca: a barra pode sumir com um app maximizado" called "matsu barra --esconder maximizado"
+run doca esconder-topo sempre
+check "doca: a barra de cima do Mac também pode sumir" called "matsu barra --esconder-topo sempre"
+run doca esconder talvez; check "doca: esconder estranho é recusado" test "$CODE" -eq 2
+run doca esconder-topo nao; check "doca: esconder a de cima estranho é recusado" test "$CODE" -eq 2
+run barra mac media maximizado
+check "barra pode pedir para sumir com app maximizado" called "matsu barra mac --tamanho media --esconder maximizado"
 run doca posicao cima; check "doca: lado desconhecido é recusado" test "$CODE" -eq 2
 run doca ampliacao talvez; check "doca: sim ou não, nada mais" test "$CODE" -eq 2
 mkdir -p "$WORK/papeis/Matsu/contents/images" "$WORK/papeis/Matsu/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
