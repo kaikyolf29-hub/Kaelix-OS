@@ -17,7 +17,7 @@ rm -rf "$DESTINO"
 cp -a "$RAIZ/installer/marca" "$DESTINO"
 mkdir -p "$TELAS/icones"
 for nome in certo voltar disco rede-cabo rede-desconectada wifi-0 wifi-1 wifi-2 wifi-3 \
-            alerta info perfil-padrao recarregar engrenagem; do
+            alerta info recarregar engrenagem; do
   arquivo="$(find "$ICONES" -name "matsu-$nome-symbolic.svg" | head -1)"
   [[ -n $arquivo ]] || { echo "falta o ícone matsu-$nome-symbolic.svg" >&2; exit 1; }
   cp "$arquivo" "$TELAS/icones/"

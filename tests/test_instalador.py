@@ -5,6 +5,7 @@ Confere o motor (discos, conta, kickstart e a leitura do progresso do
 anaconda) sem tela nenhuma, e que os arquivos que entram no updates.img
 batem entre si (tmux.conf, iniciar, ícones usados pelas telas).
 """
+import io
 import json
 import os
 import re
@@ -258,6 +259,27 @@ Installation complete
         p = motor.Progresso()
         p.linha("The following mandatory spokes are not completed:")
         self.assertTrue(p.erro)
+
+    def test_pergunta_final_sem_fim_de_linha(self):
+        """O anaconda termina perguntando, sem pular linha, e fica esperando o Enter
+        (visto no teste na VM): o fim tem que ser notado antes dele fechar."""
+        avisos = []
+        inst = motor.Instalacao("", avisos.append, registro=os.devnull)
+        saida = b"Running post-installation scripts\n...\nComplete!\nInstallation complete. Press ENTER to quit: "
+        visto_ao_fechar = []
+
+        class Processo:
+            stdout = io.BytesIO(saida)
+
+            def wait(self):
+                visto_ao_fechar.append(inst.progresso.pronto)
+                return 0
+
+        inst.processo = Processo()
+        inst._ler()
+        self.assertEqual(visto_ao_fechar, [True])
+        self.assertTrue(avisos and avisos[0].pronto)
+        self.assertEqual(inst.progresso.erro, "")
 
 
 class Arquivos(unittest.TestCase):

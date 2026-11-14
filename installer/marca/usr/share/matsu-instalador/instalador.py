@@ -889,7 +889,7 @@ class Instalador(Gtk.Window):
         self.avatar = classes(Gtk.Box(), "avatar")
         self.letra = rotulo("", "avatar-letra")
         self.letra.set_hexpand(True)
-        self.avatar_icone = icone("perfil-padrao", "claro", 34)
+        self.avatar_icone = icone("pessoa", "claro", 34)
         self.avatar_icone.set_hexpand(True)
         self.avatar.pack_start(self.letra, True, True, 0)
         self.avatar.pack_start(self.avatar_icone, True, True, 0)

@@ -113,7 +113,9 @@ def problema_na_senha(senha, confirmacao):
 
 def nome_do_computador(usuario):
     base = re.sub(r"[^a-z0-9-]", "", usuario.lower()).strip("-")[:40]
-    return f"matsu-{base}" if base else "matsu"
+    if not base or base == "matsu" or base.startswith("matsu-"):
+        return base or "matsu"  # nada de "matsu-matsu"
+    return f"matsu-{base}"
 
 
 # ----- senha -----
@@ -621,6 +623,14 @@ class Instalacao:
                     self.saida.append(texto)
                     del self.saida[:-400]
                     if self.progresso.linha(texto):
+                        self.aviso(self.progresso)
+                # A última frase do anaconda ("Installation complete. Press ENTER
+                # to quit: ") é uma pergunta e não termina a linha: confere o resto.
+                resto = pedaco.decode("utf-8", "replace")
+                if not self.progresso.pronto and resto.lstrip().startswith("Installation complete"):
+                    self.saida.append(resto.strip())
+                    pedaco = b""
+                    if self.progresso.linha(resto):
                         self.aviso(self.progresso)
         codigo = self.processo.wait()
         if not self.progresso.pronto and not self.progresso.erro:
