@@ -101,7 +101,9 @@ hmp key up
 sleep 1
 hmp key ret
 
-if ! esperar "MATSU-INSTALADOR: tela ola" 300; then
+# Costuma abrir em menos de 1 minuto, mas numa máquina do GitHub já demorou
+# mais de 5 (mesma ISO): espera até 10 minutos antes de dar como falha.
+if ! esperar "MATSU-INSTALADOR: tela ola" 600; then
   shot "02-sem-instalador"
   resultado "o instalador do Matsu não abriu"
   registros
