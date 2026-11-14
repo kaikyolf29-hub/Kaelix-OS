@@ -281,12 +281,15 @@ class Sobreposicao(Base):
         posicoes = [linhas.index(item) for item in ordem]
         self.assertEqual(posicoes, sorted(posicoes))
         self.assertEqual(linhas.count("custom_text="), 2)  # o respiro entre os três blocos
-        for esperado in ("dx_api", "frametime", "gpu_temp", "gpu_core_clock", "gpu_power", "gpu_fan", "cpu_temp",
-                         "cpu_mhz", "cpu_power", "table_columns=3", "font_size_secondary=15"):
+        for esperado in ("frametime", "gpu_temp", "gpu_core_clock", "gpu_power", "gpu_fan", "cpu_temp",
+                         "cpu_mhz", "cpu_power", "table_columns=3", "font_size_secondary=15", "fps_text=FPS",
+                         "hide_fps_superscript", "background_alpha=0.62", "text_outline=0"):
             self.assertIn(esperado, linhas)
-        # Com a API ligada, o nome dela fica no lugar de "FPS" (e o "FPS" pequeno volta).
-        self.assertFalse(any(l.startswith("fps_text") for l in linhas))
-        self.assertNotIn("hide_fps_superscript", linhas)
+        # "Tudo" não troca o "FPS" pelo nome da API (VULKAN, DX12...): isso confundia.
+        self.assertNotIn("dx_api", linhas)
+        # O primeiro número da placa e do processador é o uso: escrito do lado.
+        self.assertIn("gpu_text=GPU uso", linhas)
+        self.assertIn("cpu_text=CPU uso", linhas)
         self.assertFalse(any(l.startswith(("width=", "pci_dev=")) for l in linhas))
         # Só opções que o MangoHud 0.8.3 do Fedora conhece.
         conhecidas = {"legacy_layout", "fps", "dx_api", "frametime", "fps_metrics", "frame_timing", "custom_text",
@@ -299,10 +302,40 @@ class Sobreposicao(Base):
                       "time_no_label", "time_format", "fps_text", "hide_fps_superscript", "engine_short_names",
                       "horizontal", "horizontal_stretch", "horizontal_separator_color", "hud_compact", "width",
                       "pci_dev", "no_display", "fps_limit", "fps_limit_method", "vsync", "gl_vsync", "af",
+                      "text_outline_color", "text_outline_thickness",
                       *self.a.TECLAS_MANGOHUD}
         for linha in linhas:
             if linha and not linha.startswith("#"):
                 self.assertIn(linha.split("=", 1)[0], conhecidas, linha)
+
+    def test_api_so_quando_marcada(self):
+        itens = self.a.MODELOS["completa"] + ["api"]
+        linhas = self.completa(itens=itens)
+        # Com a API marcada, o nome dela fica no lugar de "FPS" (e o "FPS" pequeno volta).
+        self.assertIn("dx_api", linhas)
+        self.assertFalse(any(l.startswith("fps_text") for l in linhas))
+        self.assertNotIn("hide_fps_superscript", linhas)
+        self.assertIn("engine_short_names", self.completa(itens=itens, compacta=True))
+
+    def test_fundo(self):
+        transparente = self.completa(fundo="transparente")
+        self.assertIn("background_alpha=0", transparente)
+        # Sem fundo, as letras ganham contorno para ler em cena clara.
+        for esperado in ("text_outline=1", "text_outline_color=000000", "text_outline_thickness=1.5"):
+            self.assertIn(esperado, transparente)
+        leve = self.completa(fundo="leve")
+        self.assertIn("background_alpha=0.3", leve)
+        self.assertIn("text_outline_thickness=1", leve)
+        # Valor desconhecido volta para o escuro.
+        c = self.a.salvar_config({"sobreposicao": {"fundo": "rosa"}})
+        self.assertEqual(c["sobreposicao"]["fundo"], "escuro")
+        self.assertEqual(self.a.carregar_config()["sobreposicao"]["fundo"], "escuro")
+
+    def test_uso_em_ingles(self):
+        with mock.patch.dict(os.environ, {"MATSU_LANG": "en_US.UTF-8"}):
+            linhas = self.completa()
+        self.assertIn("gpu_text=GPU load", linhas)
+        self.assertIn("cpu_text=CPU load", linhas)
 
     def test_consumo_do_processador_so_quando_da_para_ler(self):
         linhas = self.completa(pc=dict(self.PC, cpu_watts=False))
@@ -319,7 +352,7 @@ class Sobreposicao(Base):
 
     def test_em_linha(self):
         linhas = self.completa(compacta=True)
-        for esperado in ("horizontal", "hud_compact", "engine_short_names", "frametime=0"):
+        for esperado in ("horizontal", "hud_compact", "frametime=0"):
             self.assertIn(esperado, linhas)
         self.assertFalse(any(l.startswith("custom_text") for l in linhas))
         self.assertNotIn("frame_timing", linhas)

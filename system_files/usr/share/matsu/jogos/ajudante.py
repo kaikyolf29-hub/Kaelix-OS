@@ -110,11 +110,15 @@ ITENS = ("hora", "fps", "api", "fps_baixo", "grafico", "nomes", "gpu", "vram", "
          "frequencia", "consumo", "ventoinha")
 POSICOES = ("top-left", "top-center", "top-right", "bottom-left", "bottom-right")
 TAMANHOS = {"pequeno": 18, "medio": 22, "grande": 27}
+# O fundo da sobreposição: o vidro escuro, um mais leve ou nenhum (só as letras,
+# com um contorno escuro para ler em cima de qualquer cena sem tapar o jogo).
+FUNDOS = {"escuro": 0.62, "leve": 0.3, "transparente": 0}
 # Os três jeitos prontos da página Sobreposição (a pessoa ainda escolhe item por item).
 MODELOS = {
     "basica": ["fps"],
     "media": ["fps", "fps_baixo", "grafico", "gpu", "cpu", "ram"],
-    "completa": ["fps", "api", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
+    # Sem a API (DX12, VULKAN...) no lugar do "FPS": fica só para quem marcar.
+    "completa": ["fps", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
                  "frequencia", "consumo", "ventoinha"],
 }
 
@@ -125,7 +129,7 @@ PADRAO = {
     "automatico": True,
     "avisar": True,
     "sobreposicao": {"ligada": False, "itens": list(MODELOS["media"]) + ["nomes", "vram", "temperatura"],
-                     "posicao": "top-left", "tamanho": "medio", "compacta": False},
+                     "posicao": "top-left", "tamanho": "medio", "compacta": False, "fundo": "escuro"},
 }
 
 # Programas que não são jogo: a sobreposição nunca aparece neles.
@@ -244,6 +248,7 @@ def limpar_config(c):
             "posicao": _escolha(s.get("posicao"), POSICOES, ps["posicao"]),
             "tamanho": _escolha(s.get("tamanho"), tuple(TAMANHOS), ps["tamanho"]),
             "compacta": bool(s.get("compacta", ps["compacta"])),
+            "fundo": _escolha(s.get("fundo"), tuple(FUNDOS), ps["fundo"]),
         },
     }
 
@@ -363,6 +368,9 @@ def texto_mangohud(c, ajustes=None, mostrar=False, pc=None):
         "legacy_layout=0",
     ]
     temperatura, frequencia, consumo = tem("temperatura"), tem("frequencia"), tem("consumo")
+    # O primeiro número da linha da placa e do processador é o uso (%): escrito do
+    # lado, para ninguém confundir com a temperatura ou a frequência que vêm depois.
+    uso = "uso" if T.idioma() == "pt" else "load"
     mostra_gpu = tem("gpu") or temperatura or frequencia or consumo or tem("ventoinha")
     mostra_cpu = tem("cpu") or temperatura or frequencia or (consumo and pc.get("cpu_watts"))
 
@@ -394,7 +402,7 @@ def texto_mangohud(c, ajustes=None, mostrar=False, pc=None):
     if mostra_gpu:
         if tem("nomes") and not compacta and pc.get("gpu"):
             bloco.append("custom_text=" + _sem_comentario(pc["gpu"]))
-        bloco += ["gpu_stats", "gpu_text=GPU"]
+        bloco += ["gpu_stats", f"gpu_text=GPU {uso}"]
         if temperatura:
             bloco.append("gpu_temp")
         if frequencia:
@@ -415,7 +423,7 @@ def texto_mangohud(c, ajustes=None, mostrar=False, pc=None):
     if mostra_cpu:
         if tem("nomes") and not compacta and pc.get("cpu"):
             bloco.append("custom_text=" + _sem_comentario(pc["cpu"]))
-        bloco += ["cpu_stats", "cpu_text=CPU"]
+        bloco += ["cpu_stats", f"cpu_text=CPU {uso}"]
         if temperatura:
             bloco.append("cpu_temp")
         if frequencia:
@@ -439,10 +447,16 @@ def texto_mangohud(c, ajustes=None, mostrar=False, pc=None):
         # Os nomes das peças e o respiro entre os blocos, em letra menor.
         f"font_size_secondary={round(tamanho * 0.7)}",
         f"round_corners={round(tamanho * 0.55)}",
-        "background_alpha=0.62",
+        f"background_alpha={FUNDOS[s['fundo']]}",
         "background_color=151518",
         "text_color=ffffff",
-        "text_outline=0",
+    ] + ([
+        # Sem o vidro escuro atrás, as letras ganham um contorno para não sumir
+        # numa cena clara (mais fino com o fundo leve, que ainda escurece um pouco).
+        "text_outline=1",
+        "text_outline_color=000000",
+        f"text_outline_thickness={1.5 if s['fundo'] == 'transparente' else 1}",
+    ] if s["fundo"] != "escuro" else ["text_outline=0"]) + [
         # As cores das partes do computador, as mesmas do Gerenciador de tarefas.
         "cpu_color=45d0c1",
         "gpu_color=f0729f",

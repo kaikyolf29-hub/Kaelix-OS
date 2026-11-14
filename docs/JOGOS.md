@@ -109,13 +109,20 @@ Na NVIDIA e na Intel, o próprio driver cuida da velocidade da placa: a opção 
 - As teclas próprias do MangoHud ficam desligadas, para nada sair de sincronia (e para nenhum atalho mandar
   dados para fora sem querer).
 - O visual é o do Matsu: fonte Inter, cantos redondos, vidro escuro e as cores de cada parte (CPU, GPU,
-  memória). Fica sempre escura, porque por cima do jogo uma caixa clara atrapalharia.
+  memória). Nunca fica clara, porque por cima do jogo uma caixa clara atrapalharia.
+- **Fundo**: **Escuro** (o vidro, padrão), **Leve** (mais transparente) ou **Transparente** (só os números,
+  sem caixa, para não tapar o jogo). Sem o vidro escuro, as letras ganham um contorno preto
+  (`text_outline`) para dar para ler numa cena clara.
+- A linha da placa e a do processador começam com **GPU uso** e **CPU uso**: o primeiro número é o uso (%),
+  e os outros (°C, MHz, W, RPM) já se explicam pela unidade.
 - Em pé, como uma tela de celular, em três blocos com um respiro entre eles: o FPS (com o tempo do quadro,
   o FPS médio, o 1% mais baixo e o gráfico), a placa (nome, uso, temperatura, ventoinha, frequência,
   consumo e a memória de vídeo) e o processador (nome, uso, temperatura, frequência, consumo e a memória).
   A página tem três jeitos prontos (**Só o FPS**, **Essencial** e **Tudo**) e cada item pode ser ligado e
   desligado. **Em linha** põe tudo numa linha só, discreta.
-- **API do jogo**: no lugar de "FPS" aparece de onde vem a imagem do jogo (DX12, DX11, DX9, VULKAN, OpenGL).
+- **DirectX ou Vulkan**: no lugar de "FPS" aparece a tecnologia de imagem que o jogo usa (DX12, DX11, DX9,
+  VULKAN, OpenGL), não a placa. Fica desligado até no **Tudo**, porque confundia (num teste com um programa
+  Vulkan, aparecia "VULKAN" no lugar do FPS).
 - Os nomes do processador e da placa são lidos do computador pela Central (o da placa sem o "(RADV ...)"
   que o MangoHud mostraria). Com duas placas (a integrada e a de jogo), a sobreposição mostra só a de jogo
   (`pci_dev`).

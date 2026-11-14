@@ -13,7 +13,7 @@ Flickable {
     readonly property int margem: Math.round(janela.gu * 1.4)
     readonly property var s: janela.conf ? janela.conf.sobreposicao
                                          : ({ ligada: false, itens: ["fps", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura"],
-                                            posicao: "top-left", tamanho: "medio", compacta: false })
+                                            posicao: "top-left", tamanho: "medio", compacta: false, fundo: "escuro" })
     function tem(item) {
         return s.itens.indexOf(item) >= 0;
     }
@@ -326,8 +326,16 @@ Flickable {
                 width: linha ? emLinha.implicitWidth + 2 * l * 0.45 : largura
                 height: linha ? l * 1.6 : emPe.implicitHeight + 2 * pad
                 radius: l * 0.55
-                color: Qt.rgba(0.082, 0.082, 0.094, 0.62)
+                // O fundo escolhido (ajudante.py, FUNDOS); sem ele, as letras ganham contorno.
+                readonly property string fundo: pagina.s.fundo || "escuro"
+                readonly property bool contorno: fundo !== "escuro"
+                color: Qt.rgba(0.082, 0.082, 0.094, ({ escuro: 0.62, leve: 0.3, transparente: 0 })[fundo])
                 opacity: pagina.s.ligada ? 1 : 0.5
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Kirigami.Units.longDuration
+                    }
+                }
                 Behavior on x {
                     NumberAnimation {
                         duration: Kirigami.Units.longDuration
@@ -389,6 +397,9 @@ Flickable {
                 readonly property string ram: janela.dados ? (janela.dados.memoria.usada / 1073741824).toFixed(1) : "5.4"
                 readonly property color corFps: fps < 30 ? "#f0609e" : (fps < 60 ? "#f5c36b" : "#ffffff")
                 readonly property string unidadeFps: pagina.tem("api") ? "FPS" : ""
+                // O primeiro número da linha é o uso (ajudante.py, gpu_text e cpu_text).
+                readonly property string rotuloGpu: janela.t("GPU uso", "GPU load")
+                readonly property string rotuloCpu: janela.t("CPU uso", "CPU load")
 
                 component Rotulo: Text {
                     font.family: "Inter"
@@ -396,6 +407,8 @@ Flickable {
                     font.weight: Font.DemiBold
                     color: "#ffffff"
                     textFormat: Text.PlainText
+                    style: hud.contorno ? Text.Outline : Text.Normal
+                    styleColor: "#000000"
                 }
                 // Um número alinhado pela direita e a unidade logo depois (pequena e no
                 // alto, como no MangoHud; "%" e "°C" ficam do tamanho do número).
@@ -540,7 +553,7 @@ Flickable {
                     }
                     LinhaHud {
                         visible: hud.mostraGpu
-                        rotulo: "GPU"
+                        rotulo: hud.rotuloGpu
                         corRotulo: "#f0729f"
                         valores: hud.valoresGpu
                     }
@@ -557,7 +570,7 @@ Flickable {
                     }
                     LinhaHud {
                         visible: hud.mostraCpu
-                        rotulo: "CPU"
+                        rotulo: hud.rotuloCpu
                         corRotulo: "#45d0c1"
                         valores: hud.valoresCpu
                     }
@@ -631,7 +644,7 @@ Flickable {
                     }
                     Parte {
                         visible: hud.mostraGpu
-                        rotulo: "GPU"
+                        rotulo: hud.rotuloGpu
                         corRotulo: "#f0729f"
                         valores: hud.valoresGpu
                     }
@@ -643,7 +656,7 @@ Flickable {
                     }
                     Parte {
                         visible: hud.mostraCpu
-                        rotulo: "CPU"
+                        rotulo: hud.rotuloCpu
                         corRotulo: "#45d0c1"
                         valores: hud.valoresCpu
                     }
@@ -681,13 +694,15 @@ Flickable {
                 readonly property var modelos: ({
                     basica: ["fps"],
                     media: ["fps", "fps_baixo", "grafico", "gpu", "cpu", "ram"],
-                    completa: ["fps", "api", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
+                    completa: ["fps", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
                                "frequencia", "consumo", "ventoinha"]
                 })
+                // A hora e a API são extras: ficam como estão ao trocar de modelo.
+                readonly property var extras: ["hora", "api"]
                 opcoes: [{ id: "basica", nome: janela.t("Só o FPS", "FPS only") }, { id: "media", nome: janela.t("Essencial", "Essentials") },
                          { id: "completa", nome: janela.t("Tudo", "Everything") }]
                 escolhido: {
-                    var atuais = pagina.s.itens.filter((i) => i !== "hora").slice().sort().join(",");
+                    var atuais = pagina.s.itens.filter((i) => extras.indexOf(i) < 0).slice().sort().join(",");
                     for (var nome in modelos)
                         if (modelos[nome].slice().sort().join(",") === atuais)
                             return nome;
@@ -695,8 +710,9 @@ Flickable {
                 }
                 onEscolher: (id) => {
                     var lista = modelos[id].slice();
-                    if (pagina.tem("hora"))
-                        lista.push("hora");
+                    for (var i = 0; i < extras.length; i++)
+                        if (pagina.tem(extras[i]))
+                            lista.push(extras[i]);
                     janela.mudar("sobreposicao.itens", lista);
                 }
             }
@@ -710,7 +726,7 @@ Flickable {
                 model: [
                     { id: "fps", nome: janela.t("FPS e tempo do quadro", "FPS and frame time"), cor: "#ffffff" },
                     { id: "fps_baixo", nome: janela.t("FPS médio e 1% mais baixo", "Average and 1% low FPS"), cor: "#ffffff" },
-                    { id: "api", nome: janela.t("API do jogo (DirectX, Vulkan)", "Game API (DirectX, Vulkan)"), cor: "#ffffff" },
+                    { id: "api", nome: janela.t("DirectX ou Vulkan (no lugar de “FPS”)", "DirectX or Vulkan (instead of “FPS”)"), cor: "#ffffff" },
                     { id: "grafico", nome: janela.t("Gráfico dos quadros", "Frame graph"), cor: "#45d0c1" },
                     { id: "nomes", nome: janela.t("Nome do processador e da placa", "CPU and GPU names"), cor: "#ffffff" },
                     { id: "gpu", nome: janela.t("Uso da placa (GPU)", "GPU usage"), cor: "#f0729f" },
@@ -848,6 +864,21 @@ Flickable {
                              { id: "grande", nome: janela.t("Grande", "Large") }]
                     escolhido: pagina.s.tamanho
                     onEscolher: (id) => janela.mudar("sobreposicao.tamanho", id)
+                }
+            }
+            LinhaOpcao {
+                Layout.fillWidth: true
+                primeira: false
+                ultima: false
+                icone: "matsu-textura-symbolic"
+                nome: janela.t("Fundo", "Background")
+                texto: janela.t("Transparente: só os números, com contorno, sem tapar o jogo.",
+                                "Transparent: just the numbers, outlined, without covering the game.")
+                Seletor {
+                    opcoes: [{ id: "escuro", nome: janela.t("Escuro", "Dark") }, { id: "leve", nome: janela.t("Leve", "Light") },
+                             { id: "transparente", nome: janela.t("Transparente", "Transparent") }]
+                    escolhido: pagina.s.fundo || "escuro"
+                    onEscolher: (id) => janela.mudar("sobreposicao.fundo", id)
                 }
             }
             LinhaOpcao {
