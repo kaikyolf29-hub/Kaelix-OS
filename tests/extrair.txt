@@ -37,3 +37,16 @@ busca:*lockscreen*
 # (as opções que existem) e onde ficam as peças dele
 /usr/share/doc/mangohud
 busca:MangoHud.conf*
+
+# Sobre este sistema (Centro de informações) e Central de boas-vindas: o que ainda
+# mostra o logo do Fedora e o texto do KDE (o catálogo pt_BR e as chaves do
+# kcm-about-distrorc, que ficam dentro da biblioteca)
+rpm:plasma-welcome
+rpm:kinfocenter
+/etc/xdg/kcm-about-distrorc
+/usr/share/locale/pt_BR/LC_MESSAGES/plasma-welcome.mo
+/usr/share/locale/pt_BR/LC_MESSAGES/kcm_about-distro.mo
+/usr/lib64/qt6/plugins/plasma/kcms/kinfocenter/kcm_about-distro.so
+busca:kcm-about-distrorc
+busca:kcm_about-distro*
+busca:plasma-welcome*
