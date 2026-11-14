@@ -1,4 +1,5 @@
-// Um app na grade de "Todos os apps": o ícone e o nome embaixo, em até duas linhas.
+// Um app numa grade do menu (fixados, "Todos os apps" em grade, uma
+// categoria aberta): o ícone e o nome embaixo, em até duas linhas.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -10,6 +11,7 @@ MouseArea {
     property var icone
     property string titulo
     property bool destacado: false
+    property real tamanhoIcone: Math.round(Kirigami.Units.gridUnit * 2.2)
 
     signal acionado()
     // Botão direito (ou segurar apertado): o menu do app (fixar na barra...).
@@ -53,8 +55,8 @@ MouseArea {
 
         Kirigami.Icon {
             source: celula.icone
-            implicitWidth: Math.round(Kirigami.Units.gridUnit * 2.2)
-            implicitHeight: Math.round(Kirigami.Units.gridUnit * 2.2)
+            implicitWidth: celula.tamanhoIcone
+            implicitHeight: celula.tamanhoIcone
             Layout.alignment: Qt.AlignHCenter
         }
         PlasmaComponents.Label {

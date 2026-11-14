@@ -1,11 +1,16 @@
-// Menu do Matsu, no jeito do vídeo da fusão: um balão de vidro com a busca em
-// cima, os recentes (numa conta nova, os fixados), todos os apps e, embaixo, a
-// pessoa, os Ajustes do Matsu, bloquear e desligar. Na fusão e no estilo
-// windows o botão do logo vem com a pílula "Buscar apps e arquivos" ao lado.
-// O botão direito num app fixa ou tira o app da barra.
+// Menu do Matsu: o Menu Iniciar do Windows 11 junto com a vista Apps do Mac,
+// num balão de vidro do Matsu. Em cima a busca; depois os fixados (seis por
+// linha, duas linhas e "Mostrar tudo"), os recentes e "Todos os apps", que
+// aparecem em blocos por categoria (como no Mac: três apps grandes e os
+// próximos pequenos), em grade ou em lista com as letras. Clicar num bloco
+// abre a categoria inteira. Embaixo, a pessoa, os Ajustes do Matsu, bloquear
+// e desligar. Na fusão e no estilo windows o botão do logo vem com a pílula
+// "Buscar apps e arquivos" ao lado. O botão direito num app fixa ou tira o
+// app do menu e da barra.
 //
 // Abre com a tecla Meta (o metadata diz que este é o menu do sistema) e com
-// Alt+F1. Os apps, os recentes e a busca vêm das mesmas peças do menu do KDE.
+// Alt+F1. Os apps, os recentes e a busca vêm das mesmas peças do menu do KDE;
+// a categoria de cada app vem do ajudante (matsu-central apps-categorias).
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -107,6 +112,8 @@ PlasmoidItem {
                 }
             } else if (fonte === raiz.ajudante + " apps-barra") {
                 raiz.lerBarra(dados["stdout"]);
+            } else if (fonte === raiz.ajudante + " apps-categorias") {
+                raiz.lerCategorias(dados["stdout"]);
             } else if (/^\S+ (fixar|tirar) /.test(fonte)) {
                 raiz.fazer("apps-barra");
             }
@@ -137,6 +144,28 @@ PlasmoidItem {
         naBarra = mapa;
     }
 
+    // A categoria de cada app ("org.kde.kate.desktop" -> "utilitarios").
+    property var categorias: ({})
+    function lerCategorias(saida) {
+        var mapa = {};
+        var linhas = String(saida || "").split("\n");
+        for (var i = 0; i < linhas.length; i++) {
+            var partes = linhas[i].split("|");
+            if (partes.length === 2 && partes[0].length > 0) {
+                mapa[partes[0]] = partes[1];
+            }
+        }
+        if (linhas.length > 1) {
+            categorias = mapa;
+        }
+    }
+
+    // Tira acentos e maiúsculas ("Área" -> "area"), para as letras da lista.
+    function simples(s) {
+        var r = String(s).toLowerCase();
+        return r.normalize ? r.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : r;
+    }
+
     // O atalho (.desktop) de um item do menu, ou vazio se não for um app.
     function atalhoDe(favoriteId, url) {
         var f = favoriteId ? String(favoriteId) : "";
@@ -153,15 +182,21 @@ PlasmoidItem {
         return "";
     }
 
-    // O app do menu de botão direito aberto agora.
+    // O app do menu de botão direito aberto agora: o atalho (para a barra) e o
+    // id dos fixados do menu.
     property string appDoMenu: ""
+    property string appDoMenuId: ""
+    property bool appDoMenuNoMenu: false
     readonly property bool appDoMenuNaBarra: naBarra[appDoMenu] !== undefined
     function menuDoApp(item, favoriteId, url, x, y) {
         var atalho = atalhoDe(favoriteId, url);
-        if (atalho === "") {
+        var id = favoriteId ? String(favoriteId) : (atalho !== "" ? "applications:" + atalho : "");
+        if (atalho === "" && id === "") {
             return;
         }
         appDoMenu = atalho;
+        appDoMenuId = id;
+        appDoMenuNoMenu = id !== "" && apps.favoritesModel.isFavorite(id);
         contexto.visualParent = item;
         contexto.open(x, y);
     }
@@ -170,15 +205,27 @@ PlasmoidItem {
         id: contexto
 
         PlasmaExtras.MenuItem {
+            text: raiz.t("Fixar no menu", "Pin to the menu")
+            icon: "bookmark-new"
+            visible: raiz.appDoMenuId !== "" && !raiz.appDoMenuNoMenu
+            onClicked: raiz.apps.favoritesModel.addFavorite(raiz.appDoMenuId)
+        }
+        PlasmaExtras.MenuItem {
+            text: raiz.t("Tirar do menu", "Unpin from the menu")
+            icon: "bookmark-remove"
+            visible: raiz.appDoMenuId !== "" && raiz.appDoMenuNoMenu
+            onClicked: raiz.apps.favoritesModel.removeFavorite(raiz.appDoMenuId)
+        }
+        PlasmaExtras.MenuItem {
             text: raiz.t("Fixar na barra", "Pin to the bar")
             icon: "window-pin"
-            visible: !raiz.appDoMenuNaBarra
+            visible: raiz.appDoMenu !== "" && !raiz.appDoMenuNaBarra
             onClicked: raiz.fazer("fixar " + raiz.aspas("applications:" + raiz.appDoMenu))
         }
         PlasmaExtras.MenuItem {
             text: raiz.t("Tirar da barra", "Unpin from the bar")
             icon: "window-unpin"
-            visible: raiz.appDoMenuNaBarra
+            visible: raiz.appDoMenu !== "" && raiz.appDoMenuNaBarra
             onClicked: raiz.fazer("tirar " + raiz.aspas(raiz.naBarra[raiz.appDoMenu]))
         }
         PlasmaExtras.MenuItem {
@@ -235,6 +282,7 @@ PlasmoidItem {
             raiz.activationTogglesExpanded = true;
         }
         comando.connectSource(ajudante + " estado idioma");
+        fazer("apps-categorias");
     }
 
     // Na barra: o logo do Matsu e, na fusão e no windows, a pílula da busca.
@@ -348,22 +396,139 @@ PlasmoidItem {
     fullRepresentation: FocusScope {
         id: cheia
 
-        readonly property int largura: Kirigami.Units.gridUnit * 24
-        readonly property int altura: Kirigami.Units.gridUnit * 32
+        readonly property int largura: Kirigami.Units.gridUnit * 36
+        // Cabe também na tela de um notebook pequeno (1366x768).
+        readonly property int alturaTela: Screen.height > 0 ? Screen.height : 1080
+        readonly property int altura: Math.min(Kirigami.Units.gridUnit * 40, Math.round(alturaTela * 0.84))
         readonly property int margem: Math.round(Kirigami.Units.gridUnit * 0.35)
         readonly property int alturaLinha: Math.round(Kirigami.Units.gridUnit * 2.9)
+        readonly property int alturaCelula: Math.round(Kirigami.Units.gridUnit * 5)
         readonly property color texto: Kirigami.Theme.textColor
         readonly property color realce: Kirigami.Theme.highlightColor
 
-        // No lugar dos recentes, numa conta nova (sem nada aberto ainda), os fixados.
-        readonly property var modeloTopo: recentes.count > 0 ? recentes : raiz.apps.favoritesModel
-        readonly property int linhasTopo: Math.min(topo.count, 4)
+        // Como no Windows 11: os fixados em seis colunas, duas linhas e "Mostrar tudo".
+        readonly property int colunas: 6
+        property bool todosFixados: false
+        readonly property int linhasFixados: {
+            var total = Math.ceil(fixados.count / colunas);
+            return todosFixados ? total : Math.min(2, total);
+        }
+        // Os recentes em duas colunas, até quatro.
+        readonly property int linhasRecentes: Math.min(2, Math.ceil(recentes.count / 2))
+
+        // Como aparecem "Todos os apps": categorias, grade ou lista.
+        readonly property string exibicao: {
+            var e = String(Plasmoid.configuration.exibicao || "");
+            return e === "grade" || e === "lista" ? e : "categorias";
+        }
+        function exibir(e) {
+            Plasmoid.configuration.exibicao = e;
+        }
+        function nomeExibicao(e) {
+            return e === "grade" ? raiz.t("Grade", "Grid") : (e === "lista" ? raiz.t("Lista", "List") : raiz.t("Categorias", "Categories"));
+        }
+
+        // A categoria aberta (clicou num bloco), ou "" na página principal.
+        property string categoriaAberta: ""
 
         // Todos os apps. O modelo só fica pronto depois do refresh, então é
         // lido de novo cada vez que o KDE refaz a lista (app instalado ou removido).
         property var todos: null
         function lerTodos() {
             todos = raiz.apps.modelForRow(1);
+        }
+
+        // Os apps de "todos" numa lista simples (nome, ícone, atalho, letra e a
+        // linha no modelo do KDE, para abrir), para os blocos, a grade e a lista.
+        property var appsLista: []
+        Instantiator {
+            id: leitor
+            model: cheia.todos
+            delegate: QtObject {
+                readonly property int linha: index
+                readonly property string nome: model.display || ""
+                readonly property var icone: model.decoration
+                readonly property string favoriteId: model.favoriteId ? String(model.favoriteId) : ""
+                readonly property string url: model.url ? String(model.url) : ""
+            }
+            onObjectAdded: juntar.restart()
+            onObjectRemoved: juntar.restart()
+        }
+        Timer {
+            id: juntar
+            interval: 50
+            onTriggered: cheia.juntarApps()
+        }
+        function letraDe(nome) {
+            var c = raiz.simples(nome).charAt(0).toUpperCase();
+            return /[A-Z]/.test(c) ? c : "#";
+        }
+        function juntarApps() {
+            var lista = [];
+            for (var i = 0; i < leitor.count; i++) {
+                var o = leitor.objectAt(i);
+                if (!o || o.nome.length === 0) {
+                    continue;
+                }
+                lista.push({ nome: o.nome, icone: o.icone, favoriteId: o.favoriteId, url: o.url, linha: o.linha,
+                             atalho: raiz.atalhoDe(o.favoriteId, o.url), letra: letraDe(o.nome) });
+            }
+            appsLista = lista;
+        }
+
+        // As categorias na ordem da vista Apps do Mac (só as que têm apps).
+        readonly property var ordemCategorias: ["utilitarios", "produtividade", "internet", "criatividade", "leitura",
+                                                "entretenimento", "jogos", "desenvolvimento", "outros"]
+        function nomeCategoria(id) {
+            switch (id) {
+            case "utilitarios": return raiz.t("Utilitários", "Utilities");
+            case "produtividade": return raiz.t("Produtividade", "Productivity");
+            case "internet": return raiz.t("Internet e social", "Internet & Social");
+            case "criatividade": return raiz.t("Criatividade", "Creativity");
+            case "leitura": return raiz.t("Informação e leitura", "Information & Reading");
+            case "entretenimento": return raiz.t("Entretenimento", "Entertainment");
+            case "jogos": return raiz.t("Jogos", "Games");
+            case "desenvolvimento": return raiz.t("Desenvolvimento", "Developer Tools");
+            default: return raiz.t("Outros", "Other");
+            }
+        }
+        readonly property var grupos: {
+            var mapa = {};
+            for (var i = 0; i < appsLista.length; i++) {
+                var a = appsLista[i];
+                var c = raiz.categorias[a.atalho] || "outros";
+                if (!mapa[c]) {
+                    mapa[c] = [];
+                }
+                mapa[c].push(a);
+            }
+            var r = [];
+            for (var k = 0; k < ordemCategorias.length; k++) {
+                var id = ordemCategorias[k];
+                if (mapa[id]) {
+                    r.push({ id: id, nome: nomeCategoria(id), apps: mapa[id] });
+                }
+            }
+            return r;
+        }
+        readonly property var grupoAberto: {
+            for (var i = 0; i < grupos.length; i++) {
+                if (grupos[i].id === categoriaAberta) {
+                    return grupos[i];
+                }
+            }
+            return null;
+        }
+
+        function abrirApp(app) {
+            if (app && cheia.todos) {
+                raiz.abrir(cheia.todos, app.linha);
+            }
+        }
+        function abrirCategoria(id) {
+            categoriaAberta = id;
+            gradeCategoria.currentIndex = -1;
+            gradeCategoria.positionViewAtBeginning();
         }
 
         Layout.minimumWidth: largura
@@ -388,8 +553,8 @@ PlasmoidItem {
         function abrirEscolhido() {
             if (raiz.buscando) {
                 raiz.abrir(lista.model, lista.currentIndex >= 0 ? lista.currentIndex : 0);
-            } else if (topo.count > 0) {
-                raiz.abrir(topo.model, 0);
+            } else if (fixados.count > 0) {
+                raiz.abrir(fixados.model, 0);
             }
         }
 
@@ -398,21 +563,21 @@ PlasmoidItem {
                 if (lista.count > 0) {
                     lista.currentIndex = Math.max(0, Math.min(lista.count - 1, lista.currentIndex + passo));
                 }
-            } else if (passo > 0) {
-                if (topo.count > 0) {
-                    topo.currentIndex = 0;
-                    topo.forceActiveFocus();
-                } else {
-                    grade.forceActiveFocus();
-                }
+            } else if (passo > 0 && categoriaAberta !== "") {
+                gradeCategoria.currentIndex = 0;
+                gradeCategoria.forceActiveFocus();
+            } else if (passo > 0 && fixados.count > 0) {
+                fixados.currentIndex = 0;
+                fixados.forceActiveFocus();
             }
         }
 
         function preparar() {
             campo.text = "";
-            topo.currentIndex = 0;
-            grade.currentIndex = 0;
-            grade.positionViewAtBeginning();
+            categoriaAberta = "";
+            todosFixados = false;
+            fixados.currentIndex = -1;
+            pagina.contentY = 0;
             campo.forceActiveFocus();
         }
 
@@ -420,6 +585,7 @@ PlasmoidItem {
             target: raiz.apps
             function onRefreshed() {
                 cheia.lerTodos();
+                raiz.fazer("apps-categorias");
             }
         }
 
@@ -443,8 +609,38 @@ PlasmoidItem {
             if (campo.text.length > 0) {
                 campo.text = "";
                 campo.forceActiveFocus();
+            } else if (categoriaAberta !== "") {
+                categoriaAberta = "";
+                campo.forceActiveFocus();
             } else {
                 raiz.expanded = false;
+            }
+        }
+
+        // A escolha da exibição de "Todos os apps", como o "Exibição" do Windows 11.
+        PlasmaExtras.Menu {
+            id: menuExibicao
+
+            PlasmaExtras.MenuItem {
+                text: raiz.t("Categorias", "Categories")
+                icon: "view-list-icons"
+                checkable: true
+                checked: cheia.exibicao === "categorias"
+                onClicked: cheia.exibir("categorias")
+            }
+            PlasmaExtras.MenuItem {
+                text: raiz.t("Grade", "Grid")
+                icon: "view-grid"
+                checkable: true
+                checked: cheia.exibicao === "grade"
+                onClicked: cheia.exibir("grade")
+            }
+            PlasmaExtras.MenuItem {
+                text: raiz.t("Lista", "List")
+                icon: "view-list-text"
+                checkable: true
+                checked: cheia.exibicao === "lista"
+                onClicked: cheia.exibir("lista")
             }
         }
 
@@ -460,7 +656,7 @@ PlasmoidItem {
                 radius: Math.round(Kirigami.Units.gridUnit * 0.7)
                 color: Qt.rgba(cheia.texto.r, cheia.texto.g, cheia.texto.b, campo.activeFocus ? 0.12 : 0.09)
                 border.width: 1
-                border.color: campo.activeFocus ? Qt.rgba(cheia.realce.r, cheia.realce.g, cheia.realce.b, 0.75) : "transparent"
+                border.color: campo.activeFocus ? Qt.rgba(cheia.texto.r, cheia.texto.g, cheia.texto.b, 0.28) : "transparent"
 
                 MouseArea {
                     anchors.fill: parent
@@ -511,7 +707,7 @@ PlasmoidItem {
                         PlasmaComponents.Label {
                             anchors.fill: parent
                             visible: campo.text.length === 0
-                            text: raiz.t("Buscar apps e arquivos", "Search apps and files")
+                            text: raiz.t("Buscar apps, arquivos e ajustes", "Search apps, files and settings")
                             verticalAlignment: Text.AlignVCenter
                             elide: Text.ElideRight
                             opacity: 0.55
@@ -533,153 +729,371 @@ PlasmoidItem {
                 }
             }
 
-            // Título da seção, como no vídeo: "Recentes" ou "Resultados para ...".
-            PlasmaComponents.Label {
-                text: raiz.buscando ? raiz.t("Resultados para “%1”", "Results for “%1”").arg(raiz.busca.trim())
-                    : (recentes.count > 0 ? raiz.t("Recentes", "Recent") : raiz.t("Fixados", "Pinned"))
-                textFormat: Text.PlainText
-                font.pointSize: Kirigami.Theme.smallFont.pointSize
-                font.weight: Font.DemiBold
-                font.capitalization: Font.AllUppercase
-                font.letterSpacing: 0.6
-                opacity: 0.6
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-                Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.55)
-                Layout.topMargin: Kirigami.Units.smallSpacing
-            }
-
-            // Sem busca: recentes (até 4) e todos os apps.
-            ColumnLayout {
-                visible: !raiz.buscando
-                spacing: Math.round(Kirigami.Units.gridUnit * 0.5)
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                ListView {
-                    id: topo
-                    model: cheia.modeloTopo
-                    interactive: false
-                    clip: true
-                    keyNavigationEnabled: true
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: cheia.linhasTopo * cheia.alturaLinha
-                    delegate: Linha {
-                        id: linhaTopo
-                        width: ListView.view.width
-                        height: cheia.alturaLinha
-                        icone: model.decoration
-                        titulo: model.display || ""
-                        detalhe: model.description || ""
-                        destacado: topo.activeFocus && index === topo.currentIndex
-                        onAcionado: raiz.abrir(topo.model, index)
-                        onMenuPedido: (x, y) => raiz.menuDoApp(linhaTopo, model.favoriteId, model.url, x, y)
-                    }
-                    Keys.onReturnPressed: raiz.abrir(model, currentIndex)
-                    Keys.onEnterPressed: raiz.abrir(model, currentIndex)
-                    Keys.onUpPressed: {
-                        if (currentIndex > 0) {
-                            decrementCurrentIndex();
-                        } else {
-                            campo.forceActiveFocus();
-                        }
-                    }
-                    Keys.onDownPressed: {
-                        if (currentIndex < cheia.linhasTopo - 1) {
-                            incrementCurrentIndex();
-                        } else {
-                            grade.forceActiveFocus();
-                        }
-                    }
-                }
-
-                PlasmaComponents.Label {
-                    text: raiz.t("Todos os apps", "All apps")
-                    font.pointSize: Kirigami.Theme.smallFont.pointSize
-                    font.weight: Font.DemiBold
-                    font.capitalization: Font.AllUppercase
-                    font.letterSpacing: 0.6
-                    opacity: 0.6
-                    Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.55)
-                    Layout.topMargin: Kirigami.Units.smallSpacing
-                }
-
-                GridView {
-                    id: grade
-                    model: cheia.todos
-                    clip: true
-                    keyNavigationEnabled: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    cellWidth: Math.floor(width / 4)
-                    cellHeight: Math.round(Kirigami.Units.gridUnit * 5.4)
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
-                    delegate: Celula {
-                        id: celulaApp
-                        width: grade.cellWidth
-                        height: grade.cellHeight
-                        icone: model.decoration
-                        titulo: model.display || ""
-                        destacado: grade.activeFocus && index === grade.currentIndex
-                        onAcionado: raiz.abrir(grade.model, index)
-                        onMenuPedido: (x, y) => raiz.menuDoApp(celulaApp, model.favoriteId, model.url, x, y)
-                    }
-                    Keys.onReturnPressed: raiz.abrir(model, currentIndex)
-                    Keys.onEnterPressed: raiz.abrir(model, currentIndex)
-                    Keys.onUpPressed: {
-                        if (currentIndex >= 4) {
-                            moveCurrentIndexUp();
-                        } else if (topo.count > 0) {
-                            topo.currentIndex = cheia.linhasTopo - 1;
-                            topo.forceActiveFocus();
-                        } else {
-                            campo.forceActiveFocus();
-                        }
-                    }
-                }
-            }
-
-            // Com busca: os resultados, o primeiro já escolhido (Enter abre).
             Item {
-                visible: raiz.buscando
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                ListView {
-                    id: lista
+                // ---------------------------------------------- a página principal
+                Flickable {
+                    id: pagina
                     anchors.fill: parent
-                    model: raiz.resultados.count > 0 ? raiz.resultados.modelForRow(0) : null
+                    visible: !raiz.buscando && cheia.categoriaAberta === ""
                     clip: true
+                    contentWidth: width
+                    contentHeight: colunaPagina.implicitHeight + Kirigami.Units.largeSpacing
                     boundsBehavior: Flickable.StopAtBounds
-                    highlightMoveDuration: 0
-                    QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
-                    delegate: Linha {
-                        id: linhaResultado
-                        width: ListView.view.width
-                        height: cheia.alturaLinha
-                        icone: model.decoration
-                        titulo: model.display || ""
-                        detalhe: cheia.detalheDoResultado(model.group, model.description)
-                        destacado: index === lista.currentIndex
-                        onAcionado: raiz.abrir(lista.model, index)
-                        onMenuPedido: (x, y) => raiz.menuDoApp(linhaResultado, model.favoriteId, model.url, x, y)
+                    QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {
+                        id: barraRolagem
+                    }
+
+                    // Mantém à vista o app escolhido pelo teclado.
+                    function mostrar(item) {
+                        if (!item) {
+                            return;
+                        }
+                        var y = item.mapToItem(colunaPagina, 0, 0).y;
+                        if (y < contentY) {
+                            contentY = Math.max(0, y - Kirigami.Units.smallSpacing);
+                        } else if (y + item.height > contentY + height) {
+                            contentY = Math.min(contentHeight - height, y + item.height - height + Kirigami.Units.smallSpacing);
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: colunaPagina
+                        width: pagina.width - (barraRolagem.visible ? Kirigami.Units.smallSpacing * 2 : 0)
+                        spacing: Math.round(Kirigami.Units.gridUnit * 0.4)
+
+                        // Fixados.
+                        Titulo {
+                            Layout.topMargin: Kirigami.Units.smallSpacing
+                            texto: raiz.t("Fixados", "Pinned")
+                            acao: fixados.count > cheia.colunas * 2
+                                  ? (cheia.todosFixados ? raiz.t("Mostrar menos", "Show less") : raiz.t("Mostrar tudo", "Show all")) : ""
+                            iconeAcao: cheia.todosFixados ? "go-up-symbolic" : "go-next-symbolic"
+                            onAcionado: cheia.todosFixados = !cheia.todosFixados
+                        }
+
+                        GridView {
+                            id: fixados
+                            model: raiz.apps.favoritesModel
+                            interactive: false
+                            clip: true
+                            keyNavigationEnabled: true
+                            currentIndex: -1
+                            cellWidth: Math.floor(width / cheia.colunas)
+                            cellHeight: cheia.alturaCelula
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: cheia.linhasFixados * cellHeight
+                            Behavior on Layout.preferredHeight {
+                                NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                            }
+                            delegate: Celula {
+                                id: celulaFixada
+                                width: fixados.cellWidth
+                                height: fixados.cellHeight
+                                icone: model.decoration
+                                titulo: model.display || ""
+                                destacado: fixados.activeFocus && index === fixados.currentIndex
+                                onAcionado: raiz.abrir(fixados.model, index)
+                                onMenuPedido: (x, y) => raiz.menuDoApp(celulaFixada, model.favoriteId, model.url, x, y)
+                            }
+                            onCurrentIndexChanged: if (activeFocus) pagina.mostrar(currentItem)
+                            Keys.onReturnPressed: raiz.abrir(model, currentIndex)
+                            Keys.onEnterPressed: raiz.abrir(model, currentIndex)
+                            Keys.onUpPressed: {
+                                if (currentIndex >= cheia.colunas) {
+                                    moveCurrentIndexUp();
+                                } else {
+                                    campo.forceActiveFocus();
+                                }
+                            }
+                            Keys.onDownPressed: {
+                                if (currentIndex + cheia.colunas < Math.min(count, cheia.linhasFixados * cheia.colunas)) {
+                                    moveCurrentIndexDown();
+                                }
+                            }
+                        }
+
+                        PlasmaComponents.Label {
+                            visible: fixados.count === 0
+                            text: raiz.t("Clique com o botão direito num app para fixá-lo aqui.", "Right-click an app to pin it here.")
+                            wrapMode: Text.Wrap
+                            opacity: 0.6
+                            Layout.fillWidth: true
+                            Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.55)
+                        }
+
+                        // Recentes (apps e arquivos abertos por último).
+                        Titulo {
+                            visible: recentes.count > 0
+                            Layout.topMargin: Kirigami.Units.smallSpacing
+                            texto: raiz.t("Recentes", "Recent")
+                        }
+
+                        GridView {
+                            id: gradeRecentes
+                            visible: recentes.count > 0
+                            model: recentes
+                            interactive: false
+                            clip: true
+                            cellWidth: Math.floor(width / 2)
+                            cellHeight: cheia.alturaLinha
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: cheia.linhasRecentes * cellHeight
+                            delegate: Linha {
+                                id: linhaRecente
+                                visible: index < 4
+                                width: gradeRecentes.cellWidth
+                                height: gradeRecentes.cellHeight
+                                icone: model.decoration
+                                titulo: model.display || ""
+                                detalhe: model.description || ""
+                                onAcionado: raiz.abrir(gradeRecentes.model, index)
+                                onMenuPedido: (x, y) => raiz.menuDoApp(linhaRecente, model.favoriteId, model.url, x, y)
+                            }
+                        }
+
+                        // Todos os apps, com a escolha da exibição à direita.
+                        Titulo {
+                            Layout.topMargin: Kirigami.Units.smallSpacing
+                            texto: raiz.t("Todos os apps", "All apps")
+                            acao: raiz.t("Exibição: ", "View: ") + cheia.nomeExibicao(cheia.exibicao)
+                            iconeAcao: "go-down-symbolic"
+                            onAcionado: botao => {
+                                menuExibicao.visualParent = botao;
+                                menuExibicao.openRelative();
+                            }
+                        }
+
+                        // Em blocos por categoria.
+                        Grid {
+                            id: blocos
+                            visible: cheia.exibicao === "categorias"
+                            readonly property real largura: colunaPagina.width - Math.round(Kirigami.Units.gridUnit * 0.6)
+                            readonly property int colunasBlocos: Math.max(3, Math.floor(largura / (Kirigami.Units.gridUnit * 7.6)))
+                            readonly property real ladoBloco: Math.floor((largura - columnSpacing * (colunasBlocos - 1)) / colunasBlocos)
+                            columns: colunasBlocos
+                            columnSpacing: Math.round(Kirigami.Units.gridUnit * 0.9)
+                            rowSpacing: Math.round(Kirigami.Units.gridUnit * 0.7)
+                            Layout.preferredWidth: largura
+                            Layout.preferredHeight: implicitHeight
+                            Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.3)
+                            Layout.topMargin: Kirigami.Units.smallSpacing
+
+                            Repeater {
+                                model: cheia.grupos
+                                BlocoCategoria {
+                                    required property var modelData
+                                    width: blocos.ladoBloco
+                                    height: implicitHeight
+                                    nome: modelData.nome
+                                    apps: modelData.apps
+                                    onAbrirApp: app => cheia.abrirApp(app)
+                                    onAbrirCategoria: cheia.abrirCategoria(modelData.id)
+                                    onMenuPedido: (item, app, x, y) => raiz.menuDoApp(item, app.favoriteId, app.url, x, y)
+                                }
+                            }
+                        }
+
+                        // Em grade, em ordem alfabética.
+                        GridView {
+                            id: gradeTodos
+                            visible: cheia.exibicao === "grade"
+                            model: visible ? cheia.appsLista : []
+                            interactive: false
+                            cellWidth: Math.floor(width / cheia.colunas)
+                            cellHeight: cheia.alturaCelula
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: Math.ceil(count / cheia.colunas) * cellHeight
+                            delegate: Celula {
+                                id: celulaTodos
+                                required property var modelData
+                                width: gradeTodos.cellWidth
+                                height: gradeTodos.cellHeight
+                                icone: modelData.icone
+                                titulo: modelData.nome
+                                onAcionado: cheia.abrirApp(modelData)
+                                onMenuPedido: (x, y) => raiz.menuDoApp(celulaTodos, modelData.favoriteId, modelData.url, x, y)
+                            }
+                        }
+
+                        // Em lista, com a letra antes de cada grupo (como no Windows 11).
+                        Column {
+                            visible: cheia.exibicao === "lista"
+                            Layout.fillWidth: true
+
+                            Repeater {
+                                model: parent.visible ? cheia.appsLista : []
+                                Column {
+                                    id: itemLista
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool primeiraDaLetra: index === 0 || cheia.appsLista[index - 1].letra !== modelData.letra
+                                    width: parent.width
+
+                                    PlasmaComponents.Label {
+                                        visible: itemLista.primeiraDaLetra
+                                        text: itemLista.modelData.letra
+                                        font.weight: Font.DemiBold
+                                        opacity: 0.6
+                                        leftPadding: Math.round(Kirigami.Units.gridUnit * 0.65)
+                                        topPadding: itemLista.index === 0 ? 0 : Kirigami.Units.smallSpacing * 2
+                                        bottomPadding: Kirigami.Units.smallSpacing
+                                    }
+                                    Linha {
+                                        id: linhaTodos
+                                        width: parent.width
+                                        height: Math.round(Kirigami.Units.gridUnit * 2.3)
+                                        tamanhoIcone: Math.round(Kirigami.Units.gridUnit * 1.5)
+                                        simples: true
+                                        icone: itemLista.modelData.icone
+                                        titulo: itemLista.modelData.nome
+                                        detalhe: ""
+                                        onAcionado: cheia.abrirApp(itemLista.modelData)
+                                        onMenuPedido: (x, y) => raiz.menuDoApp(linhaTodos, itemLista.modelData.favoriteId, itemLista.modelData.url, x, y)
+                                    }
+                                }
+                            }
+                        }
+
+                        PlasmaComponents.Label {
+                            visible: cheia.appsLista.length === 0
+                            text: raiz.t("Carregando os apps…", "Loading apps…")
+                            opacity: 0.6
+                            Layout.leftMargin: Math.round(Kirigami.Units.gridUnit * 0.55)
+                        }
                     }
                 }
 
-                Timer {
-                    id: esperaBusca
-                    interval: 700
+                // ---------------------------------------------- uma categoria aberta
+                ColumnLayout {
+                    anchors.fill: parent
+                    visible: !raiz.buscando && cheia.categoriaAberta !== ""
+                    spacing: Math.round(Kirigami.Units.gridUnit * 0.4)
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: Kirigami.Units.smallSpacing
+                        spacing: Kirigami.Units.smallSpacing
+
+                        PlasmaComponents.ToolButton {
+                            icon.name: "go-previous-symbolic"
+                            text: raiz.t("Voltar", "Back")
+                            display: QQC2.AbstractButton.IconOnly
+                            QQC2.ToolTip.text: text
+                            QQC2.ToolTip.visible: hovered
+                            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                            onClicked: {
+                                cheia.categoriaAberta = "";
+                                campo.forceActiveFocus();
+                            }
+                        }
+                        PlasmaComponents.Label {
+                            text: cheia.grupoAberto ? cheia.grupoAberto.nome : ""
+                            textFormat: Text.PlainText
+                            font.weight: Font.DemiBold
+                            font.pointSize: Math.round(Kirigami.Theme.defaultFont.pointSize * 1.15)
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+                        PlasmaComponents.Label {
+                            text: cheia.grupoAberto ? (cheia.grupoAberto.apps.length === 1 ? raiz.t("1 app", "1 app")
+                                                       : raiz.t(cheia.grupoAberto.apps.length + " apps", cheia.grupoAberto.apps.length + " apps")) : ""
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            opacity: 0.6
+                            Layout.rightMargin: Math.round(Kirigami.Units.gridUnit * 0.5)
+                        }
+                    }
+
+                    GridView {
+                        id: gradeCategoria
+                        model: cheia.grupoAberto ? cheia.grupoAberto.apps : []
+                        clip: true
+                        keyNavigationEnabled: true
+                        currentIndex: -1
+                        boundsBehavior: Flickable.StopAtBounds
+                        cellWidth: Math.floor(width / cheia.colunas)
+                        cellHeight: cheia.alturaCelula
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
+                        delegate: Celula {
+                            id: celulaCategoria
+                            required property var modelData
+                            required property int index
+                            width: gradeCategoria.cellWidth
+                            height: gradeCategoria.cellHeight
+                            icone: modelData.icone
+                            titulo: modelData.nome
+                            destacado: gradeCategoria.activeFocus && index === gradeCategoria.currentIndex
+                            onAcionado: cheia.abrirApp(modelData)
+                            onMenuPedido: (x, y) => raiz.menuDoApp(celulaCategoria, modelData.favoriteId, modelData.url, x, y)
+                        }
+                        Keys.onReturnPressed: cheia.abrirApp(cheia.grupoAberto.apps[currentIndex])
+                        Keys.onEnterPressed: cheia.abrirApp(cheia.grupoAberto.apps[currentIndex])
+                        Keys.onUpPressed: {
+                            if (currentIndex >= cheia.colunas) {
+                                moveCurrentIndexUp();
+                            } else {
+                                campo.forceActiveFocus();
+                            }
+                        }
+                    }
                 }
 
-                PlasmaComponents.Label {
-                    anchors.centerIn: parent
-                    width: parent.width - Kirigami.Units.gridUnit * 2
-                    visible: lista.count === 0 && !esperaBusca.running
-                    text: raiz.t("Nada encontrado. Tente outra palavra.", "Nothing found. Try another word.")
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.Wrap
-                    opacity: 0.6
+                // ---------------------------------------------- a busca
+                // Os resultados, o primeiro já escolhido (Enter abre).
+                Item {
+                    anchors.fill: parent
+                    visible: raiz.buscando
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: Math.round(Kirigami.Units.gridUnit * 0.4)
+
+                        Titulo {
+                            Layout.topMargin: Kirigami.Units.smallSpacing
+                            texto: raiz.t("Resultados para “%1”", "Results for “%1”").arg(raiz.busca.trim())
+                        }
+
+                        ListView {
+                            id: lista
+                            model: raiz.resultados.count > 0 ? raiz.resultados.modelForRow(0) : null
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            highlightMoveDuration: 0
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            QQC2.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
+                            delegate: Linha {
+                                id: linhaResultado
+                                width: ListView.view.width
+                                height: cheia.alturaLinha
+                                icone: model.decoration
+                                titulo: model.display || ""
+                                detalhe: cheia.detalheDoResultado(model.group, model.description)
+                                destacado: index === lista.currentIndex
+                                onAcionado: raiz.abrir(lista.model, index)
+                                onMenuPedido: (x, y) => raiz.menuDoApp(linhaResultado, model.favoriteId, model.url, x, y)
+                            }
+                        }
+                    }
+
+                    Timer {
+                        id: esperaBusca
+                        interval: 700
+                    }
+
+                    PlasmaComponents.Label {
+                        anchors.centerIn: parent
+                        width: parent.width - Kirigami.Units.gridUnit * 2
+                        visible: lista.count === 0 && !esperaBusca.running
+                        text: raiz.t("Nada encontrado. Tente outra palavra.", "Nothing found. Try another word.")
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        opacity: 0.6
+                    }
                 }
             }
 

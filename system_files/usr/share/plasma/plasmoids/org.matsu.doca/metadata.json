@@ -1,0 +1,23 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.matsu.doca",
+        "Name": "Matsu Dock",
+        "Name[pt_BR]": "Doca do Matsu",
+        "Description": "Pinned and open apps, with magnification like the Mac dock, in the Matsu style",
+        "Description[pt_BR]": "Apps fixados e abertos, com a ampliação da doca do Mac, no jeito do Matsu",
+        "Icon": "matsu-barra-symbolic",
+        "Category": "Windows and Tasks",
+        "License": "GPL-3.0",
+        "Version": "1.0",
+        "Authors": [
+            {
+                "Name": "Matsu OS"
+            }
+        ]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.multitasking"
+    ]
+}

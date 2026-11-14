@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+  <kcfgfile name=""/>
+
+  <group name="General">
+    <!-- Os apps fixados, com os mesmos nomes da barra do KDE (o comando
+         "matsu barra" e os Ajustes leem e escrevem aqui). -->
+    <entry name="launchers" type="StringList">
+      <default></default>
+    </entry>
+    <!-- Com mais de uma tela: só os apps abertos nesta tela. -->
+    <entry name="showOnlyCurrentScreen" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- O efeito lupa do Mac ao passar o mouse, e quanto cresce (0 a 100). -->
+    <entry name="ampliacao" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="ampliacaoNivel" type="Int">
+      <default>50</default>
+      <min>0</min>
+      <max>100</max>
+    </entry>
+    <!-- O pontinho embaixo dos apps abertos. -->
+    <entry name="indicadores" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- O app pula enquanto abre, como no Mac. -->
+    <entry name="animarAbertura" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- A lixeira no fim da doca (só na tela principal). -->
+    <entry name="lixeira" type="Bool">
+      <default>false</default>
+    </entry>
+  </group>
+</kcfg>

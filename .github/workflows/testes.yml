@@ -38,6 +38,10 @@ jobs:
         run: python3 tests/test_seguranca.py
       - name: Testar a troca da tela de bloqueio
         run: python3 tests/test_telas.py
+      - name: Testar a conta da ampliação da doca
+        run: node tests/test_doca.js
+      - name: Testar o ajudante da página Telas (monitores)
+        run: python3 tests/test_monitores.py
       - name: Testar os apps do dia a dia
         run: |
           set -e

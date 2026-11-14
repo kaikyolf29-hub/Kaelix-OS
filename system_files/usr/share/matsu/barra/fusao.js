@@ -37,9 +37,9 @@ function montarTela(tela) {
     } else if (buscaFica === "meio") {
         porBuscaSozinha(centro);
     }
-    porApps(centro, tela);
+    var apps = porApps(centro, tela);
     if (principal) {
-        porLixeira(centro);
+        porLixeira(centro, apps);
     }
     print("matsu: tela " + tela + ": busca " + buscaFica + ", menu " + (menuNoMeio ? "meio" : "esquerda") + "\n");
 

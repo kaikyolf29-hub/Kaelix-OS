@@ -88,6 +88,18 @@ hmp key esc
 sleep 1
 hmp key esc
 sleep 2
+# O menu junta o Menu Iniciar do Windows 11 com a vista Apps do Mac: os apps em
+# blocos por categoria. Clicar na beirada do primeiro bloco abre a categoria
+# inteira (o ponto cai no bloco com ou sem a parte dos recentes em cima).
+hmp key meta_l
+sleep 5
+hmp click 164 640 || echo "o clique não foi (seguindo sem ele)"
+sleep 2
+shot "04d3-menu-categoria-aberta"
+hmp key esc
+sleep 1
+hmp key esc
+sleep 2
 
 # Central de controle pelo atalho Meta+A, na conta nova (antes de trocar a barra).
 hmp key meta_l-a
@@ -189,6 +201,25 @@ hmp type "matsu barra mac --detalhes"
 hmp key ret
 sleep 10
 shot "13-barra-estilo-mac"
+# A doca do Matsu amplia os apps embaixo do mouse, como no Mac, e pode ficar de lado.
+hmp mover 940 1050 || echo "o mouse não foi (seguindo sem ele)"
+sleep 1
+hmp mover 948 1050 || true
+sleep 2
+shot "13a-doca-mac-ampliando"
+hmp mover 960 500 || true
+hmp type "matsu barra --posicao esquerda"
+hmp key ret
+sleep 10
+hmp mover 30 560 || true
+sleep 1
+hmp mover 30 568 || true
+sleep 2
+shot "13b-doca-mac-de-lado"
+hmp mover 960 500 || true
+hmp type "matsu barra --posicao embaixo"
+hmp key ret
+sleep 10
 hmp type "matsu barra fusao --tamanho grande --detalhes"
 hmp key ret
 sleep 10

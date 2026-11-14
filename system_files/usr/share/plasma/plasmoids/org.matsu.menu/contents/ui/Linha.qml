@@ -14,6 +14,9 @@ MouseArea {
     property string detalhe
     // A linha escolhida (pelo teclado ou o primeiro resultado da busca).
     property bool destacado: false
+    property real tamanhoIcone: Math.round(Kirigami.Units.gridUnit * 1.9)
+    // Só o nome, sem negrito (a exibição em lista de "Todos os apps").
+    property bool simples: false
 
     signal acionado()
     // Botão direito (ou segurar apertado): o menu do app (fixar na barra...).
@@ -56,8 +59,8 @@ MouseArea {
 
         Kirigami.Icon {
             source: linha.icone
-            implicitWidth: Math.round(Kirigami.Units.gridUnit * 1.9)
-            implicitHeight: Math.round(Kirigami.Units.gridUnit * 1.9)
+            implicitWidth: linha.tamanhoIcone
+            implicitHeight: linha.tamanhoIcone
             Layout.alignment: Qt.AlignVCenter
         }
 
@@ -69,7 +72,7 @@ MouseArea {
             PlasmaComponents.Label {
                 text: linha.titulo
                 textFormat: Text.PlainText
-                font.weight: Font.DemiBold
+                font.weight: linha.simples ? Font.Normal : Font.DemiBold
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }

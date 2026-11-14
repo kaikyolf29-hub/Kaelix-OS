@@ -1,5 +1,6 @@
 // Estilo "mac": a barra de cima e uma doca flutuante com os apps embaixo, no
-// meio. Na barra de cima, à esquerda, o logo do Matsu (o menu), o nome do app
+// meio (ou de pé, à esquerda ou à direita, se a pessoa escolher). A doca é a
+// do Matsu, com a ampliação do Mac ao passar o mouse. Na barra de cima, à esquerda, o logo do Matsu (o menu), o nome do app
 // em uso em negrito e os menus dele; à direita, os ícones dos apps em segundo
 // plano (a setinha), rede, Bluetooth, som, bateria e o botão da central, e a
 // data com a hora. Cada tela ganha as duas; nas outras telas a barra de cima
@@ -45,17 +46,20 @@ function montarTela(tela) {
     var principal = ehPrincipal(tela);
     montarBarraDeCima(tela, principal);
 
+    // A doca embaixo (o padrão) ou de pé, à esquerda ou à direita, como no Mac.
+    var lado = posicaoDaDoca();
+    var geo = screenGeometry(tela);
     var doca = novaBarra(tela);
-    doca.location = "bottom";
+    doca.location = lado === "esquerda" ? "left" : (lado === "direita" ? "right" : "bottom");
     doca.height = alturaDaBarra();
     doca.alignment = "center";
     doca.lengthMode = "fit";
     doca.minimumLength = gridUnit * 4;
-    doca.maximumLength = Math.round(screenGeometry(tela).width * 0.8);
+    doca.maximumLength = Math.round(lado === "embaixo" ? geo.width * 0.8 : (geo.height - alturaDaBarraDeCima()) * 0.86);
     doca.floating = true;
     doca.hiding = esconder();
-    porApps(doca, tela);
+    var apps = porApps(doca, tela);
     if (principal) {
-        porLixeira(doca);
+        porLixeira(doca, apps);
     }
 }

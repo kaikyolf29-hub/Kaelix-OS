@@ -170,8 +170,15 @@ run estado
 check "lê o tamanho da barra escolhido" bash -c "grep -qx 'barra=mac' <<<\"\$0\" && grep -qx 'barra_tamanho=grande' <<<\"\$0\" && grep -qx 'barra_esconder=1' <<<\"\$0\"" "$OUT"
 printf 'estilo=fusao\ntamanho=media\nesconder=nao\nbusca=meio\nmenu=meio\n' > "$WORK/state/barra"
 run estado
+check "a doca vem com a ampliação, os pontinhos e o pulo ligados, embaixo" bash -c "grep -qx 'barra_ampliacao=1' <<<\"\$0\" && grep -qx 'barra_ampliacao_nivel=50' <<<\"\$0\" && grep -qx 'barra_indicadores=1' <<<\"\$0\" && grep -qx 'barra_animar=1' <<<\"\$0\" && grep -qx 'barra_posicao=embaixo' <<<\"\$0\"" "$OUT"
 check "lê onde ficam a busca e o menu" bash -c "grep -qx 'barra_busca=meio' <<<\"\$0\" && grep -qx 'barra_menu=meio' <<<\"\$0\"" "$OUT"
 check "várias telas: por padrão a barra em todas e o app na tela dele" bash -c "grep -qx 'barra_telas=todas' <<<\"\$0\" && grep -qx 'barra_abertos=tela' <<<\"\$0\"" "$OUT"
+printf 'estilo=mac\ntamanho=3.1\nampliacao=nao\nampliacao_nivel=75\nindicadores=nao\nanimar=nao\nposicao=direita\n' > "$WORK/state/barra"
+run estado
+check "lê os ajustes da doca e o tamanho livre da doca do Mac" bash -c "grep -qx 'barra_tamanho=3.1' <<<\"\$0\" && grep -qx 'barra_ampliacao=0' <<<\"\$0\" && grep -qx 'barra_ampliacao_nivel=75' <<<\"\$0\" && grep -qx 'barra_indicadores=0' <<<\"\$0\" && grep -qx 'barra_animar=0' <<<\"\$0\" && grep -qx 'barra_posicao=direita' <<<\"\$0\"" "$OUT"
+printf 'estilo=mac\ntamanho=9.5\nposicao=;rm\nampliacao_nivel=x\n' > "$WORK/state/barra"
+run estado
+check "ajustes da doca estranhos voltam ao padrão" bash -c "grep -qx 'barra_tamanho=media' <<<\"\$0\" && grep -qx 'barra_posicao=embaixo' <<<\"\$0\" && grep -qx 'barra_ampliacao_nivel=50' <<<\"\$0\"" "$OUT"
 printf 'estilo=fusao\ntelas=principal\nabertos=principal\n' > "$WORK/state/barra"
 run estado
 check "lê a escolha das várias telas" bash -c "grep -qx 'barra_telas=principal' <<<\"\$0\" && grep -qx 'barra_abertos=principal' <<<\"\$0\"" "$OUT"
@@ -198,6 +205,16 @@ check "barra pode levar a busca para a ilha do meio" called "matsu barra fusao -
 run barra windows media nao esquerda esquerda principal todas
 check "barra passa a escolha das várias telas" called "matsu barra windows --tamanho media --esconder nao --busca esquerda --menu esquerda --telas principal --abertos todas"
 run barra linux; check "barra desconhecida é recusada" test "$CODE" -eq 2
+run doca ampliacao nao
+check "doca: desligar a ampliação chama o comando matsu" called "matsu barra --ampliacao nao"
+run doca ampliacao-nivel 80
+check "doca: quanto os apps crescem" called "matsu barra --ampliacao-nivel 80"
+run doca ampliacao-nivel 900
+check "doca: nível fora da faixa fica no máximo" called "matsu barra --ampliacao-nivel 100"
+run doca posicao esquerda
+check "doca: a doca do Mac pode ir para a esquerda" called "matsu barra --posicao esquerda"
+run doca posicao cima; check "doca: lado desconhecido é recusado" test "$CODE" -eq 2
+run doca ampliacao talvez; check "doca: sim ou não, nada mais" test "$CODE" -eq 2
 mkdir -p "$WORK/papeis/Matsu/contents/images" "$WORK/papeis/Matsu/contents/images_dark" "$WORK/papeis/Nuvens/contents/images" "$WORK/papeis/vazio"
 touch "$WORK/papeis/Matsu/contents/images/3840x2160.png" "$WORK/papeis/Matsu/contents/screenshot.png"
 touch "$WORK/papeis/Nuvens/contents/images/3840x2160.jpg" "$WORK/papeis/Nuvens/contents/images/1280x720.jpg" "$WORK/papeis/Nuvens/contents/images/640x480.jpg"

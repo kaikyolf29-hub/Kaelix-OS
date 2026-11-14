@@ -1,7 +1,9 @@
-// Barra e doca: o estilo da barra (fusão, Mac ou Windows), o tamanho, onde
-// ficam a busca e o menu, se a barra se esconde sozinha, os apps fixados nela
-// (tirar, mudar a ordem e pôr outros) e, com mais de uma
-// tela, se a barra aparece em todas e onde ficam os apps abertos (como no Windows).
+// Barra e doca: o estilo da barra (fusão, Mac ou Windows), o tamanho (no Mac,
+// uma régua livre, como no Mac), onde ficam a busca e o menu, se a barra se
+// esconde sozinha, a doca (ampliar os ícones embaixo do mouse, quanto, o lado
+// da tela no Mac, os pontinhos dos apps abertos e o pulo ao abrir), os apps
+// fixados nela (tirar, mudar a ordem e pôr outros) e, com mais de uma tela, se
+// a barra aparece em todas e onde ficam os apps abertos (como no Windows).
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -21,6 +23,36 @@ ColumnLayout {
     readonly property bool todasAsTelas: ajustes.texto("barra_telas") !== "principal"
     readonly property string abertos: ajustes.texto("barra_abertos") || "tela"
     readonly property int telas: Qt.application.screens.length
+    readonly property bool amplia: ajustes.texto("barra_ampliacao") !== "0"
+    readonly property int nivel: ajustes.texto("barra_ampliacao_nivel") === "" ? 50 : ajustes.numero("barra_ampliacao_nivel")
+    readonly property bool indicadores: ajustes.texto("barra_indicadores") !== "0"
+    readonly property bool animar: ajustes.texto("barra_animar") !== "0"
+    readonly property string posicao: ajustes.texto("barra_posicao") || "embaixo"
+
+    // O tamanho guardado pode ser um dos três (pequena, média, grande) ou um
+    // número da régua da doca do Mac (de 1,8 a 4,2 vezes a letra do sistema).
+    readonly property var escalas: ({ pequena: 2.25, media: 2.75, grande: 3.25 })
+    function escalaDe(t) {
+        if (escalas[t] !== undefined) {
+            return escalas[t];
+        }
+        var n = parseFloat(String(t).replace(",", "."));
+        return isNaN(n) ? 2.75 : Math.max(1.8, Math.min(4.2, n));
+    }
+    // Fora do Mac só há os três tamanhos: o número vira o mais perto.
+    function tamanhoDe(t) {
+        if (escalas[t] !== undefined) {
+            return t;
+        }
+        var n = escalaDe(t);
+        return n < 2.5 ? "pequena" : (n < 3 ? "media" : "grande");
+    }
+
+    // As opções da doca valem na hora, sem montar a barra de novo.
+    function doca(chave, opcao, valor) {
+        ajustes.definir(chave, typeof valor === "boolean" ? (valor ? "1" : "0") : String(valor));
+        ajustes.fazer("doca " + opcao + " " + (typeof valor === "boolean" ? (valor ? "sim" : "nao") : valor));
+    }
 
     // "abrir ajustes barra-apps" (o menu, o botão direito no logo): rola até os
     // apps fixados, depois que a página terminou de montar.
@@ -53,6 +85,9 @@ ColumnLayout {
         var m = menu !== undefined ? menu : pagina.menu;
         var t = (todas !== undefined ? todas : pagina.todasAsTelas) ? "todas" : "principal";
         var a = abertos !== undefined ? abertos : pagina.abertos;
+        if (estilo !== "mac") {
+            tamanho = pagina.tamanhoDe(tamanho);
+        }
         ajustes.definir("barra", estilo);
         ajustes.definir("barra_tamanho", tamanho);
         ajustes.definir("barra_esconder", esconde ? "1" : "0");
@@ -107,12 +142,27 @@ ColumnLayout {
             }
         }
 
+        // No Mac, uma régua livre para a doca; nos outros estilos, três tamanhos.
         Linha {
             nome: ajustes.t("Tamanho", "Size")
+            detalhe: pagina.estilo === "mac" ? ajustes.t("Arraste para deixar a doca do tamanho que quiser.", "Drag to make the dock the size you like.") : ""
+
+            Regua {
+                visible: pagina.estilo === "mac"
+                de: 1.8
+                ate: 4.2
+                passo: 0.05
+                valor: pagina.escalaDe(pagina.tamanho)
+                esquerda: ajustes.t("Pequena", "Small")
+                direita: ajustes.t("Grande", "Large")
+                nome: ajustes.t("Tamanho da doca", "Dock size")
+                onEscolhido: valor => pagina.trocar(pagina.estilo, valor.toFixed(2), pagina.esconde)
+            }
 
             Segmentado {
+                visible: pagina.estilo !== "mac"
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 14
-                atual: pagina.tamanho
+                atual: pagina.tamanhoDe(pagina.tamanho)
                 opcoes: [
                     { valor: "pequena", nome: ajustes.t("Pequena", "Small") },
                     { valor: "media", nome: ajustes.t("Média", "Medium") },
@@ -166,12 +216,86 @@ ColumnLayout {
 
         Linha {
             nome: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
-            detalhe: pagina.estilo === "mac" ? ajustes.t("A doca aparece quando o mouse encosta embaixo; a barra de cima fica.", "The dock shows up when the mouse touches the bottom; the top bar stays.")
+            detalhe: pagina.estilo === "mac"
+                     ? (pagina.posicao === "esquerda" ? ajustes.t("A doca aparece quando o mouse encosta na esquerda; a barra de cima fica.", "The dock shows up when the mouse touches the left edge; the top bar stays.")
+                      : pagina.posicao === "direita" ? ajustes.t("A doca aparece quando o mouse encosta na direita; a barra de cima fica.", "The dock shows up when the mouse touches the right edge; the top bar stays.")
+                      : ajustes.t("A doca aparece quando o mouse encosta embaixo; a barra de cima fica.", "The dock shows up when the mouse touches the bottom; the top bar stays."))
                                               : ajustes.t("Ela aparece quando o mouse encosta embaixo da tela.", "It shows up when the mouse touches the bottom of the screen.")
             PlasmaComponents.Switch {
                 checked: pagina.esconde
                 onToggled: pagina.trocar(pagina.estilo, pagina.tamanho, checked)
                 Accessible.name: ajustes.t("Esconder a barra sozinha", "Automatically hide the bar")
+            }
+        }
+    }
+
+    // A doca dos apps (fusão e Mac): a ampliação embaixo do mouse, como no Mac,
+    // o lado da tela (só no Mac), os pontinhos dos apps abertos e o pulo do
+    // ícone enquanto o app abre. Vale na hora, em todas as telas.
+    Grupo {
+        visible: pagina.estilo !== "windows"
+        titulo: ajustes.t("Doca", "Dock")
+        nota: ajustes.t("Vale na hora, na barra de todas as telas.", "Applies right away, on the bar of every screen.")
+
+        Linha {
+            primeira: true
+            nome: ajustes.t("Ampliar os apps ao passar o mouse", "Magnify apps on hover")
+            detalhe: ajustes.t("Os ícones crescem embaixo do mouse, como no Mac.", "Icons grow under the mouse, like on a Mac.")
+            PlasmaComponents.Switch {
+                checked: pagina.amplia
+                onToggled: pagina.doca("barra_ampliacao", "ampliacao", checked)
+                Accessible.name: ajustes.t("Ampliar os apps ao passar o mouse", "Magnify apps on hover")
+            }
+        }
+
+        Linha {
+            visible: pagina.amplia
+            nome: ajustes.t("Ampliação", "Magnification")
+
+            Regua {
+                de: 0
+                ate: 100
+                passo: 5
+                valor: pagina.nivel
+                esquerda: ajustes.t("Pouca", "Less")
+                direita: ajustes.t("Muita", "More")
+                nome: ajustes.t("Ampliação", "Magnification")
+                onEscolhido: valor => pagina.doca("barra_ampliacao_nivel", "ampliacao-nivel", Math.round(valor))
+            }
+        }
+
+        Linha {
+            visible: pagina.estilo === "mac"
+            nome: ajustes.t("Posição na tela", "Position on screen")
+
+            Segmentado {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 15
+                atual: pagina.posicao
+                opcoes: [
+                    { valor: "esquerda", nome: ajustes.t("Esquerda", "Left") },
+                    { valor: "embaixo", nome: ajustes.t("Embaixo", "Bottom") },
+                    { valor: "direita", nome: ajustes.t("Direita", "Right") }
+                ]
+                onEscolhido: valor => pagina.doca("barra_posicao", "posicao", valor)
+            }
+        }
+
+        Linha {
+            nome: ajustes.t("Mostrar um ponto nos apps abertos", "Show a dot under open apps")
+            PlasmaComponents.Switch {
+                checked: pagina.indicadores
+                onToggled: pagina.doca("barra_indicadores", "indicadores", checked)
+                Accessible.name: ajustes.t("Mostrar um ponto nos apps abertos", "Show a dot under open apps")
+            }
+        }
+
+        Linha {
+            nome: ajustes.t("Animar ao abrir os apps", "Animate apps while opening")
+            detalhe: ajustes.t("O ícone pula de leve enquanto o app abre.", "The icon bounces gently while the app opens.")
+            PlasmaComponents.Switch {
+                checked: pagina.animar
+                onToggled: pagina.doca("barra_animar", "animar", checked)
+                Accessible.name: ajustes.t("Animar ao abrir os apps", "Animate apps while opening")
             }
         }
     }

@@ -470,6 +470,30 @@ run barra apps --instalados
 check "lista de apps para escolher com nome e ícone" has "app|applications:firefox.desktop|Navegador Firefox|firefox"
 check "a lista não mostra app escondido nem só do GNOME" bash -c '! grep -q -e escondido -e gnome-only <<<"$1"' _ "$OUT"
 check "a lista vem em ordem de nome" test "$(cut -d'|' -f3 <<<"$OUT" | tr '\n' ',')" = "Dolphin,Kate,Navegador Firefox,Steam da pessoa,"
+# As categorias do menu, como a vista "Apps" do Mac.
+app_falso sistema vlc.desktop "Name=VLC" "Categories=AudioVideo;Player;Recorder;"
+app_falso sistema okular.desktop "Name=Okular" "Categories=Qt;KDE;Graphics;Office;Viewer;"
+app_falso sistema gimp.desktop "Name=GIMP" "Categories=Graphics;2DGraphics;RasterGraphics;"
+app_falso sistema code.desktop "Name=Code" "Categories=Utility;TextEditor;Development;IDE;"
+app_falso sistema jogo.desktop "Name=Jogo" "Categories=Network;FileTransfer;Game;"
+app_falso sistema writer.desktop "Name=Writer" "Categories=Office;WordProcessor;"
+app_falso sistema semcat.desktop "Name=Sem categoria"
+app_falso sistema arquivos.desktop "Name=Arquivos" "Categories=System;FileTools;FileManager;"
+sed -i 's/^Name=Firefox$/Name=Firefox\nCategories=Network;WebBrowser;/' "$APPS/sistema/firefox.desktop"
+run barra apps --categorias
+check "categorias: jogo com rede vai para jogos" has "jogo.desktop|jogos"
+check "categorias: player vai para entretenimento" has "vlc.desktop|entretenimento"
+check "categorias: visualizador de documentos vai para leitura" has "okular.desktop|leitura"
+check "categorias: editor de imagem vai para criatividade" has "gimp.desktop|criatividade"
+check "categorias: editor de código vai para desenvolvimento" has "code.desktop|desenvolvimento"
+check "categorias: escritório vai para produtividade" has "writer.desktop|produtividade"
+check "categorias: navegador vai para internet" has "firefox.desktop|internet"
+check "categorias: arquivos vai para utilitários" has "arquivos.desktop|utilitarios"
+check "categorias: sem categoria vai para outros" has "semcat.desktop|outros"
+check "categorias: o atalho da pessoa vale mais que o do sistema" test "$(grep -c '^steam.desktop|' <<<"$OUT")" = 1
+check "categorias: não lista app escondido nem só do GNOME" bash -c '! grep -q -e escondido -e gnome-only <<<"$1"' _ "$OUT"
+rm -f "$APPS/sistema/"{vlc,okular,gimp,code,jogo,writer,semcat,arquivos}.desktop
+sed -i '/^Categories=Network;WebBrowser;$/d' "$APPS/sistema/firefox.desktop"
 FAKE_RESPOSTA=sem-barra run barra apps
 check "sem lugar para apps na barra, explica" has "não tem lugar para apps fixados"
 run barra apps --lista

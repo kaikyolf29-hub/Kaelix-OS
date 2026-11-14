@@ -38,7 +38,7 @@ for (var b = 0; b < matsuBarras.length; b++) {
     var ids = matsuBarras[b].widgetIds;
     for (var w = 0; w < ids.length; w++) {
         var peca = matsuBarras[b].widgetById(ids[w]);
-        if (peca && (peca.type === "org.kde.plasma.icontasks" || peca.type === "org.kde.plasma.taskmanager")) {
+        if (pecaDeApps(peca)) {
             matsuPecas.push(peca);
         }
     }

@@ -15,6 +15,13 @@
 //   matsuEstilo   o estilo da barra ("fusao", "mac" ou "windows"); cada
 //                  arquivo de estilo também diz o seu. Serve para o limite de
 //                  apps fixados (veja limiteDeApps).
+//   matsuAmpliacao      true para os apps crescerem ao passar o mouse (a doca
+//                        do Matsu, na fusão e no Mac)
+//   matsuAmpliacaoNivel quanto crescem, de 0 a 100
+//   matsuIndicadores    true para o pontinho embaixo dos apps abertos
+//   matsuAnimar         true para o app pular enquanto abre
+//   matsuPosicao        onde fica a doca no estilo Mac: "embaixo", "esquerda"
+//                        ou "direita"
 //
 // Cada estilo define montarTela(tela), que monta a barra numa tela só. Quem
 // escolhe as telas é o arquivo que vem depois: todas-as-telas.js (montar tudo
@@ -22,6 +29,29 @@
 
 function tem(tipo) {
     return knownWidgetTypes.indexOf(tipo) !== -1;
+}
+
+// As peças que mostram os apps fixados e abertos: a doca do Matsu (fusão e
+// Mac) e a barra de apps do KDE (estilo Windows, ou sem a doca).
+var PECAS_DE_APPS = ["org.matsu.doca", "org.kde.plasma.icontasks", "org.kde.plasma.taskmanager"];
+function pecaDeApps(item) {
+    return !!item && PECAS_DE_APPS.indexOf(item.type) !== -1;
+}
+
+// A doca do Matsu (com a ampliação do Mac) entra na fusão e no Mac; no estilo
+// Windows fica a barra de apps do KDE, reta como a do Windows.
+function usaDoca() {
+    return tem("org.matsu.doca") && estiloDaBarra() !== "windows";
+}
+
+// Os ajustes da doca (ampliação, pontinhos, pulo ao abrir).
+function ajustarDoca(doca) {
+    doca.currentConfigGroup = ["General"];
+    doca.writeConfig("ampliacao", (typeof matsuAmpliacao !== "undefined") ? !!matsuAmpliacao : true);
+    var nivel = (typeof matsuAmpliacaoNivel !== "undefined") ? Number(matsuAmpliacaoNivel) : 50;
+    doca.writeConfig("ampliacaoNivel", Math.max(0, Math.min(100, isNaN(nivel) ? 50 : Math.round(nivel))));
+    doca.writeConfig("indicadores", (typeof matsuIndicadores !== "undefined") ? !!matsuIndicadores : true);
+    doca.writeConfig("animarAbertura", (typeof matsuAnimar !== "undefined") ? !!matsuAnimar : true);
 }
 
 // "autohide" quando a pessoa pediu para a barra se esconder sozinha.
@@ -115,6 +145,12 @@ function porBusca(painel) {
     }
 }
 
+// De que lado fica a doca no estilo Mac: embaixo (o padrão), à esquerda ou à direita.
+function posicaoDaDoca() {
+    var v = (typeof matsuPosicao !== "undefined" && matsuPosicao) ? matsuPosicao : "embaixo";
+    return (v === "esquerda" || v === "direita") ? v : "embaixo";
+}
+
 function estiloDaBarra() {
     var v = (typeof matsuEstilo !== "undefined" && matsuEstilo) ? matsuEstilo : "fusao";
     return (v === "mac" || v === "windows") ? v : "fusao";
@@ -184,7 +220,10 @@ function limiteDoArranjo(estilo, altura) {
     var telas = emTodasAsTelas() ? Math.max(1, screenCount) : 1;
     var limite = 0;
     for (var t = 0; t < telas; t++) {
-        var l = limiteDeApps(estilo, screenGeometry(t).width, altura);
+        var g = screenGeometry(t);
+        // A doca do Mac de pé (à esquerda ou à direita) usa a altura da tela.
+        var comprimento = (estilo === "mac" && posicaoDaDoca() !== "embaixo") ? g.height - gridUnit * 3 : g.width;
+        var l = limiteDeApps(estilo, comprimento, altura);
         limite = (limite === 0) ? l : Math.min(limite, l);
     }
     return limite;
@@ -223,7 +262,7 @@ function limiteDasBarras(barras, estilo) {
         var ids = barras[a].widgetIds;
         for (var w = 0; w < ids.length; w++) {
             var item = barras[a].widgetById(ids[w]);
-            if (!item || (item.type !== "org.kde.plasma.icontasks" && item.type !== "org.kde.plasma.taskmanager")) {
+            if (!pecaDeApps(item)) {
                 continue;
             }
             var tela = barras[a].screen >= 0 ? barras[a].screen : 0;
@@ -232,7 +271,9 @@ function limiteDasBarras(barras, estilo) {
             if (medido > 0 && barras[a].maximumLength !== medido) {
                 barras[a].maximumLength = medido;
             }
-            var l = limiteDeApps(estilo, screenGeometry(tela).width, altura, medido);
+            var geo = screenGeometry(tela);
+            var dePe = barras[a].location === "left" || barras[a].location === "right";
+            var l = limiteDeApps(estilo, dePe ? geo.height - gridUnit * 3 : geo.width, altura, medido);
             limite = (limite === 0) ? l : Math.min(limite, l);
         }
     }
@@ -291,7 +332,7 @@ function fixadosDasBarras(barras, tela) {
         var ids = barras[a].widgetIds;
         for (var w = 0; w < ids.length; w++) {
             var item = barras[a].widgetById(ids[w]);
-            if (!item || item.type !== "org.kde.plasma.icontasks") {
+            if (!pecaDeApps(item)) {
                 continue;
             }
             item.currentConfigGroup = ["General"];
@@ -311,7 +352,11 @@ function fixadosDasBarras(barras, tela) {
 // Com mais de uma tela, cada barra mostra os apps abertos na sua tela (ou em
 // todas, como a pessoa escolher). Os fixados aparecem em todas as barras.
 function porApps(painel, tela) {
-    var apps = painel.addWidget("org.kde.plasma.icontasks");
+    var doca = usaDoca();
+    var apps = painel.addWidget(doca ? "org.matsu.doca" : "org.kde.plasma.icontasks");
+    if (doca) {
+        ajustarDoca(apps);
+    }
     apps.currentConfigGroup = ["General"];
     var guardados = (typeof matsuFixados !== "undefined") ? matsuFixados : null;
     var lista = (guardados && guardados.length) ? guardados : fixadosPadrao();
@@ -337,7 +382,13 @@ function porApps(painel, tela) {
 
 // Lixeira do Matsu no fim dos apps, separada por um risquinho, como no Mac.
 // Recebe arquivos arrastados, mostra quando está cheia e abre com um clique.
-function porLixeira(painel) {
+// Na doca do Matsu a lixeira fica dentro dela (e cresce junto com os apps).
+function porLixeira(painel, apps) {
+    if (apps && apps.type === "org.matsu.doca") {
+        apps.currentConfigGroup = ["General"];
+        apps.writeConfig("lixeira", true);
+        return;
+    }
     if (!tem("org.kde.plasma.trash")) {
         return;
     }

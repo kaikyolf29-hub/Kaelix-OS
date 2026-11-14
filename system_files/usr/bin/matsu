@@ -322,7 +322,7 @@ for (var i = 0; i < ps.length; i++) {
   var ids = ps[i].widgetIds;
   for (var j = 0; j < ids.length; j++) {
     var w = ps[i].widgetById(ids[j]);
-    if (w.type !== "org.kde.plasma.icontasks" && w.type !== "org.kde.plasma.taskmanager") continue;
+    if (w.type !== "org.matsu.doca" && w.type !== "org.kde.plasma.icontasks" && w.type !== "org.kde.plasma.taskmanager") continue;
     w.currentConfigGroup = ["General"];
     var lista = String(w.readConfig("launchers", "")).split(",").filter(function (x) { return x.length > 0; });
     if (lista.indexOf("preferred://browser") === -1) continue;
@@ -455,11 +455,51 @@ bar_reply_lines() {
 # o começo de /usr/share/matsu/barra/comum.js).
 bar_vars() { # bar_vars <tamanho> <esconder> <busca> <menu> <telas> <abertos> [estilo]
   local scale esconde=false
-  case "$1" in pequena) scale=2.25 ;; grande) scale=3.25 ;; *) scale=2.75 ;; esac
+  case "$1" in pequena) scale=2.25 ;; grande) scale=3.25 ;; media) scale=2.75 ;; *) scale="$(bar_scale "$1")" ;; esac
   [[ $2 == sim ]] && esconde=true
   printf 'var matsuEscala = %s;\nvar matsuEsconder = %s;\nvar matsuBusca = "%s";\nvar matsuMenu = "%s";\nvar matsuTelas = "%s";\nvar matsuAbertos = "%s";\n' \
     "$scale" "$esconde" "$3" "$4" "$5" "$6"
   if [[ ${7:-} =~ ^(fusao|mac|windows)$ ]]; then printf 'var matsuEstilo = "%s";\n' "$7"; fi
+  bar_dock_vars
+}
+
+# O tamanho livre da doca do Mac (a régua "Tamanho" dos Ajustes): um número
+# de 1,8 a 4,2 (vezes a letra do sistema). Fora disso, ou se não for número, o médio.
+bar_scale() {
+  local v="${1/,/.}"
+  if [[ $v =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk -v v="$v" 'BEGIN { exit !(v >= 1.8 && v <= 4.2) }'; then
+    printf '%s' "$v"
+  else
+    printf '2.75'
+  fi
+}
+
+# Os ajustes da doca guardados (ampliação, pontinhos, pulo ao abrir, lugar da
+# doca no estilo Mac), como variáveis do roteiro da barra (veja comum.js).
+bar_dock_vars() {
+  local amp nivel ind ani pos
+  amp="$(bar_saved ampliacao sim)"; nivel="$(bar_saved ampliacao_nivel 50)"
+  ind="$(bar_saved indicadores sim)"; ani="$(bar_saved animar sim)"; pos="$(bar_saved posicao embaixo)"
+  [[ $nivel =~ ^[0-9]{1,3}$ ]] && (( nivel <= 100 )) || nivel=50
+  [[ $pos =~ ^(embaixo|esquerda|direita)$ ]] || pos=embaixo
+  printf 'var matsuAmpliacao = %s;\nvar matsuAmpliacaoNivel = %s;\nvar matsuIndicadores = %s;\nvar matsuAnimar = %s;\nvar matsuPosicao = "%s";\n' \
+    "$([[ $amp == nao ]] && echo false || echo true)" "$nivel" \
+    "$([[ $ind == nao ]] && echo false || echo true)" "$([[ $ani == nao ]] && echo false || echo true)" "$pos"
+}
+
+# Guarda tudo o que a pessoa escolheu para a barra (e para a doca).
+bar_write_state() { # bar_write_state <estilo> <tamanho> <esconder> <busca> <menu> <telas> <abertos> <ampliacao> <nivel> <indicadores> <animar> <posicao>
+  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\ntelas=%s\nabertos=%s\nampliacao=%s\nampliacao_nivel=%s\nindicadores=%s\nanimar=%s\nposicao=%s\n' \
+    "$@" > "$STATE_DIR/barra"
+}
+
+# Um "sim/não" das opções da doca.
+bar_yes_no() { # bar_yes_no <valor> <opção>
+  case "${1,,}" in
+    sim|s|yes|y|on|true|1|ligar|ligada)        printf 'sim' ;;
+    nao|não|n|no|off|false|0|desligar|desligada) printf 'nao' ;;
+    *) fail "Use $2 sim ou $2 nao." "Use $2 on or $2 off." ;;
+  esac
 }
 
 # Uma tela foi ligada (ou a sessão começou com mais de uma): põe a barra do
@@ -551,6 +591,56 @@ app_table() {
       else if (k == "Name[pt_BR]") nptbr = v
       else if (k == "Name[pt]") npt = v
       else if (k == "Icon") icone = v
+      else if (k == "Type") tipo = v
+      else if (k == "NoDisplay") nodisp = tolower(v)
+      else if (k == "Hidden") hidden = tolower(v)
+      else if (k == "OnlyShowIn") only = v
+      else if (k == "NotShowIn") notin = v
+    }
+    END { flush() }
+  ' "${files[@]}"
+}
+
+# A categoria de cada app, como a vista "Apps" do Mac e a exibição por
+# categoria do Menu Iniciar do Windows 11, pelo Categories= do atalho. Uma
+# linha por app que aparece no menu: id|categoria, com a categoria entre
+# utilitarios, produtividade, internet, criatividade, leitura, entretenimento,
+# jogos, desenvolvimento e outros. A ordem dos testes decide os casos de duas
+# categorias (a Steam é Network e Game: vai para jogos; o VLC é Player e
+# Recorder: vai para entretenimento; o Okular é Graphics e Office: leitura).
+app_categories() {
+  local files=()
+  mapfile -t files < <(app_files)
+  (( ${#files[@]} )) || return 0
+  awk '
+    function tem(lista) { return cats ~ ("(^|;)(" lista ")(;|$)") }
+    function flush() {
+      if (arq == "") return
+      if (tipo != "Application" || nodisp == "true" || hidden == "true") return
+      if (only != "" && only !~ /(^|;)KDE(;|$)/) return
+      if (notin ~ /(^|;)KDE(;|$)/) return
+      id = arq; sub(/.*\//, "", id)
+      if (tem("Game")) c = "jogos"
+      else if (tem("Development|IDE|Debugger|RevisionControl|GUIDesigner|Building|Profiling|WebDevelopment")) c = "desenvolvimento"
+      else if (tem("Viewer") && tem("Office|Literature|Documentation|Publishing")) c = "leitura"
+      else if (tem("Player|TV|Tuner")) c = "entretenimento"
+      else if (tem("Graphics|2DGraphics|3DGraphics|RasterGraphics|VectorGraphics|Photography|Scanning|AudioVideoEditing|Recorder|Midi|Mixer|Sequencer|Art|Publishing")) c = "criatividade"
+      else if (tem("Office|WordProcessor|Spreadsheet|Presentation|Calendar|ContactManagement|Finance|ProjectManagement|Database|Chart|Dictionary")) c = "produtividade"
+      else if (tem("Network|WebBrowser|Email|Chat|InstantMessaging|IRCClient|VideoConference|Telephony|FileTransfer|P2P|News|Feed|RemoteAccess")) c = "internet"
+      else if (tem("AudioVideo|Audio|Video|Music")) c = "entretenimento"
+      else if (tem("Education|Science|Literature|Viewer|Documentation|Maps|Geography|Math|Astronomy|Languages|Spirituality|Humanities")) c = "leitura"
+      else if (tem("Utility|System|Settings|FileManager|FileTools|TerminalEmulator|Monitor|Accessibility|Archiving|Compression|Calculator|Clock|TextEditor|Security|PackageManager|HardwareSettings|DesktopSettings|Filesystem|Emulator|Core")) c = "utilitarios"
+      else c = "outros"
+      print id "|" c
+    }
+    FNR == 1 { flush(); arq = FILENAME; sec = ""; cats = tipo = nodisp = hidden = only = notin = "" }
+    /^\[/ { sec = $0; next }
+    sec != "[Desktop Entry]" { next }
+    {
+      i = index($0, "="); if (!i) next
+      k = substr($0, 1, i - 1); v = substr($0, i + 1)
+      sub(/[ \t]+$/, "", k); sub(/^[ \t]+/, "", v)
+      if (k == "Categories") cats = v
       else if (k == "Type") tipo = v
       else if (k == "NoDisplay") nodisp = tolower(v)
       else if (k == "Hidden") hidden = tolower(v)
@@ -719,10 +809,13 @@ cmd_bar_apps() { # cmd_bar_apps <apps|fixar|tirar|ordem> [args...]
         --instalados|--installed)
           awk -F'|' '$5 == 1 { print "app|applications:" $2 "|" $3 "|" $4 }' <<<"$tabela" | sort -f -t'|' -k3,3
           return 0 ;;
+        --categorias|--categories)
+          app_categories
+          return 0 ;;
         --padrao|--padrão|--default)
           bar_pins padrao; fixados="$BAR_FIXADOS"
           ok "A barra voltou aos apps do começo." "The bar is back to the starting apps." ;;
-        *) fail "Opção desconhecida: $1. Use --lista, --instalados ou --padrao." "Unknown option: $1. Use --list, --installed or --default." ;;
+        *) fail "Opção desconhecida: $1. Use --lista, --instalados, --categorias ou --padrao." "Unknown option: $1. Use --list, --installed, --categories or --default." ;;
       esac ;;
     fixar|pin)
       [[ $# -gt 0 ]] || fail "Diga qual app fixar. Exemplo: matsu barra fixar kate" "Say which app to pin. Example: matsu bar pin kate"
@@ -815,6 +908,7 @@ cmd_bar() {
     apps|fixados|pinned|fixar|pin|tirar|unpin|desafixar|remover|ordem|order) cmd_bar_apps "$@"; return ;;
   esac
   local style="" size="" hide="" busca="" menu="" telas="" abertos="" details=0 novas=0 arg
+  local amp="" nivel="" ind="" ani="" pos=""
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift
     case "$arg" in
@@ -834,6 +928,19 @@ cmd_bar() {
       --telas=*|--screens=*) telas="${arg#*=}" ;;
       --abertos|--open-apps) abertos="${1:-}"; shift || true ;;
       --abertos=*|--open-apps=*) abertos="${arg#*=}" ;;
+      # A doca do Matsu: ampliação ao passar o mouse (e quanto), pontinhos dos
+      # apps abertos, pulo ao abrir (valem na hora, sem montar a barra de novo)
+      # e, no estilo Mac, de que lado da tela a doca fica.
+      --ampliacao|--magnification) amp="${1:-}"; shift || true ;;
+      --ampliacao=*|--magnification=*) amp="${arg#*=}" ;;
+      --ampliacao-nivel|--magnification-level) nivel="${1:-}"; shift || true ;;
+      --ampliacao-nivel=*|--magnification-level=*) nivel="${arg#*=}" ;;
+      --indicadores|--indicators) ind="${1:-}"; shift || true ;;
+      --indicadores=*|--indicators=*) ind="${arg#*=}" ;;
+      --animar|--animate) ani="${1:-}"; shift || true ;;
+      --animar=*|--animate=*) ani="${arg#*=}" ;;
+      --posicao|--position) pos="${1:-}"; shift || true ;;
+      --posicao=*|--position=*) pos="${arg#*=}" ;;
       # Interno: uma tela foi ligada; põe a barra só nas telas sem nenhuma.
       --telas-novas|--new-screens) novas=1 ;;
       *) fail "Estilo desconhecido: $arg. Use fusao, mac ou windows." "Unknown style: $arg. Use fusao, mac or windows." ;;
@@ -844,7 +951,27 @@ cmd_bar() {
     pequena|pequeno|small)     size=pequena ;;
     media|média|medio|medium)  size=media ;;
     grande|large|big)          size=grande ;;
-    *) fail "Tamanho desconhecido: $size. Use pequena, media ou grande." "Unknown size: $size. Use pequena, media or grande." ;;
+    *)
+      # Um número (a régua de tamanho da doca do Mac): de 1,8 a 4,2.
+      if [[ "$(bar_scale "$size")" == "${size/,/.}" ]]; then
+        size="${size/,/.}"
+      else
+        fail "Tamanho desconhecido: $size. Use pequena, media, grande ou um número de 1.8 a 4.2." \
+             "Unknown size: $size. Use pequena, media, grande or a number from 1.8 to 4.2."
+      fi ;;
+  esac
+  [[ -n $amp ]] && amp="$(bar_yes_no "$amp" --ampliacao)"
+  [[ -n $ind ]] && ind="$(bar_yes_no "$ind" --indicadores)"
+  [[ -n $ani ]] && ani="$(bar_yes_no "$ani" --animar)"
+  if [[ -n $nivel && ! ( $nivel =~ ^[0-9]{1,3}$ && $nivel -le 100 ) ]]; then
+    fail "Use --ampliacao-nivel de 0 a 100." "Use --magnification-level from 0 to 100."
+  fi
+  case "${pos,,}" in
+    "") ;;
+    embaixo|baixo|bottom)   pos=embaixo ;;
+    esquerda|left)          pos=esquerda ;;
+    direita|right)          pos=direita ;;
+    *) fail "Use --posicao embaixo, esquerda ou direita." "Use --position embaixo, esquerda or direita." ;;
   esac
   case "${hide,,}" in
     "") ;;
@@ -884,7 +1011,19 @@ cmd_bar() {
     *) fail "Use --abertos tela, todas ou principal." "Use --open-apps tela, todas or principal." ;;
   esac
 
-  local cur_style cur_size cur_hide cur_busca cur_menu cur_telas cur_abertos
+  local cur_style cur_size cur_hide cur_busca cur_menu cur_telas cur_abertos cur_amp cur_nivel cur_ind cur_ani cur_pos
+  cur_amp="$(bar_saved ampliacao sim)"; cur_nivel="$(bar_saved ampliacao_nivel 50)"
+  cur_ind="$(bar_saved indicadores sim)"; cur_ani="$(bar_saved animar sim)"; cur_pos="$(bar_saved posicao embaixo)"
+  [[ $cur_amp == nao ]] || cur_amp=sim
+  [[ $cur_nivel =~ ^[0-9]{1,3}$ ]] && (( cur_nivel <= 100 )) || cur_nivel=50
+  [[ $cur_ind == nao ]] || cur_ind=sim
+  [[ $cur_ani == nao ]] || cur_ani=sim
+  [[ $cur_pos =~ ^(embaixo|esquerda|direita)$ ]] || cur_pos=embaixo
+  local dock_changed=0
+  if [[ ( -n $amp && $amp != "$cur_amp" ) || ( -n $nivel && $nivel != "$cur_nivel" ) || ( -n $ind && $ind != "$cur_ind" ) || ( -n $ani && $ani != "$cur_ani" ) ]]; then
+    dock_changed=1
+  fi
+  amp="${amp:-$cur_amp}"; nivel="${nivel:-$cur_nivel}"; ind="${ind:-$cur_ind}"; ani="${ani:-$cur_ani}"
   cur_style="$(bar_saved estilo fusao)"
   cur_size="$(bar_saved tamanho media)"
   cur_hide="$(bar_saved esconder nao)"
@@ -907,8 +1046,24 @@ cmd_bar() {
     return
   fi
 
+  local layout_same=0
   if [[ -z $style && -z $size && $hide == "$cur_hide" && $busca == "$cur_busca" && $menu == "$cur_menu" \
-        && $telas == "$cur_telas" && $abertos == "$cur_abertos" ]]; then
+        && $telas == "$cur_telas" && $abertos == "$cur_abertos" && ( -z $pos || $pos == "$cur_pos" ) ]]; then
+    layout_same=1
+  fi
+  pos="${pos:-$cur_pos}"
+  # Só os ajustes da doca mudaram: valem na hora, nas docas que já estão na
+  # tela, sem montar a barra de novo.
+  if [[ $layout_same == 1 && $dock_changed == 1 ]]; then
+    bar_write_state "$cur_style" "$cur_size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos"
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v busctl >/dev/null 2>&1 && [[ -r $BAR_DIR/doca-ajustes.js ]]; then
+      bar_script "$(bar_dock_vars; cat "$BAR_DIR/comum.js" "$BAR_DIR/doca-ajustes.js")" >/dev/null 2>&1 || true
+    fi
+    ok "Doca ajustada." "Dock adjusted."
+    return 0
+  fi
+
+  if [[ $layout_same == 1 ]]; then
     if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]] && command -v kdialog >/dev/null 2>&1; then
       local on_f=off on_m=off on_w=off on_p=off on_d=off on_g=off
       case "$cur_style" in mac) on_m=on ;; windows) on_w=on ;; *) on_f=on ;; esac
@@ -975,8 +1130,13 @@ cmd_bar() {
     done < "$guardados"
     rm -f "$guardados"
   fi
+  local dock_vars
+  dock_vars="$(printf 'var matsuAmpliacao = %s;\nvar matsuAmpliacaoNivel = %s;\nvar matsuIndicadores = %s;\nvar matsuAnimar = %s;\nvar matsuPosicao = "%s";\n' \
+    "$([[ $amp == nao ]] && echo false || echo true)" "$nivel" "$([[ $ind == nao ]] && echo false || echo true)" \
+    "$([[ $ani == nao ]] && echo false || echo true)" "$pos")"
   script="$(printf 'var matsuFixados = [%s];\n' "$fixados"
     bar_vars "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$style"
+    printf '%s\n' "$dock_vars"
     cat "$BAR_DIR/comum.js" "$BAR_DIR/$style.js" "$BAR_DIR/todas-as-telas.js")"
   if ! reply2="$(bar_script "$script")"; then
     fail "Não consegui falar com a área de trabalho. Rode este comando dentro da sessão do Matsu." \
@@ -984,8 +1144,7 @@ cmd_bar() {
   fi
   # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
   if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
-  mkdir -p "$STATE_DIR" && printf 'estilo=%s\ntamanho=%s\nesconder=%s\nbusca=%s\nmenu=%s\ntelas=%s\nabertos=%s\n' \
-    "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" > "$STATE_DIR/barra"
+  bar_write_state "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos"
   # A barra nova é menor que a de antes: os apps que passaram do limite ficam
   # guardados (e a pessoa fica sabendo quais).
   local cortados
