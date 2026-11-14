@@ -4,6 +4,10 @@
 # português, o teclado ABNT2 e o horário de Brasília já marcados.
 # Não instala nada: só abre o instalador e olha.
 #
+# Também guarda os registros do instalador (porta virtio que ele procura
+# sozinho) e, no fim, o journal inteiro, digitado no terminal da segunda tela
+# e mandado para a porta serial. O resumo-iso.sh mostra o que importa deles.
+#
 # Uso: run-iso.sh <instalador.iso> <pasta-dos-prints>
 set -euo pipefail
 
@@ -20,6 +24,7 @@ shot() { hmp shot "$OUT/$1.png"; echo "print: $1"; }
 OVMF=/usr/share/ovmf/OVMF.fd
 [[ -r $OVMF ]] || OVMF=/usr/share/OVMF/OVMF_CODE.fd
 
+grep -m1 'model name' /proc/cpuinfo | sed 's/.*: //' > "$OUT/cpu.txt" || true
 qemu-img create -q -f qcow2 "$DISK" 64G
 qemu-system-x86_64 \
   -enable-kvm -cpu host -machine q35 -smp 4 -m 6144 \
@@ -29,6 +34,9 @@ qemu-system-x86_64 \
   -device virtio-vga,xres=1920,yres=1080 -display none \
   -netdev user,id=net0 -device virtio-net-pci,netdev=net0 \
   -device qemu-xhci -device usb-tablet \
+  -device virtio-serial-pci \
+  -chardev file,id=alog,path="$OUT/anaconda.log" \
+  -device virtserialport,chardev=alog,name=org.fedoraproject.anaconda.log.0 \
   -monitor unix:"$SOCK",server,nowait \
   -qmp unix:"$SOCK.qmp",server,nowait \
   -serial file:"$OUT/serial.log" &
@@ -55,3 +63,15 @@ done
 hmp click 812 468
 sleep 8
 shot "03-teclado"
+
+# O journal do boot, pelo terminal da segunda tela. O instalador já trocou o
+# teclado para ABNT2: volta para o americano antes de digitar.
+hmp key ctrl-alt-f2
+sleep 3
+hmp key ret
+hmp type "loadkeys us"
+hmp key ret
+sleep 2
+hmp type "journalctl -b --no-pager -o short-monotonic >/dev/ttyS0"
+hmp key ret
+sleep 20

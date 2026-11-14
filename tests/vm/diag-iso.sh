@@ -5,8 +5,8 @@
 #   (org.fedoraproject.anaconda.log.0);
 # - o journal e os /tmp/*.log, digitados no terminal da segunda tela (Ctrl+Alt+F2)
 #   e mandados para a porta serial.
-# Liga duas vezes: "Instalar" e "Instalar em modo simples" (sem o driver de vídeo),
-# para saber se a tela gráfica depende do driver de vídeo.
+# Liga mais duas vezes em "Instalar", para saber se a tela gráfica falha sempre
+# nesta máquina do GitHub ou só de vez em quando.
 #
 # Uso: diag-iso.sh <instalador.iso> <pasta-dos-registros>
 set -euo pipefail
@@ -83,7 +83,7 @@ ligar() {
   for _ in $(seq 1 30); do [[ -S $sock ]] && break; sleep 1; done
   sleep 10
   python3 "$HERE/hmp.py" "$sock" key "$@"
-  for t in 60 120; do
+  for t in 60 120 180; do
     sleep 60
     python3 "$HERE/hmp.py" "$sock" shot "$OUT/diag-$nome-${t}s.png" || true
   done
@@ -95,33 +95,17 @@ ligar() {
   python3 "$HERE/hmp.py" "$sock" type "loadkeys us" || true
   python3 "$HERE/hmp.py" "$sock" key ret || true
   sleep 2
-  python3 "$HERE/hmp.py" "$sock" type "journalctl -b -o short-monotonic >/dev/ttyS0" || true
+  python3 "$HERE/hmp.py" "$sock" type "journalctl -b --no-pager -o short-monotonic >/dev/ttyS0" || true
   python3 "$HERE/hmp.py" "$sock" key ret || true
-  sleep 10
-  python3 "$HERE/hmp.py" "$sock" type "tail -n 400 /tmp/*.log >/dev/ttyS0" || true
-  python3 "$HERE/hmp.py" "$sock" key ret || true
-  sleep 8
+  sleep 20
   python3 "$HERE/hmp.py" "$sock" shot "$OUT/diag-$nome-tty2.png" || true
-  python3 "$HERE/hmp.py" "$sock" key ctrl-alt-f1 || true
-  sleep 3
-  python3 "$HERE/hmp.py" "$sock" shot "$OUT/diag-$nome-tty1.png" || true
   kill "$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
   rm -f "$disco"
-
-  echo "== resumo do boot $nome (linhas que importam)"
-  grep -naiE 'kiosk|wayland|xorg|mutter|display|graphical|gui|text mode|traceback|failed|timed out|error|core.dump|segfault|drm|virtio.gpu|simpledrm|efifb' \
-    "$OUT/diag-$nome.log" "$OUT/diag-$nome-anaconda.log" 2>/dev/null \
-    | grep -vE 'ACPI|PCI|pci |usb |EDAC|ftrace|kvm.ko|edac_mce' | cut -c1-300 | tail -150 || true
 }
 
-# Menu: a segunda entrada ("Conferir...") vem marcada. "up" vai para "Instalar";
-# "down" entra em "Se algo der errado", onde a primeira é o modo simples.
-ligar normal up ret
-ligar simples down ret ret
+# Menu: a segunda entrada ("Conferir...") vem marcada; "up" vai para "Instalar".
+ligar normal-2 up ret
+ligar normal-3 up ret
 
-# Registros grandes vão comprimidos para o ramo dos prints.
-for f in "$OUT"/diag-*.log; do
-  if [[ $(stat -c %s "$f") -gt 3000000 ]]; then gzip -9 "$f"; fi
-done
 rm -rf "$TMP"
