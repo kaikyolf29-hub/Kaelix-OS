@@ -203,7 +203,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: gh release upload "$RELEASE_TAG" out/* --clobber
 
-      # Por último, para aparecer no fim do registro do fluxo.
+      # Por último, para aparecer no fim do registro do fluxo. O passo dos prints
+      # trocou a pasta para o ramo dos prints: o script vem do commit do fluxo.
       - name: Resumo dos testes da ISO
         if: matrix.suffix == 'amd' && always()
-        run: bash tests/vm/resumo-iso.sh prints-iso
+        run: git show "${GITHUB_SHA}:tests/vm/resumo-iso.sh" | bash -s prints-iso
