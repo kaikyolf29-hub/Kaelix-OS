@@ -3,6 +3,7 @@
 
 Uso:
   hmp.py <socket> shot <arquivo.png>      tira um print da tela
+  hmp.py <socket> ppm <arquivo.ppm>       o mesmo, sem compressão (fácil de ler num script)
   hmp.py <socket> key <tecla> [...]       aperta teclas (ex.: ctrl-alt-t, ret, esc)
   hmp.py <socket> type <texto>            digita um texto simples (letras, números, espaço, - . / _ |)
   hmp.py <socket> click <x> <y> [largura altura]   clica com o mouse num ponto da tela (padrão 1920x1080)
@@ -100,6 +101,8 @@ def main():
     sock_path, action, *args = sys.argv[1:]
     if action == "shot":
         send(sock_path, f"screendump {args[0]} -f png")
+    elif action == "ppm":
+        send(sock_path, f"screendump {args[0]}")
     elif action == "key":
         for k in args:
             send(sock_path, f"sendkey {k}")

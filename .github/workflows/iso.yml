@@ -98,7 +98,9 @@ jobs:
           printf '%s\n' "[Main]" "Product=${NOME_SISTEMA}" "Version=${VERSAO}" "IsFinal=True" \
             "BugURL=https://github.com/${GITHUB_REPOSITORY}/issues" "Variant=Everything" > marca/.buildstamp
           cat marca/.buildstamp
-          (cd marca && find . -print | cpio --quiet -o -H newc | gzip -9) > updates.img
+          # Tudo como root e sem a entrada "." (ela trocaria o dono da raiz do
+          # instalador pelo usuário do GitHub quando ele aplica a atualização).
+          (cd marca && find . -mindepth 1 -print | cpio --quiet -o -H newc -R 0:0 | gzip -9) > updates.img
           ls -l updates.img
 
       - name: Montar a ISO
@@ -148,14 +150,6 @@ jobs:
         if: matrix.suffix == 'amd'
         continue-on-error: true
         run: bash tests/vm/run-iso.sh "out/${ISO_NAME}" prints-iso
-
-      # Liga o instalador de novo com o registro do boot pela porta serial, com e
-      # sem a cara do Matsu, para mostrar onde ele para se a tela não abrir.
-      - name: Diagnóstico do boot da ISO
-        if: matrix.suffix == 'amd'
-        continue-on-error: true
-        timeout-minutes: 20
-        run: bash tests/vm/diag-iso.sh "out/${ISO_NAME}" prints-iso
 
       - name: Guardar os prints do instalador
         if: matrix.suffix == 'amd' && always()

@@ -9,7 +9,8 @@ OUT="$1"
 cd "$OUT" || exit 0
 
 echo "== processador da máquina do GitHub: $(cat cpu.txt 2>/dev/null)"
-for alog in anaconda.log diag-*-anaconda.log; do
+echo "== tela da máquina virtual depois de 2 minutos: $(cat tela.txt 2>/dev/null)"
+for alog in *anaconda.log; do
   [[ -f $alog ]] || continue
   nome="${alog%anaconda.log}"; nome="${nome%-}"; [[ -n $nome ]] || nome="principal"
   serial="serial.log"; [[ $nome == principal ]] || serial="$nome.log"
@@ -28,3 +29,5 @@ for alog in anaconda.log diag-*-anaconda.log; do
     | grep -aiE 'kiosk|mutter|virtio_gpu|simpledrm|drm|fbcon|plymouth|segfault|core dump|SIGSEGV|SIGILL|SIGABRT|anaconda\.service|anaconda-direct|tmux|Failed to start|Startup finished|Switching root' \
     | grep -vE 'audit|AVC' | cut -c1-240 | head -80
 done
+echo "== fim: tela $(cat tela.txt 2>/dev/null); processador $(cat cpu.txt 2>/dev/null)"
+exit 0
