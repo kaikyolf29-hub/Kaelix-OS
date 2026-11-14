@@ -14,7 +14,7 @@ jobs:
   testes:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Conferir os scripts (shellcheck)
         run: |
           shellcheck -x system_files/usr/bin/matsu system_files/usr/libexec/matsu/* build_files/*.sh tests/*.sh tests/vm/*.sh
@@ -64,7 +64,7 @@ jobs:
     if: contains(github.event.head_commit.message, '[inventario]')
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Apps e ícones da imagem
         run: |
           # O docker não carrega a imagem (camadas demais); o podman carrega.
