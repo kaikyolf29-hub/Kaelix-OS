@@ -1,13 +1,12 @@
 #!/usr/bin/bash
 # Diagnóstico do boot da ISO de instalação: liga o instalador na máquina virtual
-# com o registro completo do boot saindo pela porta serial, para ver onde ele
-# para. Liga duas vezes: com a cara do Matsu (updates.img) e sem ela, para saber
-# se o problema vem dela ou do instalador do Fedora.
-#
-# Não usa o menu da ISO: pega o kernel, o initrd e as opções da entrada
-# "Instalar" do grub.cfg da própria ISO e acrescenta só as opções de registro.
-# O console principal continua sendo a tela (console=tty0 por último), para o
-# instalador abrir no modo gráfico como abriria no PC.
+# pelo menu da própria ISO, como no PC, e tira de dentro dele os registros:
+# - os do instalador, pela porta virtio que ele já procura sozinho
+#   (org.fedoraproject.anaconda.log.0);
+# - o journal e os /tmp/*.log, digitados no terminal da segunda tela (Ctrl+Alt+F2)
+#   e mandados para a porta serial.
+# Liga duas vezes: "Instalar" e "Instalar em modo simples" (sem o driver de vídeo),
+# para saber se a tela gráfica depende do driver de vídeo.
 #
 # Uso: diag-iso.sh <instalador.iso> <pasta-dos-registros>
 set -euo pipefail
@@ -23,7 +22,6 @@ OVMF=/usr/share/ovmf/OVMF.fd
 [[ -r $OVMF ]] || OVMF=/usr/share/OVMF/OVMF_CODE.fd
 
 sudo mount -o loop,ro "$ISO" "$MNT"
-cp "$MNT/images/pxeboot/vmlinuz" "$MNT/images/pxeboot/initrd.img" "$TMP/"
 cp "$MNT/EFI/BOOT/grub.cfg" "$OUT/diag-grub.cfg"
 
 echo "== grub.cfg da ISO"
@@ -63,47 +61,64 @@ EOF
 fi
 sudo umount "$MNT"
 
-LOG_OPTS="console=ttyS0,115200n8 console=tty0 loglevel=6 printk.devkmsg=on log_buf_len=8M systemd.log_target=kmsg systemd.journald.forward_to_kmsg=1"
-
 ligar() {
-  local nome="$1" opcoes="$2"
+  local nome="$1"; shift
   local sock="$TMP/hmp-$nome" disco="$TMP/disco-$nome.qcow2"
-  echo "== boot $nome: $opcoes"
+  echo "== boot $nome (teclas no menu: $*)"
   qemu-img create -q -f qcow2 "$disco" 64G
   qemu-system-x86_64 \
     -enable-kvm -cpu host -machine q35 -smp 4 -m 6144 \
     -bios "$OVMF" \
-    -kernel "$TMP/vmlinuz" -initrd "$TMP/initrd.img" -append "$opcoes" \
     -drive file="$disco",if=virtio,format=qcow2 \
-    -cdrom "$ISO" \
+    -cdrom "$ISO" -boot d \
     -device virtio-vga,xres=1920,yres=1080 -display none \
     -netdev user,id=net0 -device virtio-net-pci,netdev=net0 \
     -device qemu-xhci -device usb-tablet \
+    -device virtio-serial-pci \
+    -chardev file,id=alog,path="$OUT/diag-$nome-anaconda.log" \
+    -device virtserialport,chardev=alog,name=org.fedoraproject.anaconda.log.0 \
     -monitor unix:"$sock",server,nowait \
     -serial file:"$OUT/diag-$nome.log" &
   local pid=$!
   for _ in $(seq 1 30); do [[ -S $sock ]] && break; sleep 1; done
-  for t in 60 120 180; do
+  sleep 10
+  python3 "$HERE/hmp.py" "$sock" key "$@"
+  for t in 60 120; do
     sleep 60
     python3 "$HERE/hmp.py" "$sock" shot "$OUT/diag-$nome-${t}s.png" || true
   done
-  # A segunda tela de texto (no instalador, um terminal) mostra se ele está vivo.
+  # Terminal da segunda tela. O instalador já trocou o teclado para ABNT2:
+  # volta para o americano antes de digitar (a barra "/" muda de lugar).
   python3 "$HERE/hmp.py" "$sock" key ctrl-alt-f2 || true
-  sleep 4
+  sleep 3
+  python3 "$HERE/hmp.py" "$sock" key ret || true
+  python3 "$HERE/hmp.py" "$sock" type "loadkeys us" || true
+  python3 "$HERE/hmp.py" "$sock" key ret || true
+  sleep 2
+  python3 "$HERE/hmp.py" "$sock" type "journalctl -b -o short-monotonic >/dev/ttyS0" || true
+  python3 "$HERE/hmp.py" "$sock" key ret || true
+  sleep 10
+  python3 "$HERE/hmp.py" "$sock" type "tail -n 400 /tmp/*.log >/dev/ttyS0" || true
+  python3 "$HERE/hmp.py" "$sock" key ret || true
+  sleep 8
   python3 "$HERE/hmp.py" "$sock" shot "$OUT/diag-$nome-tty2.png" || true
+  python3 "$HERE/hmp.py" "$sock" key ctrl-alt-f1 || true
+  sleep 3
+  python3 "$HERE/hmp.py" "$sock" shot "$OUT/diag-$nome-tty1.png" || true
   kill "$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
   rm -f "$disco"
 
   echo "== resumo do boot $nome (linhas que importam)"
-  grep -naE 'Welcome|Switching root|switch.root|anaconda|kiosk|wayland|Xorg|Traceback|Failed|FAILED|failed|Timed out|error|Error|Freezing|panic|Starting installer|updates' \
-    "$OUT/diag-$nome.log" | grep -vE 'ACPI|PCI|pci |usb |EDAC|ftrace' | tail -200 || true
-  echo "== fim do registro $nome"
-  tail -60 "$OUT/diag-$nome.log" || true
+  grep -naiE 'kiosk|wayland|xorg|mutter|display|graphical|gui|text mode|traceback|failed|timed out|error|core.dump|segfault|drm|virtio.gpu|simpledrm|efifb' \
+    "$OUT/diag-$nome.log" "$OUT/diag-$nome-anaconda.log" 2>/dev/null \
+    | grep -vE 'ACPI|PCI|pci |usb |EDAC|ftrace|kvm.ko|edac_mce' | cut -c1-300 | tail -150 || true
 }
 
-ligar com-marca "$ARGS $LOG_OPTS"
-ligar sem-marca "$(xargs -n1 <<<"$ARGS" | grep -v '^inst.updates=' | xargs) $LOG_OPTS"
+# Menu: a segunda entrada ("Conferir...") vem marcada. "up" vai para "Instalar";
+# "down" entra em "Se algo der errado", onde a primeira é o modo simples.
+ligar normal up ret
+ligar simples down ret ret
 
 # Registros grandes vão comprimidos para o ramo dos prints.
 for f in "$OUT"/diag-*.log; do
