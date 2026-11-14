@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!-- Matsu OS: a Loja do Matsu baixa a versão nova do sistema (a imagem assinada do
+     mesmo canal) sem pedir senha para quem está usando o computador, como o próprio
+     sistema faria sozinho. O programa não recebe opções: não dá para trocar de
+     imagem nem mexer em mais nada por aqui. -->
+<policyconfig>
+  <vendor>Matsu OS</vendor>
+  <action id="org.matsu.atualizar-sistema">
+    <description>Download the new version of Matsu OS</description>
+    <description xml:lang="pt_BR">Baixar a versão nova do Matsu OS</description>
+    <message>The Matsu Store wants to download the new version of the system</message>
+    <message xml:lang="pt_BR">A Loja do Matsu quer baixar a versão nova do sistema</message>
+    <icon_name>org.matsu.loja</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/matsu/matsu-atualizar-sistema</annotate>
+  </action>
+</policyconfig>

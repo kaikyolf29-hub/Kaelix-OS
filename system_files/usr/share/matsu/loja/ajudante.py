@@ -6,12 +6,19 @@ remove e atualiza é este script. Só usa a biblioteca padrão do Python e respo
 em JSON.
 
 O catálogo vem de dois lugares:
-  - o AppStream dos repositórios Flatpak ligados no sistema (o Flathub e, quando
-    existir, o repositório do Matsu): nome, resumo, descrição, ícone, fotos e
-    categorias de cada app, em português quando o app tem tradução;
-  - o catalogo.json desta pasta, escolhido pelo Matsu: os destaques do Início, as
-    seções (Essenciais, Para jogar...) e os sites que viram app (Instagram,
-    TikTok, YouTube...).
+  - o AppStream dos repositórios Flatpak ligados no sistema (o Flathub e o
+    repositório da Loja do Matsu, "matsu"): nome, resumo, descrição, ícone, fotos
+    e categorias de cada app, em português quando o app tem tradução;
+  - o catálogo do Matsu: os destaques do Início, as seções (Essenciais, Para
+    jogar...), os sites que viram app (Instagram, TikTok, YouTube...) e o preço
+    dos apps pagos. Vem do servidor da Loja (o repositório privado matsu-loja
+    publica lá) e fica guardado; sem internet vale o catalogo.json desta pasta.
+
+Apps pagos: a pessoa compra fora e recebe um código MATSU-XXXX-XXXX-XXXX. O
+"resgatar" manda o código e o resumo deste computador ao servidor, que devolve
+uma licença assinada (Ed25519) para cada app do código. A licença fica em
+~/.config/matsu/licencas e na pasta do app no Flatpak, e o app confere sozinho,
+sem internet (licenca.py é o mesmo kit que os apps pagos usam).
 
 Uso:
   ajudante.py catalogo             os apps (resumidos), as seções e os destaques (JSON)
@@ -27,6 +34,11 @@ Uso:
   ajudante.py web-remover <id>     tira o app do site
   ajudante.py abrir <id>           abre o app (Flatpak, do sistema ou da web)
   ajudante.py ref <arquivo>        lê um .flatpakref (o "Instalar" dos sites) e diz qual app é (JSON)
+  ajudante.py licencas             as licenças deste computador, conferidas (JSON)
+  ajudante.py resgatar <código>    resgata um código de app pago e guarda as licenças (JSON)
+  ajudante.py restaurar            busca de novo as licenças já resgatadas neste computador (JSON)
+  ajudante.py sistema [--procurar] a versão do Matsu OS e se há uma nova (JSON)
+  ajudante.py atualizar-sistema    baixa a versão nova do Matsu OS (pede licença ao sistema); uma linha JSON por passo
 """
 import gzip
 import html
@@ -41,6 +53,7 @@ import subprocess
 import sys
 import time
 import unicodedata
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -59,8 +72,35 @@ def _carregar_tarefas():
 T = _carregar_tarefas()
 ler = T.ler
 
+
+def _carregar(nome, caminho):
+    spec = importlib.util.spec_from_file_location(nome, caminho)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
+
+
+_L = None
+
+
+def licenca():
+    """O kit de licença (o mesmo que os apps pagos copiam), carregado na primeira vez."""
+    global _L
+    if _L is None:
+        _L = _carregar("matsu_licenca", os.environ.get("MATSU_LOJA_LICENCA_PY") or os.path.join(AQUI, "licenca.py"))
+    return _L
+
+
+# O servidor da Loja do Matsu (Supabase, plano grátis): o catálogo e os arquivos
+# ficam no balde público "loja"; a função "resgatar" troca códigos por licenças.
+SERVIDOR = os.environ.get("MATSU_LOJA_SERVIDOR") or "https://orrybyqdyezsoaoeozky.supabase.co"
+PUBLICO = SERVIDOR + "/storage/v1/object/public/loja"
+RESGATAR = SERVIDOR + "/functions/v1/resgatar"
+REMOTO_MATSU = "matsu"
+AJUDANTE_SISTEMA = os.environ.get("MATSU_LOJA_ATUALIZAR_SISTEMA") or "/usr/libexec/matsu/matsu-atualizar-sistema"
+
 # Versão do formato do cache: muda quando o que se guarda de cada app muda.
-FORMATO = 3
+FORMATO = 4
 
 # As categorias da loja e as do freedesktop que caem em cada uma (a primeira que
 # bater vale como a principal do app).
@@ -288,6 +328,9 @@ def ler_componente(comp, remoto, instalacao, ativa, pt):
         except ValueError:
             data = 0
     resumo = _melhor(comp.findall("summary"), pt)
+    # Os apps da Loja do Matsu: o selo, o preço e se estão escondidos (em teste).
+    # O catálogo do servidor pode corrigir isto depois (catalogo["matsu"]).
+    matsu = remoto == REMOTO_MATSU or _valor(comp, "matsu::loja") == "true"
     return {
         "id": ident,
         "nome": nome,
@@ -297,6 +340,12 @@ def ler_componente(comp, remoto, instalacao, ativa, pt):
         "categoria": "jogos" if "Game" in cats else _categoria(cats),
         "categorias": cats,
         "verificado": _valor(comp, "flathub::verification::verified") == "true",
+        "matsu": matsu,
+        "pago": matsu and _valor(comp, "matsu::pago") == "true",
+        "preco": _valor(comp, "matsu::preco") if matsu else "",
+        "comprar": _valor(comp, "matsu::comprar") if matsu else "",
+        "planos": "",
+        "oculto": matsu and _valor(comp, "matsu::oculto") == "true",
         "remoto": remoto,
         "instalacao": instalacao,
         "busca": simples(" ".join([nome, resumo, dev, ident] + palavras)),
@@ -366,6 +415,20 @@ def todos_os_apps():
         for app in lista:
             # O mesmo app em dois repositórios: vale o primeiro (o do sistema, o Flathub).
             apps.setdefault(app["id"], app)
+    # O catálogo do servidor tem a palavra final sobre preço, "onde comprar" e
+    # escondido (muda em minutos, sem esperar o AppStream do repositório).
+    for app_id, extra in (catalogo_matsu().get("matsu") or {}).items():
+        if app_id in apps and isinstance(extra, dict):
+            app = dict(apps[app_id])
+            app["matsu"] = True
+            app["pago"] = bool(extra.get("pago", app.get("pago")))
+            for chave in ("preco", "comprar", "planos"):
+                if extra.get(chave) is not None:
+                    app[chave] = str(extra[chave])
+            app["oculto"] = bool(extra.get("oculto", app.get("oculto")))
+            if extra.get("dev") and not app.get("dev"):
+                app["dev"] = str(extra["dev"])
+            apps[app_id] = app
     if pt:
         # A maioria dos apps do Flathub só tem o resumo em inglês: os mais procurados
         # ganham um resumo em português escrito pelo Matsu (catalogo.json, "resumos").
@@ -379,15 +442,60 @@ def todos_os_apps():
 
 
 # ----- o catálogo do Matsu -----
-def catalogo_matsu():
+def arquivo_catalogo_online():
+    return os.path.join(pasta_cache(), "catalogo-online.json")
+
+
+def _ler_catalogo(caminho):
     try:
-        with open(arquivo_catalogo(), encoding="utf-8") as f:
+        with open(caminho, encoding="utf-8") as f:
             cat = json.load(f)
+        return cat if isinstance(cat, dict) and isinstance(cat.get("secoes", []), list) else None
     except (OSError, ValueError):
-        cat = {}
+        return None
+
+
+def catalogo_matsu():
+    """O catálogo baixado do servidor da Loja (o mais novo), ou o que veio no sistema."""
+    if os.environ.get("MATSU_LOJA_CATALOGO"):
+        cat = _ler_catalogo(arquivo_catalogo()) or {}
+    else:
+        local = _ler_catalogo(arquivo_catalogo()) or {}
+        online = _ler_catalogo(arquivo_catalogo_online())
+        # O do servidor vale quando é do mesmo formato (ou mais novo) que o do sistema.
+        cat = online if online and int(online.get("versao") or 0) >= int(local.get("versao") or 0) else local
     for chave in ("destaques", "secoes", "web", "no_sistema"):
         cat.setdefault(chave, [] if chave != "no_sistema" else {})
     return cat
+
+
+def baixar_catalogo():
+    """Baixa o catálogo do servidor da Loja; devolve True quando ele mudou."""
+    if os.environ.get("MATSU_LOJA_CATALOGO"):
+        return False
+    try:
+        pedido = urllib.request.Request(PUBLICO + "/catalogo.json", headers={"User-Agent": "Loja do Matsu"})
+        with urllib.request.urlopen(pedido, timeout=15) as r:
+            dados = r.read(2 * 1024 * 1024)
+        cat = json.loads(dados.decode("utf-8"))
+        if not isinstance(cat, dict) or not isinstance(cat.get("secoes"), list):
+            return False
+    except Exception:  # noqa: BLE001 - sem internet ou servidor fora: fica o guardado
+        return False
+    destino = arquivo_catalogo_online()
+    try:
+        with open(destino, "rb") as f:
+            if f.read() == dados:
+                return False
+    except OSError:
+        pass
+    try:
+        with open(destino + ".novo", "wb") as f:
+            f.write(dados)
+        os.replace(destino + ".novo", destino)
+    except OSError:
+        return False
+    return True
 
 
 def _texto(valor, pt):
@@ -398,7 +506,11 @@ def _texto(valor, pt):
 
 
 def resumido(app):
-    return {k: app[k] for k in ("id", "nome", "resumo", "dev", "icone", "categoria", "verificado", "remoto", "busca")}
+    saida = {k: app[k] for k in ("id", "nome", "resumo", "dev", "icone", "categoria", "verificado", "remoto", "busca")}
+    for chave in ("matsu", "pago", "oculto"):
+        saida[chave] = bool(app.get(chave))
+    saida["preco"] = app.get("preco") or ""
+    return saida
 
 
 def pastas_de_aplicativos():
@@ -424,7 +536,8 @@ def cmd_catalogo():
     apps = todos_os_apps()
 
     def existe(i):
-        return i in apps
+        # Os escondidos (apps em teste) não aparecem nas vitrines, mas abrem pelo link.
+        return i in apps and not apps[i].get("oculto")
 
     destaques = []
     for d in cat["destaques"]:
@@ -438,6 +551,15 @@ def cmd_catalogo():
         if ids:
             secoes.append({"id": s.get("id", ""), "titulo": _texto(s.get("titulo"), pt),
                            "texto": _texto(s.get("texto"), pt), "apps": ids})
+    # Os apps publicados na Loja do Matsu ganham a seção deles, em primeiro (a não
+    # ser que o catálogo já tenha uma seção "matsu" escolhida à mão).
+    do_matsu = sorted((a for a in apps.values() if a.get("matsu") and not a.get("oculto")),
+                      key=lambda a: simples(a["nome"]))
+    if do_matsu and not any(s["id"] == "matsu" for s in secoes):
+        secoes.insert(0, {"id": "matsu", "titulo": "Feito para o Matsu" if pt else "Made for Matsu",
+                          "texto": "Apps publicados na Loja do Matsu" if pt else "Apps published on the Matsu Store",
+                          "apps": [a["id"] for a in do_matsu]})
+    publicar = cat.get("publicar") or {}
     web = []
     for w in cat["web"]:
         web.append({"id": w["id"], "nome": w.get("nome", w["id"]), "resumo": _texto(w.get("resumo"), pt),
@@ -445,7 +567,8 @@ def cmd_catalogo():
                     "icone": icone_web(w["id"]), "categoria": w.get("categoria", "internet")})
     contagem = {}
     for a in apps.values():
-        contagem[a["categoria"]] = contagem.get(a["categoria"], 0) + 1
+        if not a.get("oculto"):
+            contagem[a["categoria"]] = contagem.get(a["categoria"], 0) + 1
     sistema = {i: no_sistema(i, cat) for i in apps if no_sistema(i, cat)}
     print(json.dumps({
         "idioma": "pt" if pt else "en",
@@ -457,6 +580,7 @@ def cmd_catalogo():
         "categorias": contagem,
         "no_sistema": sistema,
         "repositorios": sorted({a["remoto"] for a in apps.values()}),
+        "publicar": {"email": str(publicar.get("email") or ""), "texto": _texto(publicar.get("texto"), pt)},
     }, ensure_ascii=False))
     return 0
 
@@ -533,9 +657,12 @@ def _marcas_appstream():
 def cmd_atualizar_catalogo(forcar=False):
     """Baixa o AppStream de novo (nome, fotos e versões dos apps) quando nunca veio ou tem
     mais de um dia. Num Matsu recém-instalado é isto que enche a loja na primeira vez.
-    Não pede senha: a regra do Flatpak deixa qualquer pessoa da sessão atualizar o catálogo."""
+    Não pede senha: a regra do Flatpak deixa qualquer pessoa da sessão atualizar o catálogo.
+    O catálogo do Matsu (destaques, preços) vem toda vez, e o repositório da Loja do
+    Matsu (pequeno) a cada hora: um app publicado aparece no mesmo dia."""
     antes = _marcas_appstream()
     velho = forcar or not antes or min(antes.values()) < time.time() - 86400
+    matsu_velho = forcar or antes.get(f"sistema:{REMOTO_MATSU}", 0) < time.time() - 3600
     ok = True
     if velho:
         codigos = [flatpak("update", "--appstream", "--system", "--noninteractive", tempo=300)[0]]
@@ -543,8 +670,13 @@ def cmd_atualizar_catalogo(forcar=False):
         if codigo == 0 and saida.strip():
             codigos.append(flatpak("update", "--appstream", "--user", "--noninteractive", tempo=300)[0])
         ok = 0 in codigos
+    elif matsu_velho:
+        codigo, saida, _ = flatpak("remotes", "--system", "--columns=name")
+        if codigo == 0 and REMOTO_MATSU in saida.split():
+            flatpak("update", "--appstream", "--system", "--noninteractive", REMOTO_MATSU, tempo=120)
+    catalogo_novo = baixar_catalogo()
     depois = _marcas_appstream()
-    print(json.dumps({"ok": ok, "baixou": velho, "mudou": depois != antes, "vazio": not depois}))
+    print(json.dumps({"ok": ok, "baixou": velho, "mudou": depois != antes or catalogo_novo, "vazio": not depois}))
     return 0 if ok else 1
 
 
@@ -573,10 +705,22 @@ def _erro_amigavel(texto, pt):
     return (ultima[-1] if ultima else ("Não deu certo." if pt else "It did not work."))[:200]
 
 
-def acompanhar(acao, app_id, comando):
+def progresso_sistema(linha):
+    """A porcentagem de uma linha do bootc ("Fetching layers ███ 12/40", "45%")."""
+    pct = re.findall(r"(\d{1,3}(?:\.\d)?)%", linha)
+    if pct:
+        return min(100, int(float(pct[-1])))
+    for feito, total in re.findall(r"\b(\d+)/(\d+)\b", linha):
+        if 0 < int(total) <= 500 and int(feito) <= int(total):
+            return round(int(feito) * 100 / int(total))
+    return None
+
+
+def acompanhar(acao, app_id, comando, sistema=False):
     """Roda o flatpak num terminal de mentira (assim ele mostra a porcentagem) e manda
     uma linha JSON a cada mudança: {"acao", "id", "progresso", "passo", "de"} e no fim
-    {"fim": true, "ok": ...}."""
+    {"fim": true, "ok": ...}. Com sistema=True lê o progresso do bootc (camadas da
+    imagem nova), que nunca volta para trás."""
     import pty
     pt = idioma() == "pt"
     _linha(acao=acao, id=app_id, progresso=0, passo=0, de=0, comeco=True)
@@ -622,6 +766,12 @@ def acompanhar(acao, app_id, comando):
             partes = re.split(r"[\r\n]", resto)
             resto = partes.pop()
             for p in partes + [resto]:
+                if sistema:
+                    pct = progresso_sistema(p)
+                    if pct is not None and pct > ultimo[2]:
+                        ultimo = (0, 0, pct)
+                        _linha(acao=acao, id=app_id, progresso=min(99, pct), passo=0, de=0)
+                    continue
                 # "Installing 2/3… ███▌ 45%": o passo (o app e o que ele usa) e a porcentagem.
                 passo = re.search(r"\b(\d+)/(\d+)\b", p)
                 if passo and 0 < int(passo.group(1)) <= int(passo.group(2)) <= 50:
@@ -931,6 +1081,157 @@ def cmd_ref(caminho):
     return 1
 
 
+# ----- apps pagos: códigos de resgate e licenças -----
+def pastas_licenca(app_id):
+    """Onde a licença de um app fica: na configuração da pessoa e na pasta do app no
+    Flatpak (que é a única que o app enxerga de dentro da caixa dele)."""
+    config = os.environ.get("XDG_CONFIG_HOME") or os.path.join(casa(), ".config")
+    return [os.path.join(config, "matsu", "licencas"),
+            os.path.join(casa(), ".var", "app", app_id, "config", "matsu", "licencas")]
+
+
+def guardar_licenca(app_id, lic):
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_\-]*(\.[A-Za-z0-9_\-]+)+", app_id or "") or not isinstance(lic, dict):
+        return False
+    texto = json.dumps(lic, ensure_ascii=False)
+    feito = False
+    for pasta in pastas_licenca(app_id):
+        try:
+            os.makedirs(pasta, exist_ok=True)
+            destino = os.path.join(pasta, app_id + ".json")
+            with open(destino + ".novo", "w", encoding="utf-8") as f:
+                f.write(texto)
+            os.replace(destino + ".novo", destino)
+            feito = True
+        except OSError:
+            pass
+    return feito
+
+
+def licencas_guardadas():
+    """{app: estado} das licenças deste computador, conferidas com o kit (assinatura,
+    computador e prazo)."""
+    L = licenca()
+    pasta = pastas_licenca("x")[0]
+    saida = {}
+    try:
+        nomes = sorted(os.listdir(pasta))
+    except OSError:
+        nomes = []
+    for nome in nomes:
+        if not nome.endswith(".json"):
+            continue
+        app_id = nome[:-5]
+        try:
+            with open(os.path.join(pasta, nome), encoding="utf-8") as f:
+                e = L.ler_licenca(f.read(), app_id)
+        except OSError:
+            continue
+        expira = int(e.dados.get("expira") or 0) if isinstance(e.dados, dict) else 0
+        saida[app_id] = {"valida": bool(e.valida), "motivo": e.motivo, "plano": e.plano or "",
+                         "expira": expira, "codigo": str(e.dados.get("codigo") or "") if isinstance(e.dados, dict) else ""}
+    return saida
+
+
+def cmd_licencas():
+    print(json.dumps({"licencas": licencas_guardadas(), "computador": bool(licenca().computador())},
+                     ensure_ascii=False))
+    return 0
+
+
+def _pedir_servidor(corpo):
+    pt = idioma() == "pt"
+    pedido = urllib.request.Request(RESGATAR, data=json.dumps(corpo).encode(), method="POST",
+                                    headers={"Content-Type": "application/json", "User-Agent": "Loja do Matsu"})
+    try:
+        with urllib.request.urlopen(pedido, timeout=30) as r:
+            return json.loads(r.read().decode("utf-8", "replace") or "{}")
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode("utf-8", "replace") or "{}")
+        except ValueError:
+            pass
+        return {"ok": False, "erro": "servidor",
+                "mensagem": "A Loja não respondeu agora. Tente de novo daqui a pouco." if pt else
+                "The Store did not answer right now. Try again in a moment."}
+    except (OSError, ValueError):
+        return {"ok": False, "erro": "sem-internet",
+                "mensagem": "Sem internet agora. Confira a conexão e tente de novo." if pt else
+                "No internet right now. Check the connection and try again."}
+
+
+def _guardar_resposta(r):
+    guardados = []
+    for item in r.get("licencas") or []:
+        if isinstance(item, dict) and guardar_licenca(item.get("app", ""), item.get("licenca")):
+            guardados.append(item["app"])
+    return guardados
+
+
+def cmd_resgatar(codigo):
+    pt = idioma() == "pt"
+    pc = licenca().computador()
+    if not pc:
+        print(json.dumps({"ok": False, "erro": "sem-computador",
+                          "mensagem": "Não deu para identificar este computador." if pt else
+                          "Could not identify this computer."}, ensure_ascii=False))
+        return 1
+    r = _pedir_servidor({"codigo": codigo, "computador": pc, "lingua": "pt" if pt else "en"})
+    if not r.get("ok"):
+        print(json.dumps({"ok": False, "erro": r.get("erro") or "erro",
+                          "mensagem": r.get("mensagem") or ("Não deu certo." if pt else "It did not work.")},
+                         ensure_ascii=False))
+        return 1
+    guardados = _guardar_resposta(r)
+    print(json.dumps({"ok": bool(guardados), "apps": guardados, "plano": r.get("plano", ""),
+                      "expira": r.get("expira") or 0, "computadores": r.get("computadores") or 0,
+                      "usados": r.get("usados") or 0,
+                      "mensagem": "" if guardados else ("Não deu para guardar a licença." if pt else
+                                                         "Could not save the license.")}, ensure_ascii=False))
+    return 0 if guardados else 1
+
+
+def cmd_restaurar():
+    pc = licenca().computador()
+    r = _pedir_servidor({"acao": "restaurar", "computador": pc, "lingua": idioma()}) if pc else {"ok": False}
+    if not r.get("ok"):
+        print(json.dumps({"ok": False, "erro": r.get("erro") or "erro", "mensagem": r.get("mensagem") or ""},
+                         ensure_ascii=False))
+        return 1
+    print(json.dumps({"ok": True, "apps": _guardar_resposta(r)}, ensure_ascii=False))
+    return 0
+
+
+# ----- o sistema (Matsu OS) -----
+def _atualizacoes():
+    return _carregar("matsu_atualizacoes", os.environ.get("MATSU_ATUALIZACOES_AJUDANTE") or
+                     os.path.join(AQUI, "..", "atualizacoes", "ajudante.py"))
+
+
+def cmd_sistema(procurar=False):
+    """A versão do Matsu OS (27, 27.1...), se há uma nova no canal e se uma já foi
+    baixada e espera o reinício. Usa o mesmo ajudante da janela Atualizações."""
+    try:
+        A = _atualizacoes()
+        d = A.para_janela(A.ler_arquivo(A.ARQUIVO), procurar)
+    except Exception as e:  # noqa: BLE001 - sem o ajudante (ou sem rpm-ostree): diz só o que sabe
+        print(json.dumps({"versao": "", "erro": str(e)[:200], "pode": False}, ensure_ascii=False))
+        return 1
+    print(json.dumps({"versao": d.get("versao", ""), "edicao": d.get("edicao", ""), "remota": d.get("remota"),
+                      "baixada": bool(d.get("baixada")), "procurado": d.get("procurado") or 0,
+                      "conseguiu": d.get("conseguiu"), "pode": os.access(AJUDANTE_SISTEMA, os.X_OK)},
+                     ensure_ascii=False))
+    return 0
+
+
+def cmd_atualizar_sistema():
+    """Baixa a versão nova pelo ajudante com poder de administrador (polkit
+    org.matsu.atualizar-sistema): ele só atualiza para a imagem assinada do mesmo canal."""
+    comando = [AJUDANTE_SISTEMA] if os.geteuid() == 0 or os.environ.get("MATSU_LOJA_ATUALIZAR_SISTEMA") \
+        else ["pkexec", AJUDANTE_SISTEMA]
+    return acompanhar("sistema", "matsu-sistema", comando, sistema=True)
+
+
 def main(args):
     if not args:
         print(__doc__.strip())
@@ -962,6 +1263,16 @@ def main(args):
         return cmd_abrir(resto[0])
     if cmd == "ref" and resto:
         return cmd_ref(resto[0])
+    if cmd == "licencas":
+        return cmd_licencas()
+    if cmd == "resgatar" and resto:
+        return cmd_resgatar(" ".join(resto))
+    if cmd == "restaurar":
+        return cmd_restaurar()
+    if cmd == "sistema":
+        return cmd_sistema("--procurar" in resto)
+    if cmd == "atualizar-sistema":
+        return cmd_atualizar_sistema()
     print(__doc__.strip(), file=sys.stderr)
     return 2
 

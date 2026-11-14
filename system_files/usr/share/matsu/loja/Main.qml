@@ -79,6 +79,15 @@ JanelaMatsu {
     // Aviso que aparece embaixo por alguns segundos (um erro ao instalar, por exemplo).
     property string aviso: ""
     property int avisoN: 0
+    // ----- apps pagos (comprados fora, liberados com um código) -----
+    property var licencas: ({})       // id -> { valida, motivo, plano, expira }
+    property bool restaurando: false
+    property var publicar: ({})       // { email, texto }: o cartão "Publicar na Loja" do Início
+    // ----- o sistema (Matsu OS) -----
+    property var sistema: ({})        // { versao, edicao, remota, baixada, pode }
+    property bool procurandoSistema: false
+    property real progressoSistema: -1 // -1: parado; 0 a 100: baixando a versão nova
+    property string erroSistema: ""
 
     onPaginaChanged: {
         appAberto = "";
@@ -150,7 +159,72 @@ JanelaMatsu {
             return atualizacoes[id] ? "atualizar" : "abrir";
         if (noSistema[id])
             return "sistema";
+        if (pago(id) && !licenciado(id))
+            return "comprar";
         return "obter";
+    }
+    // ----- apps pagos -----
+    function pago(id) {
+        return !!(porId[id] && porId[id].pago);
+    }
+    function licenciado(id) {
+        var _m = mudancas;
+        return !!(licencas[id] && licencas[id].valida);
+    }
+    function precoDe(id) {
+        return porId[id] && porId[id].preco ? porId[id].preco : "";
+    }
+    // "para sempre", "até 12 de dezembro de 2026" (o prazo de uma licença ou de um código).
+    function prazoTexto(plano, expira) {
+        if (!expira || plano === "sempre")
+            return t("para sempre", "forever");
+        var d = new Date(expira * 1000);
+        return t("até ", "until ") + d.toLocaleDateString(local, pt ? "d 'de' MMMM 'de' yyyy" : "MMMM d, yyyy");
+    }
+    function lerLicencas() {
+        matsu.rodar("licencas", comando(["licencas"]));
+    }
+    function pedirResgate(id) {
+        resgate.abrirPara(id || "");
+    }
+    function resgatar(codigo) {
+        matsu.rodar("resgatar", comando(["resgatar", codigo]));
+    }
+    function restaurarCompras() {
+        if (restaurando)
+            return;
+        restaurando = true;
+        matsu.rodar("restaurar", comando(["restaurar"]));
+    }
+    // Depois de resgatar: instala os apps liberados que ainda não estão no computador.
+    function instalarLiberados(ids) {
+        for (var i = 0; i < ids.length; i++)
+            if (!instalados[ids[i]] && !tarefas[ids[i]])
+                instalar(ids[i]);
+    }
+    // ----- o sistema -----
+    function lerSistema(procurar) {
+        if (procurar)
+            procurandoSistema = true;
+        matsu.rodar(procurar ? "sistema-procurar" : "sistema", comando(procurar ? ["sistema", "--procurar"] : ["sistema"]));
+    }
+    function atualizarSistema() {
+        if (progressoSistema >= 0)
+            return;
+        erroSistema = "";
+        progressoSistema = 0;
+        matsu.iniciar("sistema-op", comando(["atualizar-sistema"]));
+    }
+    function cancelarSistema() {
+        matsu.parar("sistema-op");
+    }
+    function reiniciar() {
+        // A pergunta do Plasma ("Reiniciar agora?"), que deixa a pessoa desistir.
+        matsu.soltar(["gdbus", "call", "--session", "--dest", "org.kde.LogoutPrompt", "--object-path",
+                      "/LogoutPrompt", "--method", "org.kde.LogoutPrompt.promptReboot"]);
+    }
+    function verNovidades() {
+        matsu.soltar(["/usr/libexec/matsu/matsu-janela", "org.matsu.atualizacoes", "/usr/share/matsu/atualizacoes/Main.qml"]);
     }
     function progresso(id) {
         var _m = mudancas;
@@ -308,6 +382,7 @@ JanelaMatsu {
     function procurarAtualizacoes() {
         procurando = true;
         matsu.rodar("atualizacoes", comando(["atualizacoes"]));
+        lerSistema(true);
     }
 
     // ----- busca -----
@@ -379,8 +454,18 @@ JanelaMatsu {
         function onLinha(chave, texto) {
             if (chave.indexOf("op:") === 0)
                 janela.receberPasso(texto);
+            else if (chave === "sistema-op")
+                janela.receberSistema(texto);
         }
         function onParou(chave, codigo) {
+            if (chave === "sistema-op") {
+                if (janela.progressoSistema >= 0) {
+                    // Parou sem a linha do fim (cancelado ou o ajudante caiu).
+                    janela.progressoSistema = -1;
+                    janela.lerSistema(false);
+                }
+                return;
+            }
             if (chave.indexOf("op:") !== 0)
                 return;
             // Terminou sem a linha do fim (cancelado ou o ajudante caiu): limpa o que sobrou.
@@ -425,11 +510,13 @@ JanelaMatsu {
                 var ordem = d.apps.map(function (x, n) { return { app: x, n: n, peso: escolha[x.id] ? 0 : (x.verificado ? 1 : 2) }; });
                 ordem.sort(function (x, y) { return x.peso - y.peso || x.n - y.n; });
                 janela.porId = mapa;
+                janela.publicar = d.publicar || ({});
                 // Página pedida antes do catálogo chegar: acerta o id (maiúsculas) agora.
                 if (janela.appAberto && janela.idCerto(janela.appAberto) !== janela.appAberto)
                     janela.abrirApp(janela.appAberto);
                 janela.escolhidos = escolha;
-                janela.apps = ordem.map(function (x) { return x.app; });
+                // Os escondidos (apps em teste) ficam fora das listas, mas abrem pelo link.
+                janela.apps = ordem.map(function (x) { return x.app; }).filter(function (x) { return !x.oculto; });
                 janela.destaques = d.destaques;
                 janela.secoes = d.secoes;
                 janela.sites = d.web;
@@ -496,6 +583,39 @@ JanelaMatsu {
                 janela.lerInstalados();
             } else if (chave.indexOf("web-remover:") === 0) {
                 janela.lerInstalados();
+            } else if (chave === "licencas" && d) {
+                janela.licencas = d.licencas || ({});
+                janela.mudancas++;
+            } else if (chave === "resgatar") {
+                resgate.resposta(d);
+                if (d && d.ok) {
+                    janela.lerLicencas();
+                    janela.instalarLiberados(d.apps || []);
+                }
+            } else if (chave === "restaurar") {
+                janela.restaurando = false;
+                if (d && d.ok) {
+                    janela.lerLicencas();
+                    var n = (d.apps || []).length;
+                    janela.avisar(n === 0 ? janela.t("Nenhuma compra resgatada neste computador ainda.", "No purchases redeemed on this computer yet.")
+                                          : (n === 1 ? janela.t("1 compra restaurada.", "1 purchase restored.")
+                                                     : janela.t(n + " compras restauradas.", n + " purchases restored.")));
+                } else {
+                    janela.avisar(d && d.mensagem ? d.mensagem : janela.t("Não deu para restaurar agora. Tente de novo daqui a pouco.", "Could not restore right now. Try again in a moment."));
+                }
+            } else if (chave === "sistema" || chave === "sistema-procurar") {
+                if (chave === "sistema-procurar")
+                    janela.procurandoSistema = false;
+                if (d && d.versao !== undefined) {
+                    // Sem procurar, o ajudante não olha o servidor nem a versão já
+                    // baixada: guarda o que já se sabia (senão, depois de baixar ou
+                    // cancelar, o cartão voltaria a dizer "em dia").
+                    if (chave === "sistema" && janela.sistema) {
+                        d.remota = d.remota || janela.sistema.remota || null;
+                        d.baixada = !!d.baixada || !!janela.sistema.baixada;
+                    }
+                    janela.sistema = d;
+                }
             } else if (chave === "ref") {
                 if (d && d.ok)
                     janela.abrirApp(d.id);
@@ -511,10 +631,28 @@ JanelaMatsu {
 
     // "matsu-loja app <id>" (ou appstream://<id>, ou um .flatpakref baixado do
     // site do Flathub) abre direto na página do app; "matsu-loja biblioteca" na
-    // Biblioteca.
+    // Biblioteca. Um app pago sem licença abre matsu-loja://resgatar/<id>: a Loja
+    // mostra a página dele com a janela de resgatar o código.
     function pedido(args) {
         var a = args[0];
-        if (/\.flatpakref$/i.test(a)) {
+        if (/^matsu-loja:/i.test(a)) {
+            var partes = a.replace(/^matsu-loja:(\/\/)?/i, "").replace(/\/+$/, "").split("/");
+            if (partes[0] === "resgatar") {
+                if (partes[1])
+                    abrirApp(partes[1]);
+                pedirResgate(partes[1] || "");
+            } else if (partes[0] === "app" && partes[1]) {
+                abrirApp(partes[1]);
+            } else {
+                irPara(partes[0] || "inicio");
+            }
+        } else if (a === "resgatar") {
+            if (args.length > 1)
+                abrirApp(args[1]);
+            else
+                irPara("biblioteca");
+            pedirResgate(args.length > 1 ? args[1] : "");
+        } else if (/\.flatpakref$/i.test(a)) {
             irPara("inicio");
             matsu.rodar("ref", comando(["ref", a]));
         } else if (/^appstream:/i.test(a)) {
@@ -535,9 +673,31 @@ JanelaMatsu {
     }
     onActiveChanged: if (active && lido) lerInstalados()
 
+    // O progresso da versão nova do sistema (o bootc, pelo ajudante com permissão).
+    function receberSistema(texto) {
+        var d;
+        try {
+            d = JSON.parse(texto);
+        } catch (e) {
+            return;
+        }
+        if (!d.fim) {
+            progressoSistema = Math.max(0, d.progresso || 0);
+            return;
+        }
+        progressoSistema = -1;
+        if (d.ok) {
+            sistema = Object.assign({}, sistema, { baixada: true });
+            lerSistema(false);
+        } else if (!d.cancelado) {
+            erroSistema = d.erro || t("A versão nova não baixou. Nada mudou no sistema.", "The new version did not download. Nothing changed on the system.");
+        }
+    }
+
     Component.onCompleted: {
         matsu.rodar("catalogo", comando(["catalogo"]));
         lerInstalados();
+        lerLicencas();
         procurarAtualizacoes();
         if (matsu.argumentos.length > 0)
             pedido(matsu.argumentos);
@@ -588,6 +748,11 @@ JanelaMatsu {
                 }
             }
         }
+    }
+
+    // A janela de resgatar o código de um app pago.
+    JanelaResgate {
+        id: resgate
     }
 
     // ----- o aviso embaixo, por cima de tudo (some sozinho) -----

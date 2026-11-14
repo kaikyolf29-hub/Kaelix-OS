@@ -17,7 +17,7 @@ estudar e trabalhar.
 
 - **Barra em três ilhas**: o menu, os apps abertos e a bandeja separados, com vidro e cantos redondos. Também tem o estilo Windows e o estilo Mac, com a barra de cima mostrando o nome e os menus do app aberto, e a barra aparece em cada monitor.
 - **Efeito vidro**: escolha a cor e a transparência nos Ajustes, ou desligue o vidro e deixe tudo sólido.
-- **Loja do Matsu**: apps e jogos com fotos, em português, com atualização de tudo num clique.
+- **Loja do Matsu**: apps e jogos com fotos, em português, com atualização de tudo num clique. Apps pagos são liberados com um código comprado fora da Loja, e a versão nova do sistema também chega pela Biblioteca.
 - **Central de jogos**: a biblioteca da Steam, Epic e GOG num lugar só, o FPS na tela que liga e desliga com Win+Alt+F, os ajustes e os drivers da placa de vídeo, e os controles de PlayStation e Xbox pelo Bluetooth.
 - **Arquivos do Matsu**: o gerenciador de arquivos com ícones próprios e tamanhos em KB, MB e GB.
 - **Terminal do Matsu**: abas, tela dividida e uma barra com a pasta, o ramo do git e o programa rodando.

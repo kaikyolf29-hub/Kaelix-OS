@@ -5,6 +5,18 @@ set -uo pipefail
 
 LIST=/usr/share/matsu/flatpaks.txt
 STAMP=/var/lib/matsu/flatpaks.sha256
+MATSU_REPO=/usr/share/matsu/loja/matsu.flatpakrepo
+
+# O repositório da Loja do Matsu (apps publicados pelo Matsu, assinados com a chave
+# da Loja, que vem dentro do arquivo). Não precisa de internet para ligar; a chave
+# é posta de novo a cada boot, então uma chave nova chega junto com o sistema.
+if flatpak remotes --system --columns=name | grep -qx matsu; then
+  flatpak remote-modify --system --gpg-import=<(sed -n 's/^GPGKey=//p' "$MATSU_REPO" | base64 -d) matsu \
+    || echo "aviso: não deu para conferir a chave da Loja do Matsu" >&2
+else
+  flatpak remote-add --system --if-not-exists matsu "$MATSU_REPO" \
+    || echo "aviso: não deu para ligar o repositório da Loja do Matsu" >&2
+fi
 
 flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
   || { echo "Sem internet ainda; tentando de novo daqui a pouco." >&2; exit 1; }

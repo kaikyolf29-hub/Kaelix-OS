@@ -11,13 +11,14 @@ Comment[pt_BR]=Apps, jogos e sites como app, com fotos, num clique
 Comment[pt]=Aplicações, jogos e sites como aplicação, com fotos, num clique
 # A janela é aberta pelo matsu-janela, que dá a ela a identidade deste arquivo
 # (org.matsu.loja): assim a barra mostra o ícone e o nome certos. O %U recebe o
-# appstream://<id> dos outros apps e o .flatpakref do botão "Instalar" do Flathub.
+# appstream://<id> dos outros apps, o .flatpakref do botão "Instalar" do Flathub e o
+# matsu-loja://resgatar/<id> que os apps pagos abrem para a pessoa resgatar o código.
 Exec=/usr/libexec/matsu/matsu-janela org.matsu.loja /usr/share/matsu/loja/Main.qml %U
 Icon=org.matsu.loja
 Terminal=false
 Categories=System;PackageManager;Qt;KDE;
 Keywords=loja;store;apps;aplicativos;programas;instalar;install;baixar;download;flatpak;flathub;jogos;games;atualizar;update;sites;web;
-MimeType=x-scheme-handler/appstream;application/vnd.flatpak.ref;
+MimeType=x-scheme-handler/appstream;x-scheme-handler/matsu-loja;application/vnd.flatpak.ref;
 StartupNotify=true
 StartupWMClass=org.matsu.loja
 SingleMainWindow=true

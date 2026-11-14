@@ -1,6 +1,8 @@
 // A página de um app, por cima da página de onde veio (como na Microsoft Store):
 // a logo oficial, o nome, quem faz, o botão de obter, as fotos (clicar amplia),
 // a descrição e as informações (versão, data, licença, tamanho, de onde vem).
+// Um app pago da Loja do Matsu mostra o preço no botão, onde comprar, "Tenho um
+// código" e, depois de resgatar, até quando ele está liberado neste computador.
 // Esc ou "Voltar" fecham e a lista de baixo continua onde estava. A página entra
 // subindo de leve e, enquanto a descrição não chega, mostra as linhas em esqueleto.
 import QtQuick
@@ -43,12 +45,18 @@ Item {
         return !!janela.tarefas[mostrado];
     }
     readonly property var fotos: info && info.fotos ? info.fotos : []
+    readonly property bool pago: dados !== null && !!dados.pago
+    readonly property var licenca: {
+        var _m = janela.mudancas;
+        return janela.licencas[mostrado] || null;
+    }
+    readonly property string ondeComprar: info && info.comprar ? info.comprar : ""
     readonly property int margem: Math.round(janela.gu * 1.6)
     property bool descricaoAberta: false
     property bool confirmarRemocao: false
     property int fotoAmpliada: -1
 
-    function licenca(l) {
+    function textoLicenca(l) {
         if (!l)
             return "";
         if (/proprietary/i.test(l))
@@ -183,6 +191,8 @@ Item {
                         Repeater {
                             model: {
                                 var l = [];
+                                if (detalhe.dados && detalhe.dados.matsu)
+                                    l.push(janela.t("Loja do Matsu", "Matsu Store"));
                                 if (detalhe.dados && detalhe.dados.categoria)
                                     l.push(janela.nomeCategoria(detalhe.dados.categoria));
                                 if (janela.estado(detalhe.mostrado) === "sistema")
@@ -234,6 +244,56 @@ Item {
                                 interval: 4000
                                 onTriggered: detalhe.confirmarRemocao = false
                             }
+                        }
+                    }
+                    // App pago: liberado até quando, ou como comprar e resgatar.
+                    RowLayout {
+                        visible: detalhe.pago
+                        Layout.fillWidth: true
+                        spacing: Math.round(janela.gu * 0.35)
+                        readonly property bool liberado: detalhe.licenca !== null && detalhe.licenca.valida
+                        Kirigami.Icon {
+                            implicitWidth: Math.round(Kirigami.Units.iconSizes.small * 0.9)
+                            implicitHeight: implicitWidth
+                            source: parent.liberado ? "matsu-certo-symbolic" : "matsu-etiqueta-symbolic"
+                            isMask: true
+                            color: parent.liberado ? (janela.escuro ? "#5fd394" : "#1d7f4e") : janela.frente
+                            opacity: parent.liberado ? 1 : 0.7
+                        }
+                        Texto {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                            color: parent.liberado ? (janela.escuro ? "#5fd394" : "#1d7f4e") : janela.frente
+                            opacity: parent.liberado ? 1 : 0.75
+                            text: {
+                                var l = detalhe.licenca;
+                                if (l && l.valida)
+                                    return janela.t("Liberado ", "Unlocked ") + janela.prazoTexto(l.plano, l.expira) + janela.t(" neste computador", " on this computer");
+                                if (l && l.motivo === "vencida")
+                                    return janela.t("O prazo da sua licença acabou. Resgate um código novo.", "Your license has expired. Redeem a new code.");
+                                if (l && l.motivo === "outro-computador")
+                                    return janela.t("A licença guardada é de outro computador. Resgate o código de novo.", "The saved license is from another computer. Redeem the code again.");
+                                return janela.t("Compre fora da Loja e resgate o código aqui.", "Buy it outside the Store and redeem the code here.");
+                            }
+                        }
+                    }
+                    Flow {
+                        visible: detalhe.pago && !(detalhe.licenca !== null && detalhe.licenca.valida)
+                        Layout.fillWidth: true
+                        Layout.leftMargin: -Math.round(janela.gu * 0.4)
+                        spacing: Math.round(janela.gu * 0.3)
+                        Botao {
+                            visible: detalhe.ondeComprar !== ""
+                            texto: janela.t("Onde comprar", "Where to buy")
+                            icone: "matsu-link-symbolic"
+                            dica: detalhe.ondeComprar
+                            onClicado: Qt.openUrlExternally(detalhe.ondeComprar)
+                        }
+                        Botao {
+                            texto: janela.t("Tenho um código", "I have a code")
+                            icone: "matsu-etiqueta-symbolic"
+                            onClicado: janela.pedirResgate(detalhe.mostrado)
                         }
                     }
                     Texto {
@@ -373,7 +433,9 @@ Item {
                                     [janela.t("Versão", "Version"), inst.versao || d.versao || ""],
                                     [janela.t("Atualizado em", "Updated on"), detalhe.dataLegivel(d.data)],
                                     [janela.t("Feito por", "Made by"), detalhe.dados ? detalhe.dados.dev || "" : ""],
-                                    [janela.t("Licença", "License"), detalhe.licenca(d.licenca)],
+                                    [janela.t("Preço", "Price"), detalhe.pago ? (d.preco || detalhe.dados.preco || "") : ""],
+                                    [janela.t("Planos", "Plans"), detalhe.pago ? (d.planos || "") : ""],
+                                    [janela.t("Licença", "License"), detalhe.textoLicenca(d.licenca)],
                                     [janela.t("Tamanho", "Size"), inst.tamanho || ""],
                                     [janela.t("Vem de", "Comes from"), detalhe.origem(inst.remoto || (detalhe.dados ? detalhe.dados.remoto : ""))]
                                 ];

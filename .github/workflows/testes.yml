@@ -32,6 +32,8 @@ jobs:
         run: python3 tests/test_jogos.py
       - name: Testar o ajudante da Loja do Matsu
         run: python3 tests/test_loja.py
+      - name: Testar a Loja ligada ao servidor (apps pagos, códigos, versão nova do sistema)
+        run: python3 tests/test_loja_pagos.py
       - name: Testar as novidades e o aviso de atualização
         run: python3 tests/test_novidades.py
       - name: Testar a Central de segurança

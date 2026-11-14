@@ -258,6 +258,47 @@ Item {
                     }
                 }
             }
+
+            // ----- publicar na Loja (quem fez um app pede por e-mail) -----
+            Cartao {
+                Layout.fillWidth: true
+                visible: janela.lido && !!janela.publicar.email
+                implicitHeight: linhaPublicar.implicitHeight + Math.round(janela.gu * 1.6)
+                RowLayout {
+                    id: linhaPublicar
+                    anchors.fill: parent
+                    anchors.margins: Math.round(janela.gu * 0.8)
+                    spacing: Math.round(janela.gu * 0.8)
+                    Kirigami.Icon {
+                        Layout.preferredWidth: Math.round(janela.gu * 2.4)
+                        Layout.preferredHeight: Layout.preferredWidth
+                        source: "org.matsu.loja"
+                        fallback: "matsu-loja"
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+                        Texto {
+                            Layout.fillWidth: true
+                            text: janela.t("Publique o seu app", "Publish your app")
+                            font.weight: Font.DemiBold
+                        }
+                        Texto {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            opacity: 0.72
+                            text: janela.publicar.texto || ""
+                        }
+                    }
+                    Botao {
+                        texto: janela.t("Mandar e-mail", "Send email")
+                        icone: "matsu-email-symbolic"
+                        dica: janela.publicar.email || ""
+                        onClicado: Qt.openUrlExternally("mailto:" + janela.publicar.email + "?subject="
+                                                        + encodeURIComponent(janela.t("Publicar na Loja do Matsu", "Publish on the Matsu Store")))
+                    }
+                }
+            }
         }
     }
 

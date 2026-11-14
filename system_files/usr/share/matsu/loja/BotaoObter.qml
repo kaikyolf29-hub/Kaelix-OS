@@ -3,7 +3,8 @@
 // progresso e a porcentagem (que rola, algarismo por algarismo). Preparando ou
 // removendo, a rodinha gira; no fim, a pílula fica verde com "Instalado ✓" por uns
 // segundos. Com o mouse em cima do progresso, vira "Cancelar". Os que já vêm no
-// Matsu (a Steam, por exemplo) só abrem. A largura acompanha o texto, deslizando.
+// Matsu (a Steam, por exemplo) só abrem. Um app pago ainda não liberado mostra o
+// preço e abre a janela de resgatar o código. A largura acompanha o texto, deslizando.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -25,7 +26,7 @@ MouseArea {
     readonly property string acao: janela.acaoAgora(appId)
     readonly property bool trabalhando: estado === "trabalhando"
     readonly property bool feito: estado === "feito"
-    readonly property bool cheio: estado === "obter" || estado === "atualizar"
+    readonly property bool cheio: estado === "obter" || estado === "atualizar" || estado === "comprar"
     // O que aparece antes do texto: a rodinha (sem porcentagem ainda) ou o anel.
     readonly property bool comAnel: trabalhando && !naFila && progresso > 0 && acao !== "remover" && !containsMouse
     readonly property bool comRodinha: trabalhando && !naFila && !comAnel && !containsMouse
@@ -50,6 +51,8 @@ MouseArea {
         }
         if (feito)
             return acao === "atualizar" ? janela.t("Atualizado", "Updated") : janela.t("Instalado", "Installed");
+        if (estado === "comprar")
+            return janela.precoDe(appId) || janela.t("Comprar", "Buy");
         return ({ obter: janela.t("Obter", "Get"), abrir: janela.t("Abrir", "Open"), sistema: janela.t("Abrir", "Open"),
                   atualizar: janela.t("Atualizar", "Update") })[estado] || "";
     }
@@ -80,6 +83,8 @@ MouseArea {
             janela.cancelar(appId);
         else if (estado === "obter")
             janela.instalar(appId);
+        else if (estado === "comprar")
+            janela.pedirResgate(appId);
         else if (estado === "atualizar")
             janela.atualizar(appId);
         else if (!feito)
@@ -290,7 +295,8 @@ MouseArea {
         NumberAnimation { target: visto; property: "scale"; to: 1; duration: 260; easing.type: Easing.OutBack; easing.overshoot: 3 }
     }
 
-    QQC2.ToolTip.visible: estado === "sistema" && containsMouse
-    QQC2.ToolTip.text: janela.t("Já vem no Matsu", "Comes with Matsu")
+    QQC2.ToolTip.visible: (estado === "sistema" || estado === "comprar") && containsMouse
+    QQC2.ToolTip.text: estado === "comprar" ? janela.t("Comprado fora? Resgate o código aqui", "Bought it elsewhere? Redeem the code here")
+                                            : janela.t("Já vem no Matsu", "Comes with Matsu")
     QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 }

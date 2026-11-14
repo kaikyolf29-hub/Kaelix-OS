@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+# Atualiza o Matsu OS para a versão nova do mesmo canal, conferindo a assinatura
+# da imagem. A Loja do Matsu chama pelo pkexec (ação org.matsu.atualizar-sistema),
+# que deixa quem está na frente do computador atualizar sem senha: este programa
+# não recebe nada de fora, só faz o mesmo que "matsu atualizar" faria (bootc
+# upgrade, ou bootc switch para a MESMA imagem ligando a verificação de assinatura
+# na primeira vez). A versão nova entra no próximo reinício.
+set -euo pipefail
+export LC_ALL=C.UTF-8 PATH=/usr/sbin:/usr/bin
+
+if (( $# > 0 )); then
+  echo "Este programa não recebe opções." >&2
+  exit 2
+fi
+if (( EUID != 0 )); then
+  echo "Precisa rodar como administrador (pelo pkexec)." >&2
+  exit 2
+fi
+
+status="$(bootc status --format=json)" || { echo "Não consegui ler o estado do sistema (bootc status)." >&2; exit 3; }
+ref="$(jq -r '.status.booted.image.image.image // empty' <<<"$status")"
+sig="$(jq -c '.spec.image.signature // "insecure"' <<<"$status")"
+if [[ -z $ref ]]; then
+  echo "Este sistema não foi instalado a partir de uma imagem do Matsu." >&2
+  exit 3
+fi
+
+if [[ $sig != *containerPolicy* ]]; then
+  # Primeira vez: liga a verificação de assinatura para esta e as próximas atualizações.
+  exec bootc switch --enforce-container-sigpolicy "$ref"
+fi
+exec bootc upgrade

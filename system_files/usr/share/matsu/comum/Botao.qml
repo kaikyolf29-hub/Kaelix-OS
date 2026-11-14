@@ -65,6 +65,7 @@ MouseArea {
         Texto {
             Layout.row: 0
             Layout.column: botao.iconeNoFim ? 0 : 1
+            visible: botao.texto.length > 0
             text: botao.texto
         }
     }

@@ -1,6 +1,7 @@
-// Biblioteca: o que está baixando agora (com o progresso e cancelar), as
-// atualizações (uma por uma ou todas), os apps instalados (abrir, remover) e os
-// sites que viraram app. A busca da barra de título filtra.
+// Biblioteca: o Matsu OS (versão nova do sistema, com o progresso e o reiniciar),
+// o que está baixando agora (com o progresso e cancelar), as atualizações (uma por
+// uma ou todas), os apps instalados (abrir, remover), os sites que viraram app e
+// os comprados (resgatar código, restaurar compras). A busca da barra filtra.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -11,6 +12,8 @@ Item {
     id: pagina
 
     readonly property int margem: Math.round(janela.gu * 1.6)
+    // Janela estreita: os botões do cabeçalho ficam só com o ícone (o nome vai no balão).
+    readonly property bool apertado: coluna.width < janela.gu * 38
     readonly property string busca: janela.simples(janela.busca.trim())
 
     function combina(nome) {
@@ -54,6 +57,26 @@ Item {
     readonly property var sites: {
         var _s = janela.sites;
         return _lista(_chaveSites).map(function (id) { return janela.site(id); });
+    }
+    readonly property string _chaveComprados: {
+        var _m = janela.mudancas;
+        return Object.keys(janela.licencas).filter(function (id) {
+            return pagina.combina(janela.nomeDe(id));
+        }).sort(function (a, b) { return janela.nomeDe(a).localeCompare(janela.nomeDe(b), janela.pt ? "pt-BR" : "en"); }).join("\n");
+    }
+    readonly property var comprados: _lista(_chaveComprados)
+    // O sistema: "baixando", "pronta" (espera reiniciar), "nova", "procurando" ou "em-dia".
+    readonly property string fase: {
+        var s = janela.sistema || {};
+        if (janela.progressoSistema >= 0)
+            return "baixando";
+        if (s.baixada)
+            return "pronta";
+        if (s.remota)
+            return "nova";
+        if (janela.procurandoSistema)
+            return "procurando";
+        return "em-dia";
     }
 
     // Uma linha de app: logo, nome, o que está acontecendo e os botões.
@@ -145,8 +168,11 @@ Item {
 
     // A caixa de uma parte (título em cima, as linhas num cartão).
     component Parte: ColumnLayout {
+        id: parte
         property string titulo: ""
         property string detalhe: ""
+        property string acao: ""
+        signal acionada()
         default property alias linhas: cartaoLinhas.data
         Layout.fillWidth: true
         spacing: Math.round(janela.gu * 0.5)
@@ -154,6 +180,8 @@ Item {
             Layout.fillWidth: true
             texto: parent.titulo
             detalhe: parent.detalhe
+            verTudo: parent.acao
+            onClicado: parte.acionada()
         }
         Cartao {
             Layout.fillWidth: true
@@ -221,8 +249,19 @@ Item {
                     }
                 }
                 Botao {
-                    texto: janela.procurando ? janela.t("Procurando...", "Checking...") : janela.t("Procurar atualizações", "Check for updates")
+                    readonly property string nome: janela.t("Resgatar código", "Redeem code")
+                    texto: pagina.apertado ? "" : nome
+                    dica: pagina.apertado ? nome : ""
+                    icone: "matsu-etiqueta-symbolic"
+                    Accessible.name: nome
+                    onClicado: janela.pedirResgate("")
+                }
+                Botao {
+                    readonly property string nome: janela.procurando ? janela.t("Procurando...", "Checking...") : janela.t("Procurar atualizações", "Check for updates")
+                    texto: pagina.apertado ? "" : nome
+                    dica: pagina.apertado ? nome : ""
                     icone: "matsu-recarregar-symbolic"
+                    Accessible.name: nome
                     ativo: !janela.procurando
                     onClicado: janela.procurarAtualizacoes()
                 }
@@ -231,6 +270,133 @@ Item {
                     texto: janela.t("Atualizar tudo", "Update all")
                     icone: "matsu-baixar-symbolic"
                     onClicado: janela.atualizarTudo()
+                }
+            }
+
+            // ----- o Matsu OS -----
+            Cartao {
+                id: cartaoSistema
+                Layout.fillWidth: true
+                visible: pagina.busca.length === 0 && (janela.sistema.versao || "") !== ""
+                implicitHeight: colunaSistema.implicitHeight + Math.round(janela.gu * 1.6)
+                readonly property var s: janela.sistema || {}
+                readonly property string nome: s.edicao ? "Matsu " + s.edicao + " OS" : "Matsu OS"
+                ColumnLayout {
+                    id: colunaSistema
+                    anchors.fill: parent
+                    anchors.margins: Math.round(janela.gu * 0.8)
+                    spacing: Math.round(janela.gu * 0.6)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Math.round(janela.gu * 0.8)
+                        Kirigami.Icon {
+                            Layout.preferredWidth: Math.round(janela.gu * 2.6)
+                            Layout.preferredHeight: Layout.preferredWidth
+                            source: "matsu-logo"
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+                            Texto {
+                                Layout.fillWidth: true
+                                text: cartaoSistema.nome
+                                font.weight: Font.DemiBold
+                                elide: Text.ElideRight
+                            }
+                            Texto {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                opacity: 0.7
+                                font.pointSize: Kirigami.Theme.smallFont.pointSize
+                                text: {
+                                    var s = cartaoSistema.s;
+                                    var nova = s.remota ? s.remota.versao : "";
+                                    switch (pagina.fase) {
+                                    case "baixando":
+                                        return janela.t("Baixando a versão ", "Downloading version ") + nova
+                                               + (janela.progressoSistema > 0 ? "  ·  " + janela.porcento(janela.progressoSistema) : "");
+                                    case "pronta":
+                                        return janela.t("A versão nova já está baixada. Ela entra quando você reiniciar.",
+                                                        "The new version is downloaded. It takes effect when you restart.");
+                                    case "nova":
+                                        return janela.t("Versão ", "Version ") + nova + janela.t(" disponível (você está na ", " available (you have ") + s.versao + ")";
+                                    case "procurando":
+                                        return janela.t("Procurando versão nova...", "Looking for a new version...");
+                                    }
+                                    return janela.t("Versão ", "Version ") + s.versao + janela.t("  ·  em dia", "  ·  up to date");
+                                }
+                            }
+                        }
+                        Girando {
+                            visible: pagina.fase === "procurando"
+                            Layout.preferredWidth: Math.round(janela.gu * 1.1)
+                            Layout.preferredHeight: Layout.preferredWidth
+                        }
+                        Botao {
+                            visible: pagina.fase === "nova"
+                            texto: janela.t("Novidades", "What's new")
+                            onClicado: janela.verNovidades()
+                        }
+                        BotaoDestaque {
+                            visible: pagina.fase === "nova" && !!cartaoSistema.s.pode
+                            texto: janela.t("Atualizar", "Update")
+                            icone: "matsu-baixar-symbolic"
+                            onClicado: janela.atualizarSistema()
+                        }
+                        Botao {
+                            visible: pagina.fase === "baixando"
+                            texto: janela.t("Cancelar", "Cancel")
+                            onClicado: janela.cancelarSistema()
+                        }
+                        BotaoDestaque {
+                            visible: pagina.fase === "pronta"
+                            texto: janela.t("Reiniciar", "Restart")
+                            icone: "matsu-reiniciar-symbolic"
+                            onClicado: janela.reiniciar()
+                        }
+                    }
+                    // O que vem na versão nova (as três primeiras novidades).
+                    Repeater {
+                        model: pagina.fase === "nova" && cartaoSistema.s.remota && cartaoSistema.s.remota.novidades
+                               ? cartaoSistema.s.remota.novidades.slice(0, 3) : []
+                        Texto {
+                            required property string modelData
+                            Layout.fillWidth: true
+                            Layout.leftMargin: Math.round(janela.gu * 3.4)
+                            text: "•  " + modelData
+                            wrapMode: Text.WordWrap
+                            opacity: 0.75
+                            font.pointSize: Kirigami.Theme.smallFont.pointSize
+                        }
+                    }
+                    Rectangle {
+                        visible: pagina.fase === "baixando"
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Math.round(janela.gu * 3.4)
+                        Layout.preferredHeight: 4
+                        radius: 2
+                        color: janela.tinta(0.12)
+                        Rectangle {
+                            height: parent.height
+                            radius: 2
+                            color: janela.frente
+                            width: parent.width * Math.max(0.03, janela.progressoSistema / 100)
+                            Behavior on width {
+                                NumberAnimation {
+                                    duration: 300
+                                }
+                            }
+                        }
+                    }
+                    Texto {
+                        visible: janela.erroSistema !== "" && pagina.fase !== "baixando"
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Math.round(janela.gu * 3.4)
+                        text: janela.erroSistema
+                        wrapMode: Text.WordWrap
+                        color: janela.escuro ? "#f5b26b" : "#b8621b"
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize
+                    }
                 }
             }
 
@@ -396,6 +562,64 @@ Item {
                                 onClicado: janela.abrirSite(parent.parent.modelData.id)
                             }
                         }
+                    }
+                }
+            }
+
+            // ----- comprados (apps pagos liberados neste computador) -----
+            Parte {
+                visible: pagina.comprados.length > 0 || pagina.busca.length === 0
+                titulo: janela.t("Comprados", "Purchased")
+                detalhe: janela.t("Apps pagos liberados neste computador", "Paid apps unlocked on this computer")
+                acao: janela.restaurando ? janela.t("Restaurando...", "Restoring...") : janela.t("Restaurar compras", "Restore purchases")
+                onAcionada: janela.restaurarCompras()
+                Repeater {
+                    model: pagina.comprados
+                    LinhaApp {
+                        id: comprado
+                        required property string modelData
+                        required property int index
+                        appId: modelData
+                        ultima: index === pagina.comprados.length - 1
+                        detalheTexto: {
+                            var _m = janela.mudancas;
+                            var l = janela.licencas[modelData] || {};
+                            if (l.valida)
+                                return janela.t("Liberado ", "Unlocked ") + janela.prazoTexto(l.plano, l.expira);
+                            if (l.motivo === "vencida")
+                                return janela.t("O prazo acabou", "Expired");
+                            return janela.t("Licença de outro computador", "License from another computer");
+                        }
+                        BotaoObter {
+                            visible: !!janela.app(comprado.appId) || !!janela.instalados[comprado.appId]
+                            appId: comprado.appId
+                        }
+                    }
+                }
+                // Nenhum ainda: como funciona.
+                RowLayout {
+                    visible: pagina.comprados.length === 0
+                    Layout.fillWidth: true
+                    Layout.margins: Math.round(janela.gu * 0.6)
+                    spacing: Math.round(janela.gu * 0.7)
+                    Kirigami.Icon {
+                        implicitWidth: Kirigami.Units.iconSizes.smallMedium
+                        implicitHeight: implicitWidth
+                        source: "matsu-etiqueta-symbolic"
+                        isMask: true
+                        color: janela.frente
+                        opacity: 0.6
+                    }
+                    Texto {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        opacity: 0.72
+                        text: janela.t("Comprou um app fora da Loja? Resgate o código e ele aparece aqui. Formatou o computador? Use Restaurar compras.",
+                                       "Bought an app outside the Store? Redeem the code and it shows up here. Reinstalled the computer? Use Restore purchases.")
+                    }
+                    Botao {
+                        texto: janela.t("Resgatar código", "Redeem code")
+                        onClicado: janela.pedirResgate("")
                     }
                 }
             }

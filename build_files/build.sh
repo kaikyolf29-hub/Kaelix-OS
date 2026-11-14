@@ -409,6 +409,12 @@ test -f /usr/share/dbus-1/services/org.matsu.arquivos.FileManager1.service
 # .flatpakref do botão "Instalar" do site do Flathub abrem na Loja.
 test -f /usr/share/applications/org.matsu.loja.desktop
 python3 -c "import ast; ast.parse(open('/usr/share/matsu/loja/ajudante.py').read())"
+# Loja do Matsu: o repositório da Loja (com a chave), o kit de licença dos apps
+# pagos e o ajudante que baixa a versão nova do sistema (polkit próprio).
+python3 -c "import ast; ast.parse(open('/usr/share/matsu/loja/licenca.py').read())"
+grep -q '^GPGKey=' /usr/share/matsu/loja/matsu.flatpakrepo
+test -x /usr/libexec/matsu/matsu-atualizar-sistema
+test -f /usr/share/polkit-1/actions/org.matsu.atualizar-sistema.policy
 for app in /usr/share/applications/org.kde.discover*.desktop /usr/share/applications/org.kde.plasma-systemmonitor.desktop; do
   [[ -f $app ]] || continue
   grep -q '^NoDisplay=' "$app" || sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$app"
@@ -437,7 +443,7 @@ grep -q '^X-KDE-Shortcuts=Calculator$' /usr/share/kglobalaccel/org.matsu.calcula
 # deles (o MimeType= de cada .desktop): .ics no Calendário, músicas na Música,
 # fotos no Fotos e textos no Bloco de notas.
 pares=(inode/directory:org.matsu.arquivos.desktop x-scheme-handler/appstream:org.matsu.loja.desktop
-       application/vnd.flatpak.ref:org.matsu.loja.desktop)
+       x-scheme-handler/matsu-loja:org.matsu.loja.desktop application/vnd.flatpak.ref:org.matsu.loja.desktop)
 for app in calendario musica fotos blocodenotas; do
   atalho=/usr/share/applications/org.matsu.$app.desktop
   [[ -f $atalho ]] || continue
