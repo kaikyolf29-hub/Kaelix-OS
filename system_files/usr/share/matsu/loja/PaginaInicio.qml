@@ -16,6 +16,14 @@ Item {
         janela.secao = id;
         janela.categoria = "";
     }
+    // O e-mail do "Publique o seu app" também vai para a área de transferência
+    // (nem todo computador tem um programa de e-mail para o mailto:).
+    function copiarEmail() {
+        copia.text = janela.publicar.email || "";
+        copia.selectAll();
+        copia.copy();
+        janela.avisar(janela.t("E-mail copiado", "Email copied"), true);
+    }
     function verCategoria(c) {
         janela.irPara(c === "jogos" ? "jogos" : "apps");
         janela.secao = "";
@@ -289,6 +297,24 @@ Item {
                             opacity: 0.72
                             text: janela.publicar.texto || ""
                         }
+                        Texto {
+                            text: janela.publicar.email || ""
+                            font.weight: Font.DemiBold
+                            font.underline: areaEmail.containsMouse
+                            opacity: areaEmail.containsMouse ? 1 : 0.86
+                            Accessible.role: Accessible.Button
+                            Accessible.name: janela.t("Copiar o e-mail ", "Copy the email ") + text
+                            MouseArea {
+                                id: areaEmail
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: pagina.copiarEmail()
+                            }
+                            QQC2.ToolTip.visible: areaEmail.containsMouse
+                            QQC2.ToolTip.text: janela.t("Clique para copiar", "Click to copy")
+                            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                        }
                     }
                     Botao {
                         texto: janela.t("Mandar e-mail", "Send email")
@@ -300,6 +326,11 @@ Item {
                 }
             }
         }
+    }
+
+    TextEdit {
+        id: copia
+        visible: false
     }
 
     DetalheApp {
