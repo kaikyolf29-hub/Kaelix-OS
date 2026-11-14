@@ -15,7 +15,7 @@ for alog in *anaconda.log; do
   nome="${alog%anaconda.log}"; nome="${nome%-}"; [[ -n $nome ]] || nome="principal"
   serial="serial.log"; [[ $nome == principal ]] || serial="$nome.log"
   if grep -q 'ui.gui.hubs: Starting event loop for hub' "$alog"; then
-    echo "== boot $nome: TELA GRÁFICA ABRIU"
+    echo "== boot $nome: o instalador entrou no modo gráfico"
   elif grep -q 'ui.tui' "$alog"; then
     echo "== boot $nome: abriu em modo texto"
   else
