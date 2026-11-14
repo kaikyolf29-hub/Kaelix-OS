@@ -303,6 +303,21 @@ else
   exit 1
 fi
 python3 -c "import ast,sys; ast.parse(open('/usr/share/matsu/tarefas/ajudante.py').read())"
+# Janela de senha do sistema do Matsu (agente do polkit): a peça org.matsu.senha
+# compilada na etapa "deco" e o serviço do KDE apontando para o matsu-senha-iniciar,
+# que abre a do Matsu e, se ela não conseguir, a do KDE.
+if [[ -s /deco/senha/libmatsusenha.so ]]; then
+  install -Dm0755 /deco/senha/libmatsusenha.so /usr/lib64/qt6/qml/org/matsu/senha/libmatsusenha.so
+  install -Dm0644 /deco/senha/qmldir /usr/lib64/qt6/qml/org/matsu/senha/qmldir
+  install -Dm0644 /deco/senha/matsusenha.qmltypes /usr/lib64/qt6/qml/org/matsu/senha/matsusenha.qmltypes
+  test -x /usr/libexec/matsu/matsu-senha-iniciar
+  test -f /usr/lib/systemd/user/plasma-polkit-agent.service.d/matsu.conf
+  echo "Janela de senha do Matsu instalada (agente do KDE fica de reserva)"
+else
+  rm -f /usr/lib/systemd/user/plasma-polkit-agent.service.d/matsu.conf
+  echo "AVISO: sem a peça da janela de senha; fica a do KDE" >&2
+fi
+
 # Terminal do Matsu (matsu-terminal), também compilado na etapa "deco": a janela
 # de vidro com abas, e dentro dela o terminal do Konsole (a peça konsolepart).
 if [[ -s /deco/matsu-terminal ]]; then
@@ -580,14 +595,8 @@ log "Telas de login, bloqueio e sair com a cara do Matsu"
 python3 "$CTX/build_files/telas-kde.py"
 # A tela de bloqueio inteira no jeito do Mac (hora grande, foto, senha em pílula):
 # o MatsuBloco.qml veio do system_files; o script liga ele no LockScreenUi do KDE.
+# O mesmo script põe a tela de sair do Matsu (Desligar, Reiniciar, Sair).
 python3 "$CTX/build_files/telas-matsu.py"
-# Tela de sair (Desligar, Reiniciar, Sair): a do Matsu está no visual escuro; o
-# visual claro usa a mesma (o fundo escurecido é igual nos dois).
-LNF=/usr/share/plasma/look-and-feel
-if [[ -f $LNF/org.matsu.escuro.desktop/contents/logout/Logout.qml ]]; then
-  cp -a "$LNF/org.matsu.escuro.desktop/contents/logout" "$LNF/org.matsu.claro.desktop/contents/"
-  echo "Tela de sair do Matsu nos visuais escuro e claro"
-fi
 
 log "Tipos de arquivo em português"
 # Depois de todos os pacotes (cada um pode trazer tipos novos).

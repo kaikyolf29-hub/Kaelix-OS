@@ -12,6 +12,12 @@ Tudo o que destrava (authenticator, PasswordSync, teclado virtual) continua o do
 Se o KDE mudar o arquivo e uma troca não servir, nenhuma troca é feita e a tela
 fica como veio (funcionando), com AVISO no registro da montagem.
 
+Também põe a tela de sair do Matsu (/usr/share/matsu/telas/sair) no lugar da do KDE:
+no Plasma 6.8 ela fica no pacote do shell (pasta logout, ao lado da lockscreen);
+antes, no visual (look-and-feel) do Matsu escuro e claro.
+Os arquivos do KDE trocados ficam guardados em /usr/share/matsu/telas/originais
+(para comparar quando o Plasma mudar).
+
 Uso: telas-matsu.py [pasta lockscreen]   (padrão: a pasta do sistema)
 """
 import re
@@ -22,6 +28,9 @@ PASTA = Path(sys.argv[1] if len(sys.argv) > 1 else
              "/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen")
 
 IMPORTE = 'import "file:///usr/share/matsu/telas" as Matsu'
+ORIGINAIS = Path("/usr/share/matsu/telas/originais")
+SAIR_MATSU = Path("/usr/share/matsu/telas/sair")
+VISUAIS = Path("/usr/share/plasma/look-and-feel")
 
 FUNDO_E_HORA = '''        // Matsu: o papel de parede limpo, como no Mac (sem o desfoque do KDE), com
         // um escurecido leve em cima e embaixo para a hora e a senha.
@@ -85,10 +94,48 @@ def main():
         for p in problemas:
             print(f"AVISO: tela de bloqueio: {p}; ela fica a do KDE")
         return 0
+    guardar(arquivo)
     arquivo.write_text(novo, encoding="utf-8")
     print("Tela de bloqueio: desenho do Matsu (hora grande, foto, senha em pílula)")
     return 0
 
 
+def guardar(arquivo):
+    """Guarda o arquivo do KDE como veio, antes de trocar."""
+    try:
+        ORIGINAIS.mkdir(parents=True, exist_ok=True)
+        (ORIGINAIS / arquivo.name).write_bytes(arquivo.read_bytes())
+    except OSError as erro:
+        print(f"AVISO: não deu para guardar {arquivo}: {erro}")
+
+
+def trocar_sair():
+    """Põe a tela de sair do Matsu no lugar da do KDE. Devolve as pastas trocadas."""
+    nossa = SAIR_MATSU / "Logout.qml"
+    if not nossa.is_file():
+        print(f"AVISO: falta {nossa}; a tela de sair fica a do KDE")
+        return []
+    do_shell = PASTA.parent / "logout"
+    if (do_shell / "Logout.qml").is_file():
+        pastas = [do_shell]  # Plasma 6.8 em diante
+    else:
+        pastas = [VISUAIS / v / "contents" / "logout" for v in ("org.matsu.escuro.desktop", "org.matsu.claro.desktop")
+                  if (VISUAIS / v / "contents").is_dir()]
+    feitas = []
+    for pasta in pastas:
+        pasta.mkdir(parents=True, exist_ok=True)
+        if (pasta / "Logout.qml").is_file() and IMPORTE not in (pasta / "Logout.qml").read_text(encoding="utf-8"):
+            guardar(pasta / "Logout.qml")
+        for nome in ("Logout.qml", "contagem.js"):
+            (pasta / nome).write_bytes((SAIR_MATSU / nome).read_bytes())
+        feitas.append(pasta)
+        print(f"Tela de sair do Matsu em {pasta}")
+    if not feitas:
+        print("AVISO: não achei onde fica a tela de sair; ela fica a do KDE")
+    return feitas
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    codigo = main()
+    trocar_sair()
+    sys.exit(codigo)

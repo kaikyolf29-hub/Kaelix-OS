@@ -5,7 +5,9 @@
 // Fica no lugar do MainBlock do KDE (a troca é feita na montagem por
 // build_files/telas-matsu.py) e tem as mesmas propriedades que o LockScreenUi usa:
 // mainPasswordBox, showPassword, lockScreenUiVisible, userListModel, actionItems,
-// notificationMessage, visibleBoundary e o sinal passwordResult.
+// notificationMessage, visibleBoundary e o sinal passwordResult; do Plasma 6.8,
+// passwordInputVisible (sem senha quando a pessoa escolhe a digital) e
+// authenticationTypeItem (os botões para escolher senha, digital ou cartão).
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
@@ -22,6 +24,12 @@ FocusScope {
     property bool showUserList: true
     readonly property alias userList: coluna
     property string notificationMessage: ""
+    // Plasma 6.8: some com a senha quando o jeito escolhido não usa senha.
+    property bool passwordInputVisible: true
+    // Plasma 6.8: os botões de escolher senha, digital ou cartão (só aparecem com
+    // mais de um jeito); ficam logo acima da senha.
+    property Item authenticationTypeItem: null
+    onAuthenticationTypeItemChanged: if (authenticationTypeItem) authenticationTypeItem.parent = caixaTipos
     // Os botões do KDE (Suspender, Hibernar, Trocar de usuário) ficam guardados fora
     // da tela; aqui aparecem como os botões redondos do Matsu, que chamam os deles.
     property alias actionItems: guarda.children
@@ -81,8 +89,15 @@ FocusScope {
             }
         }
 
+        ColumnLayout {
+            id: caixaTipos
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: children.length > 0 && children[0].visible ? Math.round(bloco.alturaTela * 0.012) : 0
+        }
+
         Matsu.CampoSenha {
             id: campo
+            visible: bloco.passwordInputVisible
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: Math.round(bloco.alturaTela * 0.016)
             altura: Math.max(32, Math.round(bloco.alturaTela * 0.033))

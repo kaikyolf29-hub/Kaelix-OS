@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=Permission
+Name[pt_BR]=Permissão
+Name[pt]=Permissão
+Comment=Asks for the password when a program needs administrator permission
+Comment[pt_BR]=Pede a senha quando um programa precisa de permissão de administrador
+Comment[pt]=Pede a palavra-passe quando um programa precisa de permissão de administrador
+# A janela de senha do sistema (agente do polkit do Matsu). Quem abre é o
+# serviço plasma-polkit-agent.service (matsu-senha-iniciar); este arquivo só dá
+# o nome e o ícone da janela na barra.
+Exec=/usr/libexec/matsu/matsu-senha-iniciar
+Icon=org.matsu.seguranca
+Terminal=false
+NoDisplay=true
+StartupNotify=false
+X-KDE-StartupNotify=false

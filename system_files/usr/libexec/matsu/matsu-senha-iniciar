@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+# Matsu OS — abre a janela de senha do sistema (o agente do polkit do Matsu).
+#
+# Chamado pelo serviço plasma-polkit-agent.service (drop-in matsu.conf). A janela
+# fica aberta e escondida a sessão inteira; aparece quando um programa pede
+# permissão. Se ela não abrir ou não conseguir virar o agente (peça faltando, QML
+# com erro: código diferente de 0), abre o agente do KDE no lugar, para os
+# pedidos de senha nunca ficarem sem resposta.
+KDE=/usr/libexec/kf6/polkit-kde-authentication-agent-1
+JANELA=/usr/libexec/matsu/matsu-janela
+QML=/usr/share/matsu/senha/Main.qml
+PECA=/usr/lib64/qt6/qml/org/matsu/senha/qmldir
+
+if [[ -x $JANELA && -f $QML && -f $PECA ]]; then
+  "$JANELA" org.matsu.senha "$QML"
+  codigo=$?
+  if [[ $codigo -eq 0 ]]; then
+    exit 0
+  fi
+  echo "matsu-senha: a janela de senha do Matsu saiu com o código $codigo; usando a do KDE" >&2
+else
+  echo "matsu-senha: falta uma peça da janela de senha do Matsu; usando a do KDE" >&2
+fi
+exec "$KDE"

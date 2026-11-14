@@ -67,6 +67,27 @@ cmake --build /tmp/janela-build
 install -Dm0755 /tmp/janela-build/matsu-janela /out/matsu-janela
 log "matsu-janela compilada: $(stat -c %s /out/matsu-janela) bytes"
 
+# A janela de senha do sistema (agente do polkit) do Matsu: a peça de QML
+# org.matsu.senha (ver senha/agente.h), carregada pela matsu-janela. Se não
+# compilar, a imagem sai com a janela de senha do KDE (o build.sh confere).
+compilar_senha() {
+  dnf5 -y install polkit-qt6-1-devel qt6-qtdeclarative-devel || return 1
+  cmake -S "${HERE}/senha" -B /tmp/senha-build -G Ninja -DCMAKE_BUILD_TYPE=Release || return 1
+  cmake --build /tmp/senha-build || return 1
+  local pronto=/tmp/senha-build/org/matsu/senha
+  [[ -s $pronto/libmatsusenha.so && -s $pronto/qmldir ]] || return 1
+  mkdir -p /out/senha || return 1
+  install -m0755 "$pronto/libmatsusenha.so" /out/senha/ || return 1
+  install -m0644 "$pronto/qmldir" "$pronto/matsusenha.qmltypes" /out/senha/ || return 1
+}
+log "Compilando a janela de senha do Matsu"
+if compilar_senha; then
+  log "Janela de senha compilada: $(stat -c %s /out/senha/libmatsusenha.so) bytes"
+else
+  echo "AVISO: a janela de senha do Matsu não compilou; fica a do KDE." >&2
+  rm -rf /out/senha
+fi
+
 # O terminal do Matsu (ver terminal/main.cpp): janela própria com a peça do
 # Konsole dentro.
 log "Compilando o matsu-terminal"

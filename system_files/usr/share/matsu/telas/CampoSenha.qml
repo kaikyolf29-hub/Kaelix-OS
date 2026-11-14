@@ -9,6 +9,8 @@ Basico.TextField {
     id: campo
 
     property bool mostrar: false
+    // O nome que o KDE usa (o LockScreenUi do Plasma 6.8 desliga por ele).
+    property alias showPassword: campo.mostrar
     property real altura: 38
     signal enviar()
 

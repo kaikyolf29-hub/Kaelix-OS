@@ -67,7 +67,7 @@ jobs:
                 grep -E "^/usr/(bin|libexec|lib64)/" "/saida/lista-$pacote.txt" >> /tmp/binarios || true
               else
                 for p in $linha; do
-                  [[ -e $p ]] && find "$p" -type f -size -1M >> /tmp/lista
+                  [[ -e $p ]] && find "$p" -type f -size -1024k >> /tmp/lista
                 done
               fi
             done < /lista

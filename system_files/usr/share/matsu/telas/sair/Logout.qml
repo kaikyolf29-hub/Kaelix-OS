@@ -8,9 +8,11 @@
  *    de vidro no meio, como os do Mac, com o anel que esvazia até a hora de fazer,
  *    o botão principal branco e o Cancelar.
  *
- * Mesma ligação com o KDE que a tela da Breeze (os sinais, sdtype, maysd,
+ * Mesma ligação com o KDE que a tela do KDE (os sinais, sdtype, maysd,
  * spdMethods, canLogout, softwareUpdatePending...): só o desenho é do Matsu.
- * A cópia no Matsu Claro é feita na montagem (build.sh).
+ * Na montagem, build_files/telas-matsu.py põe este arquivo no lugar do Logout.qml
+ * do KDE (no Plasma 6.8, na pasta logout do org.kde.plasma.desktop; antes, no
+ * visual do Matsu), com o contagem.js ao lado.
  */
 
 import QtQuick
@@ -22,12 +24,18 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.private.sessions
 
 import "file:///usr/share/matsu/telas" as Matsu
-import "timer.js" as Contagem
+import "contagem.js" as Contagem
 
 Item {
     id: root
-    height: screenGeometry.height
-    width: screenGeometry.width
+    // No Plasma 6.6 a tela diz o próprio tamanho (screenGeometry); no 6.8 a janela
+    // de cada monitor estica a tela sozinha.
+    Component.onCompleted: {
+        if (typeof screenGeometry !== "undefined") {
+            width = screenGeometry.width;
+            height = screenGeometry.height;
+        }
+    }
 
     signal logoutRequested()
     signal haltRequested()
