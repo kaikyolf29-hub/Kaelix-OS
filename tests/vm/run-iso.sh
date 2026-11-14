@@ -2,8 +2,10 @@
 # Liga a ISO de instalação do Matsu numa máquina virtual (QEMU com KVM) e faz
 # uma instalação de verdade pelo instalador do Matsu, do jeito que uma pessoa
 # faria: Enter nas telas, nome e senha digitados no teclado. Tira um print de
-# cada tela, espera a instalação terminar, tira o pendrive (a ISO), reinicia no
-# disco e tira print do login e do primeiro login (as Boas-vindas).
+# cada tela, espera a instalação terminar, clica em Reiniciar com o pendrive (a
+# ISO) ainda no lugar, confere que ligou pelo disco e tira print do login e do
+# primeiro login (as Boas-vindas). O disco vem antes do pendrive na ordem de
+# boot, como num PC: vazio, ele é pulado; depois da instalação, liga o Matsu.
 #
 # As telas do instalador escrevem "MATSU-INSTALADOR: tela <nome>" na porta
 # serial a cada troca; o teste espera por esses sinais em vez de chutar tempos.
@@ -51,6 +53,22 @@ registros() {
   sleep 25
 }
 
+# Quanto da tela (em %) não está escuro.
+tela_acesa() {
+  hmp ppm "$OUT/.tela.ppm"
+  python3 - "$OUT/.tela.ppm" <<'PY'
+import sys
+px = open(sys.argv[1], "rb").read().split(maxsplit=4)[4]
+amostras = range(0, len(px) - 2, 3 * 97)
+acesos = sum(1 for i in amostras if max(px[i:i + 3]) > 40)
+print(round(100 * acesos / max(len(amostras), 1)))
+PY
+  rm -f "$OUT/.tela.ppm"
+}
+
+# Quantas vezes o firmware já ligou algo (uma linha "BdsDxe: starting" por boot).
+boots() { grep -ao "BdsDxe: starting[^\"]*\"[^\"]*\"" "$OUT/serial.log" | wc -l; }
+
 OVMF=/usr/share/ovmf/OVMF.fd
 [[ -r $OVMF ]] || OVMF=/usr/share/OVMF/OVMF_CODE.fd
 
@@ -59,8 +77,8 @@ qemu-img create -q -f qcow2 "$DISK" 64G
 qemu-system-x86_64 \
   -enable-kvm -cpu host -machine q35 -smp 4 -m 6144 \
   -bios "$OVMF" \
-  -drive file="$ISO",media=cdrom,if=none,id=cdrom0,readonly=on -device ide-cd,drive=cdrom0,bootindex=1 \
-  -drive file="$DISK",if=none,id=disco0,format=qcow2 -device virtio-blk-pci,drive=disco0,bootindex=2 \
+  -drive file="$DISK",if=none,id=disco0,format=qcow2 -device virtio-blk-pci,drive=disco0,bootindex=1 \
+  -drive file="$ISO",media=cdrom,if=none,id=cdrom0,readonly=on -device ide-cd,drive=cdrom0,bootindex=2 \
   -device VGA,edid=on,xres=1920,yres=1080 -display none \
   -netdev user,id=net0 -device virtio-net-pci,netdev=net0 \
   -device qemu-xhci -device usb-tablet \
@@ -156,17 +174,41 @@ fi
 sleep 3
 shot "11-pronto"
 
-# Tira o pendrive e reinicia (Enter no "Reiniciar"): agora liga pelo disco.
-hmp cmd "eject -f cdrom0"
-sleep 2
+# Reinicia (Enter no "Reiniciar") com o pendrive no lugar: o instalador roda de
+# dentro dele até o computador apagar, então ele só sai depois que reiniciou.
+antes=$(boots)
 hmp key ret
+fim=$((SECONDS + 240))
+while (( SECONDS < fim )) && (( $(boots) <= antes )); do sleep 3; done
+if (( $(boots) <= antes )); then
+  shot "12-nao-reiniciou"
+  resultado "clicou em Reiniciar e o computador não reiniciou em 4 minutos"
+  exit 1
+fi
+ligou="$(grep -ao 'BdsDxe: starting[^"]*"[^"]*"' "$OUT/serial.log" | tail -1)"
+echo "o firmware ligou: $ligou"
+if [[ $ligou == *DVD-ROM* ]]; then
+  sleep 20
+  shot "12-ligou-pelo-pendrive"
+  resultado "reiniciou, mas ligou pelo pendrive de novo em vez do disco"
+  exit 1
+fi
+hmp cmd "eject -f cdrom0"  # agora sim: tira o pendrive
 sleep 150
 shot "12-sistema-instalado"
+if (( $(tela_acesa) < 5 )); then
+  resultado "ligou pelo disco, mas a tela do sistema instalado ficou escura"
+  exit 1
+fi
 
 # Entra com a senha criada na instalação: no primeiro login abrem as Boas-vindas.
 hmp type "matsu123"
 hmp key ret
 sleep 60
 shot "13-primeiro-login"
+if (( $(tela_acesa) < 5 )); then
+  resultado "ligou pelo disco, mas a tela ficou escura depois de entrar com a senha"
+  exit 1
+fi
 resultado "instalou e ligou pelo disco"
 exit 0

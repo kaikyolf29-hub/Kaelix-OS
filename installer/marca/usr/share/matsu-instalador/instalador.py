@@ -489,6 +489,8 @@ class Instalador(Gtk.Window):
         if DEMO:
             self.sair(0)
             return
+        # O instalador roda de dentro do pendrive até o computador apagar: por
+        # isso o pendrive só sai depois (tirar antes trava o desligamento).
         subprocess.Popen(["systemctl", "--no-wall", "reboot"])
 
     # ----- telas -----
@@ -1134,7 +1136,8 @@ class Instalador(Gtk.Window):
         selo.pack_start(img, True, True, 0)
         self.selo_ok = selo
         caixa = self._pagina("O Matsu está instalado",
-                             "Tire o pendrive e clique em Reiniciar. Na volta, é só entrar com a senha que você criou.",
+                             "Clique em Reiniciar e tire o pendrive quando aparecer a tela de login. "
+                             "Depois é só entrar com a senha que você criou.",
                              topo=selo, centro=True)
         return caixa
 
