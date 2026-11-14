@@ -32,3 +32,8 @@ busca:Logout.qml
 busca:SystemDialog.qml
 busca:MainBlock.qml
 busca:*lockscreen*
+
+# Sobreposição dos jogos (MangoHud): o exemplo de configuração da versão da imagem
+# (as opções que existem) e onde ficam as peças dele
+/usr/share/doc/mangohud
+busca:MangoHud.conf*

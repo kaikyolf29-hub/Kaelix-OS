@@ -11,6 +11,7 @@ on:
     paths:
       - "tests/extrair.txt"
       - "tests/extrair-qrc.py"
+      - "tests/extrair-palavras.py"
       - ".github/workflows/extrair.yml"
 
 permissions:
@@ -42,12 +43,16 @@ jobs:
           sudo podman pull -q "$IMG"
           sudo podman run --rm --entrypoint /usr/bin/bash \
             -v "$PWD/tests/extrair.txt:/lista:ro" -v "$PWD/tests/extrair-qrc.py:/qrc.py:ro" \
+            -v "$PWD/tests/extrair-palavras.py:/palavras.py:ro" \
             -v /tmp/extraidos:/saida "$IMG" -c '
             set -u
             mkdir -p /saida/arquivos /saida/qrc
             { rpm -q plasma-workspace plasma-desktop kwin kscreenlocker plasma-login-manager plasma-setup \
-                polkit-kde polkit-qt6-1 kf6-kirigami qt6-qtbase qt6-qt5compat qt6-qtdeclarative 2>&1
+                polkit-kde polkit-qt6-1 kf6-kirigami qt6-qtbase qt6-qt5compat qt6-qtdeclarative mangohud 2>&1
               cat /etc/os-release | grep -E "^(NAME|VERSION)="; } > /saida/VERSOES.txt
+            # As palavras de dentro da biblioteca do MangoHud: são as opções que esta
+            # versão conhece (a sobreposição dos jogos só usa opções que existem).
+            rpm -ql mangohud 2>/dev/null | grep -E "\.so$" | xargs -r python3 -I /palavras.py > /saida/mangohud-palavras.txt
             : > /tmp/lista
             : > /tmp/binarios
             while read -r linha; do
