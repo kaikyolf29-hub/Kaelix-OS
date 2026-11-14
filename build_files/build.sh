@@ -486,6 +486,15 @@ done
 # Botões da janela do lado esquerdo, nesta ordem: fechar, minimizar, tela cheia.
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
 kwriteconfig6 --file /etc/xdg/kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
+# O mesmo lado para os apps GTK e para quem pergunta ao sistema pelo gsettings
+# (org.gnome.desktop.wm.preferences button-layout), já no primeiro login, antes
+# de o KDE copiar a ordem do KWin para o GTK. Se a pessoa trocar os botões nas
+# configurações, o KDE grava a escolha dela por cima deste padrão.
+cat > /usr/share/glib-2.0/schemas/90_matsu.gschema.override <<'EOF'
+[org.gnome.desktop.wm.preferences]
+button-layout='close,minimize,maximize:'
+EOF
+glib-compile-schemas /usr/share/glib-2.0/schemas
 # Alt+Tab como no Windows 11: as janelas em miniatura lado a lado, no vidro do Matsu.
 kwriteconfig6 --file /etc/xdg/kwinrc --group TabBox --key LayoutName thumbnail_grid
 chmod 0644 /etc/xdg/kdeglobals /etc/xdg/kwinrc
