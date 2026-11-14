@@ -75,12 +75,13 @@ jobs:
           # A imagem de verdade abre o assistente de primeiro uso do KDE (Plasma
           # Setup) para a pessoa criar a conta. No teste a conta já vem pronta,
           # então marcamos o assistente como feito para cair direto no login.
-          # A tela de boas-vindas do KDE também fica de fora, para os prints
-          # mostrarem a área de trabalho. Entram também apps de bandeja de
-          # verdade, para provar os ícones perto do relógio.
+          # As Boas-vindas do Matsu também não abrem sozinhas (a marca em
+          # /etc/xdg/matsu), para os prints mostrarem a área de trabalho; o
+          # run-vm.sh abre e fotografa cada tela delas mais adiante. Entram
+          # também apps de bandeja de verdade, para provar os ícones perto do relógio.
           {
             echo "FROM $IMAGE"
-            echo "RUN touch /etc/plasma-setup-done && printf '[General]\\nShouldShow=false\\nLastSeenVersion=9.0.0\\n' > /etc/xdg/plasma-welcomerc"
+            echo "RUN touch /etc/plasma-setup-done && mkdir -p /etc/xdg/matsu && touch /etc/xdg/matsu/boas-vindas-vista"
             # Apps de bandeja de verdade para o teste da bandeja (só na imagem de teste).
             echo "RUN dnf5 -y install --skip-unavailable copyq udiskie libnotify && dnf5 clean all"
             echo "COPY tests/vm/teste-bandeja.sh /usr/bin/matsu-teste-bandeja"

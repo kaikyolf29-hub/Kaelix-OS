@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome
+Name[pt_BR]=Boas-vindas
+Name[pt]=Boas-vindas
+GenericName=Set up Matsu
+GenericName[pt_BR]=Deixar o Matsu do seu jeito
+GenericName[pt]=Deixar o Matsu do seu jeito
+Comment=Theme, bar and browser, one step at a time
+Comment[pt_BR]=Tema, barra e navegador, um passo de cada vez
+Comment[pt]=Tema, barra e navegador, um passo de cada vez
+# O assistente do primeiro login (no lugar da Central de boas-vindas do KDE).
+# Abre sozinho uma vez pelo matsu-boas-vindas (autostart) e, depois, por aqui.
+Exec=/usr/libexec/matsu/matsu-janela org.matsu.boasvindas /usr/share/matsu/boasvindas/Main.qml
+Icon=matsu-logo
+Terminal=false
+Categories=System;Settings;Qt;KDE;
+Keywords=boas-vindas;bem-vindo;começar;primeiro uso;configurar;tema;barra;navegador;welcome;setup;get started;
+StartupNotify=true
+StartupWMClass=org.matsu.boasvindas
+SingleMainWindow=true

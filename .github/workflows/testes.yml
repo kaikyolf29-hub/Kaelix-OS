@@ -40,6 +40,8 @@ jobs:
         run: python3 tests/test_telas.py
       - name: Testar os textos do primeiro uso
         run: python3 tests/test_primeiro_uso.py
+      - name: Testar as Boas-vindas do Matsu
+        run: python3 tests/test_boasvindas.py
       - name: Testar a conta da ampliação da doca
         run: node tests/test_doca.js
       - name: Testar o ajudante da página Telas (monitores)

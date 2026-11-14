@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+# Matsu OS: abre as Boas-vindas uma vez, no primeiro login (pelo autostart).
+#
+# Não abre de novo depois de vistas: a própria janela grava a marca ao fechar
+# (~/.config/matsu/boas-vindas-vista). Uma marca em /etc/xdg/matsu desliga para
+# todo mundo (o teste da máquina virtual usa, para os prints mostrarem a área de
+# trabalho).
+set -u
+
+config="${XDG_CONFIG_HOME:-$HOME/.config}"
+for marca in "$config/matsu/boas-vindas-vista" /etc/xdg/matsu/boas-vindas-vista; do
+  [[ -e $marca ]] && exit 0
+done
+# Já aberta (o login rodou duas vezes): não abre outra.
+pgrep -u "$(id -u)" -f 'matsu-janela org\.matsu\.boasvindas' >/dev/null 2>&1 && exit 0
+
+# Pelo .desktop, para a janela ganhar o nome e o ícone certos na barra.
+if command -v kstart >/dev/null 2>&1; then
+  exec kstart --application org.matsu.boasvindas
+fi
+exec /usr/libexec/matsu/matsu-janela org.matsu.boasvindas /usr/share/matsu/boasvindas/Main.qml

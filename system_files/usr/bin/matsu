@@ -368,9 +368,10 @@ cmd_browser() {
         return 0
       fi
       sleep "${MATSU_FIRST_DELAY:-12}"
-      # Se a tela de boas-vindas do Matsu está aberta, a escolha é feita nela.
-      # Sem marcar nada: se a pessoa fechar sem escolher, pergunto no próximo login.
-      if pgrep -x plasma-welcome >/dev/null 2>&1; then
+      # Se as Boas-vindas do Matsu estão abertas, a escolha é feita nelas (que
+      # marcam a escolha, até a de ficar com o Firefox). Sem marcar nada aqui: se a
+      # pessoa fechar sem passar pelo navegador, pergunto no próximo login.
+      if pgrep -u "$(id -u)" -f 'matsu-janela org\.matsu\.boasvindas' >/dev/null 2>&1; then
         say "A tela de boas-vindas está aberta; a escolha do navegador fica com ela." "The welcome screen is open; the browser choice is made there."
         return 0
       fi

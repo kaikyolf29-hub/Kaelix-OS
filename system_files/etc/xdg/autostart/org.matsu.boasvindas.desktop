@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Matsu OS - boas-vindas
+Name[en]=Matsu OS - welcome
+Comment=Abre as Boas-vindas do Matsu no primeiro login
+Comment[en]=Opens the Matsu welcome on the first login
+Exec=/usr/libexec/matsu/matsu-boas-vindas
+Icon=matsu-logo
+NoDisplay=true
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

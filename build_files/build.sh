@@ -151,6 +151,21 @@ if grep -q '^LOGO=' /usr/lib/os-release; then
 else
   echo 'LOGO=matsu-logo' >> /usr/lib/os-release
 fi
+# "Sobre este sistema" do Centro de informações (e "Detalhes do computador" nos
+# Ajustes): o Fedora deixa um /etc/xdg/kcm-about-distrorc com o logo dele
+# (LogoPath), que passa na frente do LOGO do os-release, e o título sairia
+# "Matsu OS 44" (NAME + VERSION_ID). Aqui: o pinheiro, "Matsu 27 OS" (Name +
+# Version) e a versão com a edição embaixo (Variant).
+cat > /etc/xdg/kcm-about-distrorc <<EOF
+[General]
+LogoPath=/usr/share/pixmaps/matsu-logo.svg
+Name=Matsu
+Version=${EDICAO} OS
+Variant=Versão ${VERSAO} · Edição ${ANO}
+Website=${REPO_URL}
+EOF
+chmod 0644 /etc/xdg/kcm-about-distrorc
+test -f /usr/share/pixmaps/matsu-logo.svg
 # Os textos do sistema que mostram o nome com o ano usam @EDICAO@ e @ANO@.
 # (A tela de login em texto, Ctrl+Alt+F3, já mostra o PRETTY_NAME pelo \S do /etc/issue.)
 { grep -rlZ -e '@EDICAO@' -e '@ANO@' /usr/share/matsu /usr/share/plasma /usr/share/applications \
@@ -256,8 +271,21 @@ if [[ -n $ww_url ]] && curl -fsSL --retry 3 -o /tmp/waywallen-kde.zip "$ww_url";
 else
   echo "AVISO: não deu para baixar a peça do KDE do Waywallen; o papel animado fica para depois"
 fi
-# Tela de boas-vindas do primeiro uso com a cara do Matsu (endereço do projeto).
-sed -i "s|@REPO_URL@|${REPO_URL}|" /usr/share/plasma/plasma-welcome/intro-customization.desktop
+# Boas-vindas do primeiro login: as do Matsu (org.matsu.boasvindas, pelo
+# autostart matsu-boas-vindas) no lugar da Central de boas-vindas do KDE, que
+# falava do Plasma, do Discover e do KDE Connect e ainda abria a página "O Plasma
+# foi atualizado" a cada versão nova do KDE (as novidades do Matsu ficam no app
+# Atualizações). O kded do KDE só abre a dele quando LastSeenVersion está vazio
+# ou mudou com ShowUpdatePage ligado: aqui fica com a versão da imagem e desligado.
+test -f /usr/share/applications/org.matsu.boasvindas.desktop
+test -x /usr/libexec/matsu/matsu-boas-vindas
+plasma_versao="$(rpm -q --qf '%{VERSION}' plasma-workspace 2>/dev/null || echo 9.0.0)"
+printf '[General]\nLastSeenVersion=%s\nShowUpdatePage=false\nShouldShow=false\n' "$plasma_versao" > /etc/xdg/plasma-welcomerc
+chmod 0644 /etc/xdg/plasma-welcomerc
+app=/usr/share/applications/org.kde.plasma-welcome.desktop
+if [[ -f $app ]] && ! grep -q '^NoDisplay=' "$app"; then
+  sed -i --follow-symlinks '0,/^\[Desktop Entry\]$/s//[Desktop Entry]\nNoDisplay=true/' "$app"
+fi
 # Tela de carregamento depois da senha: o emblema do Matsu no lugar do logo do KDE.
 kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Engine KSplashQML
 kwriteconfig6 --file /etc/xdg/ksplashrc --group KSplash --key Theme org.matsu.escuro.desktop

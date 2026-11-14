@@ -263,17 +263,17 @@ hmp key ret
 sleep 8
 shot "15b-barra-app-fixado"
 
-# Tela de boas-vindas com a cara do Matsu (no primeiro login de verdade ela abre sozinha).
-hmp type "clear"
-hmp key ret
-hmp type "plasma-welcome"
+# Boas-vindas do Matsu (no primeiro login de verdade elas abrem sozinhas; na
+# imagem de teste a marca em /etc/xdg/matsu desliga isso, então abrimos aqui).
+hmp type "clear; kstart --application org.matsu.boasvindas"
 hmp key ret
 sleep 12
 shot "16-boas-vindas-1"
-# Avança as telas com a seta para a direita; as do Matsu ficam perto do fim.
-for n in 2 3 4 5 6 7 8; do
-  hmp key right
-  sleep 3
+# Avança as 6 telas com Enter (o botão Continuar). Na do navegador, seguir sem
+# escolher fica com o Firefox, sem instalar nada.
+for n in 2 3 4 5 6; do
+  hmp key ret
+  sleep 4
   shot "16-boas-vindas-$n"
 done
 hmp key alt-f4

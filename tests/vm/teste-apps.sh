@@ -12,7 +12,7 @@ APPS=(
   org.kde.kcharselect org.kde.plasma.emojier org.kde.spectacle org.kde.kinfocenter org.kde.khelpcenter
   org.kde.plasma-systemmonitor org.kde.partitionmanager org.kde.kwalletmanager org.kde.kmenuedit
   org.kde.kjournaldbrowser org.kde.drkonqi.coredump.gui org.kde.kdebugsettings org.kde.kdeconnect.app
-  org.kde.krfb org.kde.discover org.kde.plasma-welcome org.corectrl.CoreCtrl
+  org.kde.krfb org.kde.discover org.matsu.boasvindas org.corectrl.CoreCtrl
   org.mozilla.firefox com.microsoft.VSCode
 )
 if [[ ${1:-} == --lista ]]; then
