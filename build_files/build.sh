@@ -590,9 +590,12 @@ done
 
 # ---------------------------------------------------------------------------
 log "Telas de login, bloqueio e sair com a cara do Matsu"
-# Essas telas vêm prontas dentro dos programas do KDE; o script troca só o
-# desenho das peças que elas dividem (relógio, foto da pessoa e botões).
+# A tela de login vem compilada dentro do programa do KDE, mas usa peças da
+# Breeze em arquivos (hora, foto, botões e o miolo com a senha): o script põe as
+# do Matsu (/usr/share/matsu/telas/breeze) no lugar e guarda as originais.
 python3 "$CTX/build_files/telas-kde.py"
+test -f /usr/share/matsu/telas/originais/breeze/SessionManagementScreen.qml \
+  || echo "AVISO: a tela de login ficou a do KDE (ver o registro acima)"
 # A tela de bloqueio inteira no jeito do Mac (hora grande, foto, senha em pílula):
 # o MatsuBloco.qml veio do system_files; o script liga ele no LockScreenUi do KDE.
 # O mesmo script põe a tela de sair do Matsu (Desligar, Reiniciar, Sair).

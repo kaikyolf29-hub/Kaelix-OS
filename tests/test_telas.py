@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testes do build_files/telas-matsu.py (a tela de bloqueio do Matsu).
+"""Testes do build_files/telas-matsu.py (bloqueio e sair) e do telas-kde.py (login).
 
 O arquivo de exemplo é o LockScreenUi.qml do Plasma 6.6 (tests/dados/telas/).
 Quando o Plasma da imagem mudar, ponha o arquivo novo ao lado (o fluxo
@@ -172,6 +172,95 @@ class Sair(unittest.TestCase):
             for v in ("org.matsu.escuro.desktop", "org.matsu.claro.desktop"):
                 self.assertTrue((visuais / v / "contents/logout/Logout.qml").is_file())
                 self.assertTrue((visuais / v / "contents/logout/contagem.js").is_file())
+
+
+spec_kde = importlib.util.spec_from_file_location("telas_kde", RAIZ / "build_files/telas-kde.py")
+K = importlib.util.module_from_spec(spec_kde)
+spec_kde.loader.exec_module(K)
+BREEZE_KDE = RAIZ / "tests/dados/telas/breeze-6.8"
+BREEZE_MATSU = RAIZ / "system_files/usr/share/matsu/telas/breeze"
+
+
+def api_qml(texto):
+    """O tipo de base e os nomes que um arquivo QML declara no objeto de fora."""
+    import re
+    base = re.search(r"^([A-Za-z0-9_.]+) \{", texto, re.M).group(1)
+    corpo = texto[texto.index(base + " {"):]
+    # Só o primeiro nível (4 espaços): o que fica dentro dos filhos não conta.
+    nomes = set(re.findall(r"^    (?:readonly |default |required )*property [\w<>.]+ (\w+)", corpo, re.M))
+    nomes |= set(re.findall(r"^    signal (\w+)", corpo, re.M))
+    nomes |= set(re.findall(r"^    function (\w+)", corpo, re.M))
+    return base, nomes
+
+
+class Login(unittest.TestCase):
+    """As peças da Breeze do Matsu (tela de login) e o build_files/telas-kde.py."""
+
+    def test_mesma_api_que_a_breeze(self):
+        # O greeter vem compilado e usa as peças pelo nome: nada pode faltar.
+        for nome in K.PECAS:
+            with self.subTest(peca=nome):
+                base_kde, kde = api_qml((BREEZE_KDE / nome).read_text(encoding="utf-8"))
+                base_matsu, matsu = api_qml((BREEZE_MATSU / nome).read_text(encoding="utf-8"))
+                self.assertEqual(base_kde, base_matsu)
+                self.assertTrue(kde, f"não achou nada no {nome} do KDE")
+                self.assertEqual(kde - matsu, set())
+
+    def test_o_que_o_greeter_usa(self):
+        # O que o Login.qml compilado do Plasma Login Manager 6.8 chama no miolo.
+        _, nomes = api_qml((BREEZE_MATSU / "SessionManagementScreen.qml").read_text(encoding="utf-8"))
+        for usado in ("userList", "userListModel", "userListCurrentIndex", "showUserList", "notificationMessage",
+                      "actionItems", "fontSize", "userSelected", "authenticationTypeItem", "_children"):
+            self.assertIn(usado, nomes)
+
+    def _breeze(self, base, prefer=True, sem=None):
+        kde, nossas, originais = base / "kde", base / "nossas", base / "originais"
+        kde.mkdir()
+        nossas.mkdir()
+        qmldir = (BREEZE_KDE / "qmldir").read_text(encoding="utf-8")
+        if not prefer:
+            qmldir = "".join(l for l in qmldir.splitlines(keepends=True) if not l.startswith("prefer "))
+        (kde / "qmldir").write_text(qmldir, encoding="utf-8")
+        for nome in K.tipos_do_qmldir(qmldir):
+            if nome != sem:
+                (kde / nome).write_text(f"// {nome} do KDE\n", encoding="utf-8")
+        for nome in K.PECAS:
+            (nossas / nome).write_text(f"// {nome} do Matsu\n", encoding="utf-8")
+        K.PASTA, K.NOSSAS, K.ORIGINAIS = kde, nossas, originais
+        return kde, originais
+
+    def test_troca_e_tira_o_prefer(self):
+        with tempfile.TemporaryDirectory() as d:
+            kde, originais = self._breeze(Path(d))
+            self.assertEqual(K.main(), 0)
+            qmldir = (kde / "qmldir").read_text(encoding="utf-8")
+            self.assertNotIn("prefer ", qmldir)
+            self.assertIn("SessionManagementScreen 254.0 SessionManagementScreen.qml", qmldir)
+            for nome in K.PECAS:
+                self.assertEqual((kde / nome).read_text(encoding="utf-8"), f"// {nome} do Matsu\n")
+                self.assertEqual((originais / nome).read_text(encoding="utf-8"), f"// {nome} do KDE\n")
+            self.assertIn("prefer ", (originais / "qmldir").read_text(encoding="utf-8"))
+            # A lista de pessoas continua a do KDE.
+            self.assertEqual((kde / "UserList.qml").read_text(encoding="utf-8"), "// UserList.qml do KDE\n")
+            # Segunda vez: os originais guardados continuam os do KDE.
+            K.main()
+            self.assertEqual((originais / "Clock.qml").read_text(encoding="utf-8"), "// Clock.qml do KDE\n")
+            self.assertIn("prefer ", (originais / "qmldir").read_text(encoding="utf-8"))
+
+    def test_peca_faltando_nao_mexe_em_nada(self):
+        with tempfile.TemporaryDirectory() as d:
+            kde, originais = self._breeze(Path(d), sem="WallpaperFader.qml")
+            antes = (kde / "qmldir").read_text(encoding="utf-8")
+            K.main()
+            self.assertEqual((kde / "qmldir").read_text(encoding="utf-8"), antes)
+            self.assertEqual((kde / "Clock.qml").read_text(encoding="utf-8"), "// Clock.qml do KDE\n")
+            self.assertFalse(originais.exists())
+
+    def test_sem_qmldir_nao_quebra(self):
+        with tempfile.TemporaryDirectory() as d:
+            K.PASTA, K.NOSSAS, K.ORIGINAIS = Path(d) / "nada", BREEZE_MATSU, Path(d) / "originais"
+            self.assertEqual(K.main(), 0)
+            self.assertFalse((Path(d) / "originais").exists())
 
 
 if __name__ == "__main__":

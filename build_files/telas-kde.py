@@ -1,62 +1,91 @@
 #!/usr/bin/env python3
-"""Dá a cara do Matsu às telas de login, de bloqueio e de sair do KDE.
+"""Dá a cara do Matsu à tela de login do KDE (Plasma Login Manager).
 
-Essas telas vêm prontas dentro dos programas do KDE, mas usam peças que ficam
-em arquivos (relógio, foto da pessoa e botões redondos). Este script troca só
-o desenho dessas peças, com trocas exatas de texto: se o KDE mudar o arquivo e
-uma troca não servir mais, ela é pulada (com aviso no registro) e a peça fica
-como veio, funcionando. Nada aqui mexe na senha ou no desbloqueio.
+A tela de login vem compilada dentro do programa (/usr/libexec/plasma-login-greeter),
+mas usa peças da Breeze que ficam em arquivos, em org/kde/breeze/components: a hora
+(Clock), a foto da pessoa (UserDelegate), os botões redondos (ActionButton) e o miolo
+com a senha (SessionManagementScreen). Este script põe as versões do Matsu dessas
+quatro peças (/usr/share/matsu/telas/breeze, com as mesmas propriedades das do KDE)
+no lugar das originais, que ficam guardadas em /usr/share/matsu/telas/originais/breeze.
 
-Uso: telas-kde.py [pasta das peças]   (padrão: a pasta do sistema)
+O qmldir da Breeze tem "prefer :/qt/qml/...": com essa linha o Qt usa a cópia de
+dentro da biblioteca e ignora os arquivos. Ela sai, para os arquivos valerem.
+
+Tudo ou nada: se faltar alguma coisa (o qmldir, uma peça que ele lista, uma das
+nossas), nada muda e a tela fica a do KDE, funcionando. Nada aqui mexe na senha.
+
+Uso: telas-kde.py [pasta das peças do KDE] [pasta das peças do Matsu] [pasta dos originais]
 """
+import shutil
 import sys
 from pathlib import Path
 
 PASTA = Path(sys.argv[1] if len(sys.argv) > 1 else "/usr/lib64/qt6/qml/org/kde/breeze/components")
+NOSSAS = Path(sys.argv[2] if len(sys.argv) > 2 else "/usr/share/matsu/telas/breeze")
+ORIGINAIS = Path(sys.argv[3] if len(sys.argv) > 3 else "/usr/share/matsu/telas/originais/breeze")
 
-TROCAS = {
-    # Botões redondos (desligar, reiniciar, sair, trocar de usuário): vidro
-    # sempre visível, como as pílulas das ilhas, e mais claro ao passar o mouse.
-    "ActionButton.qml": [
-        ("return root.softwareRendering ? 0.8 : 0.15", "return root.softwareRendering ? 0.8 : 0.26"),
-        ("return root.softwareRendering ? 0.6 : 0\n", "return root.softwareRendering ? 0.6 : 0.13\n"),
-    ],
-    # Hora em negrito, como na ilha da direita.
-    "Clock.qml": [
-        ("font.weight: Font.DemiBold", "font.weight: Font.Bold"),
-    ],
-    # Foto da pessoa num círculo da cor de destaque (o anil do Matsu, ou a cor
-    # do vidro que a pessoa escolheu), que aparece quando não há foto, e
-    # o nome em negrito.
-    "UserDelegate.qml": [
-        ("        color: Kirigami.Theme.backgroundColor\n        opacity: 0.6\n",
-         "        color: Kirigami.Theme.highlightColor\n        opacity: 0.92\n"),
-        ("        font.pointSize: wrapper.fontSize + 4\n",
-         "        font.pointSize: wrapper.fontSize + 4\n        font.weight: Font.DemiBold\n"),
-    ],
-}
+PECAS = ("ActionButton.qml", "Clock.qml", "UserDelegate.qml", "SessionManagementScreen.qml")
+
+
+def tipos_do_qmldir(texto):
+    """Os arquivos .qml que o qmldir lista (nome do tipo, versão, arquivo)."""
+    arquivos = []
+    for linha in texto.splitlines():
+        partes = linha.split()
+        if len(partes) == 3 and partes[2].endswith(".qml") and partes[0][:1].isupper():
+            arquivos.append(partes[2])
+    return arquivos
+
+
+def problemas():
+    qmldir = PASTA / "qmldir"
+    if not qmldir.is_file():
+        return [f"{qmldir} não existe"]
+    listados = tipos_do_qmldir(qmldir.read_text(encoding="utf-8"))
+    faltas = []
+    # Sem o "prefer", o Qt lê cada peça do disco: todas precisam estar lá.
+    for nome in listados:
+        if not (PASTA / nome).is_file():
+            faltas.append(f"{PASTA / nome} não existe (o qmldir lista)")
+    for nome in PECAS:
+        if nome not in listados:
+            faltas.append(f"o qmldir não lista {nome}")
+        if not (NOSSAS / nome).is_file():
+            faltas.append(f"falta a nossa {NOSSAS / nome}")
+    # A lista de pessoas e o tremido da senha errada continuam os do KDE.
+    for nome in ("UserList.qml", "RejectPasswordAnimation.qml"):
+        if nome not in listados:
+            faltas.append(f"o qmldir não lista {nome}")
+    return faltas
+
+
+def guardar(arquivo):
+    ORIGINAIS.mkdir(parents=True, exist_ok=True)
+    destino = ORIGINAIS / arquivo.name
+    # Só a primeira vez: rodar de novo não pode guardar a nossa no lugar da do KDE.
+    if not destino.exists():
+        shutil.copy2(arquivo, destino)
 
 
 def main():
-    feitas = puladas = 0
-    for nome, trocas in TROCAS.items():
-        arquivo = PASTA / nome
-        if not arquivo.is_file():
-            print(f"AVISO: {arquivo} não existe; fica como veio")
-            puladas += len(trocas)
-            continue
-        texto = original = arquivo.read_text(encoding="utf-8")
-        for antes, depois in trocas:
-            if texto.count(antes) == 1:
-                texto = texto.replace(antes, depois)
-                feitas += 1
-            else:
-                print(f"AVISO: {nome}: a troca de {antes.strip()[:50]!r} não serviu; essa parte fica como veio")
-                puladas += 1
-        if texto != original:
-            arquivo.write_text(texto, encoding="utf-8")
-    print(f"Telas de login, bloqueio e sair: {feitas} trocas feitas, {puladas} puladas")
+    faltas = problemas()
+    if faltas:
+        for falta in faltas:
+            print(f"AVISO: tela de login: {falta}")
+        print("Tela de login: fica a do KDE (nada foi trocado)")
+        return 0
+    qmldir = PASTA / "qmldir"
+    guardar(qmldir)
+    for nome in PECAS:
+        guardar(PASTA / nome)
+        shutil.copyfile(NOSSAS / nome, PASTA / nome)
+    linhas = qmldir.read_text(encoding="utf-8").splitlines(keepends=True)
+    sem_prefer = [linha for linha in linhas if not linha.startswith("prefer ")]
+    qmldir.write_text("".join(sem_prefer), encoding="utf-8")
+    print(f"Tela de login do Matsu: {len(PECAS)} peças da Breeze trocadas "
+          f"({len(linhas) - len(sem_prefer)} linha prefer tirada); originais em {ORIGINAIS}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
