@@ -1,0 +1,99 @@
+/* Transições do site, a partir das gratuitas do transitions.dev (licença no
+   README do site): troca de ícone, marcador que desliza, troca de texto e de
+   foto com desfoque e o visto que se desenha. Todas usam a mesma escala de
+   tempo e respeitam "reduzir movimento". */
+:root {
+  --dur-micro: 80ms;
+  --dur-rapida: 150ms;
+  --dur-padrao: 250ms;
+  --dur-media: 350ms;
+  --dur-lenta: 500ms;
+  --curva-saida: cubic-bezier(0.22, 1, 0.36, 1);
+  --curva-mola: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --curva-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --desfoque-pouco: 2px;
+  --desfoque-medio: 3px;
+}
+
+/* Troca de ícone (icon swap): os dois ícones no mesmo lugar, um some com
+   desfoque e escala enquanto o outro aparece. */
+.troca-icone {
+  display: inline-grid;
+  place-items: center;
+}
+.troca-icone > * {
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--dur-padrao) ease-in-out,
+    filter var(--dur-padrao) ease-in-out,
+    transform var(--dur-padrao) ease-in-out;
+}
+.troca-icone[data-mostra='a'] .troca-icone__b,
+.troca-icone[data-mostra='b'] .troca-icone__a {
+  opacity: 0;
+  filter: blur(var(--desfoque-pouco));
+  transform: scale(0.25);
+}
+
+/* O visto que se desenha (success check), no botão de copiar. */
+.visto path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+}
+.troca-icone[data-mostra='b'] .visto path {
+  animation: desenhar-visto var(--dur-lenta) var(--curva-saida) 60ms forwards;
+}
+@keyframes desenhar-visto {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Troca de texto (text states swap): o texto novo sobe 4px saindo do desfoque. */
+.troca-texto {
+  animation: texto-entra var(--dur-padrao) ease-in-out both;
+}
+@keyframes texto-entra {
+  from {
+    opacity: 0;
+    filter: blur(var(--desfoque-pouco));
+    transform: translateY(4px);
+  }
+}
+
+/* Troca de foto: a nova entra saindo do desfoque, a velha sai por baixo. */
+.troca-foto {
+  transition:
+    opacity var(--dur-media) var(--curva-saida),
+    filter var(--dur-media) var(--curva-saida),
+    transform var(--dur-media) var(--curva-saida);
+}
+.troca-foto[data-ativa='false'] {
+  opacity: 0;
+  filter: blur(var(--desfoque-medio));
+  transform: scale(0.985);
+  pointer-events: none;
+}
+
+/* Marcador que desliza (tabs sliding): a pílula vai para a opção escolhida só
+   com transform. */
+.segmentos__marca,
+.abas__marca {
+  transition: transform var(--dur-padrao) var(--curva-saida);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .troca-icone > *,
+  .troca-foto,
+  .segmentos__marca,
+  .abas__marca {
+    transition: none !important;
+  }
+  .troca-texto,
+  .troca-icone[data-mostra='b'] .visto path {
+    animation: none !important;
+  }
+  .visto path {
+    stroke-dashoffset: 0;
+  }
+}

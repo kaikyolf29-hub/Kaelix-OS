@@ -1,0 +1,1199 @@
+/* As partes da página: o topo (a área de trabalho), a barra de vidro desenhada
+   em código, os estilos da barra, os apps, a instalação, baixar e o fim. */
+
+/* ---------- papel de parede em pixel art ---------- */
+.papel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 50%;
+  image-rendering: pixelated;
+  transition: opacity var(--dur-media) var(--curva-saida);
+}
+.papel--claro {
+  opacity: 0;
+}
+:root[data-tema='claro'] .papel--claro {
+  opacity: 1;
+}
+
+/* ---------- o topo ---------- */
+.topo {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+  background: #1e1b3a;
+}
+.topo__papel {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+/* Só o lado do texto escurece um pouco, para as letras ficarem legíveis sobre o
+   pôr do sol; o sol e o lago ficam como no sistema. */
+.topo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(98deg, rgba(16, 15, 26, 0.62) 0%, rgba(16, 15, 26, 0.42) 34%, rgba(16, 15, 26, 0) 60%);
+  transition: opacity var(--dur-media) var(--curva-saida);
+}
+:root[data-tema='claro'] .topo {
+  background: #c9cdf3;
+}
+:root[data-tema='claro'] .topo::before {
+  background: linear-gradient(98deg, rgba(246, 246, 252, 0.62) 0%, rgba(246, 246, 252, 0.4) 34%, rgba(246, 246, 252, 0) 60%);
+}
+.topo__texto {
+  padding-top: calc(var(--nav) + clamp(40px, 9svh, 112px));
+  padding-bottom: 120px;
+  color: var(--sobre-papel);
+}
+.topo__h1 {
+  margin: 0;
+  font-weight: inherit;
+}
+.topo__nome {
+  font-family: var(--fonte-titulo);
+  font-size: var(--t-h1);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  column-gap: 0.2em;
+  text-shadow: 0 2px 24px rgba(10, 8, 24, 0.25);
+}
+:root[data-tema='claro'] .topo__nome {
+  text-shadow: none;
+}
+.topo__categoria {
+  display: block;
+  margin-top: 20px;
+  max-width: 18em;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(22px, 1.1vw + 14px, 32px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+.topo__lead {
+  margin-top: 20px;
+  max-width: 31em;
+  font-size: var(--t-lead);
+  line-height: 1.5;
+  color: var(--sobre-papel-2);
+  text-wrap: pretty;
+}
+.topo__texto .btn-linha {
+  margin-top: 32px;
+}
+.topo__fato {
+  margin-top: 20px;
+  font-size: var(--t-pequeno);
+  color: var(--sobre-papel-2);
+}
+
+/* A entrada: uma vez, quando a página abre. O papel assenta, o nome sai do
+   desfoque palavra por palavra (BlurText) e o resto sobe junto. */
+.js .topo__papel .papel--escuro,
+.js .topo__papel .papel--claro {
+  animation: papel-assenta 1.6s var(--curva-saida) both;
+}
+@keyframes papel-assenta {
+  from {
+    transform: scale(1.06);
+  }
+}
+.js .entra {
+  animation: entra 0.7s var(--curva-saida) both;
+  animation-delay: var(--atraso, 0ms);
+}
+@keyframes entra {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(14px);
+  }
+}
+.js .topo__barra.entra {
+  --atraso: 720ms;
+  animation-name: barra-entra;
+  animation-duration: 0.8s;
+}
+@keyframes barra-entra {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@media (max-width: 639px) {
+  .topo__texto {
+    padding-bottom: 104px;
+  }
+  .topo__nome {
+    font-size: clamp(48px, 14.5vw, 64px);
+  }
+  .topo::before {
+    background: linear-gradient(180deg, rgba(16, 15, 26, 0.58) 0%, rgba(16, 15, 26, 0.34) 58%, rgba(16, 15, 26, 0) 84%);
+  }
+  :root[data-tema='claro'] .topo::before {
+    background: linear-gradient(180deg, rgba(246, 246, 252, 0.62) 0%, rgba(246, 246, 252, 0.38) 58%, rgba(246, 246, 252, 0) 84%);
+  }
+  .topo__texto .btn-linha .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* ---------- a barra de vidro (a mesma do sistema, em código) ---------- */
+.barra {
+  --ilha-h: 56px;
+  --ilha-fundo: rgba(28, 28, 31, 0.5);
+  --barra-tinta: #f4f4f6;
+  --barra-tinta-2: rgba(244, 244, 246, 0.7);
+  --barra-miolo: rgba(255, 255, 255, 0.08);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  color: var(--barra-tinta);
+  font-family: var(--fonte);
+}
+:root[data-tema='claro'] .barra {
+  --ilha-fundo: rgba(246, 246, 249, 0.62);
+  --barra-tinta: #1a1a1e;
+  --barra-tinta-2: rgba(26, 26, 30, 0.68);
+  --barra-miolo: rgba(26, 26, 30, 0.06);
+}
+
+.barra--fusao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+.barra--fusao .ilha--inicio {
+  justify-self: start;
+}
+.barra--fusao .ilha--relogio {
+  justify-self: end;
+}
+
+/* A ilha: o vidro do React Bits com a cor do vidro do Matsu por cima. */
+.barra .ilha {
+  height: var(--ilha-h);
+  overflow: visible;
+  background: var(--ilha-fundo);
+}
+.barra .glass-surface--svg {
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  backdrop-filter: blur(10px) var(--filter-id) saturate(var(--glass-saturation, 1.5));
+}
+.barra .glass-surface--fallback,
+.barra .ilha--simples {
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+}
+.barra .ilha--simples {
+  display: flex;
+  align-items: center;
+  border-radius: 18px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 8px 24px rgba(10, 10, 20, 0.12);
+}
+:root[data-tema='claro'] .barra .ilha--simples {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 0 0 1px rgba(26, 26, 30, 0.06),
+    0 8px 24px rgba(40, 40, 70, 0.1);
+}
+.barra .glass-surface__content,
+.barra .ilha--simples {
+  gap: 10px;
+  padding: 6px 8px;
+}
+
+.barra__logo {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 11px;
+}
+.barra__busca {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 196px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 11px;
+  background: var(--barra-miolo);
+  color: var(--barra-tinta-2);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.barra__busca svg {
+  flex: none;
+}
+
+.barra__apps {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.barra__apps > li {
+  display: flex;
+}
+.barra__app {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  transition:
+    background-color var(--dur-rapida) var(--curva-ui),
+    transform var(--dur-padrao) var(--curva-mola);
+}
+.barra__app img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  pointer-events: none;
+}
+a.barra__app {
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .barra__app:hover {
+    background: var(--barra-miolo);
+  }
+}
+a.barra__app:active {
+  transform: scale(0.92);
+}
+/* O balão com o nome, como no sistema. */
+.barra__app[data-balao]::after {
+  content: attr(data-balao);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(24, 24, 27, 0.92);
+  color: #f4f4f6;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity var(--dur-rapida) var(--curva-ui),
+    transform var(--dur-rapida) var(--curva-ui);
+}
+:root[data-tema='claro'] .barra__app[data-balao]::after {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1e;
+  box-shadow: 0 0 0 1px rgba(26, 26, 30, 0.08), 0 8px 20px rgba(40, 40, 70, 0.14);
+}
+.barra__app[data-balao]:hover::after,
+a.barra__app[data-balao]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 120ms;
+}
+.barra__separador {
+  width: 1px;
+  height: 28px;
+  margin: 0 6px;
+  background: var(--barra-tinta);
+  opacity: 0.2;
+}
+
+.barra__bandeja {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 6px;
+  color: var(--barra-tinta);
+}
+.barra__acima {
+  transform: rotate(180deg);
+}
+.barra__pilula {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--barra-miolo);
+}
+.barra__hora {
+  display: grid;
+  justify-items: end;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.barra__hora b {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.barra__hora small {
+  font-size: 12px;
+  color: var(--barra-tinta-2);
+}
+
+/* Estilo Windows: uma faixa de ponta a ponta. */
+.faixa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 60px;
+  padding: 0 12px;
+  background: var(--ilha-fundo);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+}
+:root[data-tema='claro'] .faixa {
+  border-top-color: rgba(255, 255, 255, 0.7);
+}
+.faixa .barra__bandeja {
+  margin-left: auto;
+}
+.faixa .barra__apps {
+  margin-left: 8px;
+}
+
+/* Estilo Mac: a barra fina no alto e a doca embaixo. */
+.barra--mac {
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  pointer-events: none;
+}
+.barra--mac > * {
+  pointer-events: auto;
+}
+.mac-topo {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+  background: var(--ilha-fundo);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  white-space: nowrap;
+}
+.mac-topo img {
+  width: 18px;
+  height: 18px;
+}
+.mac-topo b {
+  font-weight: 600;
+}
+.mac-topo__direita {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+.barra .ilha--doca {
+  height: 64px;
+}
+.barra__apps--ampliar .barra__app {
+  width: 48px;
+  height: 48px;
+  transform-origin: 50% 100%;
+}
+.barra__apps--ampliar .barra__app img {
+  width: 40px;
+  height: 40px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .barra__apps--ampliar .barra__app:hover {
+    background: transparent;
+    transform: translateY(-10px) scale(1.4);
+  }
+  .barra__apps--ampliar li:has(+ li:hover) .barra__app,
+  .barra__apps--ampliar li:hover + li .barra__app {
+    transform: translateY(-5px) scale(1.18);
+  }
+  .barra__apps--ampliar .barra__app:hover::after {
+    bottom: calc(100% + 6px);
+    font-size: 10px;
+  }
+}
+
+/* No topo a barra é a de verdade, em tamanho de tela. */
+.topo__barra {
+  z-index: 3;
+}
+@media (max-width: 1180px) {
+  .topo__barra .barra__busca {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+}
+@media (max-width: 899px) {
+  .topo__barra .barra__acima,
+  .topo__barra .barra__bandeja > svg:first-child {
+    display: none;
+  }
+  .topo__barra .barra__separador,
+  .topo__barra .barra__separador + li {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .topo__barra.barra--fusao {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .topo__barra .ilha--inicio,
+  .topo__barra .ilha--relogio {
+    display: none;
+  }
+  .topo__barra .barra__apps > li:nth-child(n + 7) {
+    display: none;
+  }
+}
+@media (max-width: 379px) {
+  .topo__barra .barra__apps > li:nth-child(n + 6) {
+    display: none;
+  }
+}
+
+/* ---------- os estilos da barra ---------- */
+.palco {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  height: clamp(340px, calc(100svh - var(--padt) - var(--padb) - 210px), 640px);
+  border-radius: var(--r-janela);
+  background: #1e1b3a;
+  box-shadow: 0 0 0 1px var(--linha-forte), var(--sombra);
+}
+.palco__papel {
+  z-index: -1;
+  object-position: 62% 72%;
+}
+.palco__barra {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  filter: blur(var(--desfoque-medio));
+  transform: translateY(8px);
+  transition:
+    opacity var(--dur-media) var(--curva-saida),
+    filter var(--dur-media) var(--curva-saida),
+    transform var(--dur-media) var(--curva-saida);
+}
+.palco__barra[data-ativo='true'] {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+.palco__barra[data-ativo='false'] {
+  pointer-events: none;
+}
+/* Em telas menores a barra encolhe inteira, como numa foto da tela. */
+@media (max-width: 1023px) {
+  .palco__barra .barra {
+    --k: 0.72;
+    left: 50%;
+    right: auto;
+    width: calc(100% / var(--k));
+    transform: translateX(-50%) scale(var(--k));
+    transform-origin: 50% 100%;
+  }
+  .palco__barra .barra--mac {
+    top: auto;
+    height: calc(100% / var(--k));
+  }
+}
+@media (max-width: 639px) {
+  .palco {
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .palco__barra .barra {
+    --k: 0.5;
+  }
+  .palco .barra__busca {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+  .palco .barra--fusao {
+    padding: 0 12px 12px;
+  }
+}
+
+/* ---------- a vitrine da loja ---------- */
+.vitrine {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 32px;
+}
+.vitrine li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-radius: var(--r-ctrl);
+  background: var(--cartao);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.vitrine img {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  object-fit: contain;
+}
+@media (max-width: 1180px) and (min-width: 1024px), (max-width: 519px) {
+  .vitrine {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- os apps ---------- */
+.grade-apps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.grade-apps > li {
+  display: flex;
+}
+.cartao-app.spotlight-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 24px 24px 0;
+  border-radius: var(--r-cartao);
+}
+.cartao-app__topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.cartao-app__topo img {
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+.cartao-app__topo b {
+  display: block;
+  font-family: var(--fonte-titulo);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.cartao-app__topo span span {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--tinta-2);
+}
+.cartao-app__janela {
+  position: relative;
+  margin-top: 24px;
+  aspect-ratio: 16 / 8.4;
+  overflow: hidden;
+}
+.cartao-app__janela img {
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 0 0 1px var(--linha-forte), 0 18px 40px -20px rgba(0, 0, 0, 0.6);
+  transition: transform var(--dur-media) var(--curva-saida);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cartao-app:hover .cartao-app__janela img {
+    transform: translateY(-6px);
+  }
+}
+@media (max-width: 1023px) {
+  .grade-apps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+@media (max-width: 639px) {
+  .grade-apps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cartao-app.spotlight-card {
+    padding: 20px 20px 0;
+  }
+}
+
+/* ---------- como instalar: os passos presos na tela ---------- */
+.secao--instalar {
+  --h: 2.2;
+  display: block;
+  padding: 0;
+}
+.instalar__fixo {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--padt) 0 var(--padb);
+}
+.passos {
+  position: relative;
+  margin-top: 32px;
+  display: grid;
+}
+/* A linha que liga os números. */
+.passos::before {
+  content: '';
+  position: absolute;
+  left: 21px;
+  top: 28px;
+  bottom: 28px;
+  width: 1px;
+  background: var(--linha-forte);
+}
+.passo {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
+  align-items: start;
+  width: 100%;
+  padding: 14px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.passo__numero {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--chao);
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+  color: var(--tinta-2);
+  font-family: var(--fonte-titulo);
+  font-size: 17px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--dur-padrao) var(--curva-saida),
+    color var(--dur-padrao) var(--curva-saida),
+    box-shadow var(--dur-padrao) var(--curva-saida);
+}
+.passo__texto {
+  padding-top: 9px;
+}
+.passo__texto b {
+  display: block;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--tinta-2);
+  transition: color var(--dur-padrao) var(--curva-saida);
+}
+.passo__texto span {
+  display: block;
+  margin-top: 4px;
+  max-width: 30em;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--tinta-2);
+}
+.passos li[data-ativo='true'] .passo__numero {
+  background: var(--botao);
+  color: var(--botao-tinta);
+  box-shadow: none;
+}
+.passos li[data-ativo='true'] .passo__texto b,
+.passo:hover .passo__texto b {
+  color: var(--tinta);
+}
+.passo__visual-celular {
+  display: none;
+}
+
+.quadro--passos {
+  display: grid;
+  aspect-ratio: 16 / 10;
+  background: var(--chao-2);
+}
+.quadro__camada {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+.quadro--passos .quadro__foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Passo 1: a ISO indo para o pendrive. */
+.gravar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 32px;
+}
+.gravar__arquivo {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 236px;
+  padding: 28px 16px 22px;
+  border-radius: var(--r-cartao);
+  background: var(--cartao);
+  box-shadow: 0 0 0 1px var(--linha-forte), var(--sombra);
+  text-align: center;
+}
+.gravar__arquivo img {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+}
+.gravar__arquivo b {
+  font-size: 15px;
+  font-weight: 500;
+}
+.gravar__arquivo span {
+  font-size: 13px;
+  color: var(--tinta-2);
+}
+.gravar__fio {
+  position: relative;
+  flex: 0 1 140px;
+  min-width: 20px;
+  height: 2px;
+  margin: 0 -2px;
+  background: var(--linha-forte);
+  overflow: hidden;
+}
+.gravar__fio span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--sakura));
+  animation: fio-corre 1.6s linear infinite;
+}
+@keyframes fio-corre {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+.gravar__pendrive {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+.gravar__ponta {
+  width: 26px;
+  height: 36px;
+  border-radius: 4px 0 0 4px;
+  background: var(--cartao-2);
+  box-shadow: inset 0 0 0 1px var(--linha-forte);
+}
+.gravar__corpo {
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 68px;
+  border-radius: 10px 18px 18px 10px;
+  background: var(--botao);
+  color: var(--botao-tinta);
+}
+.troca-foto[data-ativa='false'] .gravar__fio span {
+  animation-play-state: paused;
+}
+
+/* Passo 3: o resumo do instalador. */
+.resumo {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 32px;
+}
+.resumo__lista {
+  width: min(100%, 420px);
+  padding: 8px;
+  border-radius: var(--r-cartao);
+  background: var(--cartao);
+  box-shadow: 0 0 0 1px var(--linha-forte), var(--sombra);
+}
+.resumo__lista li {
+  display: grid;
+  grid-template-columns: 36px auto 1fr 24px;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 15px;
+}
+.resumo__lista li + li {
+  box-shadow: 0 -1px 0 var(--linha);
+}
+.resumo__icone {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--cartao-2);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+.resumo__nome {
+  font-weight: 500;
+}
+.resumo__valor {
+  justify-self: end;
+  color: var(--tinta-2);
+  text-align: right;
+}
+.resumo__estado {
+  display: grid;
+  place-items: center;
+  color: var(--tinta);
+}
+.resumo__lista li[data-pronto='false'] .resumo__valor {
+  color: var(--tinta);
+  font-weight: 500;
+}
+.resumo__lista li[data-pronto='false'] .resumo__estado::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sakura);
+}
+
+@media (max-width: 1023px) {
+  .secao--instalar {
+    --h: 1;
+    padding: var(--padt) 0 var(--padb);
+  }
+  .instalar__fixo {
+    position: static;
+    min-height: 0;
+    padding: 0;
+  }
+  .quadro--passos {
+    display: none;
+  }
+  .passos::before {
+    bottom: auto;
+    height: 0;
+  }
+  .passos li {
+    padding-bottom: 24px;
+  }
+  .passos li .passo__numero {
+    background: var(--botao);
+    color: var(--botao-tinta);
+    box-shadow: none;
+  }
+  .passos li .passo__texto b {
+    color: var(--tinta);
+  }
+  .passo {
+    cursor: default;
+  }
+  .passo__visual-celular {
+    display: block;
+    margin: 8px 0 0 60px;
+  }
+  .passo__visual-celular .quadro {
+    background: var(--chao-2);
+  }
+}
+@media (max-width: 639px) {
+  .passo__visual-celular {
+    margin-left: 0;
+  }
+  .gravar {
+    padding: 24px 16px;
+    min-height: 200px;
+  }
+  .gravar__arquivo {
+    width: 172px;
+    padding: 18px 10px 14px;
+  }
+  .gravar__arquivo img {
+    width: 48px;
+    height: 48px;
+  }
+  .gravar__arquivo b {
+    font-size: 13px;
+  }
+  .gravar__arquivo span {
+    font-size: 12px;
+  }
+  .gravar__ponta {
+    width: 16px;
+    height: 24px;
+  }
+  .gravar__corpo {
+    width: 72px;
+    height: 44px;
+  }
+  .resumo {
+    padding: 16px;
+    min-height: 0;
+  }
+  .resumo__lista li {
+    grid-template-columns: 32px auto 1fr 20px;
+    gap: 10px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+  .resumo__icone {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* ---------- baixar ---------- */
+.cartao-baixar.spotlight-card {
+  margin-top: 32px;
+  padding: 32px;
+  border-radius: var(--r-cartao);
+}
+.cartao-baixar__placa {
+  margin-top: 16px;
+  min-height: 1.6em;
+  color: var(--tinta-2);
+}
+.cartao-baixar .btn--grande {
+  margin-top: 24px;
+}
+.cartao-baixar__arquivo {
+  margin-top: 14px;
+  font-size: var(--t-pequeno);
+  color: var(--tinta-2);
+  overflow-wrap: anywhere;
+}
+.cartao-baixar__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linha);
+  font-size: 15px;
+}
+.soma {
+  margin-top: 12px;
+  font-size: var(--t-pequeno);
+  color: var(--tinta-2);
+}
+.soma--codigo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--r-ctrl);
+  background: var(--botao-2);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+.soma--codigo > span {
+  flex: none;
+  font-weight: 500;
+  color: var(--tinta);
+}
+.soma code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', 'DejaVu Sans Mono', monospace;
+  font-size: 13px;
+}
+.soma .botao-icone {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+.requisitos {
+  padding: 28px 0 0;
+}
+.requisitos h3 {
+  margin-bottom: 16px;
+}
+.requisitos dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--linha);
+}
+.requisitos dl > div:last-child {
+  border-bottom: 1px solid var(--linha);
+}
+.requisitos dt {
+  color: var(--tinta-2);
+}
+.requisitos dd {
+  font-weight: 500;
+}
+@media (min-width: 1024px) {
+  .requisitos {
+    padding-top: 138px;
+  }
+}
+@media (max-width: 639px) {
+  .cartao-baixar.spotlight-card {
+    padding: 20px;
+  }
+  .cartao-baixar .btn--grande {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+/* ---------- o fim ---------- */
+.rodape {
+  padding: 120px 0 calc(40px + env(safe-area-inset-bottom));
+  background: var(--chao-2);
+  border-top: 1px solid var(--linha);
+}
+.rodape__wrap {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 64px;
+}
+.rodape__fecho {
+  grid-column: 1 / span 6;
+}
+.rodape__logo {
+  width: 88px;
+  height: 88px;
+}
+.rodape__nome {
+  margin-top: 24px;
+  font-size: clamp(44px, 4vw + 12px, 80px);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+.rodape__fecho .btn-linha {
+  margin-top: 32px;
+}
+.rodape__diretorio {
+  grid-column: 8 / span 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+}
+.rodape__colunas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.rodape__colunas h3 {
+  margin-bottom: 12px;
+  font-family: var(--fonte);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--tinta-2);
+}
+.rodape__colunas a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  text-decoration: none;
+  transition: color var(--dur-rapida) var(--curva-ui);
+}
+.rodape__colunas a:hover {
+  color: var(--sakura);
+}
+.rodape__legal {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--tinta-2);
+}
+@media (max-width: 1023px) {
+  .rodape__fecho,
+  .rodape__diretorio {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 639px) {
+  .rodape {
+    padding-top: 80px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- reduzir movimento ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .js .entra,
+  .js .topo__papel .papel--escuro,
+  .js .topo__papel .papel--claro,
+  .gravar__fio span {
+    animation: none !important;
+  }
+  .palco__barra,
+  .barra__app,
+  .barra__app::after,
+  .cartao-app__janela img,
+  .papel {
+    transition: none !important;
+  }
+  .barra__apps--ampliar .barra__app:hover,
+  .barra__apps--ampliar li .barra__app {
+    transform: none !important;
+  }
+}

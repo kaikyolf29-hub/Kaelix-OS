@@ -1,15 +1,20 @@
 #!/usr/bin/python3
-"""Prepara as fotos do site a partir das prints da máquina virtual.
+"""Prepara as fotos do site a partir das prints de verdade do sistema.
 
-As fotos do site são sempre do sistema de verdade: as prints que o fluxo
-"Testar e tirar prints" tira da imagem montada (ramo prints, pasta ultimo).
+As fotos da área de trabalho e das janelas vêm das prints que o fluxo "Testar e
+tirar prints" tira da imagem montada (ramo prints, pasta ultimo). As dos apps
+novos (Relógio, Calendário, Notas...) vêm das prévias com dados de exemplo
+(/mnt/project-files/kaelix-os/apps-novos/), porque na VM eles abrem vazios.
+Os passos 1 (gravar o pendrive) e 3 (o resumo do instalador) são desenhados
+no próprio site, em código.
 
 Uso:
-  git fetch origin prints && git archive origin/prints ultimo | tar -x -C /tmp/prints
-  python3 visual/site/preparar-fotos.py /tmp/prints/ultimo
+  git fetch origin prints
+  git archive origin/prints ultimo | tar -x -C /tmp/prints
+  python3 visual/site/preparar-fotos.py /tmp/prints/ultimo <pasta apps-novos>
 
-Cada foto vira um .webp em site/img/. Uma print que não existe é pulada (o
-site esconde a foto que falta).
+Cada foto vira um .webp em site/public/img/. Uma print que não existe é
+pulada e o nome sai na lista do fim.
 """
 import os
 import sys
@@ -17,52 +22,61 @@ import sys
 from PIL import Image
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DESTINO = os.path.join(RAIZ, "site", "public", "img")
 
-# nome no site: (print de origem, recorte (esquerda, topo, direita, baixo) ou
-# None para a tela inteira, largura final)
+# nome no site: (pasta, arquivo, recorte (esq, topo, dir, baixo) ou None, larguras)
+# Pastas: "vm" = prints da VM, "apps" = prévias.
 FOTOS = {
-    # A área de trabalho com o menu aberto.
-    "area-de-trabalho": ("site-01-menu.png", None, 1600),
-    # Claro e escuro, lado a lado.
-    "escuro": ("site-02-escuro.png", None, 960),
-    "claro": ("site-03-claro.png", None, 960),
-    # Os apps, cada um sozinho na tela.
-    "jogos": ("site-10-jogos.png", None, 1600),
-    "loja": ("site-11-loja.png", None, 1600),
-    "arquivos": ("site-12-arquivos.png", None, 1200),
-    "terminal": ("site-13-terminal.png", None, 1200),
-    "tarefas": ("site-14-tarefas.png", None, 1200),
-    "ajustes": ("site-15-ajustes.png", None, 1200),
-    # A barra nos três estilos: só a faixa de baixo da tela.
-    "barra-fusao": ("15-barra-de-volta-ao-padrao.png", (0, 940, 1920, 1080), 1920),
-    "barra-windows": ("12-barra-estilo-windows.png", (0, 940, 1920, 1080), 1920),
-    "barra-mac": ("13-barra-estilo-mac.png", (0, 940, 1920, 1080), 1920),
+    # A tela inteira, nas abas de "Você já sabe usar".
+    "tela-menu": ("vm", "04d-menu.png", None, (1600, 800)),
+    "tela-central": ("vm", "22-central-de-controle-escuro.png", None, (1600, 800)),
+    "tela-bloqueio": ("vm", "23-tela-de-bloqueio.png", None, (1600, 800)),
+    "tela-claro": ("vm", "11-tema-claro-area-de-trabalho.png", None, (1600, 800)),
+    # Só a janela de cada app (o retângulo exato dela na tela de 1920x1080).
+    "janela-jogos": ("vm", "36-jogos-inicio.png", (385, 141, 1534, 858), (1149, 640)),
+    "janela-loja": ("vm", "37-loja-inicio.png", (367, 123, 1552, 876), (1185, 640)),
+    "janela-seguranca": ("vm", "38-seguranca-inicio.png", (403, 141, 1516, 858), (1113, 640)),
+    "janela-arquivos": ("vm", "40-app-00-org.matsu.arquivos.png", (461, 189, 1459, 809), (998, 640)),
+    "janela-tarefas": ("vm", "34-gerenciador-processos.png", (421, 159, 1498, 840), (1077, 640)),
+    # Apps novos: cada prévia tem o tema escuro à esquerda e o claro à direita.
+    "app-calendario": ("apps", "calendario.png", "metade", (995,)),
+    "app-notas": ("apps", "notas.png", "metade", (1000,)),
+    "app-musica": ("apps", "musica.png", "metade", (966,)),
+    "app-relogio": ("apps", "relogio.png", "metade", (982,)),
+    # Instalação, passo a passo.
+    "passo-boot": ("vm", "01a-tela-de-boot-5.png", None, (1280,)),
+    "passo-boasvindas": ("vm", "16-boas-vindas-2.png", None, (1600, 800)),
 }
 
 
-def main(pasta):
-    destino = os.path.join(RAIZ, "site", "img")
-    os.makedirs(destino, exist_ok=True)
-    feitas = 0
-    for nome, (origem, recorte, largura) in FOTOS.items():
-        caminho = os.path.join(pasta, origem)
-        if not os.path.exists(caminho):
-            print(f"sem {origem}: {nome} fica de fora")
+def main(pastas):
+    os.makedirs(DESTINO, exist_ok=True)
+    faltou = []
+    for nome, (pasta, origem, recorte, larguras) in FOTOS.items():
+        caminho = os.path.join(pastas[pasta], origem) if pastas.get(pasta) else ""
+        if not caminho or not os.path.exists(caminho):
+            faltou.append(f"{nome} ({origem})")
             continue
         im = Image.open(caminho).convert("RGB")
-        if recorte:
+        if recorte == "metade":
+            im = im.crop((0, 0, im.width // 2, im.height))
+        elif recorte:
             im = im.crop(recorte)
-        if im.width != largura:
-            im = im.resize((largura, round(im.height * largura / im.width)), Image.LANCZOS)
-        im.save(os.path.join(destino, nome + ".webp"), "WEBP", quality=86, method=6)
-        feitas += 1
+        for i, largura in enumerate(larguras):
+            copia = im
+            if copia.width != largura:
+                copia = im.resize((largura, round(im.height * largura / im.width)), Image.LANCZOS)
+            sufixo = "" if i == 0 else f"-{largura}"
+            copia.save(os.path.join(DESTINO, f"{nome}{sufixo}.webp"), "WEBP", quality=84, method=6)
         print(f"{nome}.webp  <- {origem}")
-    print(f"{feitas} fotos prontas em {destino}")
+    if faltou:
+        print("ficaram de fora:", ", ".join(faltou))
     return 0
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print(__doc__.strip())
         sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    args = sys.argv[1:] + ["", ""]
+    sys.exit(main({"vm": args[0], "apps": args[1]}))
