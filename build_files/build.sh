@@ -601,6 +601,22 @@ test -f /usr/share/matsu/telas/originais/breeze/SessionManagementScreen.qml \
 # O mesmo script põe a tela de sair do Matsu (Desligar, Reiniciar, Sair).
 python3 "$CTX/build_files/telas-matsu.py"
 
+log "Primeiro uso (Plasma Setup) com a cara do Matsu"
+# Depois de instalar, a pessoa cria a conta no assistente do KDE. O fundo dele é
+# o wallpapers/Default (no Fedora, o papel do Fedora): fica o papel do Matsu, em
+# JXL (convertido na etapa deco), sem metadata.json para não aparecer repetido na
+# escolha de papel de parede. Os textos da entrada vêm do primeiro-uso.py.
+if [[ -s /deco/papel/images/5120x2880.jxl && -s /deco/papel/images_dark/5120x2880.jxl ]]; then
+  padrao=/usr/share/wallpapers/Default
+  echo "wallpapers/Default antes: $(ls -ld "$padrao" 2>&1)"
+  rm -rf "$padrao"
+  install -Dm0644 /deco/papel/images/5120x2880.jxl "$padrao/contents/images/5120x2880.jxl"
+  install -Dm0644 /deco/papel/images_dark/5120x2880.jxl "$padrao/contents/images_dark/5120x2880.jxl"
+else
+  echo "AVISO: sem o papel do Matsu em JXL; o primeiro uso fica com o fundo do Fedora"
+fi
+python3 "$CTX/build_files/primeiro-uso.py"
+
 log "Tipos de arquivo em português"
 # Depois de todos os pacotes (cada um pode trazer tipos novos).
 # Nomes dos tipos de arquivo em português ("Pasta", e não "Folder"): o

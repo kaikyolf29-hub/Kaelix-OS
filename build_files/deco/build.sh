@@ -88,6 +88,26 @@ else
   rm -rf /out/senha
 fi
 
+# O fundo do primeiro uso (Plasma Setup, onde a pessoa cria a conta): ele só
+# procura wallpapers/Default/contents/images{,_dark}/5120x2880.jxl. Aqui o papel
+# do Matsu vira JXL (sem perda); se não der, o build.sh deixa o fundo do Fedora.
+converter_papel() {
+  dnf5 -y install libjxl-utils || return 1
+  local de="${HERE}/../../system_files/usr/share/wallpapers/Matsu/contents" pasta
+  for pasta in images images_dark; do
+    mkdir -p "/out/papel/$pasta" || return 1
+    cjxl "$de/$pasta/3840x2160.png" "/out/papel/$pasta/5120x2880.jxl" -d 0 -e 7 --quiet || return 1
+    [[ -s /out/papel/$pasta/5120x2880.jxl ]] || return 1
+  done
+}
+log "Papel de parede do Matsu para o primeiro uso"
+if converter_papel; then
+  log "Papel do primeiro uso: $(stat -c %s /out/papel/images/5120x2880.jxl) bytes"
+else
+  echo "AVISO: não deu para converter o papel do primeiro uso; fica o do Fedora." >&2
+  rm -rf /out/papel
+fi
+
 # O terminal do Matsu (ver terminal/main.cpp): janela própria com a peça do
 # Konsole dentro.
 log "Compilando o matsu-terminal"

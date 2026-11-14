@@ -36,8 +36,10 @@ jobs:
         run: python3 tests/test_novidades.py
       - name: Testar a Central de segurança
         run: python3 tests/test_seguranca.py
-      - name: Testar a troca da tela de bloqueio
+      - name: Testar as telas de bloqueio, sair e login
         run: python3 tests/test_telas.py
+      - name: Testar os textos do primeiro uso
+        run: python3 tests/test_primeiro_uso.py
       - name: Testar a conta da ampliação da doca
         run: node tests/test_doca.js
       - name: Testar o ajudante da página Telas (monitores)
