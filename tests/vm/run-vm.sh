@@ -630,6 +630,19 @@ shot "34-tela-de-sair"
 hmp key esc
 sleep 2
 
+# Primeiro uso (o assistente onde a pessoa cria a conta). Na VM a conta já vem
+# pronta e ele não abre sozinho; aqui ele abre só para o print da entrada (fundo
+# do Matsu, "Bem-vindo ao Matsu") e da primeira página. Não chega a criar nada.
+hmp key ctrl-alt-t
+sleep 4
+hmp type "/usr/libexec/plasma-setup >/tmp/primeiro-uso.log 2>&1 &"
+hmp key ret
+sleep 10
+shot "43-primeiro-uso"
+hmp key ret
+sleep 4
+shot "43b-primeiro-uso-primeira-pagina"
+
 # Registro das telas do sistema num terminal de texto (Ctrl+Alt+F3), que abre
 # mesmo se a sessão ficou travada no bloqueio: o que o bloqueio, a tela de sair
 # e a janela de senha disseram. Fica por último porque não volta para a sessão.
