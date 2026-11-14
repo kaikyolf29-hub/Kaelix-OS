@@ -14,15 +14,29 @@ function tamanho(bytes) {
   return `${Math.round(bytes / 1024 ** 2)} MB`;
 }
 
+// As ISOs de um Release, pela placa: { amd: { nome, url, bytes, somaUrl }, nvidia: ... }.
+function isosDo(rel) {
+  const arquivos = {};
+  for (const a of rel.assets || []) {
+    const placa = a.name.endsWith('-nvidia.iso') ? 'nvidia' : a.name.endsWith('-amd.iso') ? 'amd' : null;
+    if (placa) arquivos[placa] = { ...arquivos[placa], nome: a.name, url: a.browser_download_url, bytes: a.size };
+    const soma = a.name.match(/-(amd|nvidia)\.iso\.sha256$/);
+    if (soma) arquivos[soma[1]] = { ...arquivos[soma[1]], somaUrl: a.browser_download_url };
+  }
+  return arquivos.amd || arquivos.nvidia ? arquivos : null;
+}
+
 // Lê a última versão publicada no GitHub (o fluxo "Publicar versão estável"
-// cria o Release com as ISOs). Sem versão publicada, o cartão diz que ela vem aí.
+// cria o Release com as ISOs). Enquanto não tem versão estável, oferece a de
+// teste (o fluxo "Publicar versão de teste" deixa um Release marcado como teste).
+// Sem nenhuma das duas, o cartão diz que a primeira vem aí.
 function useVersao() {
   const [estado, setEstado] = useState({ fase: 'carregando' });
   useEffect(() => {
     let vivo = true;
     const guardado = (() => {
       try {
-        return JSON.parse(sessionStorage.getItem('matsu-versao') || 'null');
+        return JSON.parse(sessionStorage.getItem('matsu-versao-2') || 'null');
       } catch {
         return null;
       }
@@ -33,23 +47,19 @@ function useVersao() {
     }
     fetch(LINKS.apiVersoes, { headers: { Accept: 'application/vnd.github+json' } })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then(lista => (Array.isArray(lista) ? lista.find(r => !r.draft && !r.prerelease) : null))
+      .then(lista => {
+        const publicadas = (Array.isArray(lista) ? lista : []).filter(r => !r.draft && isosDo(r));
+        return publicadas.find(r => !r.prerelease) || publicadas.find(r => r.prerelease) || null;
+      })
       .then(rel => {
         if (!rel) return { fase: 'sem-versao' };
-        const arquivos = {};
-        for (const a of rel.assets || []) {
-          const placa = a.name.endsWith('-nvidia.iso') ? 'nvidia' : a.name.endsWith('-amd.iso') ? 'amd' : null;
-          if (placa) arquivos[placa] = { ...arquivos[placa], nome: a.name, url: a.browser_download_url, bytes: a.size };
-          const soma = a.name.match(/-(amd|nvidia)\.iso\.sha256$/);
-          if (soma) arquivos[soma[1]] = { ...arquivos[soma[1]], somaUrl: a.browser_download_url };
-        }
-        if (!arquivos.amd && !arquivos.nvidia) return { fase: 'sem-versao' };
         return {
           fase: 'pronta',
+          teste: Boolean(rel.prerelease),
           versao: (rel.tag_name || '').replace(/^v/, ''),
           data: rel.published_at,
           pagina: rel.html_url,
-          arquivos
+          arquivos: isosDo(rel)
         };
       })
       .catch(() => ({ fase: 'erro' }))
@@ -58,7 +68,7 @@ function useVersao() {
         setEstado(novo);
         if (novo.fase !== 'erro') {
           try {
-            sessionStorage.setItem('matsu-versao', JSON.stringify(novo));
+            sessionStorage.setItem('matsu-versao-2', JSON.stringify(novo));
           } catch {
             // Sem armazenamento: busca de novo na próxima visita.
           }
@@ -133,7 +143,8 @@ export default function Baixar() {
   const versao = useVersao();
   const atual = PLACAS[placa];
   const arquivo = versao.fase === 'pronta' ? versao.arquivos[atual.id] : null;
-  const nomeVersao = versao.fase === 'pronta' ? `Matsu ${versao.versao}` : `Matsu ${EDICAO}`;
+  const teste = versao.fase === 'pronta' && versao.teste;
+  const nomeVersao = teste ? 'a versão de teste' : versao.fase === 'pronta' ? `o Matsu ${versao.versao}` : `o Matsu ${EDICAO}`;
   const data =
     versao.fase === 'pronta' && versao.data
       ? new Date(versao.data).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -187,11 +198,12 @@ export default function Baixar() {
               <>
                 <a className="btn btn--primario btn--baixar" href={arquivo.url}>
                   <Icone nome="baixar" tamanho={20} />
-                  Baixar o {nomeVersao}
+                  Baixar {nomeVersao}
                 </a>
                 <p className={`cartao-baixar__arquivo${trocou ? ' troca-texto' : ''}`} key={arquivo.nome}>
                   {arquivo.nome}, {tamanho(arquivo.bytes)}
-                  {data && <>. Publicada em {data}.</>}
+                  {data && (teste ? <>. Montada em {data}.</> : <>. Publicada em {data}.</>)}
+                  {teste && <> A primeira versão oficial sai depois dos testes.</>}
                 </p>
                 <Soma url={arquivo.somaUrl} />
               </>
@@ -199,7 +211,7 @@ export default function Baixar() {
               <>
                 <a className="btn btn--primario btn--baixar" href={LINKS.versoes} aria-describedby="aviso-versao">
                   <Icone nome="baixar" tamanho={20} />
-                  Baixar o {nomeVersao}
+                  Baixar {nomeVersao}
                 </a>
                 <p className="cartao-baixar__arquivo" id="aviso-versao" aria-live="polite">
                   {versao.fase === 'carregando'

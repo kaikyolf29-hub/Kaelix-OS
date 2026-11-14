@@ -1,0 +1,53 @@
+# Publica a versão de teste do Matsu OS: um Release marcado como "teste" (não é
+# a versão oficial) com as duas ISOs do canal teste. O site baixa dela enquanto a
+# primeira versão estável não sai. Cada vez que roda, troca o Release de teste
+# anterior pelo novo; a versão estável continua só pelo "Publicar versão estável".
+name: Publicar versão de teste
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: versao-teste
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Trocar o Release de teste
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Criar o Release de teste
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EDICAO="$(tr -dc '0-9' < EDICAO)"
+          MESES=(janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro)
+          HOJE="$(date -u +%-d) de ${MESES[$(( 10#$(date -u +%m) - 1 ))]} de $(date -u +%Y)"
+          cat > /tmp/notas.md <<EOF
+          Versão de teste do Matsu ${EDICAO} OS, montada em ${HOJE}. Ainda não é a
+          versão oficial: serve para experimentar antes e pode ter erros.
+
+          **Como instalar:** baixe a ISO da sua placa de vídeo (\`-amd\` para AMD,
+          Intel e vídeo integrado; \`-nvidia\` para NVIDIA), grave num pendrive de
+          4 GB ou mais com o balenaEtcher ou o Rufus (no modo DD), ligue o PC pelo
+          pendrive e siga o instalador do Matsu. Ele baixa o sistema pela internet.
+
+          O sistema instalado por esta ISO recebe as atualizações do canal de teste,
+          que chegam antes da versão oficial.
+          EOF
+          gh release delete teste --yes --cleanup-tag 2>/dev/null || true
+          gh release create teste --prerelease --target "$GITHUB_SHA" \
+            --title "Matsu ${EDICAO} OS · versão de teste" --notes-file /tmp/notas.md
+
+  iso:
+    needs: release
+    uses: ./.github/workflows/iso.yml
+    with:
+      canal: teste
+      release_tag: teste

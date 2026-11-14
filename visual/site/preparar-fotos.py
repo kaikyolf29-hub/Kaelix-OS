@@ -5,13 +5,17 @@ As fotos da área de trabalho e das janelas vêm das prints que o fluxo "Testar 
 tirar prints" tira da imagem montada (ramo prints, pasta ultimo). As dos apps
 novos (Relógio, Calendário, Notas...) vêm das prévias com dados de exemplo
 (/mnt/project-files/kaelix-os/apps-novos/), porque na VM eles abrem vazios.
-Os passos 1 (gravar o pendrive) e 3 (o resumo do instalador) são desenhados
-no próprio site, em código.
+A do instalador vem das prints do teste da ISO (ramo prints-instalador, pasta
+ultimo). O passo 1 (gravar o pendrive) é desenhado no próprio site, em código.
 
 Uso:
   git fetch origin prints
   git archive origin/prints ultimo | tar -x -C /tmp/prints
-  python3 visual/site/preparar-fotos.py /tmp/prints/ultimo <pasta apps-novos>
+  git fetch origin prints-instalador
+  git archive origin/prints-instalador ultimo | tar -x -C /tmp/prints-iso
+  python3 visual/site/preparar-fotos.py /tmp/prints/ultimo <pasta apps-novos> /tmp/prints-iso/ultimo
+
+Uma pasta vazia ("") pula as fotos dela e deixa as que já estão no site.
 
 Cada foto vira um .webp em site/public/img/. Uma print que não existe é
 pulada e o nome sai na lista do fim.
@@ -25,7 +29,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 DESTINO = os.path.join(RAIZ, "site", "public", "img")
 
 # nome no site: (pasta, arquivo, recorte (esq, topo, dir, baixo) ou None, larguras)
-# Pastas: "vm" = prints da VM, "apps" = prévias.
+# Pastas: "vm" = prints da VM, "apps" = prévias, "iso" = prints do instalador.
 FOTOS = {
     # A tela inteira, nas abas de "Você já sabe usar".
     "tela-menu": ("vm", "04d-menu.png", None, (1600, 800)),
@@ -45,6 +49,8 @@ FOTOS = {
     "app-relogio": ("apps", "relogio.png", "metade", (982,)),
     # Instalação, passo a passo.
     "passo-boot": ("vm", "01a-tela-de-boot-5.png", None, (1280,)),
+    # O cartão do instalador no meio, com um pouco do papel de parede em volta (16:9).
+    "passo-instalador": ("iso", "08-resumo.png", (240, 135, 1680, 945), (1440, 800)),
     "passo-boasvindas": ("vm", "16-boas-vindas-2.png", None, (1600, 800)),
 }
 
@@ -78,5 +84,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(__doc__.strip())
         sys.exit(2)
-    args = sys.argv[1:] + ["", ""]
-    sys.exit(main({"vm": args[0], "apps": args[1]}))
+    args = sys.argv[1:] + ["", "", ""]
+    sys.exit(main({"vm": args[0], "apps": args[1], "iso": args[2]}))

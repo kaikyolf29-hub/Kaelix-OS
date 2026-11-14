@@ -24,39 +24,10 @@ function Gravar() {
   );
 }
 
-// O terceiro passo também é desenho, não foto: o resumo do que o instalador já
-// deixa marcado e do que falta a pessoa escolher.
-const RESUMO = [
-  { nome: 'Idioma', valor: 'Português (Brasil)', icone: 'web', pronto: true },
-  { nome: 'Teclado', valor: 'ABNT2', icone: 'teclado', pronto: true },
-  { nome: 'Fuso horário', valor: 'Brasília', icone: 'sincronia', pronto: true },
-  { nome: 'Disco', valor: 'Você escolhe', icone: 'disco', pronto: false },
-  { nome: 'Sua conta', valor: 'Nome e senha', icone: 'cadeado', pronto: false }
-];
-
-function Resumo() {
-  return (
-    <div className="resumo" role="img" aria-label="Idioma, teclado e fuso horário já marcados; falta escolher o disco e criar a conta">
-      <ul className="resumo__lista">
-        {RESUMO.map(r => (
-          <li key={r.nome} data-pronto={r.pronto}>
-            <span className="resumo__icone">
-              <Icone nome={r.icone} tamanho={18} />
-            </span>
-            <span className="resumo__nome">{r.nome}</span>
-            <span className="resumo__valor">{r.valor}</span>
-            <span className="resumo__estado">{r.pronto ? <Icone nome="certo" tamanho={16} /> : null}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 const PASSOS = [
   {
     titulo: 'Grave a ISO num pendrive',
-    texto: 'Use um pendrive de 4 GB ou mais e o balenaEtcher ou o Rufus. O que estiver nele é apagado.',
+    texto: 'Use um pendrive de 4 GB ou mais e o balenaEtcher ou o Rufus, no modo DD. O que estiver nele é apagado.',
     visual: <Gravar />
   },
   {
@@ -68,8 +39,10 @@ const PASSOS = [
   },
   {
     titulo: 'Escolha o disco e crie sua conta',
-    texto: 'Português, teclado ABNT2 e horário de Brasília já vêm marcados. O instalador baixa o sistema pela internet.',
-    visual: <Resumo />
+    texto: 'O instalador do Matsu pergunta o idioma, a internet, o disco e a sua conta. Depois baixa o sistema pela internet.',
+    foto: 'passo-instalador',
+    tamanhos: [800, 1440],
+    alt: 'O instalador do Matsu na tela Tudo pronto para instalar, com o disco, a conta, o idioma e o teclado escolhidos'
   },
   {
     titulo: 'Escolha a aparência e comece',

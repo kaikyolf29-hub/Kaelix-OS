@@ -39,9 +39,12 @@ workflow) e precisa do GitHub Pages ligado em Settings > Pages, com a origem
 O cartão de baixar lê a lista de versões do repositório na API do GitHub. Se já
 tem uma versão estável publicada (o fluxo "Publicar versão estável" cria o
 Release com `matsu-os-<versão>-amd.iso` e `-nvidia.iso` e as somas `.sha256`),
-o botão baixa a ISO da placa escolhida. Se ainda não tem, o botão abre a página
-de versões e o cartão avisa que a primeira está quase pronta. Não precisa mexer
-no site quando sair uma versão.
+o botão baixa a ISO da placa escolhida. Enquanto não tem versão estável, ele
+baixa a versão de teste (o fluxo "Publicar versão de teste" deixa um Release
+marcado como teste, com `matsu-os-teste-amd.iso` e `-nvidia.iso`) e o cartão
+diz que é de teste. Sem nenhuma das duas, o botão abre a página de versões e o
+cartão avisa que a primeira está quase pronta. Não precisa mexer no site quando
+sair uma versão.
 
 ## O que veio de fora (e as licenças)
 
