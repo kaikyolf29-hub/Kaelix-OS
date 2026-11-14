@@ -103,9 +103,20 @@ TECLAS_MANGOHUD = ("toggle_hud", "toggle_hud_position", "toggle_preset", "reset_
 ATALHO_FPS = "Meta+Alt+F"
 
 # O que a sobreposição pode mostrar, na ordem em que aparece no jogo.
-ITENS = ("fps", "grafico", "cpu", "gpu", "ram", "vram", "temperatura", "frequencia", "consumo", "hora")
+# fps_baixo: o FPS médio e o 1% mais baixo (os travamentos que a média esconde)
+# api: no lugar de "FPS", de onde vem a imagem do jogo (DX12, DX11, VULKAN, OpenGL)
+# nomes: o nome do processador e da placa em cima dos números de cada um
+ITENS = ("hora", "fps", "api", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
+         "frequencia", "consumo", "ventoinha")
 POSICOES = ("top-left", "top-center", "top-right", "bottom-left", "bottom-right")
 TAMANHOS = {"pequeno": 18, "medio": 22, "grande": 27}
+# Os três jeitos prontos da página Sobreposição (a pessoa ainda escolhe item por item).
+MODELOS = {
+    "basica": ["fps"],
+    "media": ["fps", "fps_baixo", "grafico", "gpu", "cpu", "ram"],
+    "completa": ["fps", "api", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
+                 "frequencia", "consumo", "ventoinha"],
+}
 
 PADRAO = {
     "perfil": "padrao",
@@ -113,8 +124,8 @@ PADRAO = {
     "jogos": {},
     "automatico": True,
     "avisar": True,
-    "sobreposicao": {"ligada": False, "itens": ["fps", "grafico", "cpu", "gpu", "ram"], "posicao": "top-left",
-                     "tamanho": "medio", "compacta": False},
+    "sobreposicao": {"ligada": False, "itens": list(MODELOS["media"]) + ["nomes", "vram", "temperatura"],
+                     "posicao": "top-left", "tamanho": "medio", "compacta": False},
 }
 
 # Programas que não são jogo: a sobreposição nunca aparece neles.
@@ -271,50 +282,165 @@ def fonte_matsu():
     return ""
 
 
-def texto_mangohud(c, ajustes=None, mostrar=False):
-    """O MangoHud.conf do Matsu. "mostrar": se a sobreposição aparece agora (só com jogo aberto)."""
+def nome_curto_cpu(nome):
+    """O nome do processador sem o que sobra ("12th Gen", "CPU @ 2.50GHz", "with Radeon Graphics")."""
+    nome = re.sub(r"^\d+(st|nd|rd|th) Gen\s+", "", nome or "")
+    nome = re.sub(r"\s+(CPU\s*)?@\s*[\d.]+\s*GHz.*$", "", nome)
+    nome = re.sub(r"\s+w(ith|/)\s+Radeon.*$", "", nome, flags=re.I)
+    nome = re.sub(r"\s+(CPU|Processor)$", "", nome)
+    return re.sub(r"\s+", " ", nome).strip()
+
+
+def placa_principal(placas):
+    """A placa em que os jogos rodam: a NVIDIA ou a AMD de memória própria, antes da integrada."""
+    def nota(p):
+        if p.get("driver") == "nvidia":
+            return 3
+        if p.get("driver") == "amdgpu" and ler_int(p.get("caminho", "") + "/mem_info_vram_total") > 2 * 1024 ** 3:
+            return 2
+        return 1 if p.get("driver") in ("amdgpu", "i915", "xe", "nouveau", "radeon") else 0
+    return max(placas, key=nota) if placas else None
+
+
+def consumo_cpu_legivel():
+    """Se o MangoHud consegue ler quanto o processador gasta (W). Na maioria dos PCs o
+    Linux fecha esse número só para o administrador (por segurança, desde 2020): aí a
+    sobreposição não mostra, em vez de mostrar "0 W" o tempo todo."""
+    hwmon = SYS + "/class/hwmon"
+    for hw in sorted(os.listdir(hwmon)) if os.path.isdir(hwmon) else []:
+        nome = ler(f"{hwmon}/{hw}/name").strip()
+        if nome in ("zenpower", "zenergy"):
+            return True
+        if nome == "k10temp" and any(ler(r).strip() == "Pcore" for r in glob.glob(f"{hwmon}/{hw}/power*_label")):
+            return True
+    powercap = SYS + "/class/powercap"
+    for pasta in sorted(os.listdir(powercap)) if os.path.isdir(powercap) else []:
+        if ler(f"{powercap}/{pasta}/name").strip() == "package-0":
+            return os.access(f"{powercap}/{pasta}/energy_uj", os.R_OK)
+    return False
+
+
+_PC = {}
+
+
+def dados_do_pc():
+    """O que a sobreposição precisa saber deste computador (lido uma vez)."""
+    if not _PC and os.environ.get("MATSU_JOGOS_DEMO"):
+        _PC.update({"cpu": "AMD Ryzen 7 7800X3D", "gpu": placa_demo()["nome"], "cpu_watts": True})
+    if not _PC:
+        fixos = T.Leitor().dados_fixos()
+        placas = fixos.get("placas") or []
+        placa = placa_principal(placas)
+        # Com duas placas (a integrada e a de jogo), a sobreposição mostra só a de jogo,
+        # a do nome em cima dos números (o MangoHud mostraria as duas).
+        pci = os.path.basename(os.path.realpath(placa["caminho"])) if placa and len(placas) > 1 else ""
+        _PC.update({"cpu": nome_curto_cpu(fixos.get("cpu_nome", "")), "gpu": placa["nome"] if placa else "",
+                    "pci": pci if re.fullmatch(r"[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]", pci) else "",
+                    "cpu_watts": consumo_cpu_legivel()})
+    return _PC
+
+
+def _sem_comentario(texto):
+    """O MangoHud corta a linha no "#": o nome vai sem ele."""
+    return re.sub(r"\s+", " ", (texto or "").replace("#", "")).strip()
+
+
+def texto_mangohud(c, ajustes=None, mostrar=False, pc=None):
+    """O MangoHud.conf do Matsu. "mostrar": se a sobreposição aparece agora (só com jogo aberto).
+
+    Em pé (Completa), como uma tela de celular, em blocos: o FPS (com a média, o 1% mais
+    baixo e o gráfico), a placa (com a memória de vídeo) e o processador (com a memória),
+    cada bloco com o nome da peça em cima, em letra menor. Com legacy_layout=0 o MangoHud
+    mostra só o que está listado, na ordem do arquivo; as opções são as do MangoHud 0.8.3."""
     s = c["sobreposicao"]
     itens = s["itens"]
+    tem = itens.__contains__
+    compacta = s["compacta"]
+    pc = pc if pc is not None else dados_do_pc()
     linhas = [
         "# Sobreposição do Matsu (MangoHud). Quem escreve este arquivo é a Central de jogos:",
         "# mude por ela, porque o que for mudado aqui à mão volta ao jeito dela.",
         "legacy_layout=0",
     ]
-    # Na ordem em que aparece no jogo (com legacy_layout=0, só o que está listado aparece).
-    if "hora" in itens:
-        linhas += ["time", "time_no_label", "time_format=%H:%M"]
-    if "fps" in itens:
-        linhas += ["fps", "fps_text=FPS", "hide_fps_superscript"]
-        if not s["compacta"]:
-            linhas.append("frametime")
-    if "grafico" in itens and not s["compacta"]:
-        linhas.append("frame_timing")
-    if "gpu" in itens or "temperatura" in itens or "frequencia" in itens or "consumo" in itens:
-        linhas += ["gpu_stats", "gpu_text=GPU"]
-        if "temperatura" in itens:
-            linhas.append("gpu_temp")
-        if "frequencia" in itens:
-            linhas.append("gpu_core_clock")
-        if "consumo" in itens:
-            linhas.append("gpu_power")
-    if "cpu" in itens or "temperatura" in itens or "frequencia" in itens:
-        linhas += ["cpu_stats", "cpu_text=CPU"]
-        if "temperatura" in itens:
-            linhas.append("cpu_temp")
-        if "frequencia" in itens:
-            linhas.append("cpu_mhz")
-    if "vram" in itens:
-        linhas.append("vram")
-    if "ram" in itens:
-        linhas.append("ram")
+    temperatura, frequencia, consumo = tem("temperatura"), tem("frequencia"), tem("consumo")
+    mostra_gpu = tem("gpu") or temperatura or frequencia or consumo or tem("ventoinha")
+    mostra_cpu = tem("cpu") or temperatura or frequencia or (consumo and pc.get("cpu_watts"))
+
+    # Cada bloco é uma lista de linhas; na Completa, um respiro separa os blocos.
+    blocos = []
+    if tem("hora"):
+        blocos.append(["time", "time_no_label", "time_format=%H:%M"])
+    bloco = []
+    if tem("fps"):
+        bloco.append("fps")
+        if tem("api"):
+            # O nome da API no lugar de "FPS" (DX12, DX11, DX9, VULKAN, OpenGL); o
+            # "FPS" pequeno fica depois do número.
+            bloco.append("dx_api")
+            if compacta:
+                bloco.append("engine_short_names")
+        else:
+            bloco += ["fps_text=FPS", "hide_fps_superscript"]
+        # O tempo de cada quadro (ms) ao lado do FPS; em linha, só o FPS (o MangoHud
+        # mostra o tempo sem pedir, por isso o "=0").
+        bloco.append("frametime" if not compacta else "frametime=0")
+        if tem("fps_baixo"):
+            bloco.append("fps_metrics=avg,0.01")
+        if tem("grafico") and not compacta:
+            bloco.append("frame_timing")
+    if bloco:
+        blocos.append(bloco)
+    bloco = []
+    if mostra_gpu:
+        if tem("nomes") and not compacta and pc.get("gpu"):
+            bloco.append("custom_text=" + _sem_comentario(pc["gpu"]))
+        bloco += ["gpu_stats", "gpu_text=GPU"]
+        if temperatura:
+            bloco.append("gpu_temp")
+        if frequencia:
+            bloco.append("gpu_core_clock")
+        if consumo:
+            bloco.append("gpu_power")
+        if tem("ventoinha"):
+            bloco.append("gpu_fan")
+    if tem("vram"):
+        bloco.append("vram")
+        if frequencia and not compacta:
+            bloco.append("gpu_mem_clock")
+    if bloco and pc.get("pci"):
+        bloco.append(f"pci_dev={pc['pci']}")
+    if bloco:
+        blocos.append(bloco)
+    bloco = []
+    if mostra_cpu:
+        if tem("nomes") and not compacta and pc.get("cpu"):
+            bloco.append("custom_text=" + _sem_comentario(pc["cpu"]))
+        bloco += ["cpu_stats", "cpu_text=CPU"]
+        if temperatura:
+            bloco.append("cpu_temp")
+        if frequencia:
+            bloco.append("cpu_mhz")
+        if consumo and pc.get("cpu_watts"):
+            bloco.append("cpu_power")
+    if tem("ram"):
+        bloco.append("ram")
+    if bloco:
+        blocos.append(bloco)
+    for i, bloco in enumerate(blocos):
+        if i and not compacta:
+            linhas.append("custom_text=")  # o respiro entre os blocos (uma linha vazia em letra menor)
+        linhas += bloco
+
     tamanho = TAMANHOS[s["tamanho"]]
     fonte = fonte_matsu()
     linhas += [
         f"position={s['posicao']}",
         f"font_size={tamanho}",
-        "round_corners=10",
-        "background_alpha=0.55",
-        "background_color=1c1c1f",
+        # Os nomes das peças e o respiro entre os blocos, em letra menor.
+        f"font_size_secondary={round(tamanho * 0.7)}",
+        f"round_corners={round(tamanho * 0.55)}",
+        "background_alpha=0.62",
+        "background_color=151518",
         "text_color=ffffff",
         "text_outline=0",
         # As cores das partes do computador, as mesmas do Gerenciador de tarefas.
@@ -327,20 +453,25 @@ def texto_mangohud(c, ajustes=None, mostrar=False):
         "fps_color_change",
         "fps_value=30,60",
         "fps_color=f0609e,f5c36b,ffffff",
-        "offset_x=12",
-        "offset_y=12",
+        "offset_x=16",
+        "offset_y=16",
         # Sem as teclas próprias do MangoHud (Shift+F12 só esconderia neste jogo e
         # deixaria a chave da Central mentindo; Shift+F1 trocaria o limite de FPS do
         # perfil; Shift+F3 mandaria o registro para a internet): quem mostra e
         # esconde é o atalho Meta+Alt+F do KDE, que muda este arquivo, e o MangoHud
         # do jogo aberto relê na hora.
     ] + [f"{tecla}=" for tecla in TECLAS_MANGOHUD]
-    if s["compacta"]:
+    if compacta:
         # Uma pílula só do tamanho do texto (sem esticar até a ponta da tela).
         linhas += ["horizontal", "horizontal_stretch=0", "horizontal_separator_color=55555c",
                    "hud_compact", "table_columns=14"]
     else:
-        linhas += ["table_columns=3", "cellpadding_y=0.05"]
+        # Três colunas: o nome à esquerda e os números em duas colunas, descendo
+        # (o que não cabe vai para a linha de baixo): fica em pé, como um celular.
+        linhas += ["table_columns=3", "cellpadding_y=0.12"]
+        if not (tem("grafico") or mostra_gpu or mostra_cpu or tem("vram") or tem("ram")):
+            # Só o FPS: uma pílula mais estreita (a largura de fábrica é para os números todos).
+            linhas.append(f"width={round(tamanho * 11.5)}")
     if fonte:
         linhas.append(f"font_file={fonte}")
     if not mostrar or not s["ligada"] or not itens:
@@ -737,7 +868,7 @@ class Leitor:
             "idioma": self.tarefas.lingua,
             "vidro": T.vidro(),
             "cpu": {"uso": self.cpu(), "temp": round(ler_int(temp_cpu) / 1000) if temp_cpu else 0,
-                    "nome": self.tarefas.dados_fixos()["cpu_nome"]},
+                    "nome": self.tarefas.dados_fixos()["cpu_nome"], "mhz": mhz_cpu()},
             "memoria": self.memoria(),
             "placas": self.placas(),
             "jogo": estado.get("jogo"),
@@ -746,7 +877,24 @@ class Leitor:
             "ajuste": self.ajuste,
             "atalho": ATALHO_FPS,
             "fps": self.fps_ligada(),
+            # Os nomes que a sobreposição mostra e se o consumo do processador aparece.
+            "pc": dados_do_pc(),
         }
+
+
+def mhz_cpu():
+    """A frequência do núcleo mais rápido agora (a mesma que a sobreposição mostra)."""
+    freqs = []
+    for linha in ler(PROC + "/cpuinfo").splitlines():
+        if linha.startswith("cpu MHz"):
+            try:
+                freqs.append(float(linha.split(":")[1]))
+            except (ValueError, IndexError):
+                pass
+    if not freqs:
+        for arquivo in glob.glob(SYS + "/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq"):
+            freqs.append(ler_int(arquivo) / 1000)
+    return round(max(freqs)) if freqs else 0
 
 
 def placa_demo():

@@ -110,6 +110,22 @@ Na NVIDIA e na Intel, o próprio driver cuida da velocidade da placa: a opção 
   dados para fora sem querer).
 - O visual é o do Matsu: fonte Inter, cantos redondos, vidro escuro e as cores de cada parte (CPU, GPU,
   memória). Fica sempre escura, porque por cima do jogo uma caixa clara atrapalharia.
+- Em pé, como uma tela de celular, em três blocos com um respiro entre eles: o FPS (com o tempo do quadro,
+  o FPS médio, o 1% mais baixo e o gráfico), a placa (nome, uso, temperatura, ventoinha, frequência,
+  consumo e a memória de vídeo) e o processador (nome, uso, temperatura, frequência, consumo e a memória).
+  A página tem três jeitos prontos (**Só o FPS**, **Essencial** e **Tudo**) e cada item pode ser ligado e
+  desligado. **Em linha** põe tudo numa linha só, discreta.
+- **API do jogo**: no lugar de "FPS" aparece de onde vem a imagem do jogo (DX12, DX11, DX9, VULKAN, OpenGL).
+- Os nomes do processador e da placa são lidos do computador pela Central (o da placa sem o "(RADV ...)"
+  que o MangoHud mostraria). Com duas placas (a integrada e a de jogo), a sobreposição mostra só a de jogo
+  (`pci_dev`).
+- **Consumo do processador**: o MangoHud lê da RAPL do kernel, que desde 2020 só o administrador lê (por
+  segurança, contra o ataque PLATYPUS). O Matsu não abre essa porta: quando o número não dá para ler, a
+  sobreposição não mostra (em vez de "0 W" parado) e a página explica. O consumo da placa aparece sempre.
+- Alguns rótulos são do próprio MangoHud e ficam como ele escreve: **AVG** (média), **1%** e **Frametime**.
+- As opções usadas são as do MangoHud 0.8.3 do Fedora 44 (o teste confere a lista). A prévia da sobreposição
+  de verdade pode ser feita num contêiner com o MangoHud do Ubuntu e Vulkan por software (sem placa de vídeo,
+  com um `/sys` de mentira para a placa e o processador).
 
 ### Controles
 

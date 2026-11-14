@@ -264,6 +264,108 @@ class Sobreposicao(Base):
         self.assertLess(linhas.index("fps"), linhas.index("gpu_stats"))
         self.assertLess(linhas.index("gpu_stats"), linhas.index("cpu_stats"))
 
+    PC = {"cpu": "AMD Ryzen 7 5700X3D", "gpu": "AMD Radeon RX 6700 XT", "pci": "", "cpu_watts": True}
+
+    def completa(self, pc=None, **extra):
+        s = {"ligada": True, "itens": self.a.MODELOS["completa"]}
+        s.update(extra)
+        c = self.a.salvar_config({"sobreposicao": s})
+        return self.a.texto_mangohud(c, None, mostrar=True, pc=pc or self.PC).splitlines()
+
+    def test_completa_em_pe(self):
+        linhas = self.completa()
+        # Em pé, em blocos: FPS (com média, 1% e gráfico), placa (com a memória de
+        # vídeo) e processador (com a memória), cada um com o nome em cima.
+        ordem = ["fps", "fps_metrics=avg,0.01", "frame_timing", "custom_text=AMD Radeon RX 6700 XT", "gpu_stats",
+                 "vram", "gpu_mem_clock", "custom_text=AMD Ryzen 7 5700X3D", "cpu_stats", "ram"]
+        posicoes = [linhas.index(item) for item in ordem]
+        self.assertEqual(posicoes, sorted(posicoes))
+        self.assertEqual(linhas.count("custom_text="), 2)  # o respiro entre os três blocos
+        for esperado in ("dx_api", "frametime", "gpu_temp", "gpu_core_clock", "gpu_power", "gpu_fan", "cpu_temp",
+                         "cpu_mhz", "cpu_power", "table_columns=3", "font_size_secondary=15"):
+            self.assertIn(esperado, linhas)
+        # Com a API ligada, o nome dela fica no lugar de "FPS" (e o "FPS" pequeno volta).
+        self.assertFalse(any(l.startswith("fps_text") for l in linhas))
+        self.assertNotIn("hide_fps_superscript", linhas)
+        self.assertFalse(any(l.startswith(("width=", "pci_dev=")) for l in linhas))
+        # Só opções que o MangoHud 0.8.3 do Fedora conhece.
+        conhecidas = {"legacy_layout", "fps", "dx_api", "frametime", "fps_metrics", "frame_timing", "custom_text",
+                      "gpu_stats", "gpu_text", "gpu_temp", "gpu_core_clock", "gpu_power", "gpu_fan", "vram",
+                      "gpu_mem_clock", "cpu_stats", "cpu_text", "cpu_temp", "cpu_mhz", "cpu_power", "ram",
+                      "position", "font_size", "font_size_secondary", "round_corners", "background_alpha",
+                      "background_color", "text_color", "text_outline", "cpu_color", "gpu_color", "ram_color",
+                      "vram_color", "engine_color", "frametime_color", "fps_color_change", "fps_value", "fps_color",
+                      "offset_x", "offset_y", "table_columns", "cellpadding_y", "font_file", "blacklist", "time",
+                      "time_no_label", "time_format", "fps_text", "hide_fps_superscript", "engine_short_names",
+                      "horizontal", "horizontal_stretch", "horizontal_separator_color", "hud_compact", "width",
+                      "pci_dev", "no_display", "fps_limit", "fps_limit_method", "vsync", "gl_vsync", "af",
+                      *self.a.TECLAS_MANGOHUD}
+        for linha in linhas:
+            if linha and not linha.startswith("#"):
+                self.assertIn(linha.split("=", 1)[0], conhecidas, linha)
+
+    def test_consumo_do_processador_so_quando_da_para_ler(self):
+        linhas = self.completa(pc=dict(self.PC, cpu_watts=False))
+        self.assertNotIn("cpu_power", linhas)  # sem "0 W" parado na tela
+        self.assertIn("gpu_power", linhas)
+
+    def test_nome_sem_cerquilha(self):
+        linhas = self.completa(pc=dict(self.PC, gpu="Placa #1"))
+        self.assertIn("custom_text=Placa 1", linhas)  # o MangoHud corta a linha no "#"
+
+    def test_duas_placas_mostra_a_de_jogo(self):
+        linhas = self.completa(pc=dict(self.PC, pci="0000:03:00.0"))
+        self.assertIn("pci_dev=0000:03:00.0", linhas)
+
+    def test_em_linha(self):
+        linhas = self.completa(compacta=True)
+        for esperado in ("horizontal", "hud_compact", "engine_short_names", "frametime=0"):
+            self.assertIn(esperado, linhas)
+        self.assertFalse(any(l.startswith("custom_text") for l in linhas))
+        self.assertNotIn("frame_timing", linhas)
+
+    def test_so_o_fps_fica_estreito(self):
+        c = self.a.salvar_config({"sobreposicao": {"ligada": True, "itens": ["fps"]}})
+        linhas = self.a.texto_mangohud(c, None, mostrar=True, pc=self.PC).splitlines()
+        self.assertIn("width=253", linhas)
+        self.assertIn("fps_text=FPS", linhas)
+        self.assertIn("hide_fps_superscript", linhas)
+        self.assertNotIn("custom_text=", linhas)
+
+    def test_modelos_e_padrao(self):
+        for itens in self.a.MODELOS.values():
+            self.assertTrue(set(itens) <= set(self.a.ITENS))
+        padrao = self.a.carregar_config()["sobreposicao"]["itens"]
+        for item in ("fps", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura"):
+            self.assertIn(item, padrao)
+        # Itens desconhecidos caem fora; a ordem é a do jogo.
+        c = self.a.salvar_config({"sobreposicao": {"itens": ["ram", "inventado", "api", "fps"]}})
+        self.assertEqual(c["sobreposicao"]["itens"], ["fps", "api", "ram"])
+
+    def test_nomes_das_pecas(self):
+        nome = self.a.nome_curto_cpu
+        self.assertEqual(nome("12th Gen Intel Core i5-12400F"), "Intel Core i5-12400F")
+        self.assertEqual(nome("Intel Core i7-8700 CPU @ 3.20GHz"), "Intel Core i7-8700")
+        self.assertEqual(nome("AMD Ryzen 5 5600G with Radeon Graphics"), "AMD Ryzen 5 5600G")
+        self.assertEqual(nome("AMD Ryzen 7 5700X3D"), "AMD Ryzen 7 5700X3D")
+        placas = [{"nome": "Intel UHD 630", "driver": "i915", "caminho": "/x"},
+                  {"nome": "NVIDIA GeForce RTX 2060 SUPER", "driver": "nvidia", "caminho": "/y"}]
+        self.assertEqual(self.a.placa_principal(placas)["nome"], "NVIDIA GeForce RTX 2060 SUPER")
+        self.assertIsNone(self.a.placa_principal([]))
+
+    def test_consumo_cpu_legivel(self):
+        sys_ = self.mundo.sys
+        self.assertFalse(self.a.consumo_cpu_legivel())
+        escrever(sys_ / "class/powercap/intel-rapl:0/name", "package-0\n")
+        energia = sys_ / "class/powercap/intel-rapl:0/energy_uj"
+        escrever(energia, "123\n")
+        self.assertTrue(self.a.consumo_cpu_legivel())
+        if os.getuid() != 0:  # o administrador lê tudo
+            energia.chmod(0o000)
+            self.assertFalse(self.a.consumo_cpu_legivel())
+        escrever(sys_ / "class/hwmon/hwmon2/name", "zenpower\n")
+        self.assertTrue(self.a.consumo_cpu_legivel())
+
     def test_desligada_nunca_mostra(self):
         c = self.a.carregar_config()
         self.assertIn("no_display", self.a.texto_mangohud(c, None, mostrar=True).splitlines())

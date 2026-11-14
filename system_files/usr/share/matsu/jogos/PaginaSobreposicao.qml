@@ -12,7 +12,8 @@ Flickable {
 
     readonly property int margem: Math.round(janela.gu * 1.4)
     readonly property var s: janela.conf ? janela.conf.sobreposicao
-                                         : ({ ligada: false, itens: ["fps", "grafico", "cpu", "gpu", "ram"], posicao: "top-left", tamanho: "medio", compacta: false })
+                                         : ({ ligada: false, itens: ["fps", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura"],
+                                            posicao: "top-left", tamanho: "medio", compacta: false })
     function tem(item) {
         return s.itens.indexOf(item) >= 0;
     }
@@ -293,18 +294,39 @@ Flickable {
                 }
             }
 
-            // A sobreposição de mentira, igual à do jogo (cores das partes do Matsu).
+            // A sobreposição de mentira, desenhada como o MangoHud desenha (três colunas:
+            // o nome à esquerda e os números descendo em duas colunas), com as cores das
+            // partes do Matsu. Os números da placa, do processador e da memória são deste
+            // computador; o FPS é de exemplo.
             Rectangle {
                 id: hud
                 readonly property real m: Math.round(janela.gu * 0.6)
                 readonly property string p: pagina.s.posicao
+                readonly property bool linha: pagina.s.compacta
+                readonly property real l: tela.letra
+                readonly property real pequena: l * 0.55
+                readonly property real secundaria: l * 0.7
+                readonly property real pad: l * 0.3
+                readonly property real alturaLinha: l * 1.32
+                // Só o FPS: a pílula estreita, como no jogo (ajudante.py, width).
+                readonly property bool soFps: !pagina.tem("grafico") && !mostraGpu && !mostraCpu && !pagina.tem("vram") && !pagina.tem("ram")
+                readonly property real largura: l * (soFps ? 11.5 : 13.8)
+                readonly property real coluna: (largura - 2 * pad) / 3
+                readonly property real alinhar: l * 2.7   // o MangoHud alinha os números pela direita em 4 letras
+                readonly property bool mostraGpu: pagina.tem("gpu") || pagina.tem("temperatura") || pagina.tem("frequencia") || pagina.tem("consumo") || pagina.tem("ventoinha")
+                readonly property bool watsCpu: janela.dados && janela.dados.pc ? janela.dados.pc.cpu_watts : false
+                readonly property bool mostraCpu: pagina.tem("cpu") || pagina.tem("temperatura") || pagina.tem("frequencia") || (pagina.tem("consumo") && watsCpu)
+                readonly property bool nomes: pagina.tem("nomes") && !linha
+                // No jogo é o nome da API do jogo aberto (DX12, DX11, DX9, VULKAN, OpenGL).
+                readonly property string api: "DX12"
+
                 visible: pagina.s.itens.length > 0
                 x: p.indexOf("left") >= 0 ? m : (p.indexOf("right") >= 0 ? tela.width - width - m : (tela.width - width) / 2)
                 y: p.indexOf("top") === 0 ? m : tela.height - height - m
-                width: conteudoHud.implicitWidth + tela.letra * 1.1
-                height: conteudoHud.implicitHeight + tela.letra * 0.8
-                radius: tela.letra * 0.45
-                color: Qt.rgba(0.11, 0.11, 0.12, 0.62)
+                width: linha ? emLinha.implicitWidth + 2 * l * 0.45 : largura
+                height: linha ? l * 1.6 : emPe.implicitHeight + 2 * pad
+                radius: l * 0.55
+                color: Qt.rgba(0.082, 0.082, 0.094, 0.62)
                 opacity: pagina.s.ligada ? 1 : 0.5
                 Behavior on x {
                     NumberAnimation {
@@ -319,61 +341,177 @@ Flickable {
                     }
                 }
 
-                // Números de verdade deste computador; o FPS é de exemplo.
+                // Os números. A placa é a de jogo (a do nome), como no jogo.
                 readonly property int fps: 141 + (janela.tique * 7) % 6
-                readonly property var p0: janela.placa
-                readonly property string gpu: p0 ? Math.max(0, p0.uso) + "%" : "57%"
-                readonly property string gpuTemp: p0 && p0.temp > 0 ? p0.temp + "°C" : "61°C"
-                readonly property string gpuMhz: p0 && p0.mhz > 0 ? p0.mhz + "MHz" : "2581MHz"
-                readonly property string gpuW: p0 && p0.watts > 0 ? Math.round(p0.watts) + "W" : "187W"
-                readonly property string cpu: janela.dados ? Math.round(janela.dados.cpu.uso) + "%" : "23%"
-                readonly property string cpuTemp: janela.dados && janela.dados.cpu.temp > 0 ? janela.dados.cpu.temp + "°C" : "52°C"
-                readonly property string ram: janela.dados ? janela.num(janela.dados.memoria.usada / 1073741824, 1) + " GiB" : "5,4 GiB"
-                readonly property string vram: p0 && p0.vram_total > 0 ? janela.num(p0.vram_usada / 1073741824, 1) + " GiB" : "3,2 GiB"
+                readonly property var p0: {
+                    var lista = janela.dados ? janela.dados.placas : [];
+                    var nome = janela.dados && janela.dados.pc ? janela.dados.pc.gpu : "";
+                    for (var i = 0; i < lista.length; i++)
+                        if (lista[i].nome === nome)
+                            return lista[i];
+                    return janela.placa;
+                }
+                function ou(valor, exemplo) {
+                    return valor > 0 ? String(Math.round(valor)) : exemplo;
+                }
+                readonly property var valoresGpu: {
+                    var v = [];
+                    if (pagina.tem("gpu") || mostraGpu)
+                        v.push({ n: p0 && p0.uso >= 0 ? String(p0.uso) : "57", u: "%", grande: true });
+                    if (pagina.tem("temperatura"))
+                        v.push({ n: p0 ? ou(p0.temp, "61") : "61", u: linha ? "°" : "°C", grande: true });
+                    if (pagina.tem("ventoinha"))
+                        v.push(p0 && p0.ventoinha >= 0 && !(p0.rpm > 0) ? { n: String(p0.ventoinha), u: "%", grande: true, extra: "FAN" }
+                                                                    : { n: p0 ? ou(p0.rpm, "1650") : "1650", u: "RPM" });
+                    if (pagina.tem("frequencia"))
+                        v.push({ n: p0 ? ou(p0.mhz, "2581") : "2581", u: "MHz" });
+                    if (pagina.tem("consumo"))
+                        v.push({ n: p0 ? ou(p0.watts, "187") : "187", u: "W" });
+                    return v;
+                }
+                readonly property var valoresVram: {
+                    var v = [{ n: p0 && p0.vram_total > 0 ? (p0.vram_usada / 1073741824).toFixed(1) : "3.2", u: linha ? "" : "GiB" }];
+                    if (pagina.tem("frequencia") && !linha)
+                        v.push({ n: p0 ? ou(p0.mhz_mem, "1000") : "1000", u: "MHz" });
+                    return v;
+                }
+                readonly property var valoresCpu: {
+                    var d = janela.dados ? janela.dados.cpu : null;
+                    var v = [{ n: d ? String(Math.round(d.uso)) : "23", u: "%", grande: true }];
+                    if (pagina.tem("temperatura"))
+                        v.push({ n: d ? ou(d.temp, "52") : "52", u: linha ? "°" : "°C", grande: true });
+                    if (pagina.tem("frequencia"))
+                        v.push({ n: d ? ou(d.mhz, "4200") : "4200", u: "MHz" });
+                    if (pagina.tem("consumo") && watsCpu)
+                        v.push({ n: "58", u: "W" });
+                    return v;
+                }
+                readonly property string ram: janela.dados ? (janela.dados.memoria.usada / 1073741824).toFixed(1) : "5.4"
+                readonly property color corFps: fps < 30 ? "#f0609e" : (fps < 60 ? "#f5c36b" : "#ffffff")
+                readonly property string unidadeFps: pagina.tem("api") ? "FPS" : ""
 
                 component Rotulo: Text {
                     font.family: "Inter"
-                    font.pixelSize: tela.letra
+                    font.pixelSize: hud.l
                     font.weight: Font.DemiBold
                     color: "#ffffff"
+                    textFormat: Text.PlainText
+                }
+                // Um número alinhado pela direita e a unidade logo depois (pequena e no
+                // alto, como no MangoHud; "%" e "°C" ficam do tamanho do número).
+                component Valor: Item {
+                    property string n: ""
+                    property string u: ""
+                    property bool grande: false
+                    property string extra: ""
+                    property color cor: "#ffffff"
+                    width: hud.coluna
+                    height: hud.alturaLinha
+                    Rotulo {
+                        id: numero
+                        x: hud.alinhar - width
+                        text: parent.n
+                        color: parent.cor
+                    }
+                    Rotulo {
+                        x: numero.x + numero.width + 1
+                        text: parent.u
+                        font.pixelSize: parent.grande ? hud.l : hud.pequena
+                    }
+                    Rotulo {
+                        visible: parent.extra !== ""
+                        x: numero.x + numero.width + 1 + hud.l * 0.75
+                        text: parent.extra
+                        font.pixelSize: hud.pequena
+                    }
+                }
+                // Uma linha da tabela: o nome e os valores em duas colunas, descendo.
+                component LinhaHud: Item {
+                    property string rotulo: ""
+                    property color corRotulo: "#ffffff"
+                    property var valores: []
+                    width: hud.largura - 2 * hud.pad
+                    height: Math.max(1, Math.ceil(valores.length / 2)) * hud.alturaLinha
+                    Rotulo {
+                        text: parent.rotulo
+                        color: parent.corRotulo
+                    }
+                    Repeater {
+                        model: parent.valores
+                        Valor {
+                            required property var modelData
+                            required property int index
+                            x: hud.coluna * (1 + index % 2)
+                            y: Math.floor(index / 2) * hud.alturaLinha
+                            n: modelData.n
+                            u: modelData.u
+                            grande: modelData.grande === true
+                            extra: modelData.extra || ""
+                            cor: modelData.cor || "#ffffff"
+                        }
+                    }
+                }
+                component Nome: Rotulo {
+                    font.pixelSize: hud.secundaria
+                    height: hud.secundaria * 1.45
+                    verticalAlignment: Text.AlignVCenter
+                }
+                component Respiro: Item {
+                    width: 1
+                    height: hud.secundaria * 1.45
                 }
 
+                // ----- em pé (Completa) -----
                 Column {
-                    id: conteudoHud
-                    anchors.centerIn: parent
-                    spacing: tela.letra * 0.25
-                    visible: !pagina.s.compacta
+                    id: emPe
+                    x: hud.pad
+                    y: hud.pad
+                    visible: !hud.linha
 
                     Rotulo {
                         visible: pagina.tem("hora")
+                        height: hud.alturaLinha
                         text: "21:47"
                     }
-                    Row {
+                    Respiro { visible: pagina.tem("hora") && pagina.tem("fps") }
+                    LinhaHud {
                         visible: pagina.tem("fps")
-                        spacing: tela.letra * 0.6
-                        Rotulo { text: "FPS"; width: tela.letra * 3.2 }
-                        Item {
-                            width: tela.letra * 2.6
-                            height: numeroFps.altura
-                            NumeroRolante {
-                                id: numeroFps
-                                anchors.right: parent.right
-                                texto: String(hud.fps)
-                                cor: "#ffffff"
-                                duracao: 380
-                                font.family: "Inter"
-                                font.pixelSize: tela.letra
-                                font.weight: Font.DemiBold
-                            }
-                        }
-                        Rotulo { text: janela.num(1000 / hud.fps, 1) + " ms"; opacity: 0.85 }
+                        rotulo: pagina.tem("api") ? hud.api : "FPS"
+                        valores: [{ n: String(hud.fps), u: hud.unidadeFps, cor: hud.corFps },
+                                  { n: (1000 / hud.fps).toFixed(1), u: "ms" }]
                     }
-                    // Gráfico do tempo de cada quadro.
+                    LinhaHud {
+                        visible: pagina.tem("fps") && pagina.tem("fps_baixo")
+                        rotulo: "AVG"
+                        valores: [{ n: String(hud.fps - 4), u: hud.unidadeFps }]
+                    }
+                    LinhaHud {
+                        visible: pagina.tem("fps") && pagina.tem("fps_baixo")
+                        rotulo: "1%"
+                        valores: [{ n: String(Math.round(hud.fps * 0.68)), u: hud.unidadeFps }]
+                    }
+                    // O gráfico do tempo de cada quadro, com o título pequeno do MangoHud.
+                    Item {
+                        visible: pagina.tem("fps") && pagina.tem("grafico")
+                        width: hud.largura - 2 * hud.pad
+                        height: hud.pequena * 2.6
+                        Rotulo {
+                            anchors.bottom: parent.bottom
+                            text: "Frametime"
+                            font.pixelSize: hud.pequena
+                        }
+                        Rotulo {
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            text: "min: " + (1000 / (hud.fps + 9)).toFixed(1) + "ms, max: " + (1000 / (hud.fps - 30)).toFixed(1) + "ms"
+                            font.pixelSize: hud.pequena
+                        }
+                    }
                     Canvas {
                         id: graficoHud
-                        visible: pagina.tem("grafico") && pagina.tem("fps")
-                        width: tela.letra * 10
-                        height: tela.letra * 1.6
+                        visible: pagina.tem("fps") && pagina.tem("grafico")
+                        width: hud.largura - 2 * hud.pad
+                        height: hud.l * 2.3
                         property int t: janela.tique
                         onTChanged: requestPaint()
                         onWidthChanged: requestPaint()
@@ -381,12 +519,12 @@ Flickable {
                             var ctx = getContext("2d");
                             ctx.reset();
                             ctx.strokeStyle = "#45d0c1";
-                            ctx.lineWidth = Math.max(1, tela.letra * 0.09);
+                            ctx.lineWidth = Math.max(1, hud.l * 0.07);
                             ctx.beginPath();
-                            for (var i = 0; i <= 40; i++) {
-                                var v = 0.5 + 0.18 * Math.sin((i + t * 3) * 0.7) + ((i * 7 + t) % 13 === 0 ? 0.3 : 0);
-                                var x = i * width / 40;
-                                var y = height - v * height * 0.8;
+                            for (var i = 0; i <= 60; i++) {
+                                var v = 0.22 + 0.05 * Math.sin((i + t * 3) * 1.3) + ((i * 7 + t) % 17 === 0 ? 0.25 : 0);
+                                var x = i * width / 60;
+                                var y = height - v * height;
                                 if (i === 0)
                                     ctx.moveTo(x, y);
                                 else
@@ -395,66 +533,125 @@ Flickable {
                             ctx.stroke();
                         }
                     }
-                    Row {
-                        visible: pagina.tem("gpu") || pagina.tem("temperatura") || pagina.tem("frequencia") || pagina.tem("consumo")
-                        spacing: tela.letra * 0.6
-                        Rotulo { text: "GPU"; color: "#f0729f"; width: tela.letra * 3.2 }
-                        Rotulo { text: hud.gpu; width: tela.letra * 2.6; horizontalAlignment: Text.AlignRight }
-                        Rotulo { visible: pagina.tem("temperatura"); text: hud.gpuTemp }
-                        Rotulo { visible: pagina.tem("frequencia"); text: hud.gpuMhz }
-                        Rotulo { visible: pagina.tem("consumo"); text: hud.gpuW }
+                    Respiro { visible: pagina.tem("fps") && (hud.mostraGpu || pagina.tem("vram")) }
+                    Nome {
+                        visible: hud.nomes && (hud.mostraGpu || pagina.tem("vram"))
+                        text: janela.dados && janela.dados.pc && janela.dados.pc.gpu ? janela.dados.pc.gpu : (hud.p0 ? hud.p0.nome : "")
                     }
-                    Row {
-                        visible: pagina.tem("cpu") || pagina.tem("temperatura") || pagina.tem("frequencia")
-                        spacing: tela.letra * 0.6
-                        Rotulo { text: "CPU"; color: "#45d0c1"; width: tela.letra * 3.2 }
-                        Rotulo { text: hud.cpu; width: tela.letra * 2.6; horizontalAlignment: Text.AlignRight }
-                        Rotulo { visible: pagina.tem("temperatura"); text: hud.cpuTemp }
-                        Rotulo { visible: pagina.tem("frequencia"); text: "4200MHz" }
+                    LinhaHud {
+                        visible: hud.mostraGpu
+                        rotulo: "GPU"
+                        corRotulo: "#f0729f"
+                        valores: hud.valoresGpu
                     }
-                    Row {
+                    LinhaHud {
                         visible: pagina.tem("vram")
-                        spacing: tela.letra * 0.6
-                        Rotulo { text: "VRAM"; color: "#f59f6b"; width: tela.letra * 3.2 }
-                        Rotulo { text: hud.vram }
+                        rotulo: "VRAM"
+                        corRotulo: "#f59f6b"
+                        valores: hud.valoresVram
                     }
-                    Row {
+                    Respiro { visible: (pagina.tem("fps") || hud.mostraGpu || pagina.tem("vram")) && (hud.mostraCpu || pagina.tem("ram")) }
+                    Nome {
+                        visible: hud.nomes && hud.mostraCpu
+                        text: janela.dados && janela.dados.pc ? janela.dados.pc.cpu : ""
+                    }
+                    LinhaHud {
+                        visible: hud.mostraCpu
+                        rotulo: "CPU"
+                        corRotulo: "#45d0c1"
+                        valores: hud.valoresCpu
+                    }
+                    LinhaHud {
                         visible: pagina.tem("ram")
-                        spacing: tela.letra * 0.6
-                        Rotulo { text: "RAM"; color: "#b18cf5"; width: tela.letra * 3.2 }
-                        Rotulo { text: hud.ram }
+                        rotulo: "RAM"
+                        corRotulo: "#b18cf5"
+                        valores: [{ n: hud.ram, u: "GiB" }]
                     }
                 }
-                // Em linha (compacta): tudo numa linha só.
+
+                // ----- em linha: tudo numa linha só, com um traço entre as partes -----
                 Row {
+                    id: emLinha
                     anchors.centerIn: parent
-                    visible: pagina.s.compacta
-                    spacing: tela.letra * 0.7
-                    Rotulo { visible: pagina.tem("hora"); text: "21:47" }
-                    Rotulo { visible: pagina.tem("fps"); text: hud.fps + " FPS" }
-                    Row {
-                        visible: pagina.tem("gpu")
-                        spacing: tela.letra * 0.3
-                        Rotulo { text: "GPU"; color: "#f0729f" }
-                        Rotulo { text: hud.gpu }
+                    visible: hud.linha
+                    spacing: hud.l * 0.4
+
+                    component Parte: Row {
+                        property string rotulo: ""
+                        property color corRotulo: "#ffffff"
+                        property var valores: []
+                        property bool primeira: false
+                        spacing: hud.l * 0.3
+                        Rectangle {
+                            visible: !parent.primeira
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 1
+                            height: hud.l * 0.8
+                            color: "#55555c"
+                        }
+                        Rotulo {
+                            text: parent.rotulo
+                            color: parent.corRotulo
+                        }
+                        Repeater {
+                            model: parent.valores
+                            Row {
+                                required property var modelData
+                                Rotulo {
+                                    text: modelData.n
+                                    color: modelData.cor || "#ffffff"
+                                }
+                                Rotulo {
+                                    text: modelData.u
+                                    font.pixelSize: modelData.grande ? hud.l : hud.pequena
+                                }
+                            }
+                        }
                     }
-                    Row {
-                        visible: pagina.tem("cpu")
-                        spacing: tela.letra * 0.3
-                        Rotulo { text: "CPU"; color: "#45d0c1" }
-                        Rotulo { text: hud.cpu }
+                    Rotulo {
+                        visible: pagina.tem("hora")
+                        text: "21:47"
                     }
-                    Row {
+                    Parte {
+                        visible: pagina.tem("fps")
+                        primeira: !pagina.tem("hora")
+                        rotulo: pagina.tem("api") ? hud.api : "FPS"
+                        valores: [{ n: String(hud.fps), u: hud.unidadeFps, cor: hud.corFps }]
+                    }
+                    Parte {
+                        visible: pagina.tem("fps") && pagina.tem("fps_baixo")
+                        rotulo: "AVG"
+                        valores: [{ n: String(hud.fps - 4), u: hud.unidadeFps }]
+                    }
+                    Parte {
+                        visible: pagina.tem("fps") && pagina.tem("fps_baixo")
+                        primeira: true   // o MangoHud junta a média e o 1% numa parte só
+                        rotulo: "1%"
+                        valores: [{ n: String(Math.round(hud.fps * 0.68)), u: hud.unidadeFps }]
+                    }
+                    Parte {
+                        visible: hud.mostraGpu
+                        rotulo: "GPU"
+                        corRotulo: "#f0729f"
+                        valores: hud.valoresGpu
+                    }
+                    Parte {
                         visible: pagina.tem("vram")
-                        spacing: tela.letra * 0.3
-                        Rotulo { text: "VRAM"; color: "#f59f6b" }
-                        Rotulo { text: hud.vram }
+                        rotulo: "VRAM"
+                        corRotulo: "#f59f6b"
+                        valores: hud.valoresVram
                     }
-                    Row {
+                    Parte {
+                        visible: hud.mostraCpu
+                        rotulo: "CPU"
+                        corRotulo: "#45d0c1"
+                        valores: hud.valoresCpu
+                    }
+                    Parte {
                         visible: pagina.tem("ram")
-                        spacing: tela.letra * 0.3
-                        Rotulo { text: "RAM"; color: "#b18cf5" }
-                        Rotulo { text: hud.ram }
+                        rotulo: "RAM"
+                        corRotulo: "#b18cf5"
+                        valores: [{ n: hud.ram, u: "" }]
                     }
                 }
             }
@@ -467,12 +664,42 @@ Flickable {
             opacity: 0.5
         }
 
-        // ----- o que mostrar -----
-        Texto {
+        // ----- o que mostrar: três jeitos prontos e, embaixo, item por item -----
+        RowLayout {
+            Layout.fillWidth: true
             Layout.topMargin: Math.round(janela.gu * 0.8)
-            text: janela.t("O que mostrar", "What to show")
-            font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1.5
-            font.weight: Font.DemiBold
+            spacing: Math.round(janela.gu * 0.6)
+            Texto {
+                Layout.fillWidth: true
+                text: janela.t("O que mostrar", "What to show")
+                font.pointSize: Kirigami.Theme.defaultFont.pointSize + 1.5
+                font.weight: Font.DemiBold
+            }
+            Seletor {
+                // Os mesmos MODELOS do ajudante.py; nenhum fica marcado quando a
+                // pessoa escolheu outra mistura.
+                readonly property var modelos: ({
+                    basica: ["fps"],
+                    media: ["fps", "fps_baixo", "grafico", "gpu", "cpu", "ram"],
+                    completa: ["fps", "api", "fps_baixo", "grafico", "nomes", "gpu", "vram", "cpu", "ram", "temperatura",
+                               "frequencia", "consumo", "ventoinha"]
+                })
+                opcoes: [{ id: "basica", nome: janela.t("Só o FPS", "FPS only") }, { id: "media", nome: janela.t("Essencial", "Essentials") },
+                         { id: "completa", nome: janela.t("Tudo", "Everything") }]
+                escolhido: {
+                    var atuais = pagina.s.itens.filter((i) => i !== "hora").slice().sort().join(",");
+                    for (var nome in modelos)
+                        if (modelos[nome].slice().sort().join(",") === atuais)
+                            return nome;
+                    return "";
+                }
+                onEscolher: (id) => {
+                    var lista = modelos[id].slice();
+                    if (pagina.tem("hora"))
+                        lista.push("hora");
+                    janela.mudar("sobreposicao.itens", lista);
+                }
+            }
         }
         Flow {
             Layout.fillWidth: true
@@ -482,14 +709,18 @@ Flickable {
             Repeater {
                 model: [
                     { id: "fps", nome: janela.t("FPS e tempo do quadro", "FPS and frame time"), cor: "#ffffff" },
+                    { id: "fps_baixo", nome: janela.t("FPS médio e 1% mais baixo", "Average and 1% low FPS"), cor: "#ffffff" },
+                    { id: "api", nome: janela.t("API do jogo (DirectX, Vulkan)", "Game API (DirectX, Vulkan)"), cor: "#ffffff" },
                     { id: "grafico", nome: janela.t("Gráfico dos quadros", "Frame graph"), cor: "#45d0c1" },
+                    { id: "nomes", nome: janela.t("Nome do processador e da placa", "CPU and GPU names"), cor: "#ffffff" },
                     { id: "gpu", nome: janela.t("Uso da placa (GPU)", "GPU usage"), cor: "#f0729f" },
+                    { id: "vram", nome: janela.t("Memória de vídeo", "Video memory"), cor: "#f59f6b" },
                     { id: "cpu", nome: janela.t("Uso do processador (CPU)", "CPU usage"), cor: "#45d0c1" },
                     { id: "ram", nome: janela.t("Memória (RAM)", "Memory (RAM)"), cor: "#b18cf5" },
-                    { id: "vram", nome: janela.t("Memória de vídeo", "Video memory"), cor: "#f59f6b" },
                     { id: "temperatura", nome: janela.t("Temperaturas", "Temperatures"), cor: "#f5c36b" },
                     { id: "frequencia", nome: janela.t("Frequências (MHz)", "Clock speeds (MHz)"), cor: "#8fa2ff" },
-                    { id: "consumo", nome: janela.t("Consumo da placa (W)", "GPU power (W)"), cor: "#7fcf6a" },
+                    { id: "consumo", nome: janela.t("Consumo (W)", "Power draw (W)"), cor: "#7fcf6a" },
+                    { id: "ventoinha", nome: janela.t("Ventoinha da placa", "GPU fan"), cor: "#9fd8ff" },
                     { id: "hora", nome: janela.t("Hora", "Clock"), cor: "#ffffff" }
                 ]
 
@@ -651,6 +882,18 @@ Flickable {
                 nome: janela.t("Jogos do Windows e jogos Vulkan", "Windows games and Vulkan games")
                 texto: janela.t("Aparece sozinha: quase todos os jogos da Steam, inclusive os do Windows pelo Proton.",
                                 "Shows up by itself: almost every Steam game, including Windows games through Proton.")
+            }
+            LinhaOpcao {
+                Layout.fillWidth: true
+                primeira: false
+                ultima: false
+                icone: "matsu-raio-symbolic"
+                nome: janela.t("Consumo do processador", "CPU power draw")
+                texto: janela.dados && janela.dados.pc && janela.dados.pc.cpu_watts
+                       ? janela.t("Neste computador aparece o consumo da placa e do processador.",
+                                  "On this computer both the GPU and the CPU power draw show up.")
+                       : janela.t("Neste computador aparece só o da placa: o do processador o Linux deixa só para o administrador, por segurança.",
+                                  "On this computer only the GPU's shows up: Linux keeps the CPU's for the administrator, for security.")
             }
             LinhaOpcao {
                 Layout.fillWidth: true
