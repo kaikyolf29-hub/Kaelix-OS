@@ -215,6 +215,30 @@ pausado, atenção, sem proteção). O balão mostra o estado, a pausa rápida (
 escudo (ameaça bloqueada, pendrive, escudo de volta) usam o `notify-send`, com
 botões que abrem a Central na página certa.
 
+## 6b. Janela de senha do sistema (agente do polkit)
+
+Quando um programa pede permissão de administrador (o `pkexec`, o firewall, um
+driver, "Abrir mesmo assim"), quem pergunta a senha é a janela do Matsu, não a do
+KDE. Ela só pergunta e responde ao polkit: **quem decide é o polkit e o PAM**, do
+mesmo jeito que com o agente do KDE.
+
+- O plugin `org.matsu.senha` (`build_files/deco/senha`, C++ com o PolkitQt1) é o
+  agente: recebe o pedido, monta a lista de quem pode permitir (o polkit manda os
+  administradores; um grupo como `wheel` vira os membros dele, com a pessoa da
+  sessão primeiro) e conversa com o ajudante do polkit (`polkit-agent-helper-1`).
+- A janela é `/usr/share/matsu/senha/Main.qml`, aberta pela `matsu-janela`: título
+  curto ("Rodar “X” como administrador?" quando o `pkexec` diz o programa), a foto
+  e o nome de quem vai permitir, o campo da senha e "Detalhes" com a ação, o
+  programa e o comando. A senha errada balança o campo e pergunta de novo; o PAM
+  decide se trava depois de muitas tentativas.
+- Um pedido por vez, como no KDE. A senha nunca é guardada: vai direto para o
+  ajudante do polkit, e o campo é limpo quando a senha volta errada ou a janela fecha.
+- O serviço do KDE (`plasma-polkit-agent.service`) continua o mesmo; o drop-in
+  `plasma-polkit-agent.service.d/matsu.conf` só troca o programa por
+  `/usr/libexec/matsu/matsu-senha-iniciar`. Se a janela do Matsu ou o plugin
+  faltarem, ou se ela não conseguir virar o agente, ele **abre o agente do KDE**,
+  para nunca ficar sem quem pergunte a senha.
+
 ## 7. Na montagem da imagem
 
 O `build_files/seguranca.sh`:
