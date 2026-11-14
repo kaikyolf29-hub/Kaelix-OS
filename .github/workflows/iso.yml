@@ -149,6 +149,14 @@ jobs:
         continue-on-error: true
         run: bash tests/vm/run-iso.sh "out/${ISO_NAME}" prints-iso
 
+      # Liga o instalador de novo com o registro do boot pela porta serial, com e
+      # sem a cara do Matsu, para mostrar onde ele para se a tela não abrir.
+      - name: Diagnóstico do boot da ISO
+        if: matrix.suffix == 'amd'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: bash tests/vm/diag-iso.sh "out/${ISO_NAME}" prints-iso
+
       - name: Guardar os prints do instalador
         if: matrix.suffix == 'amd' && always()
         uses: actions/upload-artifact@v4
