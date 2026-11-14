@@ -591,6 +591,24 @@ shot "37f-loja-pagina-do-app"
 hmp key alt-f4
 sleep 2
 
+# Janela de senha do sistema (o agente do polkit do Matsu): o pkexec pede a
+# senha, a janela do Matsu aparece por cima, digita a senha e o terminal mostra
+# se deu certo (resultado=0) e o que o agente registrou.
+hmp key ctrl-alt-t
+sleep 5
+hmp type "clear; pkexec /usr/bin/true; echo resultado=\$?; journalctl --user -b -u plasma-polkit-agent -o cat | tail -n 8"
+hmp key ret
+sleep 6
+shot "39-janela-de-senha"
+hmp type "$USER_PASS"
+sleep 1
+shot "39a-janela-de-senha-digitada"
+hmp key ret
+sleep 6
+shot "39b-senha-aceita"
+hmp key alt-f4
+sleep 2
+
 # Tela de bloqueio (Meta+L), com o papel de parede do Matsu. Depois digita a
 # senha (aparece a foto, o nome e o campo) e desbloqueia, para provar que
 # desbloquear continua funcionando com as peças do Matsu.
@@ -611,6 +629,22 @@ sleep 5
 shot "34-tela-de-sair"
 hmp key esc
 sleep 2
+
+# Registro das telas do sistema num terminal de texto (Ctrl+Alt+F3), que abre
+# mesmo se a sessão ficou travada no bloqueio: o que o bloqueio, a tela de sair
+# e a janela de senha disseram. Fica por último porque não volta para a sessão.
+hmp key ctrl-alt-f3
+sleep 4
+hmp type "matsu"
+hmp key ret
+sleep 2
+hmp type "$USER_PASS"
+hmp key ret
+sleep 5
+hmp type "clear; journalctl -b -o cat --no-pager | grep -i -e kscreenlocker -e greet -e lockscreen -e logout -e matsu-senha -e polkit | grep -v -i -e 'locale' | tail -n 40"
+hmp key ret
+sleep 5
+shot "42-registro-do-bloqueio-e-senha"
 
 echo "Prints em $OUT"
 ls -l "$OUT"
