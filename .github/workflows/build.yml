@@ -13,6 +13,7 @@ on:
       - ".github/workflows/iso.yml"
       - ".github/workflows/prints.yml"
       - ".github/workflows/publicar-estavel.yml"
+      - ".github/workflows/atualizar-estavel.yml"
       - ".github/workflows/testes.yml"
       - ".github/workflows/site.yml"
       - ".github/workflows/extrair.yml"

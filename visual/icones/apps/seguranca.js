@@ -1,21 +1,14 @@
-// Segurança do Matsu: o escudo com o pinheiro dentro (o mesmo selo da Central de
-// segurança), claros sobre o degradê de mar fundo.
-module.exports = ({ base, B, liso }) => {
-  // Uma nuvem de folhas do pinheiro: pílula com centro (x, y), largura e altura.
-  const nuvem = (x, y, w, h) =>
-    `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${h / 2}" fill="${B}"/>`;
+// Central de segurança: o escudo claro com o sinal de certo em verde e o
+// pontinho rosa em cima, sobre o degradê verde.
+module.exports = ({ grade, B, R, liso }) => {
+  const cores = ['seg', '#5FD39A', '#1F8A5B'];
+  const escudo = `<path d="M499.1 251.6 A48 48 0 0 1 524.9 251.6 L713.4 304.1 A52 52 0 0 1 751.1 360 L731.2 539.3 A80 80 0 0 1 707.2 588.1 L550.8 738.6 A56 56 0 0 1 473.2 738.6 L316.8 588.1 A80 80 0 0 1 292.8 539.3 L272.9 360 A52 52 0 0 1 310.6 304.1 Z" fill="${B}" stroke="${B}" stroke-width="12" ${liso}/>`;
+  const certo = (t) => `<path d="M410 526 L484 600 L622 450" fill="none" stroke="#1F8A5B" stroke-width="${t}" ${liso}/>`;
   return {
     seguranca: {
       nomes: ['org.matsu.seguranca'],
-      svg: base('seg', '#4CC7B8', '#145F72') +
-        // O escudo.
-        `<path d="M128 46 L192 72 V122 C192 166 165 197 128 214 C91 197 64 166 64 122 V72 Z" fill="none" stroke="${B}" stroke-width="14" ${liso}/>` +
-        // O tronco torto e os galhos.
-        `<path d="M128 182 C128 168 115 162 119 148 C123 136 136 133 131 112" fill="none" stroke="${B}" stroke-width="10" ${liso}/>` +
-        `<path d="M119 149 C111 148 106 145 101 139 M130 128 C138 127 144 125 151 120" fill="none" stroke="${B}" stroke-width="7" ${liso}/>` +
-        // As nuvens de folhas e a pedra.
-        nuvem(129, 108, 58, 18) + nuvem(129, 94, 28, 14) + nuvem(100, 138, 40, 15) + nuvem(155, 121, 38, 14) +
-        `<rect x="104" y="181" width="48" height="8" rx="4" fill="${B}" opacity="0.6"/>`,
+      svg: grade(...cores, escudo + certo(56) + `<circle cx="512" cy="344" r="24" fill="${R}"/>`),
+      pequeno: grade(...cores, escudo + certo(74), 1.14),
     },
   };
 };

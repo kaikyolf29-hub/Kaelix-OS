@@ -1,0 +1,81 @@
+# Atualização calada do Matsu OS: coloca a imagem do canal "teste" no canal
+# "estavel" SEM número novo, sem Release e sem ISO nova.
+#
+# Serve para melhorias pequenas dentro da mesma versão (ícones, correções) que
+# não pedem aviso: os computadores recebem na atualização automática de sempre
+# e, como a versão continua a mesma (rótulo org.matsu.versao), não aparece o
+# aviso de "versão nova" nem o de "o Matsu foi atualizado". A ISO é um
+# instalador de rede, então quem instalar depois já recebe a imagem nova.
+#
+# Versão nova que a pessoa percebe (27.1, 27.2...) continua pelo fluxo
+# "Publicar versão estável", com o NOVIDADES.md, o Release e as ISOs.
+#
+# Só roda quando o criador manda, pela aba Actions, escrevendo ATUALIZAR.
+name: Atualizar estável sem versão nova
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: "Escreva ATUALIZAR para confirmar (a versão continua a mesma)"
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: canal-estavel
+  cancel-in-progress: false
+
+jobs:
+  promover:
+    name: Trocar a imagem do canal estavel (mesma versão)
+    if: inputs.confirmar == 'ATUALIZAR' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: v2.5.0
+
+      - name: Copiar as imagens assinadas do canal teste para o estavel
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          echo "$TOKEN" | skopeo login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          rotulo() { skopeo inspect --no-tags "docker://$1" | jq -r '.Labels["org.matsu.versao"] // empty'; }
+          resumo() { skopeo inspect --no-tags "docker://$1" | jq -r '"\(.Digest) (montada em \(.Labels["org.opencontainers.image.version"] // "?"), código \(.Labels["org.opencontainers.image.revision"] // "?" | .[0:7]))"'; }
+          for IMG in matsu-os matsu-os-nvidia; do
+            TESTE="${REGISTRY}/${IMG}:teste"
+            ESTAVEL="${REGISTRY}/${IMG}:estavel"
+            # Só passa imagem com assinatura válida e da MESMA versão do estável.
+            cosign verify --key cosign.pub "$TESTE" > /dev/null
+            V_TESTE="$(rotulo "$TESTE")"
+            V_ESTAVEL="$(rotulo "$ESTAVEL")"
+            if [[ -z "$V_ESTAVEL" ]]; then
+              echo "::error::${IMG} ainda não tem versão estável. A primeira sai pelo fluxo \"Publicar versão estável\"."
+              exit 1
+            fi
+            if [[ "$V_TESTE" != "$V_ESTAVEL" ]]; then
+              echo "::error::${IMG}:teste é da versão '${V_TESTE:-sem número}' e o estável é da ${V_ESTAVEL}. Versão nova sai pelo fluxo \"Publicar versão estável\"."
+              exit 1
+            fi
+            ANTES="$(resumo "$ESTAVEL")"
+            DEPOIS="$(resumo "$TESTE")"
+            if [[ "${ANTES%% *}" == "${DEPOIS%% *}" ]]; then
+              echo "${IMG}: o estável já é igual ao teste, nada a fazer." | tee -a "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            for TAG in estavel "${V_ESTAVEL}"; do
+              skopeo copy --all --preserve-digests "docker://${TESTE}" "docker://${REGISTRY}/${IMG}:${TAG}"
+            done
+            cosign verify --key cosign.pub "$ESTAVEL" > /dev/null
+            {
+              echo "### ${IMG}:estavel atualizado (continua na versão ${V_ESTAVEL})"
+              echo "- antes: ${ANTES}"
+              echo "- agora: ${DEPOIS}"
+            } >> "$GITHUB_STEP_SUMMARY"
+          done

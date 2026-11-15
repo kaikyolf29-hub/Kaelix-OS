@@ -4,7 +4,17 @@ Comment=Ícones do Matsu OS, tema claro
 Inherits=breeze,hicolor
 Example=system-file-manager
 FollowsColorScheme=true
-Directories=apps/scalable,ajustes/scalable,actions/16,status/symbolic,mimetypes/pequeno,mimetypes/pequeno@2x,mimetypes/scalable,places/pequeno,places/pequeno@2x,places/scalable
+Directories=apps/pequeno,apps/scalable,ajustes/scalable,actions/16,status/symbolic,mimetypes/pequeno,mimetypes/pequeno@2x,mimetypes/scalable,places/pequeno,places/pequeno@2x,places/scalable
+
+# Apps do Matsu de 16 a 24 px (lista do gerenciador de tarefas, avisos, buscas):
+# o desenho maior e sem os detalhes miúdos (visual/icones/gerar.js). Vem antes da
+# pasta apps/scalable, que vale para os outros tamanhos e para os outros apps.
+[apps/pequeno]
+Size=16
+MinSize=8
+MaxSize=24
+Type=Scalable
+Context=Applications
 
 [apps/scalable]
 Size=48

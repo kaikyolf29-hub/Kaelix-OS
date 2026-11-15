@@ -18,7 +18,7 @@ JanelaMatsu {
     id: janela
 
     title: t("Boas-vindas", "Welcome")
-    icone: "matsu-logo"
+    icone: "org.matsu.boasvindas"
     width: gu * 46
     height: gu * 34
     minimumWidth: gu * 38

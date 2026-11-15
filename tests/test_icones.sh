@@ -42,11 +42,41 @@ check "ícone de ação sem o quadrado do Matsu:${sem_quadrado:- nenhum}" "[[ -z
 check "Matsu-claro usa os mesmos ícones de apps" "[[ \$(readlink '$ICONES/Matsu-claro/apps') == ../Matsu/apps ]]"
 check "Matsu e Matsu-claro com os mesmos nomes" \
   "diff <(cd '$ICONES/Matsu' && find . ! -name index.theme -not -path './apps*' | sort) <(cd '$ICONES/Matsu-claro' && find . ! -name index.theme -not -path './apps*' | sort) >/dev/null"
-for d in apps/scalable ajustes/scalable actions/16 status/symbolic mimetypes/pequeno mimetypes/pequeno@2x mimetypes/scalable \
+for d in apps/pequeno apps/scalable ajustes/scalable actions/16 status/symbolic mimetypes/pequeno mimetypes/pequeno@2x mimetypes/scalable \
          places/pequeno places/pequeno@2x places/scalable; do
   check "index.theme do Matsu lista a pasta $d" "grep -q '^Directories=.*$d' '$ICONES/Matsu/index.theme'"
   check "index.theme do Matsu-claro lista a pasta $d" "grep -q '^Directories=.*$d' '$ICONES/Matsu-claro/index.theme'"
 done
+
+# 3b) Versão pequena dos apps do Matsu (16 a 24 px): a pasta vem antes da
+# apps/scalable (o KDE e o Qt pegam a primeira pasta que serve no tamanho), cada
+# ícone pequeno tem o normal com o mesmo nome, e os ícones org.matsu.* do
+# hicolor (para quem troca o tema de ícones) são iguais aos do tema.
+for t in Matsu Matsu-claro; do
+  check "$t: apps/pequeno vem antes de apps/scalable" "grep -q '^Directories=apps/pequeno,apps/scalable,' '$ICONES/$t/index.theme'"
+done
+sem_normal=""
+for f in "$ICONES"/Matsu/apps/pequeno/*.svg; do
+  [[ -e "$ICONES/Matsu/apps/scalable/${f##*/}" ]] || sem_normal+=" ${f##*/}"
+done
+check "ícone pequeno sem o normal:${sem_normal:- nenhum}" "[[ -z '$sem_normal' ]]"
+for n in matsu-arquivos org.matsu.loja org.matsu.relogio org.matsu.boasvindas user-trash user-trash-full utilities-terminal; do
+  check "$n tem a versão pequena" "[[ -e '$ICONES/Matsu/apps/pequeno/$n.svg' ]]"
+done
+mkdir -p "$tmp/hicolor"
+node visual/icones/gerar.js "$tmp/so-apps/scalable" "$tmp/hicolor" >/dev/null
+check "hicolor com os ícones org.matsu.* em dia (rode gerar.js com a pasta hicolor)" \
+  "diff <(cd '$tmp/hicolor' && ls) <(cd '$ICONES/hicolor/scalable/apps' && ls org.matsu.*) >/dev/null && \
+   ( for f in '$tmp'/hicolor/*.svg; do cmp -s \"\$f\" '$ICONES/hicolor/scalable/apps/'\"\${f##*/}\" || exit 1; done )"
+
+# 3c) O site mostra os mesmos ícones do sistema (site/public/icones/<app>.svg é
+# cópia de matsu-<app>.svg): depois de mudar um desenho, copie para lá também.
+site_velho=""
+for f in site/public/icones/*.svg; do
+  n="${f##*/}"; orig="$ICONES/Matsu/apps/scalable/matsu-$n"
+  if [[ -e $orig ]] && ! cmp -s "$f" "$orig"; then site_velho+=" $n"; fi
+done
+check "ícones do site iguais aos do sistema:${site_velho:- todos}" "[[ -z '$site_velho' ]]"
 
 # 4) Todo ícone que os apps e as peças do Matsu pedem existe no tema ou no hicolor.
 existe() {
@@ -127,7 +157,7 @@ check "ícones do build.sh existem" "[[ -e '$ICONES/Matsu/apps/scalable/matsu-aj
 
 # 8) Todo SVG é XML válido e do tamanho 256.
 ruins=""
-for f in "$ICONES"/Matsu/apps/scalable/matsu-*.svg; do
+for f in "$ICONES"/Matsu/apps/scalable/matsu-*.svg "$ICONES"/Matsu/apps/pequeno/matsu-*.svg; do
   python3 -c "import sys, xml.dom.minidom as m; d=m.parse(sys.argv[1]); assert d.documentElement.getAttribute('viewBox')=='0 0 256 256'" "$f" 2>/dev/null || ruins+=" ${f##*/}"
 done
 check "SVGs válidos com viewBox 0 0 256 256:${ruins:- todos}" "[[ -z '$ruins' ]]"

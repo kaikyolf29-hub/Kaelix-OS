@@ -1,13 +1,20 @@
-// Música: duas colcheias ligadas, claras, sobre o degradê coral e rosa (sem o azul),
-// com três barrinhas da onda do player atrás.
-module.exports = ({ base, B, liso }) => ({
-  musica: {
-    nomes: ['org.matsu.musica'],
-    svg: base('mus', '#FF8A8F', '#D2336E') +
-      `<path d="M58 150 v-24 M74 160 v-44 M90 146 v-16" fill="none" stroke="${B}" stroke-opacity=".38" stroke-width="10" ${liso}/>` +
-      `<path d="M112 170 V84 l80 -16 v86" fill="none" stroke="${B}" stroke-width="15" ${liso}/>` +
-      `<path d="M112 100 l80 -16" fill="none" stroke="${B}" stroke-width="22" ${liso}/>` +
-      `<ellipse cx="96" cy="172" rx="21" ry="17" transform="rotate(-18 96 172)" fill="${B}"/>` +
-      `<ellipse cx="176" cy="156" rx="21" ry="17" transform="rotate(-18 176 156)" fill="${B}"/>`,
-  },
-});
+// Música: a nota dupla clara sobre dois arcos de disco de vinil, com o miolo
+// rosa numa das notas e um brilho branco, sobre o degradê rosa intenso.
+module.exports = ({ grade, B, R, liso }) => {
+  const cores = ['mus', '#FF6F91', '#C2185B'];
+  const notas = (haste) =>
+    `<ellipse cx="382" cy="594" rx="64" ry="50" transform="rotate(-18 382 594)" fill="${B}"/>` +
+    `<ellipse cx="606" cy="556" rx="64" ry="50" transform="rotate(-18 606 556)" fill="${B}"/>` +
+    `<path d="M426 584 V336 M650 546 V298" fill="none" stroke="${B}" stroke-width="${haste}" ${liso}/>` +
+    `<path d="M403 333.4 A18 18 0 0 1 418.2 315.6 L648.2 279.3 A18 18 0 0 1 669 297.1 L669 346 A18 18 0 0 1 653.8 363.8 L423.8 400.1 A18 18 0 0 1 403 382.3 Z" fill="${B}"/>`;
+  return {
+    musica: {
+      nomes: ['org.matsu.musica'],
+      svg: grade(...cores,
+        `<path d="M672.9 663.5 A218 218 0 0 1 295.5 650.3" fill="none" stroke="${B}" stroke-width="32" ${liso} opacity=".45"/>` +
+        `<path d="M608.4 656.4 A162 162 0 0 1 360.3 647.7" fill="none" stroke="${B}" stroke-width="24" ${liso} opacity=".28"/>` +
+        notas(46) + `<circle cx="606" cy="556" r="20" fill="${R}"/><circle cx="312" cy="384" r="20" fill="#FFFFFF"/>`),
+      pequeno: grade(...cores, `<g transform="translate(0 30)">${notas(58)}</g>`, 1.14),
+    },
+  };
+};

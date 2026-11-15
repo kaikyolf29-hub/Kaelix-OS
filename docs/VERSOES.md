@@ -53,6 +53,20 @@ Uma frase curta sobre a versão (opcional).
    imagem assinada para o canal `estavel` e para a etiqueta `27.1`, cria o Release
    `v27.1` com as novidades e anexa as ISOs.
 
+## Atualização calada (a mesma versão, sem aviso)
+
+Para melhorias pequenas que não pedem número novo nem aviso (ícones, uma
+correção), o fluxo **Atualizar estável sem versão nova** (aba Actions, escreva
+`ATUALIZAR`) copia a imagem assinada do canal `teste` para o `estavel` e para a
+etiqueta da versão (`27`), sem Release e sem ISO nova:
+
+- Ele só aceita se a imagem do canal `teste` for da **mesma versão** do estável
+  (rótulo `org.matsu.versao`). Versão nova (27.1...) é pelo **Publicar versão estável**.
+- Os computadores recebem na atualização automática de sempre. Como o número
+  não muda, não aparece "versão nova" nem "o Matsu foi atualizado".
+- A ISO é um instalador de rede: quem instalar depois já recebe a imagem nova.
+- Antes de rodar, confira as prints da máquina virtual da montagem que vai subir.
+
 ## O aviso no computador
 
 O `matsu-novidades.timer` (do usuário) roda o `/usr/share/matsu/atualizacoes/ajudante.py`

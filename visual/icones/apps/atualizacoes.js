@@ -1,31 +1,18 @@
-// Atualizações do Matsu: a seta de baixar dentro do círculo que gira (as duas
-// meias-voltas com a pontinha), claros sobre o degradê verde-pinheiro.
-module.exports = ({ base, B, liso }) => {
-  const cx = 128, cy = 128, r = 70;
-  const pt = (graus) => {
-    const a = (graus * Math.PI) / 180;
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)].map((n) => n.toFixed(1)).join(' ');
-  };
-  // Cada meia-volta vai de um lado ao outro, deixando uma folga para a ponta.
-  const arco = (de, ate) => `<path d="M${pt(de)} A${r} ${r} 0 0 1 ${pt(ate)}" fill="none" stroke="${B}" stroke-width="16" ${liso}/>`;
-  // A pontinha da seta no fim de cada meia-volta (apontando no sentido da volta).
-  const ponta = (graus) => {
-    const a = (graus * Math.PI) / 180;
-    const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
-    const tx = -Math.sin(a), ty = Math.cos(a);          // tangente (sentido horário)
-    const nx = Math.cos(a), ny = Math.sin(a);           // para fora
-    const p = (dt, dn) => `${(x + tx * dt + nx * dn).toFixed(1)},${(y + ty * dt + ny * dn).toFixed(1)}`;
-    return `<path d="M${p(-4, 20)} L${p(18, 0)} L${p(-4, -20)} Z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>`;
-  };
+// Atualizações do Matsu: as duas setas que dão a volta (atualizar) com o
+// brilho rosa no meio, sobre o degradê violeta.
+module.exports = ({ grade, B, R, liso }) => {
+  const cores = ['atu', '#B093FF', '#6A49DD'];
+  const setas = (t, p) =>
+    `<path d="M321.7 423.3 A210 210 0 0 1 702.3 423.3" fill="none" stroke="${B}" stroke-width="${t}" ${liso}/>` +
+    `<path d="M628 410 L708 432 L720 350" fill="none" stroke="${B}" stroke-width="${p}" ${liso}/>` +
+    `<path d="M702.3 600.7 A210 210 0 0 1 321.7 600.7" fill="none" stroke="${B}" stroke-width="${t}" ${liso}/>` +
+    `<path d="M396 614 L316 592 L304 674" fill="none" stroke="${B}" stroke-width="${p}" ${liso}/>`;
+  const brilho = `<path d="M499.5 435 A14 14 0 0 1 524.5 435 L543.6 473.2 A16 16 0 0 0 550.8 480.4 L589 499.5 A14 14 0 0 1 589 524.5 L550.8 543.6 A16 16 0 0 0 543.6 550.8 L524.5 589 A14 14 0 0 1 499.5 589 L480.4 550.8 A16 16 0 0 0 473.2 543.6 L435 524.5 A14 14 0 0 1 435 499.5 L473.2 480.4 A16 16 0 0 0 480.4 473.2 Z" fill="${R}"/>`;
   return {
     atualizacoes: {
       nomes: ['org.matsu.atualizacoes'],
-      svg: base('atu', '#5ED6A6', '#17795F') +
-        arco(-150, -12) + ponta(-12) +
-        arco(30, 168) + ponta(168) +
-        // A seta de baixar no meio.
-        `<path d="M128 94 V156" stroke="${B}" stroke-width="16" ${liso}/>` +
-        `<path d="M102 132 L128 158 L154 132" fill="none" stroke="${B}" stroke-width="16" ${liso}/>`,
+      svg: grade(...cores, setas(52, 48) + brilho + `<circle cx="512" cy="512" r="14" fill="${B}"/>`),
+      pequeno: grade(...cores, setas(74, 70), 1.08),
     },
   };
 };

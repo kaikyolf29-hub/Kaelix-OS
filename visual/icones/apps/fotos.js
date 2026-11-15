@@ -1,16 +1,17 @@
-// Fotos: uma foto clara com a montanha e o sol, sobre o degradê do pôr do sol do
-// Matsu (pêssego para o rosa da cerejeira). Diferente do ícone das Imagens (Gwenview),
-// que é anil com duas fotos tortas.
-module.exports = ({ base, B, liso }) => ({
-  fotos: {
-    nomes: ['org.matsu.fotos'],
-    svg: base('fot', '#FFB86B', '#E2508A',
-      `<clipPath id="c-fot"><rect x="70" y="74" width="116" height="108" rx="16"/></clipPath>` +
-      `<linearGradient id="ceu-fot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE1B8"/><stop offset="1" stop-color="#FFC2D4"/></linearGradient>`) +
-      `<rect x="58" y="62" width="140" height="132" rx="26" fill="${B}"/>` +
-      `<g clip-path="url(#c-fot)"><rect x="70" y="74" width="116" height="108" fill="url(#ceu-fot)"/>` +
-      `<circle cx="154" cy="106" r="15" fill="#FFB547"/>` +
-      `<path d="M62 190 L104 128 L130 160 L148 140 L194 190 Z" fill="#E2508A" ${liso}/>` +
-      `<path d="M62 190 L104 128 L122 150" fill="none" stroke="#B8336E" stroke-opacity=".35" stroke-width="5" ${liso}/></g>`,
-  },
-});
+// Fotos: a moldura clara com a paisagem dentro (dois morros e o sol rosa),
+// sobre o degradê de pôr do sol.
+module.exports = ({ grade, B, R }) => {
+  const cores = ['fot', '#FFB199', '#C76F90'];
+  const paisagem = (moldura, sol) =>
+    `<path d="M404 746 A236 236 0 0 1 746 529.1 V746 Z" fill="${B}" opacity=".6"/>` +
+    `<path d="M278 746 V523.5 A268 268 0 0 1 671.6 746 Z" fill="${B}"/>` +
+    sol +
+    `<rect x="256" y="256" width="512" height="512" rx="76" fill="none" stroke="${B}" stroke-width="${moldura}"/>`;
+  return {
+    fotos: {
+      nomes: ['org.matsu.fotos'],
+      svg: grade(...cores, paisagem(48, `<circle cx="414" cy="408" r="58" fill="${R}" stroke="${B}" stroke-width="14"/>`)),
+      pequeno: grade(...cores, paisagem(64, `<circle cx="420" cy="414" r="70" fill="${R}"/>`), 1.12),
+    },
+  };
+};

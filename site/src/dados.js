@@ -86,5 +86,5 @@ export const APPS_BARRA = [
   { nome: { pt: 'Loja do Matsu', en: 'Matsu Store' }, icone: 'icones/loja.svg', ir: '#loja' },
   { nome: { pt: 'Central de jogos', en: 'Game Center' }, icone: 'icones/jogos.svg', ir: '#jogos' },
   { nome: { pt: 'Gerenciador de tarefas', en: 'Task Manager' }, icone: 'icones/tarefas.svg', ir: '#apps' },
-  { nome: { pt: 'Ajustes do Matsu', en: 'Matsu Settings' }, icone: 'icones/configuracoes.svg', ir: '#sistema' }
+  { nome: { pt: 'Ajustes do Matsu', en: 'Matsu Settings' }, icone: 'icones/ajustes.svg', ir: '#sistema' }
 ];

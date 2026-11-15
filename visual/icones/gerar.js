@@ -1,19 +1,58 @@
 #!/usr/bin/env node
 // Gera os ícones próprios do Matsu (apps do sistema) como SVG.
-// Uso: node gerar.js <pasta de saída>
-// Estilo: quadrado arredondado com degradê da paleta do Matsu e desenho claro,
-// de traço grosso e cantos arredondados, para ler bem até em 22 px na barra.
+// Uso: node gerar.js <pasta de saída> [pasta hicolor]
+//
+// Estilo (a família de 15/11/2026, feita a partir dos desenhos que o Kaiky
+// gerou no Google Antigravity): quadrado arredondado com o degradê do app, um
+// brilho de vidro na metade de cima e a borda clara fininha; o desenho no meio
+// em branco do Matsu, de traço grosso e cantos redondos, com um detalhe rosa de
+// cerejeira (a assinatura da família).
+//
+// Cada app tem duas versões:
+//   - <saída>/matsu-<app>.svg: a normal, de 25 px para cima (barra, doca, menu);
+//   - <saída>/../pequeno/matsu-<app>.svg: a de 16 a 24 px (lista do gerenciador
+//     de tarefas, avisos, buscas), com o desenho maior e sem os detalhes que
+//     viram borrão nesse tamanho. O index.theme lista a pasta "pequeno" antes.
+// Com a pasta hicolor, os ícones org.matsu.* também vão para lá (cópia), para
+// os apps do Matsu continuarem com o ícone deles se a pessoa trocar o tema.
 const fs = require('fs');
 const path = require('path');
 
 const B = '#F4F6FF';                       // branco do Matsu (nunca branco puro)
+const R = '#F0A6CC';                       // rosa de cerejeira (o detalhe da família)
 const liso = `stroke-linejoin="round" stroke-linecap="round"`;
 
+// O quadrado do ícone (16 a 240 na grade de 256). O degradê do fundo fica em
+// coordenadas da grade (g-<id>), para servir também de "recorte" entre desenhos.
 function base(id, c1, c2, extra = '') {
-  return `<defs><linearGradient id="g-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>` +
-    `<linearGradient id="b-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".38"/><stop offset=".5" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>${extra}</defs>` +
+  return `<defs><linearGradient id="g-${id}" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="240"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>` +
+    `<linearGradient id="v-${id}" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="128"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".3"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>` +
+    `<linearGradient id="b-${id}" gradientUnits="userSpaceOnUse" x1="0" y1="16" x2="0" y2="240"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".42"/><stop offset=".5" stop-color="#FFFFFF" stop-opacity=".16"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".1"/></linearGradient>${extra}</defs>` +
     `<rect x="16" y="16" width="224" height="224" rx="58" fill="url(#g-${id})"/>` +
+    `<path d="M16 128 V74 A58 58 0 0 1 74 16 H182 A58 58 0 0 1 240 74 V128 Z" fill="url(#v-${id})"/>` +
     `<rect x="17.5" y="17.5" width="221" height="221" rx="56.5" fill="none" stroke="url(#b-${id})" stroke-width="3"/>`;
+}
+
+// Os desenhos dos apps são feitos na grade de 1024 dos originais (o quadrado vai
+// de 100 a 924, centro 512) e encaixados no quadrado do Matsu. "k" amplia o
+// desenho em volta do centro (a versão pequena usa 1,1 a 1,2). Dentro do
+// desenho, url(#f-<id>) é o mesmo degradê do fundo: serve para abrir uma folga
+// entre duas partes (o lápis em cima da folha, o broto na frente do sol).
+const ESCALA = 224 / 824;
+function grade(id, c1, c2, desenho, k = 1) {
+  const s = ESCALA * k;
+  const d = 128 - 512 * s;
+  const y1 = (16 - d) / s, y2 = (240 - d) / s;
+  const fundo = `<linearGradient id="f-${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${y1.toFixed(1)}" x2="0" y2="${y2.toFixed(1)}"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>`;
+  return base(id, c1, c2, fundo) +
+    `<g transform="matrix(${s.toFixed(5)} 0 0 ${s.toFixed(5)} ${d.toFixed(3)} ${d.toFixed(3)})">${desenho}</g>`;
+}
+
+// Estrelinha de quatro pontas (brilho), na grade de 1024.
+function estrela(cx, cy, r, cor = B, opacidade = 1) {
+  const c = r * 0.2;
+  return `<path d="M${cx} ${cy - r} Q${cx + c} ${cy - c} ${cx + r} ${cy} Q${cx + c} ${cy + c} ${cx} ${cy + r} ` +
+    `Q${cx - c} ${cy + c} ${cx - r} ${cy} Q${cx - c} ${cy - c} ${cx} ${cy - r} Z" fill="${cor}"${opacidade < 1 ? ` opacity="${opacidade}"` : ''}/>`;
 }
 
 function engrenagem(cx, cy, dentes, rFora, rDentro, furo) {
@@ -39,68 +78,17 @@ function velocimetro(cx, cy, r, nivel) {
     `<circle cx="${cx}" cy="${cy}" r="15" fill="${B}"/>`;
 }
 
+// Apps do KDE que o Matsu cobre com o ícone dele (os apps do próprio Matsu
+// ficam um por arquivo em apps/).
 const ICONES = {
-  arquivos: {
-    nomes: ['org.matsu.arquivos', 'system-file-manager', 'org.kde.dolphin'],
-    svg: base('arq', '#7C8DFF', '#4353D6') +
-      `<path d="M66 98 v-6 a6 6 0 0 1 6 -6 h34 l14 16 h64 a6 6 0 0 1 6 6 v62 h-124 z" fill="${B}" opacity=".5" stroke="${B}" stroke-opacity=".5" stroke-width="6" ${liso}/>` +
-      `<path d="M58 124 h140 l-9 58 h-122 z" fill="${B}" stroke="${B}" stroke-width="10" ${liso}/>`,
-  },
-  // Terminal do Matsu: grafite quase preto (o fundo do logo), sem o azul.
-  terminal: {
-    nomes: ['org.matsu.terminal', 'utilities-terminal', 'org.kde.konsole', 'konsole'],
-    svg: base('term', '#3A3B42', '#141517') +
-      `<polyline points="80,96 120,128 80,160" fill="none" stroke="#45D0C1" stroke-width="18" ${liso}/>` +
-      `<line x1="136" y1="162" x2="180" y2="162" stroke="${B}" stroke-width="18" ${liso}/>`,
-  },
-  // Loja: sacola azul com a seta de baixar (o Kaiky pediu tirar o rosa, 10/11/2026).
-  loja: {
-    nomes: ['org.matsu.loja', 'plasmadiscover', 'org.kde.discover'],
-    svg: base('loja', '#63D0FF', '#2867E3') +
-      `<path d="M100 104 v-12 a28 28 0 0 1 56 0 v12" fill="none" stroke="${B}" stroke-width="13" ${liso}/>` +
-      `<path d="M70 104 h116 l-6 74 a14 14 0 0 1 -14 13 h-76 a14 14 0 0 1 -14 -13 z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>` +
-      `<circle cx="100" cy="120" r="6" fill="#2B78E8" opacity=".9"/><circle cx="156" cy="120" r="6" fill="#2B78E8" opacity=".9"/>` +
-      `<path d="M128 132 v32 m-15 -13 l15 15 l15 -15" fill="none" stroke="#2B78E8" stroke-width="11" ${liso}/>`,
-  },
   // Monitor do sistema: velocímetro de desempenho (a linha de batimento lembrava coração).
   monitor: {
     nomes: ['utilities-system-monitor', 'org.kde.plasma-systemmonitor'],
     svg: base('mon', '#62E3D5', '#1E9C90') + velocimetro(128, 150, 70, 0.70),
   },
-  // Gerenciador de tarefas: o gráfico de desempenho subindo, num anil mais fundo
-  // que o dos Arquivos.
-  tarefas: {
-    nomes: ['org.matsu.tarefas'],
-    svg: base('tar', '#6F7CFF', '#2E35B0') +
-      `<path d="M62 170 L98 128 L126 150 L162 96 L194 122 V190 H62 Z" fill="${B}" opacity=".26"/>` +
-      `<path d="M62 170 L98 128 L126 150 L162 96 L194 122" fill="none" stroke="${B}" stroke-width="15" ${liso}/>` +
-      `<line x1="58" y1="192" x2="198" y2="192" stroke="${B}" stroke-width="10" opacity=".55" ${liso}/>` +
-      `<circle cx="162" cy="96" r="13" fill="#45D0C1" stroke="${B}" stroke-width="6"/>`,
-  },
-  // Central de jogos: controle claro sobre o degradê rosa e roxo das bolinhas do
-  // Matsu, com a cruz em roxo e os botões nas cores de fechar e tela cheia.
-  jogos: {
-    nomes: ['org.matsu.jogos'],
-    svg: base('jog', '#FF7DB5', '#7A45E0') +
-      `<path d="M88 88 h80 a42 42 0 0 1 41 34 l10 50 a24 24 0 0 1 -42 19 l-17 -20 h-64 l-17 20 a24 24 0 0 1 -42 -19 l10 -50 a42 42 0 0 1 41 -34 z" fill="${B}" stroke="${B}" stroke-width="6" ${liso}/>` +
-      `<path d="M94 116 v34 M77 133 h34" fill="none" stroke="#7A45E0" stroke-width="12" ${liso}/>` +
-      `<circle cx="160" cy="122" r="10" fill="#F0609E"/><circle cx="182" cy="144" r="10" fill="#45D0C1"/>` +
-      `<path d="M118 102 h20" stroke="#7A45E0" stroke-opacity=".35" stroke-width="7" ${liso}/>`,
-  },
   configuracoes: {
     nomes: ['systemsettings', 'org.kde.systemsettings', 'preferences-system'],
     svg: base('conf', '#A3AEDC', '#5A659F') + engrenagem(128, 128, 8, 66, 50, 22),
-  },
-  // Ajustes do Matsu (a janela de ajustes do Matsu, como a do Mac): controles
-  // deslizantes no rosa de cerejeira do logo, para não ficar igual ao das
-  // Configurações do sistema do KDE (a engrenagem).
-  ajustes: {
-    nomes: ['org.matsu.ajustes'],
-    svg: base('ajus', '#EBA3C7', '#8C4F80') +
-      [[82, 156], [128, 100], [174, 140]].map(([y, x]) =>
-        `<path d="M62 ${y} H194" stroke="${B}" stroke-opacity=".42" stroke-width="17" ${liso}/>` +
-        `<path d="M62 ${y} H${x}" stroke="${B}" stroke-width="17" ${liso}/>` +
-        `<circle cx="${x}" cy="${y}" r="23" fill="${B}"/>`).join(''),
   },
   editor: {
     nomes: ['kate', 'org.kde.kate', 'kwrite', 'org.kde.kwrite'],
@@ -126,37 +114,17 @@ const ICONES = {
       `<g clip-path="url(#c-img)"><rect x="-44" y="-36" width="88" height="66" fill="url(#ceu-img)"/><circle cx="20" cy="-14" r="10" fill="#FFC677"/>` +
       `<path d="M-44 30 L-14 -4 L6 16 L20 4 L44 28 V30 Z" fill="#4353D6"/></g></g>`,
   },
-  // Lixeira do Matsu (vazia e cheia), no fim dos apps da barra, como a do Mac.
-  lixeira: {
-    nomes: ['user-trash', 'trashcan_empty'],
-    svg: base('lix', '#9AA6D6', '#4C5690') + lata(false),
-  },
-  'lixeira-cheia': {
-    nomes: ['user-trash-full', 'trashcan_full'],
-    svg: base('lixc', '#9AA6D6', '#4C5690') + lata(true),
-  },
 };
 
-// Lata de lixo: tampa com alça, corpo com frisos. Cheia: sem tampa, com papéis saindo.
-function lata(cheia) {
-  const corpo = `<path d="M82 104 h92 l-8 82 a12 12 0 0 1 -12 11 h-52 a12 12 0 0 1 -12 -11 z" fill="${B}" stroke="${B}" stroke-width="8" ${liso}/>` +
-    `<path d="M108 122 l2 54 M128 122 v54 M148 122 l-2 54" fill="none" stroke="#5C66A3" stroke-width="9" ${liso}/>`;
-  if (!cheia) {
-    return corpo + `<path d="M72 88 h112" fill="none" stroke="${B}" stroke-width="14" ${liso}/>` +
-      `<path d="M110 84 v-10 a6 6 0 0 1 6 -6 h24 a6 6 0 0 1 6 6 v10" fill="none" stroke="${B}" stroke-width="10" ${liso}/>`;
-  }
-  return `<g transform="rotate(-14 104 92)"><rect x="80" y="66" width="46" height="56" rx="5" fill="#FFC677"/><path d="M90 82 h26 M90 94 h20" stroke="#E98A28" stroke-width="5" ${liso}/></g>` +
-    `<g transform="rotate(12 152 92)"><rect x="130" y="62" width="44" height="58" rx="5" fill="#8FA2FF"/><path d="M140 78 h24 M140 90 h18" stroke="#4353D6" stroke-width="5" ${liso}/></g>` +
-    `<path d="M112 98 q16 -26 34 -4 q-8 -22 -30 -12 z" fill="${B}" opacity=".85"/>` +
-    corpo;
-}
-
-// Ícones dos apps novos do Matsu, um arquivo por app em apps/ (Relógio, Música...):
-//   module.exports = ({ base, B, liso }) => ({ relogio: { nomes: ['org.matsu.relogio'], svg: base('rel', '#..', '#..') + `...` } });
+// Ícones dos apps do Matsu, um arquivo por app em apps/ (Arquivos, Relógio...):
+//   module.exports = ({ grade, B, R, liso, estrela }) => ({
+//     relogio: { nomes: ['org.matsu.relogio'], svg: grade('rel', '#..', '#..', desenho), pequeno: grade(..., 1.15) },
+//   });
+const kit = { base, grade, estrela, B, R, liso };
 const pastaApps = path.join(__dirname, 'apps');
 if (fs.existsSync(pastaApps)) {
   for (const arq of fs.readdirSync(pastaApps).filter((a) => a.endsWith('.js')).sort()) {
-    const novos = require(path.join(pastaApps, arq))({ base, B, liso });
+    const novos = require(path.join(pastaApps, arq))(kit);
     for (const [nome, ic] of Object.entries(novos)) {
       if (ICONES[nome]) throw new Error(`ícone repetido: ${nome} (${arq})`);
       ICONES[nome] = ic;
@@ -164,18 +132,33 @@ if (fs.existsSync(pastaApps)) {
   }
 }
 
-const saida = process.argv[2];
-if (!saida) { console.error('uso: node gerar.js <pasta de saída>'); process.exit(1); }
-fs.mkdirSync(saida, { recursive: true });
-for (const [nome, ic] of Object.entries(ICONES)) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">${ic.svg}</svg>\n`;
+function gravar(pasta, nome, ic, svgDoIcone) {
+  fs.mkdirSync(pasta, { recursive: true });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">${svgDoIcone}</svg>\n`;
   const principal = `matsu-${nome}.svg`;
-  fs.writeFileSync(path.join(saida, principal), svg);
+  fs.writeFileSync(path.join(pasta, principal), svg);
   for (const n of ic.nomes) {
-    const alvo = path.join(saida, `${n}.svg`);
+    const alvo = path.join(pasta, `${n}.svg`);
     try { fs.unlinkSync(alvo); } catch (e) { /* ainda não existe */ }
     fs.symlinkSync(principal, alvo);
   }
+  return svg;
 }
-console.log(`${Object.keys(ICONES).length} ícones em ${saida}`);
+
+const saida = process.argv[2];
+const hicolor = process.argv[3];
+if (!saida) { console.error('uso: node gerar.js <pasta de saída> [pasta hicolor]'); process.exit(1); }
+const pequena = path.join(saida, '..', 'pequeno');
+let pequenos = 0;
+for (const [nome, ic] of Object.entries(ICONES)) {
+  const svg = gravar(saida, nome, ic, ic.svg);
+  if (ic.pequeno) { gravar(pequena, nome, ic, ic.pequeno); pequenos++; }
+  if (hicolor) {
+    for (const n of ic.nomes.filter((n) => n.startsWith('org.matsu.'))) {
+      fs.mkdirSync(hicolor, { recursive: true });
+      fs.writeFileSync(path.join(hicolor, `${n}.svg`), svg);
+    }
+  }
+}
+console.log(`${Object.keys(ICONES).length} ícones em ${saida} (${pequenos} com a versão pequena)`);
 module.exports = { ICONES };
