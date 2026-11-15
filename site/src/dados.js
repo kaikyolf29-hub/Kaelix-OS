@@ -42,7 +42,7 @@ export const SECOES = [
 // "aprovado" para true (e acrescentar "github: kaikydev1-jpg" no
 // .github/FUNDING.yml).
 export const APOIO = {
-  pix: { chave: '', nome: '', cidade: '' },
+  pix: { chave: '0971af38-cbf2-4f0e-9c58-c13b658f0a54', nome: '', cidade: '' },
   sponsors: { usuario: 'kaikydev1-jpg', aprovado: false }
 };
 export const TEM_PIX = chaveValida(APOIO.pix.chave);

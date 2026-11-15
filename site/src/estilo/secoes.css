@@ -1066,6 +1066,23 @@ main #instalar.is-live > .mo-pc__grid {
   .apoio-sponsors .btn {
     width: 100%;
   }
+  /* No celular o botão Copiar vai embaixo, largo, e a chave cabe numa linha. */
+  .copiavel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'rotulo'
+      'valor'
+      'botao';
+    row-gap: 6px;
+    padding: 12px;
+  }
+  .copiavel__valor {
+    font-size: 13px;
+  }
+  .copiavel__botao.btn {
+    width: 100%;
+    margin-top: 6px;
+  }
 }
 
 /* ---------- o fim ---------- */
