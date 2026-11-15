@@ -27,8 +27,13 @@ workflow) e precisa do GitHub Pages ligado em Settings > Pages, com a origem
 - `src/dados.js`: a edição do ano (27), os links do GitHub, o tamanho da ISO e
   os apps da barra. Na virada do ano, mudar `EDICAO` aqui.
 - `src/componentes/`: as partes da página, na ordem: Topo (a área de trabalho
-  com a barra de vidro), Telas, Divisoes (jogos, loja, segurança), Estilos (a
-  barra nos três estilos), Apps, Instalar, Baixar, Apoiar e Rodape.
+  com a barra de vidro), Telas, Atalhos, Jogos, Estilos (a barra nos três
+  estilos), Aparência, Loja, Apps, Criar (programar e criar), Segurança,
+  Instalar, Baixar, Perguntas, Apoiar e Rodape. Jogos, Aparência, Loja, Criar e
+  Segurança ficam juntas em `Divisoes.jsx` (texto à esquerda, janela à direita).
+- Atalhos e Perguntas: cada atalho e cada resposta foi conferido no sistema
+  (de onde vem cada um está no comentário do topo do arquivo). Mudou um atalho
+  ou o instalador? Mude aqui também.
 - `src/estilo/`: `base.css` (cores do Matsu, letras, botões, menu),
   `transicoes.css` (as transições) e `secoes.css` (cada parte).
 - `public/img/`: as fotos do sistema, tiradas das prints de verdade da VM por
@@ -85,5 +90,8 @@ sair uma versão.
 - **Funnel Display e Funnel Sans** (SIL OFL 1.1): as letras, em
   `public/fontes/` com a licença.
 - **Logos de apps de terceiros** (Steam, Brave, Chrome, Discord, Spotify, OBS,
-  VS Code, Heroic, Lutris): dos projetos de cada um e do gilbarbara/logos (CC0).
-  São marcas dos seus donos, e o rodapé diz isso.
+  VS Code, Heroic, Lutris, Python, Node.js, Ubuntu, Arch): dos projetos de cada
+  um e do gilbarbara/logos (CC0). O do Kdenlive vem do próprio Kdenlive
+  (KDE/kdenlive, `data/icons/sc-apps-kdenlive.svg`, GPL) e o do Kali Linux do
+  tema de ícones Papirus (`distributor-logo-kali-linux.svg`, GPL 3.0). São
+  marcas dos seus donos, e o rodapé diz isso.

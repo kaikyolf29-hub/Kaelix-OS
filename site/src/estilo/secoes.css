@@ -1127,7 +1127,7 @@ main #instalar.is-live > .mo-pc__grid {
 .rodape__colunas {
   display: grid;
   grid-column: 6 / span 7;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 .rodape__colunas h3 {
@@ -1163,8 +1163,240 @@ main #instalar.is-live > .mo-pc__grid {
   .rodape {
     padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }
+  .rodape__colunas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rodape__colunas > :first-child {
+    grid-row: span 2;
+  }
   .rodape__nome {
     font-size: clamp(48px, 14.5vw, 64px);
+  }
+}
+
+/* ---------- marcas na lista: uma, duas ou três logos ---------- */
+.marcas--1 {
+  grid-template-columns: 22px;
+  grid-template-rows: 22px;
+}
+.marcas--1 img {
+  width: 22px;
+  height: 22px;
+}
+.marcas--1 img:first-child {
+  grid-column: auto;
+}
+.marcas--2 {
+  grid-template-columns: repeat(2, 16px);
+  grid-template-rows: repeat(2, 16px);
+}
+.marcas--2 img:first-child {
+  grid-column: 1;
+  justify-self: start;
+}
+.marcas--2 img:last-child {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* ---------- as cores do vidro (as mesmas dos Ajustes) ---------- */
+.linhas li > span:last-child > .cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.cores__cor {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cor);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.cores__cor:first-child {
+  box-shadow: 0 0 0 2px var(--chao), 0 0 0 3.5px var(--tinta-2);
+}
+
+/* ---------- os atalhos ---------- */
+.atalhos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.atalho {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 136px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--cartao);
+  box-shadow: inset 0 0 0 1px var(--linha);
+}
+.teclas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.teclas__par {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.teclas__mais {
+  color: var(--tinta-2);
+  font-size: 14px;
+}
+.tecla {
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px 2px;
+  border-radius: 9px;
+  background: var(--cartao-2);
+  box-shadow: inset 0 0 0 1px var(--linha-forte), inset 0 -3px 0 var(--linha);
+  font-family: var(--fonte);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--tinta);
+  white-space: nowrap;
+}
+.tecla__ou {
+  margin: 0 4px;
+  color: var(--tinta-2);
+}
+.atalho__texto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.selo {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sakura) 16%, transparent);
+  color: var(--sakura);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+@media (max-width: 1023px) {
+  .atalhos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .atalhos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .atalhos {
+    gap: 8px;
+  }
+  .atalho {
+    min-height: 0;
+    gap: 16px;
+    padding: 16px;
+  }
+  .tecla {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px 2px;
+    font-size: 14px;
+  }
+  .atalho__texto {
+    font-size: 15px;
+  }
+}
+@media (max-width: 379px) {
+  .atalhos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- as perguntas frequentes ---------- */
+.perguntas {
+  border-top: 1px solid var(--linha);
+}
+.pergunta {
+  border-bottom: 1px solid var(--linha);
+}
+.pergunta summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 64px;
+  padding: 16px 0;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.35;
+  cursor: pointer;
+  list-style: none;
+  transition: color var(--dur-rapida) var(--curva-ui);
+}
+.pergunta summary::-webkit-details-marker {
+  display: none;
+}
+.pergunta summary:hover {
+  color: var(--sakura);
+}
+.pergunta summary:focus-visible {
+  outline: 2px solid var(--sakura);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.pergunta__seta {
+  flex: none;
+  color: var(--tinta-2);
+  transition: transform var(--dur-padrao) var(--curva-saida);
+}
+.pergunta[open] .pergunta__seta {
+  transform: rotate(180deg);
+}
+.pergunta__resposta p {
+  max-width: 40em;
+  padding: 0 40px 24px 0;
+  color: var(--tinta-2);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+/* Abre e fecha crescendo (onde o navegador sabe animar até "auto"). */
+@supports (interpolate-size: allow-keywords) {
+  .pergunta {
+    interpolate-size: allow-keywords;
+  }
+  .pergunta::details-content {
+    block-size: 0;
+    overflow: clip;
+    opacity: 0;
+    transition:
+      block-size var(--dur-media) var(--curva-saida),
+      opacity var(--dur-padrao) var(--curva-ui),
+      content-visibility var(--dur-media) allow-discrete;
+  }
+  .pergunta[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+@media (max-width: 639px) {
+  .pergunta summary {
+    font-size: 17px;
+    min-height: 56px;
+  }
+  .pergunta__resposta p {
+    padding-right: 0;
   }
 }
 
@@ -1179,7 +1411,9 @@ main #instalar.is-live > .mo-pc__grid {
   .barra__app,
   .barra__app::after,
   .cartao-app__janela img,
-  .papel {
+  .papel,
+  .pergunta::details-content,
+  .pergunta__seta {
     transition: none !important;
   }
   .barra__apps--ampliar .barra__app:hover,

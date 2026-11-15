@@ -42,6 +42,8 @@ FOTOS = {
     "janela-seguranca": ("vm", "38-seguranca-inicio.png", (403, 141, 1516, 858), (1113, 640)),
     "janela-arquivos": ("vm", "40-app-00-org.matsu.arquivos.png", (461, 189, 1459, 809), (998, 640)),
     "janela-tarefas": ("vm", "34-gerenciador-processos.png", (421, 159, 1498, 840), (1077, 640)),
+    "janela-ajustes": ("vm", "30-ajustes-aparencia.png", (680, 380, 1473, 968), (793, 640)),
+    "janela-terminal": ("vm", "07b-terminal-abas-e-tela-dividida.png", (680, 381, 1600, 961), (920, 640)),
     # Apps novos: cada prévia tem o tema escuro à esquerda e o claro à direita.
     "app-calendario": ("apps", "calendario.png", "metade", (995,)),
     "app-notas": ("apps", "notas.png", "metade", (1000,)),
