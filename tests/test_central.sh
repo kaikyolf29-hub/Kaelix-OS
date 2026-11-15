@@ -297,6 +297,10 @@ LC_ALL="" LC_MESSAGES="" LANGUAGE="pt_BR:pt" MATSU_LANG="" LANG=en_US.UTF-8 run 
 check "LANGUAGE vale mais que o LANG" linha "idioma=pt"
 LC_ALL="" LC_MESSAGES="" LANGUAGE="" MATSU_LANG="" LANG=pt_BR.UTF-8 run estado idioma
 check "o menu pergunta só o idioma" test "$OUT" = "idioma=pt"
+mkdir -p "$WORK/state"; printf 'estilo=mac\n' > "$WORK/state/barra"
+run estado barra
+check "a doca pergunta só a barra (estilo Mac)" bash -c "grep -qx barra=mac <<<\"\$0\" && ! grep -q '^idioma=' <<<\"\$0\"" "$OUT"
+rm -f "$WORK/state/barra"
 
 echo "Sua conta: nome e foto da pessoa"
 mkdir -p "$WORK/contas"

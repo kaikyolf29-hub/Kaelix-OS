@@ -58,6 +58,9 @@ function ajustarDoca(doca) {
     doca.writeConfig("ampliacaoNivel", Math.max(0, Math.min(100, isNaN(nivel) ? 50 : Math.round(nivel))));
     doca.writeConfig("indicadores", (typeof matsuIndicadores !== "undefined") ? !!matsuIndicadores : true);
     doca.writeConfig("animarAbertura", (typeof matsuAnimar !== "undefined") ? !!matsuAnimar : true);
+    // No estilo Mac a doca desenha o próprio vidro, que estica com a lupa (e
+    // desliga o fundo da barra); nos outros, o vidro é o fundo da barra.
+    doca.writeConfig("vidro", estiloDaBarra() === "mac" ? "proprio" : "barra");
 }
 
 // Como a barra se esconde, no jeito do Plasma: "none" (fica sempre), "dodgewindows"
@@ -227,7 +230,11 @@ function limiteDeApps(estilo, largura, altura, meioMedido) {
     var lixeira = app + Math.round(gridUnit * 0.5);
     var espaco, maximo = 12;
     if (estilo === "mac") {
-        espaco = Math.round(largura * 0.8) - lixeira - gridUnit;
+        // Na doca do Mac os apps ficam mais juntos (cada um ocupa 0,86 da
+        // altura da doca) e o vidro sobra 0,14 em cada ponta (veja org.matsu.doca).
+        app = Math.round(altura * 0.86);
+        lixeira = app + Math.round(gridUnit * 0.9);
+        espaco = Math.round(largura * 0.8) - lixeira - Math.round(altura * 0.28) - gridUnit;
         maximo = 24;
     } else if (estilo === "windows") {
         espaco = largura - altura - (ondeBusca() !== "nao" ? larguraDaBusca() : 0) - larguraDaBandeja() - gridUnit * 2;

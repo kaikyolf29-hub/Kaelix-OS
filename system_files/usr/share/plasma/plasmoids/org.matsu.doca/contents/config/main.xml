@@ -15,6 +15,12 @@
     <entry name="showOnlyCurrentScreen" type="Bool">
       <default>false</default>
     </entry>
+    <!-- Quem desenha o vidro da doca: "proprio" (a doca, no estilo Mac: o
+         vidro estica com a lupa) ou "barra" (o fundo da barra, nos outros
+         estilos). Vazio numa doca montada antes desta opção. -->
+    <entry name="vidro" type="String">
+      <default></default>
+    </entry>
     <!-- O efeito lupa do Mac ao passar o mouse, e quanto cresce (0 a 100). -->
     <entry name="ampliacao" type="Bool">
       <default>true</default>

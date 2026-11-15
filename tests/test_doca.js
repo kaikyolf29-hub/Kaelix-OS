@@ -33,8 +33,8 @@ confere("a curva só desce", Z.escala(10, 2, 144, 1) > Z.escala(60, 2, 144, 1) &
 confere("sem força (animação no começo) não cresce", Z.escala(0, 2, 144, 0) === 1);
 confere("meia força cresce a metade", perto(Z.escala(0, 2, 144, 0.5), 1.5));
 confere("máximo 1 (ampliação desligada) não cresce", Z.escala(0, 1, 144, 1) === 1);
-confere("nível 0 = 1,3x e 100 = 2,2x", perto(Z.maximoDoNivel(0), 1.3) && perto(Z.maximoDoNivel(100), 2.2));
-confere("nível fora da faixa fica na faixa", perto(Z.maximoDoNivel(500), 2.2) && perto(Z.maximoDoNivel(-3), 1.3));
+confere("nível 0 = 1,15x, 50 = 1,45x e 100 = 1,75x", perto(Z.maximoDoNivel(0), 1.15) && perto(Z.maximoDoNivel(50), 1.45) && perto(Z.maximoDoNivel(100), 1.75));
+confere("nível fora da faixa fica na faixa", perto(Z.maximoDoNivel(500), 1.75) && perto(Z.maximoDoNivel(-3), 1.15));
 
 console.log("arrumar");
 {

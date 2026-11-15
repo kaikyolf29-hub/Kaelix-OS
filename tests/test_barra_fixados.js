@@ -114,7 +114,7 @@ confere("com a barra pequena cabem mais (8)", r.limite === 8, r.saida);
 r = roda("ler", [], A, { largura: 1280, estilo: "windows" });
 confere("na barra única do windows cabem 9", r.limite === 9, r.saida);
 r = roda("ler", [], A, { largura: 1280, mac: true });
-confere("com a barra no topo (estilo Mac) a doca cabe mais (15)", r.limite === 15, r.saida);
+confere("com a barra no topo (estilo Mac) a doca cabe mais (20: os apps ficam mais juntos)", r.limite === 20, r.saida);
 r = roda("ler", [], A, { largura: 800 });
 confere("nunca menos de 4", r.limite === 4, r.saida);
 r = roda("fixar", ["applications:novo.desktop"], muitos(7), { largura: 1280 });

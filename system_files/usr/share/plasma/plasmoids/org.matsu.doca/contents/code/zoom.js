@@ -23,10 +23,12 @@ function escala(distancia, maximo, raio, forca) {
     return 1 + (maximo - 1) * Math.min(1, forca) * curva;
 }
 
-// O teto da ampliação a partir do ajuste da pessoa (0 a 100): de 1,3x a 2,2x.
+// O teto da ampliação a partir do ajuste da pessoa (0 a 100): de 1,15x a
+// 1,75x. O meio (50, o padrão) dá 1,45x: o app cresce sem tomar a tela, perto
+// do que o Mac faz com a lupa ligada (antes ia até 2,2x e crescia demais).
 function maximoDoNivel(nivel) {
     var n = Math.max(0, Math.min(100, Number(nivel) || 0));
-    return 1.3 + 0.9 * n / 100;
+    return 1.15 + 0.6 * n / 100;
 }
 
 // pedacos: lista de {tamanho, cresce} na ordem do eixo, na fileira normal.

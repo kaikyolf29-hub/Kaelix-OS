@@ -391,6 +391,19 @@ PlasmoidItem {
     Component.onCompleted: {
         comando.connectSource(ajudante + " estado idioma");
         ler();
+        semFundo();
+    }
+
+    // A barra de cima do estilo Mac não tem fundo, como a do macOS 26: o nome
+    // do app, os menus, os ícones e o relógio ficam direto sobre o papel de
+    // parede (com o fundo desligado o Plasma também não desfoca nada atrás).
+    // Esta peça só vai na barra de cima do Mac (veja usr/share/matsu/barra/mac.js).
+    function semFundo() {
+        var barra = Plasmoid.containment;
+        if (barra && Plasmoid.location === PlasmaCore.Types.TopEdge
+                && barra.backgroundHints !== PlasmaCore.Types.NoBackground) {
+            barra.backgroundHints = PlasmaCore.Types.NoBackground;
+        }
     }
 
     // ---------------------------------------------------------------------

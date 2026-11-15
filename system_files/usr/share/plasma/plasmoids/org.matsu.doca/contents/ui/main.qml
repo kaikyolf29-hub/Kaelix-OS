@@ -12,6 +12,11 @@
 // aparece, os ícones da barra somem; quando o mouse sai, os apps voltam ao
 // tamanho normal, a janela some e os ícones da barra voltam no mesmo lugar.
 //
+// No estilo Mac a doca desenha o próprio vidro (o Plasma não desenha o fundo
+// da barra): assim, ao passar o mouse, o vidro estica junto com os apps, como
+// no Mac, em vez de os apps das pontas saírem para fora dele. A janela da
+// ampliação desenha o mesmo vidro, do tamanho da fileira ampliada.
+//
 // Os apps fixados ficam em "launchers" (o mesmo nome da barra do KDE), e quem
 // fixa, tira e põe em ordem nas barras de todas as telas é o comando "matsu
 // barra" (pelo /usr/libexec/matsu/matsu-central), para valer em todas.
@@ -24,6 +29,7 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.extras as PlasmaExtras
 import org.kde.plasma.plasma5support as P5Support
 import org.kde.taskmanager as TaskManager
+import org.kde.ksvg as KSvg
 
 import "../code/zoom.js" as Zoom
 
@@ -57,25 +63,52 @@ PlasmoidItem {
     readonly property real comprimento: vertical ? height : width
     readonly property bool temLixeira: Plasmoid.configuration.lixeira === true
     // O risquinho entre os apps e a lixeira, como no Mac.
-    readonly property real vao: temLixeira ? Math.round(Kirigami.Units.gridUnit * 0.8) : 0
+    readonly property real vao: temLixeira ? Math.round(Kirigami.Units.gridUnit * (vidroProprio ? 0.9 : 0.8)) : 0
     readonly property int quantos: tarefas.count + (temLixeira ? 1 : 0)
-    // Cada app é um quadrado da espessura da doca; com apps demais para o
-    // espaço, os quadrados encolhem (nunca passam da borda).
+
+    // ------------------------------------------------- o vidro do Mac
+    // No estilo Mac a doca desenha o vidro. O comando "matsu barra" marca cada
+    // doca ("proprio" no Mac, "barra" nos outros estilos); numa doca montada
+    // antes dessa marca, o ajudante diz qual é o estilo.
+    readonly property string marcaDoVidro: Plasmoid.configuration.vidro || ""
+    property bool macPeloAjudante: false
+    readonly property bool vidroProprio: marcaDoVidro === "proprio" || (marcaDoVidro === "" && macPeloAjudante)
+    onVidroProprioChanged: desligarFundoDaBarra()
+    function desligarFundoDaBarra() {
+        var barra = Plasmoid.containment;
+        if (vidroProprio && barra && barra.backgroundHints !== PlasmaCore.Types.NoBackground) {
+            barra.backgroundHints = PlasmaCore.Types.NoBackground;
+        }
+    }
+    // O vidro passa um pouco das pontas da fileira, como no Mac.
+    readonly property real pontas: vidroProprio ? Math.round(espessura * 0.14) : 0
+    // O passo de um app ao longo da doca: na doca do Mac, o ícone e um respiro
+    // estreito (os apps ficam mais juntos, como no Mac); nas outras, um
+    // quadrado da espessura da doca.
+    readonly property real passo: vidroProprio ? Math.round(espessura * 0.86) : espessura
+
+    // Cada app ocupa um passo; com apps demais para o espaço, os passos
+    // encolhem (nunca passam da borda).
     readonly property real celula: quantos > 0
-        ? Math.max(8, Math.min(espessura, Math.floor((comprimento - vao) / quantos))) : espessura
-    readonly property real tamanhoIcone: Math.round(celula * 0.8)
+        ? Math.max(8, Math.min(passo, Math.floor((comprimento - vao - 2 * pontas) / quantos))) : passo
+    readonly property real tamanhoIcone: vidroProprio ? Math.round(Math.min(celula * 0.88, espessura * 0.76))
+        : Math.round(celula * 0.8)
     // Espaço entre a borda da tela e o ícone: é onde fica o pontinho.
-    readonly property real margemIcone: Math.max(2, Math.round((espessura - tamanhoIcone) * 0.62))
-    readonly property real inicioFileira: Math.max(0, Math.round((comprimento - (quantos * celula + vao)) / 2))
+    readonly property real margemIcone: vidroProprio ? Math.max(2, Math.round((espessura - tamanhoIcone) * 0.56))
+        : Math.max(2, Math.round((espessura - tamanhoIcone) * 0.62))
+    readonly property real inicioFileira: Math.max(pontas, Math.round((comprimento - (quantos * celula + vao)) / 2))
+    // O vidro em repouso, ao longo do eixo: da primeira à última peça da fileira.
+    readonly property real fimFileira: inicioFileira + quantos * celula + vao
+    readonly property real tamanhoPreferido: Math.max(espessura, quantos * passo + vao + 2 * pontas)
 
     Layout.fillWidth: vertical
     Layout.fillHeight: !vertical
-    Layout.minimumWidth: vertical ? -1 : Math.max(espessura, Math.round(quantos * espessura * 0.5 + vao))
-    Layout.preferredWidth: vertical ? -1 : Math.max(espessura, quantos * espessura + vao)
-    Layout.maximumWidth: vertical ? -1 : Math.max(espessura, quantos * espessura + vao)
-    Layout.minimumHeight: vertical ? Math.max(espessura, Math.round(quantos * espessura * 0.5 + vao)) : -1
-    Layout.preferredHeight: vertical ? Math.max(espessura, quantos * espessura + vao) : -1
-    Layout.maximumHeight: vertical ? Math.max(espessura, quantos * espessura + vao) : -1
+    Layout.minimumWidth: vertical ? -1 : Math.max(espessura, Math.round(quantos * passo * 0.5 + vao + 2 * pontas))
+    Layout.preferredWidth: vertical ? -1 : tamanhoPreferido
+    Layout.maximumWidth: vertical ? -1 : tamanhoPreferido
+    Layout.minimumHeight: vertical ? Math.max(espessura, Math.round(quantos * passo * 0.5 + vao + 2 * pontas)) : -1
+    Layout.preferredHeight: vertical ? tamanhoPreferido : -1
+    Layout.maximumHeight: vertical ? tamanhoPreferido : -1
 
     // Converte um retângulo dado no eixo da doca (a: ao longo, c: a partir da
     // borda da tela) para x, y, largura e altura de um item com este
@@ -367,6 +400,8 @@ PlasmoidItem {
                 if (achado) {
                     raiz.idioma = achado[1];
                 }
+            } else if (fonte === raiz.ajudante + " estado barra") {
+                raiz.macPeloAjudante = /(^|\n)barra=mac(\n|$)/.test(String(dados["stdout"] || ""));
             }
         }
     }
@@ -374,7 +409,15 @@ PlasmoidItem {
         comando.connectSource(ajudante + " " + argumentos);
     }
 
-    Component.onCompleted: fazer("estado idioma")
+    Component.onCompleted: {
+        fazer("estado idioma");
+        desligarFundoDaBarra();
+        // Uma doca montada antes da marca "vidro" (a atualização chegou com
+        // ela já na tela): o ajudante diz se o estilo é o Mac.
+        if (marcaDoVidro === "") {
+            fazer("estado barra");
+        }
+    }
 
     // Avisa o KWin onde está cada app, para a animação de minimizar ir até ele.
     Timer {
@@ -398,6 +441,18 @@ PlasmoidItem {
     property int arrastado: -1
 
     // --------------------------------------------- a fileira na barra
+    // O vidro do Mac em repouso, atrás dos apps (some enquanto a janela da
+    // ampliação mostra o vidro esticado).
+    VidroDoca {
+        doca: raiz
+        visible: raiz.vidroProprio
+        inicio: raiz.inicioFileira - raiz.pontas
+        fim: raiz.fimFileira + raiz.pontas
+        total: raiz.comprimento
+        fundo: raiz.espessura
+        opacity: raiz.sobreposto ? 0 : 1
+    }
+
     Item {
         id: fileira
         anchors.fill: parent
@@ -630,6 +685,21 @@ PlasmoidItem {
             id: palco
             width: raiz.vertical ? sobre.fundo : sobre.eixoTotal
             height: raiz.vertical ? sobre.eixoTotal : sobre.fundo
+
+            // O vidro do Mac esticado: da primeira à última peça da fileira
+            // ampliada (com a força da lupa em zero, é o vidro da barra).
+            VidroDoca {
+                readonly property int ultimo: raiz.pedacos.length - 1
+                readonly property real a0: raiz.arranjo.inicio[0] !== undefined ? raiz.arranjo.inicio[0] : 0
+                readonly property real a1: ultimo >= 0 && raiz.arranjo.inicio[ultimo] !== undefined
+                    ? raiz.arranjo.inicio[ultimo] + raiz.arranjo.tamanho[ultimo] : raiz.fimFileira - raiz.inicioFileira
+                doca: raiz
+                visible: raiz.vidroProprio
+                inicio: sobre.sobra + raiz.inicioFileira + a0 - raiz.pontas
+                fim: sobre.sobra + raiz.inicioFileira + a1 + raiz.pontas
+                total: sobre.eixoTotal
+                fundo: sobre.fundo
+            }
 
             // O risquinho antes da lixeira, acompanhando a fileira.
             Rectangle {

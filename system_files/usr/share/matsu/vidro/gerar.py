@@ -76,13 +76,15 @@ def camadas(opacidade):
             'fill="%s" opacity="%s"' % (cor, round(t, 3)))
 
 
-def fundo(opacidade, borda, r=R, pre="", oy=0):
+def fundo(opacidade, borda, r=R, pre="", oy=0, brilho=None):
     """As nove peças do fundo (canto, lado, miolo), com a linha clara na borda.
 
     borda é um número (a mesma linha em volta) ou (cima, lados, baixo): o vidro
     do Mac tem a linha mais clara em cima, como a luz batendo de cima. pre põe um
     prefixo no nome das peças (ex.: "north-", a barra de cima) e oy desce o
-    desenho na folha, para não ficar por cima das outras peças."""
+    desenho na folha, para não ficar por cima das outras peças. brilho é o id
+    de um degradê branco que acende a faixa de cima (o canto e a beirada de
+    cima), como a luz batendo no vidro."""
     f, k = camadas(opacidade)
     if not isinstance(borda, (tuple, list)):
         borda = (borda, borda, borda)
@@ -117,8 +119,10 @@ def fundo(opacidade, borda, r=R, pre="", oy=0):
                         "M%d,0 A%d,%d 0 0 1 0,%d V%d A%d,%d 0 0 0 %d,0 Z" % (r, r, r, r, n, n, n, n)),
     }
     for nome, (x, y, op, disco, anel) in cantos.items():
-        p.append('<g id="%s%s" transform="translate(%d,%d)"><rect fill="#000000" opacity="0.001" width="%d" height="%d"/>%s<path %s d="%s"/></g>' % (pre, nome, x, y, r, r, cheio("path", disco), linha(op), anel))
-    p.append('<g id="%stop" transform="translate(%d,%d)">%s<rect %s width="%d" height="1"/></g>' % (pre, x1, y0, cheio("rect", ' width="%d" height="%d"' % (c, r)), linha(b_cima), c))
+        luz = '<path fill="url(#%s)" d="%s"/>' % (brilho, disco) if brilho and nome.startswith("top") else ""
+        p.append('<g id="%s%s" transform="translate(%d,%d)"><rect fill="#000000" opacity="0.001" width="%d" height="%d"/>%s%s<path %s d="%s"/></g>' % (pre, nome, x, y, r, r, cheio("path", disco), luz, linha(op), anel))
+    luz = '<rect fill="url(#%s)" width="%d" height="%d"/>' % (brilho, c, r) if brilho else ""
+    p.append('<g id="%stop" transform="translate(%d,%d)">%s%s<rect %s width="%d" height="1"/></g>' % (pre, x1, y0, cheio("rect", ' width="%d" height="%d"' % (c, r)), luz, linha(b_cima), c))
     p.append('<g id="%sbottom" transform="translate(%d,%d)">%s<rect %s y="%d" width="%d" height="1"/></g>' % (pre, x1, y2, cheio("rect", ' width="%d" height="%d"' % (c, r)), linha(b_baixo), r - 1, c))
     p.append('<g id="%sleft" transform="translate(0,%d)">%s<rect %s width="1" height="%d"/></g>' % (pre, y1, cheio("rect", ' width="%d" height="%d"' % (r, c)), l, c))
     p.append('<g id="%sright" transform="translate(%d,%d)">%s<rect %s x="%d" width="1" height="%d"/></g>' % (pre, x2, y1, cheio("rect", ' width="%d" height="%d"' % (r, c)), l, r - 1, c))
@@ -174,39 +178,62 @@ def mascara(x0, r=R, pre="", oy=0):
     ]
 
 
-def sombra(x0, r=R):
-    """Sombra suave em volta da ilha. Por baixo da ilha ela é invisível."""
-    R = r
+def sombra(x0, r=R, s=S, pre="shadow-", g="s-", oy=0):
+    """Sombra suave em volta da ilha. Por baixo da ilha ela é invisível.
+
+    s é quanto ela sai para fora, pre o prefixo das peças, g o dos degradês
+    (veja degrades_sombra) e oy desce o desenho na folha."""
+    R, S = r, s
     t = S + R
-    x1, x2, y1, y2 = x0 + t, x0 + t + C, t, t + C
+    x1, x2, y0, y1, y2 = x0 + t, x0 + t + C, oy, oy + t, oy + t + C
     inv = 'fill="#000000" opacity="0.001"'
+    p, d = pre, g
     return [
-        '<rect id="shadow-topleft" x="%d" y="0" width="%d" height="%d" fill="url(#s-tl)"/>' % (x0, t, t),
-        '<rect id="shadow-topright" x="%d" y="0" width="%d" height="%d" fill="url(#s-tr)"/>' % (x2, t, t),
-        '<rect id="shadow-bottomleft" x="%d" y="%d" width="%d" height="%d" fill="url(#s-bl)"/>' % (x0, y2, t, t),
-        '<rect id="shadow-bottomright" x="%d" y="%d" width="%d" height="%d" fill="url(#s-br)"/>' % (x2, y2, t, t),
-        '<g id="shadow-top"><rect x="%d" y="0" width="%d" height="%d" fill="url(#s-cima)"/><rect %s x="%d" y="%d" width="%d" height="%d"/></g>' % (x1, C, S, inv, x1, S, C, R),
-        '<g id="shadow-bottom"><rect %s x="%d" y="%d" width="%d" height="%d"/><rect x="%d" y="%d" width="%d" height="%d" fill="url(#s-baixo)"/></g>' % (inv, x1, y2, C, R, x1, y2 + R, C, S),
-        '<g id="shadow-left"><rect x="%d" y="%d" width="%d" height="%d" fill="url(#s-esq)"/><rect %s x="%d" y="%d" width="%d" height="%d"/></g>' % (x0, y1, S, C, inv, x0 + S, y1, R, C),
-        '<g id="shadow-right"><rect %s x="%d" y="%d" width="%d" height="%d"/><rect x="%d" y="%d" width="%d" height="%d" fill="url(#s-dir)"/></g>' % (inv, x2, y1, R, C, x2 + R, y1, S, C),
-        '<rect id="shadow-center" %s x="%d" y="%d" width="%d" height="%d"/>' % (inv, x1, y1, C, C),
-        '<rect id="shadow-hint-top-margin" x="%d" y="0" width="2" height="%d" fill="#ff00ff"/>' % (x1 + 8, S),
-        '<rect id="shadow-hint-bottom-margin" x="%d" y="%d" width="2" height="%d" fill="#ff00ff"/>' % (x1 + 8, y2 + R, S),
-        '<rect id="shadow-hint-left-margin" x="%d" y="%d" width="%d" height="2" fill="#ff00ff"/>' % (x0, y1 + 8, S),
-        '<rect id="shadow-hint-right-margin" x="%d" y="%d" width="%d" height="2" fill="#ff00ff"/>' % (x2 + R, y1 + 8, S),
-        '<rect id="shadow-hint-top-inset" x="%d" y="0" width="2" height="%d" fill="#00ff00"/>' % (x1 + 16, S),
-        '<rect id="shadow-hint-bottom-inset" x="%d" y="%d" width="2" height="%d" fill="#00ff00"/>' % (x1 + 16, y2 + R, S),
-        '<rect id="shadow-hint-left-inset" x="%d" y="%d" width="%d" height="2" fill="#00ff00"/>' % (x0, y1 + 16, S),
-        '<rect id="shadow-hint-right-inset" x="%d" y="%d" width="%d" height="2" fill="#00ff00"/>' % (x2 + R, y1 + 16, S),
+        '<rect id="%stopleft" x="%d" y="%d" width="%d" height="%d" fill="url(#%stl)"/>' % (p, x0, y0, t, t, d),
+        '<rect id="%stopright" x="%d" y="%d" width="%d" height="%d" fill="url(#%str)"/>' % (p, x2, y0, t, t, d),
+        '<rect id="%sbottomleft" x="%d" y="%d" width="%d" height="%d" fill="url(#%sbl)"/>' % (p, x0, y2, t, t, d),
+        '<rect id="%sbottomright" x="%d" y="%d" width="%d" height="%d" fill="url(#%sbr)"/>' % (p, x2, y2, t, t, d),
+        '<g id="%stop"><rect x="%d" y="%d" width="%d" height="%d" fill="url(#%scima)"/><rect %s x="%d" y="%d" width="%d" height="%d"/></g>' % (p, x1, y0, C, S, d, inv, x1, y0 + S, C, R),
+        '<g id="%sbottom"><rect %s x="%d" y="%d" width="%d" height="%d"/><rect x="%d" y="%d" width="%d" height="%d" fill="url(#%sbaixo)"/></g>' % (p, inv, x1, y2, C, R, x1, y2 + R, C, S, d),
+        '<g id="%sleft"><rect x="%d" y="%d" width="%d" height="%d" fill="url(#%sesq)"/><rect %s x="%d" y="%d" width="%d" height="%d"/></g>' % (p, x0, y1, S, C, d, inv, x0 + S, y1, R, C),
+        '<g id="%sright"><rect %s x="%d" y="%d" width="%d" height="%d"/><rect x="%d" y="%d" width="%d" height="%d" fill="url(#%sdir)"/></g>' % (p, inv, x2, y1, R, C, x2 + R, y1, S, C, d),
+        '<rect id="%scenter" %s x="%d" y="%d" width="%d" height="%d"/>' % (p, inv, x1, y1, C, C),
+        '<rect id="%shint-top-margin" x="%d" y="%d" width="2" height="%d" fill="#ff00ff"/>' % (p, x1 + 8, y0, S),
+        '<rect id="%shint-bottom-margin" x="%d" y="%d" width="2" height="%d" fill="#ff00ff"/>' % (p, x1 + 8, y2 + R, S),
+        '<rect id="%shint-left-margin" x="%d" y="%d" width="%d" height="2" fill="#ff00ff"/>' % (p, x0, y1 + 8, S),
+        '<rect id="%shint-right-margin" x="%d" y="%d" width="%d" height="2" fill="#ff00ff"/>' % (p, x2 + R, y1 + 8, S),
+        '<rect id="%shint-top-inset" x="%d" y="%d" width="2" height="%d" fill="#00ff00"/>' % (p, x1 + 16, y0, S),
+        '<rect id="%shint-bottom-inset" x="%d" y="%d" width="2" height="%d" fill="#00ff00"/>' % (p, x1 + 16, y2 + R, S),
+        '<rect id="%shint-left-inset" x="%d" y="%d" width="%d" height="2" fill="#00ff00"/>' % (p, x0, y1 + 16, S),
+        '<rect id="%shint-right-inset" x="%d" y="%d" width="%d" height="2" fill="#00ff00"/>' % (p, x2 + R, y1 + 16, S),
     ]
 
 
-def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra", extras=()):
+def degrades_sombra(g, forca, r=R, s=S):
+    """Os degradês de uma sombra (veja sombra): de "forca" na borda até sumir."""
+    k = r / float(s + r)
+    lin = paradas([(0, 0), (0.45, round(forca * 0.12, 3)), (0.75, round(forca * 0.4, 3)), (1, forca)])
+    rad = paradas([(0, 0), (round(k, 4), 0), (round(k + 0.0001, 4), forca), (round(k + (1 - k) * 0.25, 4), round(forca * 0.4, 3)),
+                   (round(k + (1 - k) * 0.55, 4), round(forca * 0.12, 3)), (1, 0)])
+    return ("<defs>"
+            '<linearGradient id="%scima" x1="0" y1="0" x2="0" y2="1">%s</linearGradient>' % (g, lin)
+            + '<linearGradient id="%sbaixo" x1="0" y1="1" x2="0" y2="0">%s</linearGradient>' % (g, lin)
+            + '<linearGradient id="%sesq" x1="0" y1="0" x2="1" y2="0">%s</linearGradient>' % (g, lin)
+            + '<linearGradient id="%sdir" x1="1" y1="0" x2="0" y2="0">%s</linearGradient>' % (g, lin)
+            + '<radialGradient id="%stl" cx="1" cy="1" r="1">%s</radialGradient>' % (g, rad)
+            + '<radialGradient id="%str" cx="0" cy="1" r="1">%s</radialGradient>' % (g, rad)
+            + '<radialGradient id="%sbl" cx="1" cy="0" r="1">%s</radialGradient>' % (g, rad)
+            + '<radialGradient id="%sbr" cx="0" cy="0" r="1">%s</radialGradient>' % (g, rad)
+            + "</defs>")
+
+
+def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra", extras=(), soltas=()):
     """Uma folha completa: fundo, margens, sombra e máscara. Serve para a barra, os balões e as dicas.
 
     extras são desenhos a mais na mesma folha, cada um (prefixo, opacidade,
     borda): o Plasma usa "north-" nas barras presas no alto da tela e "west-" e
-    "east-" nas de pé, nos lados (veja painel_mac)."""
+    "east-" nas de pé, nos lados (veja painel_mac). soltas são peças prontas
+    que vão embaixo de tudo, numa faixa a mais da folha (veja doca_mac)."""
     R = r
     k = R / float(S + R)
     estilo = ESTILO % {
@@ -217,7 +244,8 @@ def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="F
     for i, (pre, op, b) in enumerate(extras):
         oy = OY_TOPO * (i + 1)
         pecas += fundo(op, b, r, pre=pre, oy=oy) + dicas(r, mv, mh, pre=pre, oy=oy) + mascara(200, r, pre=pre, oy=oy)
-    altura = 180 + OY_TOPO * len(extras)
+    pecas += list(soltas)
+    altura = 180 + OY_TOPO * (len(extras) + (1 if soltas else 0))
     return ('<?xml version="1.0" encoding="UTF-8"?>\n'
             '<!-- %s do Matsu. Gerado por usr/share/matsu/vidro/gerar.py: não editar à mão. -->\n' % nome
             + '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="280" height="%d" viewBox="0 0 280 %d">\n' % (altura, altura)
@@ -237,15 +265,42 @@ NIVEIS_MAC = {
 OY_TOPO = 200
 
 
-def painel_mac(op_doca, op_topo, borda_doca, borda_topo, forca_sombra):
-    """A folha do vidro do Mac: a doca (sem prefixo e de pé, "west-" e "east-")
-    e a barra de cima ("north-").
+# A doca do estilo Mac desenha o próprio vidro (a peça org.matsu.doca desliga o
+# fundo da barra): assim o vidro cresce junto com a lupa, como no Mac. Ela usa
+# as peças "doca-" (o vidro) e "doca-sombra-" (a sombra em volta) desta folha.
+# Sem o fundo da barra não há desfoque atrás (nem no PC com placa de vídeo),
+# então é o mesmo desenho com e sem o efeito: o vidro claro do macOS 26, bem
+# transparente, com a borda acesa e um brilho na faixa de cima.
+R_DOCA = 18     # raio do canto
+S_DOCA = 8      # quanto a sombra sai (cabe na folga da barra flutuante)
+NIVEIS_DOCA = {"mais": 0.20, "normal": 0.32, "menos": 0.52, "sem": 1}
+BORDA_DOCA = (0.80, 0.42, 0.55)     # a linha clara: cima, lados, baixo
+BRILHO_DOCA = 0.34                  # a luz na faixa de cima, que some para baixo
+SOMBRA_DOCA = 0.20
+
+
+def doca_mac(opacidade, oy):
+    """O vidro da doca do Mac ("doca-") e a sombra em volta ("doca-sombra-")."""
+    luz = ('<defs><linearGradient id="brilho-doca" x1="0" y1="0" x2="0" y2="1">'
+           '<stop offset="0" stop-color="#ffffff" stop-opacity="%s"/>'
+           '<stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient></defs>' % BRILHO_DOCA)
+    return ([luz, degrades_sombra("ds-", SOMBRA_DOCA, R_DOCA, S_DOCA)]
+            + fundo(opacidade, BORDA_DOCA, R_DOCA, pre="doca-", oy=oy, brilho="brilho-doca")
+            + sombra(100, R_DOCA, S_DOCA, pre="doca-sombra-", g="ds-", oy=oy))
+
+
+def painel_mac(op_doca, op_topo, borda_doca, borda_topo, forca_sombra, op_vidro_doca):
+    """A folha do vidro do Mac: a doca (sem prefixo e de pé, "west-" e "east-"),
+    a barra de cima ("north-") e o vidro que a própria doca desenha ("doca-").
 
     O Plasma usa esta folha (solid/widgets/panel-background) nas barras marcadas
     como opacas; o comando "matsu barra" marca assim só as do estilo Mac, então
-    as ilhas da fusão e a barra do Windows continuam com o vidro de sempre."""
+    as ilhas da fusão e a barra do Windows continuam com o vidro de sempre. As
+    peças sem prefixo só aparecem enquanto a doca ainda não desligou o fundo da
+    barra (no primeiro instante); a barra de cima também desliga o dela."""
+    extras = (("north-", op_topo, borda_topo), ("west-", op_doca, borda_doca), ("east-", op_doca, borda_doca))
     return painel(op_doca, borda_doca, forca_sombra, nome="Vidro do estilo Mac (doca e barra de cima)",
-                  extras=(("north-", op_topo, borda_topo), ("west-", op_doca, borda_doca), ("east-", op_doca, borda_doca)))
+                  extras=extras, soltas=doca_mac(op_vidro_doca, OY_TOPO * (len(extras) + 1)))
 
 
 ESTILO_TAREFAS = """<defs>
@@ -397,7 +452,7 @@ def main():
     for pasta, (op_doca, op_topo, borda_doca, borda_topo) in versoes_mac.items():
         os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
         with open(os.path.join(raiz, pasta, "panel-background.svg"), "w") as f:
-            f.write(painel_mac(op_doca, op_topo, borda_doca, borda_topo, 0.18))
+            f.write(painel_mac(op_doca, op_topo, borda_doca, borda_topo, 0.18, NIVEIS_DOCA[opcoes.transparencia]))
     with open(os.path.join(raiz, "widgets", "tasks.svg"), "w") as f:
         f.write(tarefas())
     # Balões (menu, bandeja, avisos, a escolha de telas do Meta+P): mesmos cantos e borda das ilhas.
