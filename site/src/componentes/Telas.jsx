@@ -1,33 +1,40 @@
 import { useRef, useState } from 'react';
+import { useT } from '../idioma.js';
 
 const ABAS = [
   {
     id: 'menu',
-    nome: 'Menu e barra',
-    texto: 'Apps fixados, busca e categorias, como no Windows\u00a011.',
+    nome: { pt: 'Menu e barra', en: 'Menu and taskbar' },
+    texto: { pt: 'Apps fixados, busca e categorias, como no Windows\u00a011.', en: 'Pinned apps, search and categories, like Windows\u00a011.' },
     foto: 'tela-menu',
-    alt: 'A área de trabalho do Matsu com o menu aberto e a barra de vidro embaixo'
+    alt: {
+      pt: 'A área de trabalho do Matsu com o menu aberto e a barra de vidro embaixo',
+      en: 'The Matsu desktop with the menu open and the glass taskbar at the bottom'
+    }
   },
   {
     id: 'central',
-    nome: 'Central de controle',
-    texto: 'Rede, som, modo escuro e perfil de energia num clique.',
+    nome: { pt: 'Central de controle', en: 'Control center' },
+    texto: { pt: 'Rede, som, modo escuro e perfil de energia num clique.', en: 'Network, sound, dark mode and power profile in one click.' },
     foto: 'tela-central',
-    alt: 'A central de controle aberta perto do relógio, com rede, modo escuro, som e perfil de energia'
+    alt: {
+      pt: 'A central de controle aberta perto do relógio, com rede, modo escuro, som e perfil de energia',
+      en: 'The control center open next to the clock, with network, dark mode, sound and power profile'
+    }
   },
   {
     id: 'bloqueio',
-    nome: 'Tela de bloqueio',
-    texto: 'Hora grande, sua foto e a senha numa pílula.',
+    nome: { pt: 'Tela de bloqueio', en: 'Lock screen' },
+    texto: { pt: 'Hora grande, sua foto e a senha numa pílula.', en: 'A big clock, your photo and the password in a pill.' },
     foto: 'tela-bloqueio',
-    alt: 'A tela de bloqueio do Matsu com a hora, a data e o campo de senha'
+    alt: { pt: 'A tela de bloqueio do Matsu com a hora, a data e o campo de senha', en: 'The Matsu lock screen with the time, the date and the password field' }
   },
   {
     id: 'claro',
-    nome: 'Tema claro',
-    texto: 'O papel de parede vira dia e as janelas ficam brancas.',
+    nome: { pt: 'Tema claro', en: 'Light theme' },
+    texto: { pt: 'O papel de parede vira dia e as janelas ficam brancas.', en: 'The wallpaper turns to day and the windows turn white.' },
     foto: 'tela-claro',
-    alt: 'A área de trabalho do Matsu no tema claro'
+    alt: { pt: 'A área de trabalho do Matsu no tema claro', en: 'The Matsu desktop in the light theme' }
   }
 ];
 
@@ -35,6 +42,7 @@ const ABAS = [
 export default function Telas() {
   const [ativa, setAtiva] = useState(0);
   const lista = useRef(null);
+  const t = useT();
 
   const teclado = e => {
     const passo = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
@@ -49,12 +57,14 @@ export default function Telas() {
     <section className="secao" id="sistema" aria-labelledby="sistema-titulo">
       <div className="wrap divisao divisao--5-7">
         <div className="divisao__texto">
-          <h2 id="sistema-titulo">Fácil para quem vem do Windows</h2>
+          <h2 id="sistema-titulo">{t('Fácil para quem vem do Windows', 'Easy if you come from Windows')}</h2>
           <p className="sub">
-            O menu, a busca, os apps abertos e o relógio ficam na barra de baixo. As janelas são de vidro e deixam ver o
-            papel de parede.
+            {t(
+              'O menu, a busca, os apps abertos e o relógio ficam na barra de baixo. As janelas são de vidro e deixam ver o papel de parede.',
+              'The menu, search, open apps and the clock sit on the bottom bar. Windows are made of glass and let the wallpaper show through.'
+            )}
           </p>
-          <div className="abas" role="tablist" aria-label="Partes do sistema" aria-orientation="vertical" ref={lista} onKeyDown={teclado}>
+          <div className="abas" role="tablist" aria-label={t('Partes do sistema', 'Parts of the system')} aria-orientation="vertical" ref={lista} onKeyDown={teclado}>
             <span className="abas__marca" style={{ '--i': ativa }} aria-hidden="true" />
             {ABAS.map((a, i) => (
               <button
@@ -68,8 +78,8 @@ export default function Telas() {
                 className="aba"
                 onClick={() => setAtiva(i)}
               >
-                <b>{a.nome}</b>
-                <span>{a.texto}</span>
+                <b>{t(a.nome)}</b>
+                <span>{t(a.texto)}</span>
               </button>
             ))}
           </div>
@@ -85,7 +95,7 @@ export default function Telas() {
               sizes="(min-width: 1024px) 737px, 100vw"
               width="1600"
               height="900"
-              alt={i === ativa ? a.alt : ''}
+              alt={i === ativa ? t(a.alt) : ''}
               aria-hidden={i === ativa ? undefined : 'true'}
               loading="lazy"
             />

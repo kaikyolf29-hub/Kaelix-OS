@@ -1,0 +1,5 @@
+# O botão "Sponsor" do repositório leva para a parte Apoiar do site.
+# Quando o GitHub aprovar o perfil do Sponsors, acrescentar a linha:
+# github: kaikydev1-jpg
+# (e trocar "aprovado" para true em site/src/dados.js).
+custom: ["https://kaikyolf29-hub.github.io/Matsu-OS/#apoiar"]

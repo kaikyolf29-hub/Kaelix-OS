@@ -1,8 +1,9 @@
 # Site do Matsu
 
-A página para baixar a ISO do Matsu. É uma página só, em português, feita com
-Vite e React e desenhada já no build (o HTML sai pronto e o React só "acorda"
-por cima).
+A página para baixar a ISO do Matsu. É uma página só, feita com Vite e React e
+desenhada já no build (o HTML sai pronto e o React só "acorda" por cima). Sai
+em dois idiomas: `index.html` (português, o padrão) e `en.html` (inglês), com o
+botão EN/PT no menu levando junto a parte onde a pessoa está.
 
 ## Rodar e montar
 
@@ -27,12 +28,34 @@ workflow) e precisa do GitHub Pages ligado em Settings > Pages, com a origem
   os apps da barra. Na virada do ano, mudar `EDICAO` aqui.
 - `src/componentes/`: as partes da página, na ordem: Topo (a área de trabalho
   com a barra de vidro), Telas, Divisoes (jogos, loja, segurança), Estilos (a
-  barra nos três estilos), Apps, Instalar, Baixar e Rodape.
+  barra nos três estilos), Apps, Instalar, Baixar, Apoiar e Rodape.
 - `src/estilo/`: `base.css` (cores do Matsu, letras, botões, menu),
   `transicoes.css` (as transições) e `secoes.css` (cada parte).
 - `public/img/`: as fotos do sistema, tiradas das prints de verdade da VM por
   `visual/site/preparar-fotos.py`, e o papel de parede em pixel art aumentado
   3 e 6 vezes sem borrar.
+
+## Os dois idiomas
+
+Cada texto fica junto, nos dois idiomas: `t('Baixar', 'Download')` ou
+`{ pt: ..., en: ... }` nas listas (`src/idioma.js`). O `scripts/prerender.mjs`
+desenha a página duas vezes e troca o título, a descrição e os links do
+cabeçalho no `en.html`. As fotos do sistema são as mesmas nos dois.
+
+## Apoie o Matsu
+
+A parte **Apoiar** (e o link no menu) só aparece quando tem um jeito de apoiar,
+configurado em `APOIO` no `src/dados.js`:
+
+- **Pix:** só a chave **aleatória** (formato `1234abcd-...`). Nunca CPF,
+  telefone ou e-mail: o build para e o `tests/test_matsu.sh` falha. Com o nome
+  e a cidade, o site também mostra o QR Code e o "Pix copia e cola" sem valor
+  fixo, feitos aqui mesmo (`src/pix.js`, conferido com o exemplo do manual do
+  Banco Central; o QR é desenhado pelo `uqr`, MIT), sem serviço de fora.
+- **GitHub Sponsors:** trocar `aprovado` para `true` quando o GitHub aprovar o
+  perfil, e acrescentar `github: kaikydev1-jpg` no `.github/FUNDING.yml`.
+
+Sem rastreador e sem guardar nada de quem apoia.
 
 ## O botão de baixar
 

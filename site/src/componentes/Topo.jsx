@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import BlurText from '../reactbits/BlurText.jsx';
 import BarraVidro from './BarraVidro.jsx';
 import { EDICAO, TAMANHO_ISO } from '../dados.js';
+import { useT } from '../idioma.js';
 
 // O papel de parede é pixel art de 640x360 aumentado 3 e 6 vezes sem borrar
 // (WebP sem perda: os dois juntos pesam menos que o PNG pequeno). No celular vai
@@ -15,6 +16,7 @@ export const PAPEL = tema => `img/papel-${tema}-1920.webp 1920w, img/papel-${tem
 // do sistema (o mesmo do primeiro boot) e a barra de vidro em três ilhas.
 export default function Topo() {
   const escuro = useRef(null);
+  const t = useT();
   return (
     <section className="topo" id="inicio" data-enter aria-labelledby="topo-titulo">
       <picture className="papel-quadro">
@@ -59,23 +61,28 @@ export default function Topo() {
             distance={28}
           />
           <span className="topo__categoria entra" style={{ '--atraso': '380ms' }}>
-            Sistema operacional de graça para o seu PC
+            {t('Sistema operacional de graça para o seu PC', 'A free operating system for your PC')}
           </span>
         </h1>
         <p className="topo__lead entra" style={{ '--atraso': '460ms' }}>
-          Bonito desde o primeiro boot, pronto para jogar e todo em português. Tem loja de apps, central de
-          jogos e atualiza sozinho.
+          {t(
+            'Bonito desde o primeiro boot, pronto para jogar e todo em português. Tem loja de apps, central de jogos e atualiza sozinho.',
+            'Looks great from the first boot, ready for gaming, in English or Portuguese. It has an app store and a game center, and it updates itself.'
+          )}
         </p>
         <div className="btn-linha entra" style={{ '--atraso': '540ms' }}>
           <a className="btn btn--primario" id="botao-topo" href="#baixar">
-            Baixar o Matsu {EDICAO}
+            {t('Baixar o Matsu', 'Download Matsu')} {EDICAO}
           </a>
           <a className="btn btn--secundario" href="#instalar">
-            Ver como instalar
+            {t('Ver como instalar', 'See how to install')}
           </a>
         </div>
         <p className="topo__fato entra" style={{ '--atraso': '600ms' }}>
-          Instalador de {TAMANHO_ISO}, para PCs com placa AMD, Intel ou NVIDIA.
+          {t(
+            `Instalador de ${TAMANHO_ISO.pt}, para PCs com placa AMD, Intel ou NVIDIA.`,
+            `An installer of ${TAMANHO_ISO.en}, for PCs with AMD, Intel or NVIDIA graphics.`
+          )}
         </p>
         </div>
         <div className="topo__pe">

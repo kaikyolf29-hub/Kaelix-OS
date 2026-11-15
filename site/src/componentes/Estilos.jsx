@@ -1,11 +1,24 @@
 import { useRef, useState } from 'react';
 import BarraVidro from './BarraVidro.jsx';
 import { PAPEL } from './Topo.jsx';
+import { useT } from '../idioma.js';
 
 const ESTILOS = [
-  { id: 'fusao', nome: 'Matsu', texto: 'Três ilhas de vidro: o menu e a busca, os apps e o relógio.' },
-  { id: 'windows', nome: 'Windows', texto: 'Uma faixa só, com tudo à esquerda e o relógio no canto.' },
-  { id: 'mac', nome: 'Mac', texto: 'A barra fina no alto com os menus do app e a doca que amplia.' }
+  {
+    id: 'fusao',
+    nome: 'Matsu',
+    texto: { pt: 'Três ilhas de vidro: o menu e a busca, os apps e o relógio.', en: 'Three glass islands: menu and search, apps, and the clock.' }
+  },
+  {
+    id: 'windows',
+    nome: 'Windows',
+    texto: { pt: 'Uma faixa só, com tudo à esquerda e o relógio no canto.', en: 'A single strip, with everything on the left and the clock in the corner.' }
+  },
+  {
+    id: 'mac',
+    nome: 'Mac',
+    texto: { pt: 'A barra fina no alto com os menus do app e a doca que amplia.', en: 'A thin bar on top with the app menus, and a dock that magnifies.' }
+  }
 ];
 
 // A barra de verdade não é foto: é a mesma barra desenhada aqui, nos três estilos
@@ -14,6 +27,7 @@ export default function Estilos() {
   const [ativo, setAtivo] = useState(0);
   const fundo = useRef(null);
   const botoes = useRef(null);
+  const t = useT();
 
   const teclado = e => {
     const passo = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
@@ -29,10 +43,15 @@ export default function Estilos() {
       <div className="wrap">
         <div className="cabeca">
           <div>
-            <h2 id="barra-titulo">Barra no estilo Matsu, Windows ou Mac</h2>
-            <p className="sub">Escolha o estilo nos Ajustes do Matsu e troque quando quiser. Os apps fixados vão junto.</p>
+            <h2 id="barra-titulo">{t('Barra no estilo Matsu, Windows ou Mac', 'A taskbar in Matsu, Windows or Mac style')}</h2>
+            <p className="sub">
+              {t(
+                'Escolha o estilo nos Ajustes do Matsu e troque quando quiser. Os apps fixados vão junto.',
+                'Pick the style in Matsu Settings and switch whenever you like. Your pinned apps come along.'
+              )}
+            </p>
           </div>
-          <div className="segmentos" role="tablist" aria-label="Estilo da barra" ref={botoes} onKeyDown={teclado}>
+          <div className="segmentos" role="tablist" aria-label={t('Estilo da barra', 'Taskbar style')} ref={botoes} onKeyDown={teclado}>
             <span className="segmentos__marca" style={{ '--i': ativo }} aria-hidden="true" />
             {ESTILOS.map((e, i) => (
               <button
@@ -49,7 +68,10 @@ export default function Estilos() {
             ))}
           </div>
         </div>
-        <div className="palco" id="barra-palco" role="tabpanel" aria-label={`Barra no estilo ${ESTILOS[ativo].nome}. ${ESTILOS[ativo].texto}`}>
+        <div className="palco" id="barra-palco" role="tabpanel" aria-label={t(
+            `Barra no estilo ${ESTILOS[ativo].nome}. ${ESTILOS[ativo].texto.pt}`,
+            `${ESTILOS[ativo].nome} style taskbar. ${ESTILOS[ativo].texto.en}`
+          )}>
           <picture className="papel-quadro">
             <source media="(max-width: 639px)" srcSet="img/papel-escuro-quadrado.webp" width="720" height="720" />
             <img

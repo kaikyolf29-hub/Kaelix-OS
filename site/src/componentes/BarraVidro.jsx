@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react';
 import GlassSurface from '../reactbits/GlassSurface.jsx';
 import Icone from './Icone.jsx';
 import { APPS_BARRA } from '../dados.js';
+import { LOCALE, useIdioma, useT } from '../idioma.js';
 
-// A hora e a data como a barra do Matsu mostra: "06:14" e "sáb. 14 de nov.".
+// A hora e a data como a barra do Matsu mostra: "06:14" e "sáb. 14 de nov."
+// (em inglês: "06:14" e "Sat Nov 14").
 function useRelogio() {
+  const idioma = useIdioma();
   const [agora, setAgora] = useState(null);
   useEffect(() => {
     setAgora(new Date());
@@ -13,8 +16,9 @@ function useRelogio() {
   }, []);
   if (!agora) return { hora: '--:--', data: '' };
   const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  const semana = agora.toLocaleDateString('pt-BR', { weekday: 'short' });
-  const mes = agora.toLocaleDateString('pt-BR', { month: 'short' });
+  const semana = agora.toLocaleDateString(LOCALE[idioma], { weekday: 'short' });
+  const mes = agora.toLocaleDateString(LOCALE[idioma], { month: 'short' });
+  if (idioma === 'en') return { hora, data: `${semana} ${mes} ${agora.getDate()}` };
   return { hora, data: `${semana} ${agora.getDate()} de ${mes}` };
 }
 
@@ -45,26 +49,28 @@ function Logo({ cedo = false }) {
 }
 
 function Busca() {
+  const t = useT();
   return (
     <span className="barra__busca">
       <Icone nome="busca" tamanho={16} />
-      Buscar apps e arquivos
+      {t('Buscar apps e arquivos', 'Search apps and files')}
     </span>
   );
 }
 
 function AppsDaBarra({ comLixeira = true, links = true, ampliar = false }) {
+  const t = useT();
   return (
     <ul className={`barra__apps${ampliar ? ' barra__apps--ampliar' : ''}`}>
       {APPS_BARRA.map((app, i) => (
-        <li key={app.nome}>
+        <li key={app.icone}>
           {links ? (
-            <a className="barra__app" href={app.ir} aria-label={app.nome} data-balao={app.nome}>
+            <a className="barra__app" href={app.ir} aria-label={t(app.nome)} data-balao={t(app.nome)}>
               {/* No celular o topo mostra só os seis primeiros; os outros esperam. */}
               <img src={app.icone} alt="" width="36" height="36" loading={i < 6 ? 'eager' : 'lazy'} />
             </a>
           ) : (
-            <span className="barra__app" data-balao={app.nome}>
+            <span className="barra__app" data-balao={t(app.nome)}>
               <img src={app.icone} alt="" width="36" height="36" loading="lazy" />
             </span>
           )}
@@ -74,7 +80,7 @@ function AppsDaBarra({ comLixeira = true, links = true, ampliar = false }) {
         <>
           <li className="barra__separador" aria-hidden="true" />
           <li>
-            <span className="barra__app" data-balao="Lixeira">
+            <span className="barra__app" data-balao={t('Lixeira', 'Trash')}>
               <img src="icones/lixeira.svg" alt="" width="36" height="36" loading="lazy" />
             </span>
           </li>
@@ -106,6 +112,7 @@ function Bandeja({ relogio, compacta = false }) {
 // (barra fina no alto e doca embaixo). Desenha só o que a barra de verdade tem.
 export default function BarraVidro({ estilo = 'fusao', vidro = false, fundo, links = false, className = '' }) {
   const relogio = useRelogio();
+  const t = useT();
 
   if (estilo === 'windows') {
     return (
@@ -125,12 +132,12 @@ export default function BarraVidro({ estilo = 'fusao', vidro = false, fundo, lin
       <div className={`barra barra--mac ${className}`} aria-hidden={links ? undefined : 'true'}>
         <div className="mac-topo">
           <img src="img/logo.svg" alt="" width="20" height="20" loading="lazy" />
-          <b>Arquivos</b>
-          <span>Arquivo</span>
-          <span>Editar</span>
-          <span>Exibir</span>
-          <span>Ir</span>
-          <span>Janela</span>
+          <b>{t('Arquivos', 'Files')}</b>
+          <span>{t('Arquivo', 'File')}</span>
+          <span>{t('Editar', 'Edit')}</span>
+          <span>{t('Exibir', 'View')}</span>
+          <span>{t('Ir', 'Go')}</span>
+          <span>{t('Janela', 'Window')}</span>
           <span className="mac-topo__direita">
             <Icone nome="escudo" tamanho={16} />
             <Icone nome="rede-cabo" tamanho={16} />

@@ -1,6 +1,32 @@
 import { useEffect, useState, useRef } from 'react';
 import Icone from './Icone.jsx';
-import { NOME, SECOES } from '../dados.js';
+import { APOIAR, NOME, SECOES, TEM_APOIO } from '../dados.js';
+import { PAGINA, useIdioma, useT } from '../idioma.js';
+
+// O menu de cima: as partes do sistema e, quando tem um jeito de apoiar, o Apoiar.
+const MENU = TEM_APOIO ? [...SECOES, APOIAR] : SECOES;
+
+// O outro idioma, levando junto a parte da página onde a pessoa está (#jogos...).
+export function BotaoIdioma({ className = '', longo = false }) {
+  const idioma = useIdioma();
+  const outro = idioma === 'en' ? 'pt' : 'en';
+  const nome = outro === 'en' ? 'English' : 'Português';
+  return (
+    <a
+      className={className}
+      href={PAGINA[outro]}
+      hrefLang={outro === 'en' ? 'en' : 'pt-BR'}
+      lang={outro === 'en' ? 'en' : 'pt-BR'}
+      aria-label={outro === 'en' ? 'Read in English' : 'Ler em português'}
+      title={nome}
+      onClick={e => {
+        e.currentTarget.href = PAGINA[outro] + window.location.hash;
+      }}
+    >
+      {longo ? nome : outro.toUpperCase()}
+    </a>
+  );
+}
 
 function useTema() {
   const [tema, setTema] = useState('escuro');
@@ -23,14 +49,15 @@ function useTema() {
 
 export function BotaoTema() {
   const [tema, trocar] = useTema();
+  const t = useT();
   const claro = tema === 'claro';
   return (
     <button
       type="button"
       className="botao-icone botao-tema"
       onClick={trocar}
-      aria-label={claro ? 'Usar o tema escuro' : 'Usar o tema claro'}
-      title={claro ? 'Tema escuro' : 'Tema claro'}
+      aria-label={claro ? t('Usar o tema escuro', 'Use the dark theme') : t('Usar o tema claro', 'Use the light theme')}
+      title={claro ? t('Tema escuro', 'Dark theme') : t('Tema claro', 'Light theme')}
     >
       <span className="troca-icone" data-mostra={claro ? 'b' : 'a'}>
         <Icone nome="lua" tamanho={20} className="troca-icone__a" />
@@ -43,6 +70,7 @@ export function BotaoTema() {
 // O <header class="nav"> está no index.html; o React desenha o que vai dentro.
 export default function Navegacao() {
   const [aberto, setAberto] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (!aberto) return undefined;
@@ -58,31 +86,34 @@ export default function Navegacao() {
   return (
     <>
       <div className="wrap nav__linha">
-        <a className="pular" href="#conteudo">Pular para o conteúdo</a>
-        <a className="nav__marca" href="#inicio" aria-label={`${NOME}, início`}>
+        <a className="pular" href="#conteudo">
+          {t('Pular para o conteúdo', 'Skip to content')}
+        </a>
+        <a className="nav__marca" href="#inicio" aria-label={`${NOME}, ${t('início', 'home')}`}>
           <img src="img/logo.svg" alt="" width="32" height="32" />
           <span>{NOME}</span>
         </a>
-        <nav className="nav__secoes" aria-label="Seções">
+        <nav className="nav__secoes" aria-label={t('Seções', 'Sections')}>
           <ul>
-            {SECOES.map(s => (
+            {MENU.map(s => (
               <li key={s.id}>
-                <a href={`#${s.id}`}>{s.nome}</a>
+                <a href={`#${s.id}`}>{t(s.nome)}</a>
               </li>
             ))}
           </ul>
         </nav>
         <div className="nav__acoes">
+          <BotaoIdioma className="botao-icone botao-idioma" />
           <BotaoTema />
           <a className="btn btn--primario nav__baixar" href="#baixar">
-            Baixar o Matsu {NOME.split(' ')[1]}
+            {t('Baixar o Matsu', 'Download Matsu')} {NOME.split(' ')[1]}
           </a>
           <button
             type="button"
             className="botao-icone nav__menu"
             aria-expanded={aberto}
             aria-controls="menu-celular"
-            aria-label={aberto ? 'Fechar o menu' : 'Abrir o menu'}
+            aria-label={aberto ? t('Fechar o menu', 'Close the menu') : t('Abrir o menu', 'Open the menu')}
             onClick={() => setAberto(a => !a)}
           >
             <span className="troca-icone" data-mostra={aberto ? 'b' : 'a'}>
@@ -94,13 +125,16 @@ export default function Navegacao() {
       </div>
       <div id="menu-celular" className="folha" data-aberto={aberto} hidden={!aberto} onClick={() => setAberto(false)}>
         <ul>
-          {SECOES.map(s => (
+          {MENU.map(s => (
             <li key={s.id}>
-              <a href={`#${s.id}`}>{s.nome}</a>
+              <a href={`#${s.id}`}>{t(s.nome)}</a>
             </li>
           ))}
           <li>
-            <a href="#baixar">Baixar</a>
+            <a href="#baixar">{t('Baixar', 'Download')}</a>
+          </li>
+          <li className="folha__idioma">
+            <BotaoIdioma longo />
           </li>
         </ul>
       </div>
@@ -113,6 +147,7 @@ export default function Navegacao() {
 // O <nav class="barra-celular"> está no index.html; aqui vai o botão e o liga/desliga.
 export function BarraCelular() {
   const [mostrar, setMostrar] = useState(false);
+  const t = useT();
   const botao = useRef(null);
   useEffect(() => {
     const barra = botao.current?.parentElement;
@@ -137,7 +172,7 @@ export function BarraCelular() {
   }, []);
   return (
     <a className="btn btn--primario" href="#baixar" ref={botao} tabIndex={mostrar ? undefined : -1}>
-      Baixar o Matsu {NOME.split(' ')[1]}
+      {t('Baixar o Matsu', 'Download Matsu')} {NOME.split(' ')[1]}
     </a>
   );
 }

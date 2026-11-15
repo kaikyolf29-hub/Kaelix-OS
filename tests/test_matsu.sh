@@ -343,6 +343,14 @@ OUT="$(grep -rIn -i 'kaelix' "$ROOT/system_files" "$ROOT/build_files" "$ROOT/sit
 check "nenhum arquivo do sistema com o nome antigo (Kaelix)" test -z "$OUT"
 
 echo
+echo "site: apoiar"
+# A chave Pix do site é vazia (sem Pix) ou a aleatória: nunca CPF, telefone ou e-mail.
+CHAVE="$(sed -n "s/^  pix: { chave: '\([^']*\)'.*/\1/p" "$ROOT/site/src/dados.js")"
+check "a chave Pix do site é vazia ou a aleatória" bash -c '[[ -z $0 || $0 =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]' "$CHAVE"
+check "o site acha a linha da chave Pix" grep -q "^  pix: { chave: '" "$ROOT/site/src/dados.js"
+check "o FUNDING.yml leva para a parte Apoiar do site" grep -qF 'https://kaikyolf29-hub.github.io/Matsu-OS/#apoiar' "$ROOT/.github/FUNDING.yml"
+
+echo
 echo "prompt do terminal"
 # O prompt mostra a pasta, o ramo (com * quando mudou) e a setinha, que fica
 # vermelha depois de um erro. Um ramo com nome de comando nunca é executado.

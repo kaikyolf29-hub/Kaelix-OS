@@ -212,6 +212,17 @@ h3 {
   margin-inline: auto;
 }
 
+/* Só para leitor de tela (avisos como "Chave Pix copiada"). */
+.visualmente-escondido {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .pular {
   position: absolute;
   left: 12px;
@@ -398,6 +409,18 @@ h3 {
 .nav__menu {
   display: none;
 }
+/* O idioma: "EN" no site em português, "PT" no site em inglês. */
+.botao-idioma {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--tinta-2);
+  text-decoration: none;
+  transition: color var(--dur-rapida) var(--curva-ui), background-color var(--dur-rapida) var(--curva-ui);
+}
+.botao-idioma:hover {
+  color: var(--tinta);
+}
 @media (max-width: 1180px) {
   .nav__secoes a {
     padding: 0 8px;
@@ -407,7 +430,8 @@ h3 {
     right: 8px;
   }
 }
-@media (max-width: 1023px) {
+/* Com o Apoiar e o botão de idioma, os links só cabem a partir de 1100px. */
+@media (max-width: 1099px) {
   .nav__secoes {
     display: none;
   }
@@ -418,7 +442,8 @@ h3 {
   }
 }
 @media (max-width: 639px) {
-  .nav__baixar {
+  .nav__baixar,
+  .botao-idioma {
     display: none;
   }
   .nav__marca {
@@ -447,6 +472,13 @@ h3 {
   font-size: 24px;
   font-weight: 500;
   text-decoration: none;
+}
+.folha__idioma a {
+  margin-top: 16px;
+  border-bottom: 0;
+  font-family: var(--fonte);
+  font-size: 17px;
+  color: var(--tinta-2);
 }
 @keyframes folha-abre {
   from {

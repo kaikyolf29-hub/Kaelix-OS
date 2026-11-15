@@ -2,15 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import SpotlightCard from '../reactbits/SpotlightCard.jsx';
 import Icone from './Icone.jsx';
 import { EDICAO, LINKS, TAMANHO_ISO } from '../dados.js';
+import { LOCALE, useIdioma, useT } from '../idioma.js';
 
 const PLACAS = [
-  { id: 'amd', nome: 'AMD ou Intel', texto: 'Para placas de vídeo AMD (Radeon), Intel e vídeo integrado.' },
-  { id: 'nvidia', nome: 'NVIDIA', texto: 'Já vem com o driver da NVIDIA (GeForce) instalado.' }
+  {
+    id: 'amd',
+    nome: { pt: 'AMD ou Intel', en: 'AMD or Intel' },
+    texto: { pt: 'Para placas de vídeo AMD (Radeon), Intel e vídeo integrado.', en: 'For AMD (Radeon) and Intel graphics cards and integrated graphics.' }
+  },
+  {
+    id: 'nvidia',
+    nome: { pt: 'NVIDIA', en: 'NVIDIA' },
+    texto: { pt: 'Já vem com o driver da NVIDIA (GeForce) instalado.', en: 'Comes with the NVIDIA (GeForce) driver installed.' }
+  }
 ];
 
-function tamanho(bytes) {
+function tamanho(bytes, idioma) {
   const gb = bytes / 1024 ** 3;
-  if (gb >= 1) return `${gb.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} GB`;
+  if (gb >= 1) return `${gb.toLocaleString(LOCALE[idioma], { maximumFractionDigits: 1 })} GB`;
   return `${Math.round(bytes / 1024 ** 2)} MB`;
 }
 
@@ -95,6 +104,7 @@ function useVersao() {
 
 // A soma SHA-256 confere se a ISO chegou inteira. O botão copia e mostra o visto.
 function Soma({ url }) {
+  const t = useT();
   const [soma, setSoma] = useState('');
   const [copiado, setCopiado] = useState(false);
   const espera = useRef(0);
@@ -114,9 +124,9 @@ function Soma({ url }) {
     return (
       <p className="soma">
         <a className="link" href={url}>
-          Baixar a soma SHA-256
+          {t('Baixar a soma SHA-256', 'Download the SHA-256 checksum')}
         </a>{' '}
-        para conferir se a ISO chegou inteira.
+        {t('para conferir se a ISO chegou inteira.', 'to check that the ISO arrived intact.')}
       </p>
     );
   }
@@ -134,7 +144,7 @@ function Soma({ url }) {
     <div className="soma soma--codigo">
       <span>SHA-256</span>
       <code>{soma}</code>
-      <button type="button" className="botao-icone" onClick={copiar} aria-label={copiado ? 'Soma copiada' : 'Copiar a soma SHA-256'}>
+      <button type="button" className="botao-icone" onClick={copiar} aria-label={copiado ? t('Soma copiada', 'Checksum copied') : t('Copiar a soma SHA-256', 'Copy the SHA-256 checksum')}>
         <span className="troca-icone" data-mostra={copiado ? 'b' : 'a'}>
           <Icone nome="copiar" tamanho={18} className="troca-icone__a" />
           <Icone nome="certo" tamanho={18} className="troca-icone__b visto" />
@@ -144,7 +154,18 @@ function Soma({ url }) {
   );
 }
 
+const REQUISITOS = [
+  { nome: { pt: 'Processador', en: 'Processor' }, valor: { pt: '64 bits, Intel ou AMD', en: '64-bit, Intel or AMD' } },
+  { nome: { pt: 'Memória', en: 'Memory' }, valor: { pt: '4 GB, ou 8 GB para jogar', en: '4 GB, or 8 GB for gaming' } },
+  { nome: { pt: 'Disco', en: 'Disk' }, valor: { pt: '64 GB livres, de preferência SSD', en: '64 GB free, ideally an SSD' } },
+  { nome: { pt: 'Placa de vídeo', en: 'Graphics card' }, valor: { pt: 'AMD, Intel ou NVIDIA', en: 'AMD, Intel or NVIDIA' } },
+  { nome: { pt: 'Pendrive', en: 'USB drive' }, valor: { pt: '4 GB ou mais', en: '4 GB or more' } },
+  { nome: { pt: 'Internet', en: 'Internet' }, valor: { pt: 'Na hora de instalar, por cabo ou Wi-Fi', en: 'While installing, wired or Wi-Fi' } }
+];
+
 export default function Baixar() {
+  const t = useT();
+  const idioma = useIdioma();
   const [placa, setPlacaAgora] = useState(0);
   // O texto só faz a troca com desfoque depois que a pessoa escolhe a placa.
   const [trocou, setTrocou] = useState(false);
@@ -156,18 +177,27 @@ export default function Baixar() {
   const atual = PLACAS[placa];
   const arquivo = versao.fase === 'pronta' ? versao.arquivos[atual.id] : null;
   const teste = versao.fase === 'pronta' && versao.teste;
-  const nomeVersao = teste ? 'a versão de teste' : versao.fase === 'pronta' ? `o Matsu ${versao.versao}` : `o Matsu ${EDICAO}`;
+  const nomeVersao = teste
+    ? t('a versão de teste', 'the test version')
+    : `${t('o Matsu', 'Matsu')} ${versao.fase === 'pronta' ? versao.versao : EDICAO}`;
   const data =
     versao.fase === 'pronta' && versao.data
-      ? new Date(versao.data).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+      ? new Date(versao.data).toLocaleDateString(LOCALE[idioma], { day: 'numeric', month: 'long', year: 'numeric' })
       : '';
 
   return (
     <section className="secao" id="baixar" aria-labelledby="baixar-titulo">
       <div className="wrap divisao divisao--5-7">
         <div className="divisao__texto">
-          <h2 id="baixar-titulo">Baixar o Matsu {EDICAO}</h2>
-          <p className="sub">É de graça, sem cadastro e sem propaganda. Escolha a ISO pela sua placa de vídeo.</p>
+          <h2 id="baixar-titulo">
+            {t('Baixar o Matsu', 'Download Matsu')} {EDICAO}
+          </h2>
+          <p className="sub">
+            {t(
+              'É de graça, sem cadastro e sem propaganda. Escolha a ISO pela sua placa de vídeo.',
+              'It’s free, with no sign-up and no ads. Pick the ISO for your graphics card.'
+            )}
+          </p>
           <SpotlightCard
             className="cartao-baixar"
             spotlightColor="var(--luz)"
@@ -179,7 +209,7 @@ export default function Baixar() {
               '--spotlight-card-shadow': 'none'
             }}
           >
-            <div className="segmentos segmentos--largo" role="radiogroup" aria-label="Sua placa de vídeo">
+            <div className="segmentos segmentos--largo" role="radiogroup" aria-label={t('Sua placa de vídeo', 'Your graphics card')}>
               <span className="segmentos__marca" style={{ '--i': placa }} aria-hidden="true" />
               {PLACAS.map((p, i) => (
                 <button
@@ -198,24 +228,24 @@ export default function Baixar() {
                     }
                   }}
                 >
-                  {p.nome}
+                  {t(p.nome)}
                 </button>
               ))}
             </div>
             <p className={`cartao-baixar__placa${trocou ? ' troca-texto' : ''}`} key={atual.id}>
-              {atual.texto}
+              {t(atual.texto)}
             </p>
 
             {versao.fase === 'pronta' && arquivo ? (
               <>
                 <a className="btn btn--primario btn--baixar" href={arquivo.url}>
                   <Icone nome="baixar" tamanho={20} />
-                  Baixar {nomeVersao}
+                  {t('Baixar', 'Download')} {nomeVersao}
                 </a>
                 <p className={`cartao-baixar__arquivo${trocou ? ' troca-texto' : ''}`} key={arquivo.nome}>
-                  {arquivo.nome}, {tamanho(arquivo.bytes)}
-                  {data && (teste ? <>. Montada em {data}.</> : <>. Publicada em {data}.</>)}
-                  {teste && <> A primeira versão oficial sai depois dos testes.</>}
+                  {arquivo.nome}, {tamanho(arquivo.bytes, idioma)}
+                  {data && (teste ? <>. {t('Montada em', 'Built on')} {data}.</> : <>. {t('Publicada em', 'Released on')} {data}.</>)}
+                  {teste && <> {t('A primeira versão oficial sai depois dos testes.', 'The first official version comes after testing.')}</>}
                 </p>
                 <Soma url={arquivo.somaUrl} />
               </>
@@ -223,54 +253,42 @@ export default function Baixar() {
               <>
                 <a className="btn btn--primario btn--baixar" href={LINKS.versoes} aria-describedby="aviso-versao">
                   <Icone nome="baixar" tamanho={20} />
-                  Baixar {nomeVersao}
+                  {t('Baixar', 'Download')} {nomeVersao}
                 </a>
                 <p className="cartao-baixar__arquivo" id="aviso-versao" aria-live="polite">
                   {versao.fase === 'carregando'
-                    ? 'Procurando a versão mais nova...'
+                    ? t('Procurando a versão mais nova...', 'Looking for the newest version...')
                     : versao.fase === 'erro'
-                      ? 'Não deu para ler a versão mais nova agora. O botão abre a página de versões no GitHub.'
-                      : `A primeira versão está quase pronta. Quando sair, este botão baixa a ISO (${TAMANHO_ISO}).`}
+                      ? t(
+                          'Não deu para ler a versão mais nova agora. O botão abre a página de versões no GitHub.',
+                          'Couldn’t read the newest version right now. The button opens the releases page on GitHub.'
+                        )
+                      : t(
+                          `A primeira versão está quase pronta. Quando sair, este botão baixa a ISO (${TAMANHO_ISO.pt}).`,
+                          `The first version is almost ready. When it’s out, this button downloads the ISO (${TAMANHO_ISO.en}).`
+                        )}
                 </p>
               </>
             )}
             <p className="cartao-baixar__links">
               <a className="link" href={LINKS.versoes}>
-                Ver todas as versões
+                {t('Ver todas as versões', 'See all versions')}
               </a>
               <a className="link" href={LINKS.novidades}>
-                Ler as novidades
+                {t('Ler as novidades', 'Read what’s new')}
               </a>
             </p>
           </SpotlightCard>
         </div>
         <div className="requisitos">
-          <h3>Requisitos do PC</h3>
+          <h3>{t('Requisitos do PC', 'PC requirements')}</h3>
           <dl>
-            <div>
-              <dt>Processador</dt>
-              <dd>64 bits, Intel ou AMD</dd>
-            </div>
-            <div>
-              <dt>Memória</dt>
-              <dd>4 GB, ou 8 GB para jogar</dd>
-            </div>
-            <div>
-              <dt>Disco</dt>
-              <dd>64 GB livres, de preferência SSD</dd>
-            </div>
-            <div>
-              <dt>Placa de vídeo</dt>
-              <dd>AMD, Intel ou NVIDIA</dd>
-            </div>
-            <div>
-              <dt>Pendrive</dt>
-              <dd>4 GB ou mais</dd>
-            </div>
-            <div>
-              <dt>Internet</dt>
-              <dd>Na hora de instalar, por cabo ou Wi-Fi</dd>
-            </div>
+            {REQUISITOS.map(r => (
+              <div key={r.nome.pt}>
+                <dt>{t(r.nome)}</dt>
+                <dd>{t(r.valor)}</dd>
+              </div>
+            ))}
           </dl>
         </div>
       </div>

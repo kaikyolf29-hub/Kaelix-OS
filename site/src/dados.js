@@ -1,8 +1,12 @@
 // Tudo o que muda de ano para ano ou de versão para versão fica aqui.
+import { chaveValida } from './pix.js';
 
 // A edição do ano (o arquivo EDICAO na raiz do repositório): 27 = edição 2027.
 export const EDICAO = 27;
 export const NOME = `Matsu ${EDICAO} OS`;
+
+// O endereço do site no GitHub Pages (o mesmo do canonical no index.html).
+export const SITE = 'https://kaikyolf29-hub.github.io/Matsu-OS/';
 
 // Onde moram o código e as versões publicadas (o fluxo "Publicar versão
 // estável" cria um Release com as duas ISOs: ...-amd.iso e ...-nvidia.iso).
@@ -18,28 +22,45 @@ export const LINKS = {
 
 // Tamanho aproximado da ISO (instalador de rede): usado enquanto a versão
 // publicada não responde.
-export const TAMANHO_ISO = 'cerca de 1,1 GB';
+export const TAMANHO_ISO = { pt: 'cerca de 1,1 GB', en: 'about 1.1 GB' };
 
 // As seções, na ordem da página (o menu de cima usa esta lista).
 export const SECOES = [
-  { id: 'sistema', nome: 'Sistema' },
-  { id: 'jogos', nome: 'Jogos' },
-  { id: 'loja', nome: 'Loja' },
-  { id: 'apps', nome: 'Apps' },
-  { id: 'seguranca', nome: 'Segurança' },
-  { id: 'instalar', nome: 'Instalar' }
+  { id: 'sistema', nome: { pt: 'Sistema', en: 'System' } },
+  { id: 'jogos', nome: { pt: 'Jogos', en: 'Gaming' } },
+  { id: 'loja', nome: { pt: 'Loja', en: 'Store' } },
+  { id: 'apps', nome: { pt: 'Apps', en: 'Apps' } },
+  { id: 'seguranca', nome: { pt: 'Segurança', en: 'Security' } },
+  { id: 'instalar', nome: { pt: 'Instalar', en: 'Install' } }
 ];
+
+// Apoie o Matsu. A chave Pix é SEMPRE a aleatória (aquela no formato
+// 1234abcd-...): nunca CPF, telefone ou e-mail. Sem chave aleatória, o Pix não
+// aparece. Com nome e cidade, o site também mostra o QR Code e o "Pix copia e
+// cola" (sem valor fixo), feitos no navegador, sem serviço de fora.
+// O GitHub Sponsors só liga depois que o GitHub aprovar o perfil: aí é trocar
+// "aprovado" para true (e acrescentar "github: kaikydev1-jpg" no
+// .github/FUNDING.yml).
+export const APOIO = {
+  pix: { chave: '', nome: '', cidade: '' },
+  sponsors: { usuario: 'kaikydev1-jpg', aprovado: false }
+};
+export const TEM_PIX = chaveValida(APOIO.pix.chave);
+export const TEM_SPONSORS = APOIO.sponsors.aprovado && Boolean(APOIO.sponsors.usuario);
+// A parte Apoiar (e o link no menu) só aparece quando tem um jeito de apoiar.
+export const TEM_APOIO = TEM_PIX || TEM_SPONSORS;
+export const APOIAR = { id: 'apoiar', nome: { pt: 'Apoiar', en: 'Support' } };
 
 // Os apps da barra, na ordem da barra padrão do sistema (barra/comum.js):
 // Arquivos, navegador, Terminal, Steam, Loja, Gerenciador e Ajustes, e a
 // Lixeira separada. Cada um leva à parte da página que fala dele.
 export const APPS_BARRA = [
-  { nome: 'Arquivos', icone: 'icones/arquivos.svg', ir: '#apps' },
-  { nome: 'Brave', icone: 'icones/brave.svg', ir: '#loja' },
-  { nome: 'Terminal', icone: 'icones/terminal.svg', ir: '#apps' },
-  { nome: 'Steam', icone: 'icones/steam.svg', ir: '#jogos' },
-  { nome: 'Loja do Matsu', icone: 'icones/loja.svg', ir: '#loja' },
-  { nome: 'Central de jogos', icone: 'icones/jogos.svg', ir: '#jogos' },
-  { nome: 'Gerenciador de tarefas', icone: 'icones/tarefas.svg', ir: '#apps' },
-  { nome: 'Ajustes do Matsu', icone: 'icones/configuracoes.svg', ir: '#sistema' }
+  { nome: { pt: 'Arquivos', en: 'Files' }, icone: 'icones/arquivos.svg', ir: '#apps' },
+  { nome: { pt: 'Brave', en: 'Brave' }, icone: 'icones/brave.svg', ir: '#loja' },
+  { nome: { pt: 'Terminal', en: 'Terminal' }, icone: 'icones/terminal.svg', ir: '#apps' },
+  { nome: { pt: 'Steam', en: 'Steam' }, icone: 'icones/steam.svg', ir: '#jogos' },
+  { nome: { pt: 'Loja do Matsu', en: 'Matsu Store' }, icone: 'icones/loja.svg', ir: '#loja' },
+  { nome: { pt: 'Central de jogos', en: 'Game Center' }, icone: 'icones/jogos.svg', ir: '#jogos' },
+  { nome: { pt: 'Gerenciador de tarefas', en: 'Task Manager' }, icone: 'icones/tarefas.svg', ir: '#apps' },
+  { nome: { pt: 'Ajustes do Matsu', en: 'Matsu Settings' }, icone: 'icones/configuracoes.svg', ir: '#sistema' }
 ];
