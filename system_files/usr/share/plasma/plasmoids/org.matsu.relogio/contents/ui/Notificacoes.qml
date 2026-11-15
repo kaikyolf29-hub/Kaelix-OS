@@ -1,6 +1,6 @@
 // Notificações recebidas (a lista do próprio KDE), com "não perturbe" e
 // "limpar tudo" no topo, como a central de notificações do Windows 11.
-// Os balões que aparecem na hora continuam sendo do KDE.
+// Os avisos que aparecem na hora são do Matsu (Avisos.qml), no jeito do Mac.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts

@@ -7,9 +7,13 @@
 //
 // As notificações e o calendário vêm de módulos do KDE e ficam em arquivos
 // separados: se um deles faltar, o relógio continua funcionando.
+//
+// O relógio da tela principal também mostra os avisos dos apps na hora em que
+// chegam, no jeito do Mac (Avisos.qml), no lugar dos balões do KDE.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasma5support as P5Support
 import org.kde.plasma.plasmoid
@@ -25,6 +29,12 @@ PlasmoidItem {
     readonly property string ajudante: "/usr/libexec/matsu/matsu-central"
     property var agora: new Date()
     property bool silencio: false
+
+    onExpandedChanged: {
+        if (raiz.expanded && avisos.item) {
+            avisos.item.listaAberta();
+        }
+    }
 
     readonly property string hora: agora.toLocaleTimeString(Qt.locale(), Locale.ShortFormat)
     // "ter. 10 de nov." em português, "Tue 10 Nov" nas outras línguas.
@@ -68,6 +78,26 @@ PlasmoidItem {
         running: true
         triggeredOnStart: true
         onTriggered: raiz.lerSilencio()
+    }
+
+    // Os avisos dos apps na tela: um só, no relógio da tela principal.
+    Loader {
+        id: avisos
+        active: !!Plasmoid.containment && Plasmoid.containment.screen === 0
+        source: "Avisos.qml"
+        onLoaded: {
+            item.tradutor = raiz.t;
+            item.mostrarLista.connect(() => raiz.expanded = true);
+            item.emCima = Qt.binding(() => Plasmoid.location === PlasmaCore.Types.TopEdge);
+            item.area = Qt.binding(() => {
+                var c = Plasmoid.containment;
+                if (!c) {
+                    return Qt.rect(0, 0, 0, 0);
+                }
+                return Qt.rect(c.screenGeometry.x + c.availableScreenRect.x, c.screenGeometry.y + c.availableScreenRect.y,
+                               c.availableScreenRect.width, c.availableScreenRect.height);
+            });
+        }
     }
 
     P5Support.DataSource {

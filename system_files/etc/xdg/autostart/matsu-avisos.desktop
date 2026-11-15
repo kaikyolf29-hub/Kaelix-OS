@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Matsu OS - avisos
+Comment=Os avisos dos apps no jeito do Mac, pelo relógio do Matsu
+Comment[en]=App notifications the Mac way, through the Matsu clock
+Exec=/usr/libexec/matsu/matsu-avisos
+Icon=preferences-desktop-notification
+NoDisplay=true
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

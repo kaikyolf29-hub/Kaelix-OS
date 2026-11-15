@@ -91,10 +91,12 @@ PlasmoidItem {
     // encolhem (nunca passam da borda).
     readonly property real celula: quantos > 0
         ? Math.max(8, Math.min(passo, Math.floor((comprimento - vao - 2 * pontas) / quantos))) : passo
-    readonly property real tamanhoIcone: vidroProprio ? Math.round(Math.min(celula * 0.88, espessura * 0.76))
+    readonly property real tamanhoIcone: vidroProprio ? Math.round(Math.min(celula * 0.88, espessura * 0.74))
         : Math.round(celula * 0.8)
-    // Espaço entre a borda da tela e o ícone: é onde fica o pontinho.
-    readonly property real margemIcone: vidroProprio ? Math.max(2, Math.round((espessura - tamanhoIcone) * 0.56))
+    // Espaço entre a borda da tela e o ícone: é onde fica o pontinho. No Mac
+    // sobra um pouco mais embaixo, para o ponto caber dentro do vidro sem
+    // encostar na borda nem no ícone.
+    readonly property real margemIcone: vidroProprio ? Math.max(2, Math.round((espessura - tamanhoIcone) * 0.64))
         : Math.max(2, Math.round((espessura - tamanhoIcone) * 0.62))
     readonly property real inicioFileira: Math.max(pontas, Math.round((comprimento - (quantos * celula + vao)) / 2))
     // O vidro em repouso, ao longo do eixo: da primeira à última peça da fileira.

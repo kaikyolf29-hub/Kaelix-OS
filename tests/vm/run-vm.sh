@@ -220,11 +220,13 @@ hmp mover 960 500 || true
 hmp type "matsu barra --posicao embaixo"
 hmp key ret
 sleep 10
-# No estilo Mac, os avisos dos apps têm o vidro do Mac (canto do alto, à direita).
+# No estilo Mac, os avisos dos apps são do Matsu, como no Mac: cartões de vidro
+# no canto do alto, à direita, com o ícone à esquerda e o mais novo em cima. O
+# primeiro tem botões (fica esperando no fundo, senão some quando o comando acaba).
 # (o hmp só digita ASCII: os acentos vão escritos com \u, que o bash do terminal troca)
-hmp type "clear; notify-send -a 'Loja do Matsu' -i org.matsu.loja \$'Atualiza\\u00e7\\u00e3o pronta' \$'O Steam foi atualizado para a vers\\u00e3o nova.'"
+hmp type "clear; (notify-send -a Mensagens -i internet-mail -A r=Responder -A i=Ignorar Ana \$'Chego a\\u00ed em 10 minutos, pode descer.' --wait >/dev/null 2>&1 &); sleep 1; notify-send -a 'Loja do Matsu' -i org.matsu.loja \$'Atualiza\\u00e7\\u00e3o pronta' \$'O Steam foi atualizado para a vers\\u00e3o nova.'"
 hmp key ret
-sleep 2
+sleep 3
 shot "13d-aviso-estilo-mac"
 sleep 6
 # A doca some quando um app fica maximizado e volta com o mouse na borda de

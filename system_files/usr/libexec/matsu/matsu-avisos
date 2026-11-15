@@ -1,0 +1,20 @@
+#!/bin/bash
+# Matsu OS: os avisos dos apps (notificações) aparecem no jeito do Mac, pelo
+# relógio do Matsu. Este ajudante desliga a peça de avisos do KDE nas bandejas
+# (senão cada aviso apareceria duas vezes), com o roteiro
+# /usr/share/matsu/barra/avisos.js. Roda no começo de cada sessão
+# (/etc/xdg/autostart/matsu-avisos.desktop) e tenta de novo enquanto a área de
+# trabalho ainda não respondeu. Sem nada a mudar, não mexe em nada.
+set -u
+
+BAR_DIR="${MATSU_BAR_DIR:-/usr/share/matsu/barra}"
+roteiro="$(cat "$BAR_DIR/comum.js" "$BAR_DIR/avisos.js" 2>/dev/null)" || exit 0
+
+for espera in 0 3 5 10 20; do
+  sleep "$espera"
+  if saida="$(busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$roteiro" 2>/dev/null)"; then
+    printf '%s\n' "$saida"
+    exit 0
+  fi
+done
+exit 0

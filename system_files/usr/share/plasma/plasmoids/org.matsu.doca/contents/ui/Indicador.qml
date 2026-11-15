@@ -2,9 +2,10 @@
 // "Mostrar indicadores de apps abertos"), no jeito do Matsu: um ponto redondo
 // na cor do texto, perto da borda da tela. Ele nasce crescendo quando o app
 // abre e some encolhendo quando fecha. O app em uso fica com o ponto mais forte
-// e um brilho suave em volta (no Mac todos são iguais; aqui dá para saber qual
-// está na frente sem virar o traço do Windows). O app que pede atenção pisca
-// em laranja. Com a ampliação, o ponto não cresce junto com o ícone.
+// e, fora do estilo Mac, um brilho suave em volta (no Mac todos são iguais;
+// aqui dá para saber qual está na frente sem virar o traço do Windows). O app
+// que pede atenção pisca em laranja. Com a ampliação, o ponto não cresce junto
+// com o ícone.
 import QtQuick
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasmoid
@@ -23,7 +24,10 @@ Item {
 
     // Uns 4 px numa doca média, maior junto com a doca.
     readonly property real lado: Math.max(4, Math.round(doca.tamanhoIcone * 0.11))
-    readonly property rect r: doca.caixa(centro - lado / 2, Math.max(1, Math.round((doca.margemIcone - lado) / 2)), lado, lado, total, fundo)
+    // No meio da folga entre o ícone e a borda. No estilo Mac (o vidro é da
+    // própria doca), nunca encostado na borda do vidro.
+    readonly property real folga: Math.round((doca.margemIcone - lado) / 2)
+    readonly property rect r: doca.caixa(centro - lado / 2, Math.max(doca.vidroProprio ? 3 : 1, folga), lado, lado, total, fundo)
     readonly property color cor: pedindo ? "#ff9f43" : Kirigami.Theme.textColor
 
     visible: Plasmoid.configuration.indicadores !== false
@@ -32,14 +36,15 @@ Item {
     width: lado
     height: lado
 
-    // O brilho do app em uso.
+    // O brilho do app em uso. No estilo Mac não tem (como no Mac): ali o
+    // brilho passava da borda do vidro, e o ponto mais forte já mostra o app.
     Rectangle {
         anchors.centerIn: parent
         width: Math.round(ponto.lado * 2.6)
         height: width
         radius: width / 2
         color: ponto.cor
-        opacity: ponto.aberto && ponto.ativo && !ponto.pedindo ? 0.16 : 0
+        opacity: ponto.aberto && ponto.ativo && !ponto.pedindo && !ponto.doca.vidroProprio ? 0.16 : 0
         Behavior on opacity {
             NumberAnimation { duration: 220 }
         }

@@ -463,6 +463,29 @@ function listaDePecas(valor) {
     return itens;
 }
 
+// A peça de avisos do KDE (as notificações na hora) fica desligada na
+// bandeja: quem mostra os avisos é o relógio do Matsu (org.matsu.relogio).
+// Ela entra na lista das conhecidas, para a bandeja não ligar de novo sozinha.
+// Volta true se mudou alguma coisa (usado também por avisos.js).
+var AVISOS_DO_KDE = "org.kde.plasma.notifications";
+function semAvisosDoKde(alvo) {
+    var mudou = false;
+    alvo.currentConfigGroup = ["General"];
+    var extras = listaDePecas(alvo.readConfig("extraItems", ""));
+    var conhecidas = listaDePecas(alvo.readConfig("knownItems", ""));
+    if (extras.indexOf(AVISOS_DO_KDE) !== -1) {
+        extras.splice(extras.indexOf(AVISOS_DO_KDE), 1);
+        alvo.writeConfig("extraItems", extras);
+        mudou = true;
+    }
+    if (conhecidas.indexOf(AVISOS_DO_KDE) === -1) {
+        conhecidas.push(AVISOS_DO_KDE);
+        alvo.writeConfig("knownItems", conhecidas);
+        mudou = true;
+    }
+    return mudou;
+}
+
 // Bandeja como no Windows: aparecem os ícones dos apps que estão rodando
 // (Discord, Steam, OBS...), com menu no botão direito. Rede, som, Bluetooth e
 // bateria já estão na pílula da central; as outras peças do KDE (área de
@@ -500,6 +523,11 @@ function arrumarBandeja(bandeja) {
             }
         }
         alvo.writeConfig("extraItems", extras);
+    }
+    // Os avisos dos apps são do Matsu (o relógio, no jeito do Mac): a peça de
+    // avisos do KDE não carrega, senão cada aviso apareceria duas vezes.
+    if (tem("org.matsu.relogio")) {
+        semAvisosDoKde(alvo);
     }
     alvo.writeConfig("iconSize", 0);        // 16 px, do tamanho dos ícones da pílula
     alvo.writeConfig("iconSpacing", 2);
