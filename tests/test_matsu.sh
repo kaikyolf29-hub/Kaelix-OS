@@ -330,6 +330,38 @@ run vidro verde
 check "não apaga um tema que a pessoa fez" bash -c "grep -qF 'Não vou mexer' <<<\"\$0\" && grep -qF meu '$VIDRO/metadata.json'" "$OUT"
 rm -rf "$VIDRO"
 
+echo "vidro do Mac nos balões"
+BAL="$VIDRO/translucent/dialogs/background.svg"
+run barra mac
+check "no estilo Mac, os balões (avisos, bandeja) ganham o vidro do Mac" bash -c "grep -qF 'vidro do Mac' '$BAL' && grep -qF 'A16,16' '$BAL' && grep -qF 'mac=1' '$VIDRO/.matsu-vidro'"
+check "o Plasma relê o tema com os balões novos" bash -c "grep -n 'plasma-apply-desktoptheme' '$CALLS' | tr '\n' ' ' | grep -qE 'default.*Matsu'"
+check "os avisos e os balões da barra de cima ficam iguais" cmp -s "$BAL" "$VIDRO/translucent/solid/dialogs/background.svg"
+run barra mac
+check "escolher o Mac de novo não gera nem relê o tema à toa" bash -c "! grep -qF 'plasma-apply-desktoptheme' '$CALLS'"
+run vidro padrao --transparencia normal
+check "no Mac, o vidro padrão mantém os balões do Mac" grep -qF 'vidro do Mac' "$BAL"
+run vidro roxo --transparencia mais
+check "no Mac, a cor escolhida também vai nos balões do Mac" bash -c "grep -qF 'vidro do Mac' '$BAL' && grep -qF 'fill=\"#8b5cf6\"' '$BAL'"
+run barra fusao
+check "na fusão, os balões voltam ao vidro das ilhas (com a cor)" bash -c "! grep -qF 'vidro do Mac' '$BAL' && grep -qF 'fill=\"#8b5cf6\"' '$BAL' && grep -qF 'mac=0' '$VIDRO/.matsu-vidro'"
+run vidro padrao --transparencia normal
+check "na fusão com o vidro padrão, vale o tema do sistema" test ! -e "$VIDRO"
+# Uma atualização trocou o gerador (ou o tema veio de antes): o login refaz.
+run barra mac
+printf 'gerador=velho\n' > "$VIDRO/.matsu-vidro"
+rm -f "$BAL"
+run vidro --sincronizar
+check "no login, um tema de uma versão antiga é refeito" bash -c "test -s '$BAL' && grep -qF 'mac=1' '$VIDRO/.matsu-vidro'"
+check "no login, não relê o tema (a área de trabalho ainda não ligou)" bash -c "! grep -qF 'plasma-apply-desktoptheme' '$CALLS'"
+run vidro --sincronizar
+check "no login, sem nada a mudar, não gera de novo" test "$CODE" -eq 0 -a -z "$OUT"
+rm -rf "$VIDRO"; mkdir -p "$VIDRO" && echo meu > "$VIDRO/metadata.json"
+run vidro --sincronizar
+check "no login, não mexe num tema que a pessoa fez" bash -c "grep -qF meu '$VIDRO/metadata.json' && test ! -e '$VIDRO/.matsu-vidro'"
+rm -rf "$VIDRO"
+run barra fusao
+check "o script do login do vidro passa no dash" dash -n "$ROOT/system_files/etc/xdg/plasma-workspace/env/matsu-vidro.sh"
+
 echo
 echo "arquivos do sistema"
 # Um link quebrado não dá erro na montagem: o arquivo só some no sistema (foi

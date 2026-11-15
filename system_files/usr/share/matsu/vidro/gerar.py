@@ -227,20 +227,22 @@ def degrades_sombra(g, forca, r=R, s=S):
             + "</defs>")
 
 
-def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra", extras=(), soltas=()):
+def painel(opacidade, borda, forca_sombra, r=R, mv=4, mh=8, grosso=True, nome="Fundo das ilhas da barra", extras=(), soltas=(), brilho=0):
     """Uma folha completa: fundo, margens, sombra e máscara. Serve para a barra, os balões e as dicas.
 
     extras são desenhos a mais na mesma folha, cada um (prefixo, opacidade,
     borda): o Plasma usa "north-" nas barras presas no alto da tela e "west-" e
     "east-" nas de pé, nos lados (veja painel_mac). soltas são peças prontas
-    que vão embaixo de tudo, numa faixa a mais da folha (veja doca_mac)."""
+    que vão embaixo de tudo, numa faixa a mais da folha (veja doca_mac).
+    brilho acende a faixa de cima do fundo (a força da luz; 0 = sem)."""
     R = r
     k = R / float(S + R)
     estilo = ESTILO % {
         "lin": paradas([(0, 0), (0.45, round(forca_sombra * 0.12, 3)), (0.75, round(forca_sombra * 0.4, 3)), (1, forca_sombra)]),
         "rad": paradas([(0, 0), (round(k, 4), 0), (round(k + 0.0001, 4), forca_sombra), (round(k + (1 - k) * 0.25, 4), round(forca_sombra * 0.4, 3)), (round(k + (1 - k) * 0.55, 4), round(forca_sombra * 0.12, 3)), (1, 0)]),
     }
-    pecas = fundo(opacidade, borda, r) + dicas(r, mv, mh, grosso) + sombra(80, r) + mascara(200, r)
+    luz = [degrade_brilho("brilho", brilho)] if brilho else []
+    pecas = luz + fundo(opacidade, borda, r, brilho="brilho" if brilho else None) + dicas(r, mv, mh, grosso) + sombra(80, r) + mascara(200, r)
     for i, (pre, op, b) in enumerate(extras):
         oy = OY_TOPO * (i + 1)
         pecas += fundo(op, b, r, pre=pre, oy=oy) + dicas(r, mv, mh, pre=pre, oy=oy) + mascara(200, r, pre=pre, oy=oy)
@@ -279,12 +281,16 @@ BRILHO_DOCA = 0.34                  # a luz na faixa de cima, que some para baix
 SOMBRA_DOCA = 0.20
 
 
+def degrade_brilho(nome, forca):
+    """O degradê branco da luz na faixa de cima do vidro: de "forca" até sumir."""
+    return ('<defs><linearGradient id="%s" x1="0" y1="0" x2="0" y2="1">'
+            '<stop offset="0" stop-color="#ffffff" stop-opacity="%s"/>'
+            '<stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient></defs>' % (nome, forca))
+
+
 def doca_mac(opacidade, oy):
     """O vidro da doca do Mac ("doca-") e a sombra em volta ("doca-sombra-")."""
-    luz = ('<defs><linearGradient id="brilho-doca" x1="0" y1="0" x2="0" y2="1">'
-           '<stop offset="0" stop-color="#ffffff" stop-opacity="%s"/>'
-           '<stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient></defs>' % BRILHO_DOCA)
-    return ([luz, degrades_sombra("ds-", SOMBRA_DOCA, R_DOCA, S_DOCA)]
+    return ([degrade_brilho("brilho-doca", BRILHO_DOCA), degrades_sombra("ds-", SOMBRA_DOCA, R_DOCA, S_DOCA)]
             + fundo(opacidade, BORDA_DOCA, R_DOCA, pre="doca-", oy=oy, brilho="brilho-doca")
             + sombra(100, R_DOCA, S_DOCA, pre="doca-sombra-", g="ds-", oy=oy))
 
@@ -368,11 +374,26 @@ def tarefas():
 RB = 12     # raio do canto dos balões (menu, bandeja, avisos, escolha de telas do Meta+P)
 RD = 8      # raio do canto das dicas (o texto que aparece ao parar o mouse)
 
+# Os balões no estilo Mac (--mac): os avisos dos apps, a bandeja, o calendário,
+# o volume... com o vidro do macOS 26: mais redondos, mais transparentes com o
+# desfoque, a borda acesa (mais em cima, como a luz batendo de cima) e um brilho
+# leve na faixa de cima. "matsu barra mac" gera o tema da pessoa com --mac; nos
+# outros estilos os balões continuam como os das ilhas.
+RB_MAC = 16
+# Quanto o fundo cobre, por nível: (com desfoque, sem desfoque).
+NIVEIS_BALAO_MAC = {"mais": (0.50, 0.86), "normal": (0.64, 0.92), "menos": (0.82, 0.96), "sem": (1, 1)}
+BORDA_BALAO_MAC = (0.46, 0.22, 0.26)    # a linha clara: cima, lados, baixo
+BRILHO_BALAO_MAC = 0.12
+MARGEM_BALAO_MAC = 6                    # o canto mais redondo pede um pouco mais de folga dentro
 
-def cabecalho():
-    """Faixa de cima e de baixo dos balões, com os cantos acompanhando o canto redondo."""
-    r, c = RB, 32
-    f = 'class="ColorScheme-Background" fill="currentColor" opacity="0.75"'
+
+def cabecalho(r=RB, cobre=0.75):
+    """Faixa de cima e de baixo dos balões, com os cantos acompanhando o canto redondo.
+
+    r é o raio do canto dos balões e cobre, quanto a faixa cobre (no Mac, só
+    um véu leve: o vidro aparece por baixo)."""
+    c = 32
+    f = 'class="ColorScheme-Background" fill="currentColor" opacity="%s"' % cobre
     lin = 'class="ColorScheme-Text" fill="currentColor" opacity="0.14"'
     inv = 'fill="#000000" opacity="0.001"'
     pecas = ['<rect id="hint-stretch-borders" x="0" y="0" width="5" height="5" opacity="0.6"/>']
@@ -423,6 +444,7 @@ def main():
     args = argparse.ArgumentParser(description="Gera o vidro do Matsu (tema Plasma).")
     args.add_argument("--cor", help="cor do vidro, #rrggbb (sem ela, vidro sem cor)")
     args.add_argument("--transparencia", choices=sorted(NIVEIS), default="normal")
+    args.add_argument("--mac", action="store_true", help="balões com o vidro do Mac (o estilo Mac da barra)")
     args.add_argument("pasta", help="pasta do tema")
     opcoes = args.parse_args()
     if opcoes.cor:
@@ -461,12 +483,26 @@ def main():
     baloes = {"translucent/dialogs": (balao_vidro, 0.18, 0.26), "dialogs": (balao_sem, 0.14, 0.26),
               "translucent/solid/dialogs": (balao_vidro, 0.18, 0.26), "solid/dialogs": (balao_sem, 0.14, 0.26),
               "opaque/dialogs": (1, 0.12, 0)}
+    rb, margem, luz, nome_balao, cobre = RB, 4, 0, "Fundo dos balões", 0.75
+    if opcoes.mac:
+        # Os avisos dos apps não saem de barra nenhuma (usam "dialogs"); os da
+        # bandeja e do calendário saem da barra de cima (usam "solid/dialogs"):
+        # todos com o mesmo vidro do Mac.
+        vidro_mac, sem_mac = NIVEIS_BALAO_MAC[opcoes.transparencia]
+        if TINTA:
+            # Com uma cor escolhida, o vidro não fica mais claro que o das ilhas.
+            vidro_mac, sem_mac = max(vidro_mac, balao_vidro - 0.06), max(sem_mac, balao_sem - 0.02)
+        baloes = {"translucent/dialogs": (vidro_mac, BORDA_BALAO_MAC, 0.26), "dialogs": (sem_mac, BORDA_BALAO_MAC, 0.26),
+                  "translucent/solid/dialogs": (vidro_mac, BORDA_BALAO_MAC, 0.26), "solid/dialogs": (sem_mac, BORDA_BALAO_MAC, 0.26),
+                  "opaque/dialogs": (1, 0.12, 0)}
+        rb, margem, luz, nome_balao, cobre = RB_MAC, MARGEM_BALAO_MAC, BRILHO_BALAO_MAC, "Fundo dos balões (vidro do Mac)", 0.30
     for pasta, (op, borda, somb) in baloes.items():
         os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
+        brilho = luz if op < 1 else 0
         with open(os.path.join(raiz, pasta, "background.svg"), "w") as f:
-            f.write(painel(op, borda, somb, r=RB, mv=4, mh=4, grosso=False, nome="Fundo dos balões"))
+            f.write(painel(op, borda, somb, r=rb, mv=margem, mh=margem, grosso=False, nome=nome_balao, brilho=brilho))
     with open(os.path.join(raiz, "widgets", "plasmoidheading.svg"), "w") as f:
-        f.write(cabecalho())
+        f.write(cabecalho(rb, cobre))
     with open(os.path.join(raiz, "widgets", "tooltip.svg"), "w") as f:
         f.write(painel(0.97, 0.14, 0.22, r=RD, mv=4, mh=4, grosso=False, nome="Fundo das dicas"))
     meta = {

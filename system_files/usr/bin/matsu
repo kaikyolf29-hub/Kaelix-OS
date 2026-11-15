@@ -1200,6 +1200,9 @@ cmd_bar() {
   # --detalhes mostra o que a área de trabalho respondeu (ajuda a achar defeito).
   if [[ $details == 1 ]]; then bar_reply_lines "$reply1"; bar_reply_lines "$reply2"; fi
   bar_write_state "$style" "$size" "$hide" "$busca" "$menu" "$telas" "$abertos" "$amp" "$nivel" "$ind" "$ani" "$pos" "$hide_top"
+  # No estilo Mac, os avisos dos apps e os balões da bandeja ganham o vidro do
+  # Mac; nos outros estilos, voltam ao vidro das ilhas.
+  vidro_sincronizar recarregar
   # A barra nova é menor que a de antes: os apps que passaram do limite ficam
   # guardados (e a pessoa fica sabendo quais).
   local cortados
@@ -1263,7 +1266,67 @@ vidro_recarregar() {
   plasma-apply-desktoptheme Matsu >/dev/null 2>&1 || true
 }
 
+# O tema da pessoa (o vidro com cor, outra transparência ou os balões do Mac)
+# fica em VIDRO_DIR. A marca .matsu-vidro diz que foi o Matsu que fez e guarda
+# com o que foi feito (inclusive o gerador desta versão do sistema).
+vidro_assinatura() { # vidro_assinatura <#rrggbb ou ""> <nível> <mac 0|1>
+  printf 'cor=%s\ntransparencia=%s\nmac=%s\ngerador=%s\n' "$1" "$2" "$3" \
+    "$(sha256sum "$VIDRO_GEN" 2>/dev/null | cut -c1-16)"
+}
+
+# vidro_gerar <#rrggbb ou ""> <nível> <mac 0|1>: deixa o tema da pessoa assim.
+# Sem cor, transparência normal e fora do estilo Mac, vale o tema do sistema (o
+# da pessoa é apagado). Volta 0 se mudou algo, 1 se já estava assim, 2 se o tema
+# é da pessoa (não mexe) e 3 se não conseguiu gerar.
+vidro_gerar() {
+  local hex="$1" nivel="$2" mac="$3" marca
+  [[ -d $VIDRO_DIR && ! -e $VIDRO_DIR/.matsu-vidro ]] && return 2
+  if [[ -z $hex && $nivel == normal && $mac != 1 ]]; then
+    [[ -e $VIDRO_DIR ]] || return 1
+    rm -rf "$VIDRO_DIR"
+    return 0
+  fi
+  marca="$(vidro_assinatura "$hex" "$nivel" "$mac")"
+  [[ -r $VIDRO_DIR/.matsu-vidro && "$(cat "$VIDRO_DIR/.matsu-vidro")" == "$marca" ]] && return 1
+  command -v python3 >/dev/null 2>&1 && [[ -r $VIDRO_GEN ]] || return 3
+  rm -rf "$VIDRO_DIR"
+  mkdir -p "$VIDRO_DIR" && printf '%s\n' "$marca" > "$VIDRO_DIR/.matsu-vidro" || return 3
+  local extra=()
+  [[ -n $hex ]] && extra+=(--cor "$hex")
+  [[ $mac == 1 ]] && extra+=(--mac)
+  if ! python3 "$VIDRO_GEN" "${extra[@]}" --transparencia "$nivel" "$VIDRO_DIR" >/dev/null; then
+    rm -rf "$VIDRO_DIR"
+    return 3
+  fi
+  return 0
+}
+
+# vidro_sincronizar [recarregar]: o tema da pessoa de acordo com o vidro
+# escolhido e o estilo da barra (no Mac, os avisos dos apps e os balões da
+# bandeja ganham o vidro do Mac). Roda no login (plasma-workspace/env/
+# matsu-vidro.sh), antes da área de trabalho ler o tema: depois de uma
+# atualização, o vidro novo já aparece sozinho. Com "recarregar", o Plasma
+# relê o tema se algo mudou.
+vidro_sincronizar() {
+  local cor nivel hex mac=0 rc=0
+  cor="$(vidro_saved cor padrao)"
+  nivel="$(vidro_saved transparencia normal)"
+  hex="$(vidro_hex "$cor")" || hex=""
+  [[ $nivel =~ ^(mais|normal|menos|sem)$ ]] || nivel=normal
+  [[ "$(bar_saved estilo fusao)" == mac ]] && mac=1
+  vidro_gerar "$hex" "$nivel" "$mac" || rc=$?
+  if [[ $rc == 0 && ${1:-} == recarregar ]]; then
+    vidro_recarregar
+  fi
+  return 0
+}
+
 cmd_glass() {
+  # Interno (login): só confere o tema da pessoa, sem recarregar nada.
+  if [[ ${1:-} == --sincronizar || ${1:-} == --sync ]]; then
+    vidro_sincronizar
+    return 0
+  fi
   local cor="" nivel="" arg hex
   while [[ $# -gt 0 ]]; do
     arg="$1"; shift
@@ -1324,16 +1387,15 @@ cmd_glass() {
   if [[ -d $VIDRO_DIR && ! -e $VIDRO_DIR/.matsu-vidro ]]; then
     fail "Já existe um tema seu em $VIDRO_DIR. Não vou mexer nele." "There is already a theme of yours in $VIDRO_DIR. Leaving it alone."
   fi
-  rm -rf "$VIDRO_DIR"
-  if [[ -n $hex || $nivel != normal ]]; then
+  # No estilo Mac, os balões (avisos dos apps, bandeja) levam o vidro do Mac.
+  local mac=0 rc=0
+  [[ "$(bar_saved estilo fusao)" == mac ]] && mac=1
+  if [[ -n $hex || $nivel != normal || $mac == 1 ]]; then
     need python3
     [[ -r $VIDRO_GEN ]] || fail "Não achei o gerador do vidro: $VIDRO_GEN" "Glass generator not found: $VIDRO_GEN"
-    mkdir -p "$VIDRO_DIR" && : > "$VIDRO_DIR/.matsu-vidro"
-    if ! python3 "$VIDRO_GEN" ${hex:+--cor "$hex"} --transparencia "$nivel" "$VIDRO_DIR" >/dev/null; then
-      rm -rf "$VIDRO_DIR"
-      fail "Não consegui gerar o vidro." "Could not generate the glass."
-    fi
   fi
+  vidro_gerar "$hex" "$nivel" "$mac" || rc=$?
+  [[ $rc == 3 ]] && fail "Não consegui gerar o vidro." "Could not generate the glass."
   # A cor do destaque acompanha o vidro (no padrão, o cinza neutro do Matsu).
   if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
     plasma-apply-colorscheme --accent-color "${hex:-$VIDRO_PADRAO_DESTAQUE}" >/dev/null 2>&1 \
