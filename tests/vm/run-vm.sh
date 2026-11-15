@@ -295,6 +295,14 @@ shot "18-menu-com-balao-redondo"
 hmp key esc
 sleep 2
 
+# A pílula da rede e do som com o mouse em cima (como no Windows, ela acende),
+# antes de abrir. Primeiro no tema claro.
+hmp mover 1726 1046 || echo "o mouse não foi (seguindo sem ele)"
+sleep 2
+shot "18b-pilula-da-central-com-mouse-claro"
+hmp mover 960 500 || true
+sleep 1
+
 # Central de controle do Matsu (Meta+A), na ilha da direita. Primeiro no tema claro.
 hmp key meta_l-a
 sleep 6
@@ -328,7 +336,12 @@ sleep 4
 shot "21-registro-das-telas-do-matsu"
 hmp key alt-f4
 sleep 3
-# Agora no tema escuro, abrindo com um clique na pílula da central (ilha da direita).
+# Agora no tema escuro: a pílula sem o mouse, com o mouse em cima e aberta
+# com um clique (ilha da direita).
+shot "21c-pilula-da-central-escuro"
+hmp mover 1726 1046 || echo "o mouse não foi (seguindo sem ele)"
+sleep 2
+shot "21d-pilula-da-central-com-mouse-escuro"
 hmp click 1726 1046 || echo "o clique não foi (seguindo sem ele)"
 sleep 6
 shot "22-central-de-controle-escuro"
