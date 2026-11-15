@@ -38,11 +38,13 @@ export const SECOES = [
 // 1234abcd-...): nunca CPF, telefone ou e-mail. Sem chave aleatória, o Pix não
 // aparece. Com nome e cidade, o site também mostra o QR Code e o "Pix copia e
 // cola" (sem valor fixo), feitos no navegador, sem serviço de fora.
+// O campo da cidade é obrigatório no código do Pix, mas o app do banco mostra
+// o nome da conta dona da chave e não confere a cidade: vai "BRASIL".
 // O GitHub Sponsors só liga depois que o GitHub aprovar o perfil: aí é trocar
 // "aprovado" para true (e acrescentar "github: kaikydev1-jpg" no
 // .github/FUNDING.yml).
 export const APOIO = {
-  pix: { chave: '0971af38-cbf2-4f0e-9c58-c13b658f0a54', nome: '', cidade: '' },
+  pix: { chave: '0971af38-cbf2-4f0e-9c58-c13b658f0a54', nome: 'Kaiky Oliveira De Freitas', cidade: 'BRASIL' },
   sponsors: { usuario: 'kaikydev1-jpg', aprovado: false }
 };
 export const TEM_PIX = chaveValida(APOIO.pix.chave);
