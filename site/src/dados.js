@@ -16,6 +16,7 @@ export const LINKS = {
   versoes: `https://github.com/${REPO}/releases`,
   novidades: `https://github.com/${REPO}/blob/main/NOVIDADES.md`,
   licenca: `https://github.com/${REPO}/blob/main/LICENSE`,
+  perguntar: `https://github.com/${REPO}/issues`,
   // A lista (e não /latest) responde 200 com [] quando ainda não há versão.
   apiVersoes: `https://api.github.com/repos/${REPO}/releases?per_page=10`
 };
@@ -31,8 +32,29 @@ export const SECOES = [
   { id: 'loja', nome: { pt: 'Loja', en: 'Store' } },
   { id: 'apps', nome: { pt: 'Apps', en: 'Apps' } },
   { id: 'seguranca', nome: { pt: 'Segurança', en: 'Security' } },
-  { id: 'instalar', nome: { pt: 'Instalar', en: 'Install' } }
+  { id: 'instalar', nome: { pt: 'Instalar', en: 'Install' } },
+  { id: 'perguntas', nome: { pt: 'Dúvidas', en: 'FAQ' } }
 ];
+
+// O rodapé lista todas as partes, em duas colunas: o que o sistema tem e o
+// que ajuda a começar.
+export const RODAPE = {
+  sistema: [
+    { id: 'sistema', nome: { pt: 'Vindo do Windows', en: 'Coming from Windows' } },
+    { id: 'atalhos', nome: { pt: 'Atalhos', en: 'Shortcuts' } },
+    { id: 'jogos', nome: { pt: 'Jogos', en: 'Gaming' } },
+    { id: 'aparencia', nome: { pt: 'Aparência', en: 'Appearance' } },
+    { id: 'loja', nome: { pt: 'Loja', en: 'Store' } },
+    { id: 'apps', nome: { pt: 'Apps', en: 'Apps' } },
+    { id: 'criar', nome: { pt: 'Programar e criar', en: 'Coding and creating' } },
+    { id: 'seguranca', nome: { pt: 'Segurança', en: 'Security' } }
+  ],
+  comecar: [
+    { id: 'instalar', nome: { pt: 'Como instalar', en: 'How to install' } },
+    { id: 'baixar', nome: { pt: 'Baixar e requisitos', en: 'Download and requirements' } },
+    { id: 'perguntas', nome: { pt: 'Perguntas frequentes', en: 'FAQ' } }
+  ]
+};
 
 // Apoie o Matsu. A chave Pix é SEMPRE a aleatória (aquela no formato
 // 1234abcd-...): nunca CPF, telefone ou e-mail. Sem chave aleatória, o Pix não

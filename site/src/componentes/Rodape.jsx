@@ -1,4 +1,4 @@
-import { APOIAR, EDICAO, LINKS, NOME, SECOES, TEM_APOIO } from '../dados.js';
+import { APOIAR, EDICAO, LINKS, NOME, RODAPE, TEM_APOIO } from '../dados.js';
 import { useT } from '../idioma.js';
 import { BotaoIdioma } from './Navegacao.jsx';
 
@@ -30,7 +30,17 @@ export default function Rodape() {
           <div>
             <h3>{t('O sistema', 'The system')}</h3>
             <ul>
-              {SECOES.map(s => (
+              {RODAPE.sistema.map(s => (
+                <li key={s.id}>
+                  <a href={`#${s.id}`}>{t(s.nome)}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3>{t('Para começar', 'Get started')}</h3>
+            <ul>
+              {RODAPE.comecar.map(s => (
                 <li key={s.id}>
                   <a href={`#${s.id}`}>{t(s.nome)}</a>
                 </li>

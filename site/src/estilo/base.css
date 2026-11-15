@@ -430,8 +430,8 @@ h3 {
     right: 8px;
   }
 }
-/* Com o Apoiar e o botão de idioma, os links só cabem a partir de 1100px. */
-@media (max-width: 1099px) {
+/* Com o Apoiar, as Dúvidas e o botão de idioma, os links só cabem a partir de 1260px. */
+@media (max-width: 1259px) {
   .nav__secoes {
     display: none;
   }
