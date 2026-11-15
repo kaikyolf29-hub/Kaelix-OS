@@ -49,7 +49,19 @@ function useVersao() {
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(lista => {
         const publicadas = (Array.isArray(lista) ? lista : []).filter(r => !r.draft && isosDo(r));
-        return publicadas.find(r => !r.prerelease) || publicadas.find(r => r.prerelease) || null;
+        // Enquanto uma versão nova ainda recebe as ISOs (a da NVIDIA chega antes
+        // da AMD), fica a que já tem as duas.
+        const completa = r => {
+          const a = isosDo(r);
+          return Boolean(a.amd?.url && a.nvidia?.url);
+        };
+        return (
+          publicadas.find(r => !r.prerelease && completa(r)) ||
+          publicadas.find(r => r.prerelease && completa(r)) ||
+          publicadas.find(r => !r.prerelease) ||
+          publicadas.find(r => r.prerelease) ||
+          null
+        );
       })
       .then(rel => {
         if (!rel) return { fase: 'sem-versao' };
