@@ -201,6 +201,18 @@ hmp type "matsu barra mac --detalhes"
 hmp key ret
 sleep 10
 shot "13-barra-estilo-mac"
+# A peça aberta na barra fina de cima ganha uma pílula (e não um bloco da altura
+# da barra): o relógio (Meta+N) e a setinha da bandeja (Meta+B).
+hmp key meta_l-n
+sleep 4
+shot "13e-relogio-aberto-estilo-mac"
+hmp key esc
+sleep 2
+hmp key meta_l-b
+sleep 4
+shot "13f-bandeja-aberta-estilo-mac"
+hmp key esc
+sleep 2
 # A doca do Matsu amplia os apps embaixo do mouse, como no Mac, e pode ficar de lado.
 hmp mover 940 1050 || echo "o mouse não foi (seguindo sem ele)"
 sleep 1
@@ -390,6 +402,12 @@ sleep 2
 hmp key meta_l-n
 sleep 4
 shot "29-relogio-notificacoes-e-calendario"
+hmp key esc
+sleep 2
+# Um ícone da bandeja aberto (o escudo da Segurança): a pílula fica só atrás dele.
+hmp click 1625 1046 || echo "o clique não foi (seguindo sem ele)"
+sleep 4
+shot "29b-seguranca-aberta-na-bandeja"
 hmp key esc
 sleep 2
 

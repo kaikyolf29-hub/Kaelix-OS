@@ -371,6 +371,57 @@ run barra fusao
 check "o script do login do vidro passa no dash" dash -n "$ROOT/system_files/etc/xdg/plasma-workspace/env/matsu-vidro.sh"
 
 echo
+echo "peça aberta na barra (pílula no lugar do bloco)"
+# O KDE desenha um fundo atrás da peça aberta na barra (widgets/tabbar) esticado
+# até as bordas da barra: no tema do Matsu ele é uma pílula com folga em volta.
+TEMA_SIS="$ROOT/system_files/usr/share/plasma/desktoptheme/Matsu"
+ABAS="$TEMA_SIS/widgets/tabbar.svg"
+GERADO="$WORK/tema-gerado"
+python3 "$ROOT/system_files/usr/share/matsu/vidro/gerar.py" "$GERADO" >/dev/null
+check "o tema do sistema é o que o gerador faz (nada editado à mão)" diff -rq "$GERADO" "$TEMA_SIS"
+check "barra de baixo e barras de pé têm a pílula da peça aberta" bash -c "grep -qF 'id=\"south-active-tab-center\"' '$ABAS' && grep -qF 'id=\"west-active-tab-center\"' '$ABAS' && grep -qF 'id=\"east-active-tab-center\"' '$ABAS'"
+check "na barra de baixo, a pílula tem 6 de folga em cima e raio 11 (36 numa ilha de 48)" bash -c "grep -F 'id=\"south-active-tab-top\"' '$ABAS' | grep -qF 'y=\"6\" width=\"12\" height=\"11\"'"
+check "na barra de baixo, a pílula tem 6 de folga dos lados" bash -c "grep -F 'id=\"south-active-tab-left\"' '$ABAS' | grep -qF 'x=\"6\" width=\"11\"'"
+check "as barras de pé têm a mesma pílula" bash -c "grep -F 'id=\"west-active-tab-top\"' '$ABAS' | grep -qF 'y=\"6\" width=\"12\" height=\"11\"' && grep -F 'id=\"east-active-tab-left\"' '$ABAS' | grep -qF 'x=\"6\" width=\"11\"'"
+# Sem "north-active-tab": a barra fina de cima do Mac usa "active-tab" e as abas
+# de dentro dos balões usam as peças sem nome (o fundo suave de sempre).
+check "não existe a peça da barra de cima com o nome do lado" bash -c "! grep -qF 'north-active-tab' '$ABAS'"
+check "a barra fina de cima do Mac tem a pílula dela (3 de folga, raio 7: 22 numa barra de 28)" bash -c "grep -F 'id=\"active-tab-top\"' '$ABAS' | grep -qF 'y=\"3\" width=\"12\" height=\"7\"'"
+check "as abas dos balões continuam com o fundo suave, sem folga" bash -c "grep -F 'id=\"top\"' '$ABAS' | grep -qF 'opacity=\"0.12\" y=\"0\" width=\"12\" height=\"6\"' && grep -qF 'id=\"center\"' '$ABAS'"
+run vidro roxo
+check "o tema da pessoa leva a mesma peça" cmp -s "$VIDRO/widgets/tabbar.svg" "$ABAS"
+run vidro padrao
+# O menu, a central e o relógio desenham a própria pílula e escondem o fundo do KDE.
+for peca in menu central relogio; do
+  QML="$ROOT/system_files/usr/share/plasma/plasmoids/org.matsu.$peca/contents/ui/main.qml"
+  check "org.matsu.$peca esconde o bloco do KDE atrás da peça aberta" bash -c "grep -qF 'target: compacta.blocoDoKde' '$QML' && grep -qF 'caixa.expandedFeedback' '$QML' && grep -qF 'function corAberta(forca)' '$QML'"
+done
+
+echo
+echo "memória do tema depois de uma atualização"
+# O Plasma guarda os desenhos do tema em ~/.cache e não percebe que o tema do
+# sistema mudou (os arquivos têm sempre a mesma data): o login apaga a memória.
+TS="$WORK/tema-do-sistema"
+mkdir -p "$TS/widgets" "$WORK/cache"
+echo um > "$TS/widgets/tabbar.svg"
+memoria() { touch "$WORK/cache/ksvg-elements" "$WORK/cache/plasma_theme_Matsu_v1.0.kcache" "$WORK/cache/plasma-svgelements-Matsu_v1.0" "$WORK/cache/outra-coisa"; }
+memoria
+MATSU_TEMA_SISTEMA="$TS" run vidro --sincronizar
+check "no primeiro login, a memória do tema é apagada" bash -c "! test -e '$WORK/cache/ksvg-elements' && ! test -e '$WORK/cache/plasma_theme_Matsu_v1.0.kcache' && ! test -e '$WORK/cache/plasma-svgelements-Matsu_v1.0'"
+check "o resto da pasta de memória fica" test -e "$WORK/cache/outra-coisa"
+check "a marca do tema do sistema é gravada" test -s "$WORK/cache/matsu-tema-do-sistema"
+memoria
+MATSU_TEMA_SISTEMA="$TS" run vidro --sincronizar
+check "com o mesmo tema, o login seguinte não apaga nada" test -e "$WORK/cache/ksvg-elements" -a -e "$WORK/cache/plasma_theme_Matsu_v1.0.kcache"
+echo dois > "$TS/widgets/tabbar.svg"
+MATSU_TEMA_SISTEMA="$TS" run vidro --sincronizar
+check "depois de uma atualização que muda o tema, a memória é apagada de novo" bash -c "! test -e '$WORK/cache/ksvg-elements' && ! test -e '$WORK/cache/plasma_theme_Matsu_v1.0.kcache'"
+memoria
+MATSU_TEMA_SISTEMA="$WORK/nao-existe" run vidro --sincronizar
+check "sem o tema do sistema, não apaga nada" test -e "$WORK/cache/ksvg-elements"
+rm -f "$WORK/cache/ksvg-elements" "$WORK/cache/plasma_theme_Matsu_v1.0.kcache" "$WORK/cache/plasma-svgelements-Matsu_v1.0" "$WORK/cache/outra-coisa" "$WORK/cache/matsu-tema-do-sistema"
+
+echo
 echo "arquivos do sistema"
 # Um link quebrado não dá erro na montagem: o arquivo só some no sistema (foi
 # assim que os ícones do tema claro e o Ctrl+Shift+Esc sumiram na troca de nome).

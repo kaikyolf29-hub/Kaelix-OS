@@ -23,6 +23,17 @@ PlasmoidItem {
         return pt ? portugues : ingles;
     }
 
+    // A cor da pílula com a peça aberta: a cor de destaque por cima de um véu
+    // do texto. É a mesma cor de quando o KDE desenhava o bloco dele atrás da
+    // peça aberta (que agora fica escondido, veja "blocoDoKde").
+    function corAberta(forca) {
+        var t = Kirigami.Theme.textColor;
+        var d = Kirigami.Theme.highlightColor;
+        var veu = 0.12 * (1 - forca);
+        var a = forca + veu;
+        return Qt.rgba((d.r * forca + t.r * veu) / a, (d.g * forca + t.g * veu) / a, (d.b * forca + t.b * veu) / a, a);
+    }
+
     readonly property string ajudante: "/usr/libexec/matsu/matsu-central"
     property var estado: ({})
 
@@ -166,18 +177,42 @@ PlasmoidItem {
         Keys.onReturnPressed: raiz.expanded = !raiz.expanded
         Keys.onSpacePressed: raiz.expanded = !raiz.expanded
 
+        // O KDE desenha um bloco da altura inteira da barra atrás da peça
+        // aberta. Aqui quem mostra que abriu é a pílula do Matsu: o bloco some.
+        readonly property Item blocoDoKde: {
+            var caixa = parent ? parent.parent : null;
+            if (!caixa) {
+                return null;
+            }
+            if (caixa.expandedFeedback) {
+                return caixa.expandedFeedback;
+            }
+            for (var i = 0; i < caixa.children.length; i++) {
+                if (caixa.children[i].imagePath === "widgets/tabbar") {
+                    return caixa.children[i];
+                }
+            }
+            return null;
+        }
+        Binding {
+            target: compacta.blocoDoKde
+            property: "visible"
+            value: false
+            when: compacta.blocoDoKde !== null
+        }
+
         Rectangle {
             id: pilula
 
-            readonly property color base: raiz.expanded ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+            readonly property color base: Kirigami.Theme.textColor
 
             visible: !compacta.fina
             anchors.centerIn: parent
             height: Math.min(compacta.height - 2, Math.round(Kirigami.Units.gridUnit * 2))
             width: icones.implicitWidth + compacta.folga * 2
             radius: Math.round(height * 0.3)
-            color: Qt.rgba(base.r, base.g, base.b,
-                           raiz.expanded ? 0.42 : (compacta.containsMouse || compacta.activeFocus ? 0.17 : 0.09))
+            color: raiz.expanded ? raiz.corAberta(0.42)
+                                 : Qt.rgba(base.r, base.g, base.b, compacta.containsMouse || compacta.activeFocus ? 0.17 : 0.09)
             Behavior on color {
                 ColorAnimation { duration: Kirigami.Units.shortDuration }
             }

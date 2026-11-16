@@ -24,7 +24,7 @@ MouseArea {
         height: Math.min(parent.height - 6, Math.round(Kirigami.Units.gridUnit * 1.45))
         radius: Math.round(height * 0.34)
         color: Qt.rgba(base.r, base.g, base.b,
-                       botao.pressed ? 0.20 : botao.aceso ? 0.16 : botao.containsMouse ? 0.11 : 0)
+                       botao.pressed ? 0.28 : botao.aceso ? 0.26 : botao.containsMouse ? 0.11 : 0)
         Behavior on color {
             ColorAnimation { duration: Kirigami.Units.shortDuration }
         }

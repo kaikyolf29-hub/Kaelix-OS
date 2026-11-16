@@ -35,6 +35,17 @@ PlasmoidItem {
         return pt ? portugues : ingles;
     }
 
+    // A cor da pílula com a peça aberta: a cor de destaque por cima de um véu
+    // do texto. É a mesma cor de quando o KDE desenhava o bloco dele atrás da
+    // peça aberta (que agora fica escondido, veja "blocoDoKde").
+    function corAberta(forca) {
+        var t = Kirigami.Theme.textColor;
+        var d = Kirigami.Theme.highlightColor;
+        var veu = 0.12 * (1 - forca);
+        var a = forca + veu;
+        return Qt.rgba((d.r * forca + t.r * veu) / a, (d.g * forca + t.g * veu) / a, (d.b * forca + t.b * veu) / a, a);
+    }
+
     readonly property string ajudante: "/usr/libexec/matsu/matsu-central"
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
     // Só a pílula da busca, sem o logo: é a busca que fica na ilha do meio.
@@ -311,6 +322,30 @@ PlasmoidItem {
             raiz.expanded = !estavaAberto;
         }
 
+        // O KDE desenha um bloco da altura inteira da barra atrás da peça
+        // aberta. Aqui quem mostra que abriu é a pílula do Matsu: o bloco some.
+        readonly property Item blocoDoKde: {
+            var caixa = parent ? parent.parent : null;
+            if (!caixa) {
+                return null;
+            }
+            if (caixa.expandedFeedback) {
+                return caixa.expandedFeedback;
+            }
+            for (var i = 0; i < caixa.children.length; i++) {
+                if (caixa.children[i].imagePath === "widgets/tabbar") {
+                    return caixa.children[i];
+                }
+            }
+            return null;
+        }
+        Binding {
+            target: compacta.blocoDoKde
+            property: "visible"
+            value: false
+            when: compacta.blocoDoKde !== null
+        }
+
         Row {
             id: linhaCompacta
             height: parent.height
@@ -353,14 +388,15 @@ PlasmoidItem {
                 Keys.onSpacePressed: raiz.expanded = !raiz.expanded
 
                 Rectangle {
-                    readonly property color base: compacta.aberto ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+                    readonly property color base: Kirigami.Theme.textColor
 
                     anchors.fill: parent
                     anchors.topMargin: Kirigami.Units.smallSpacing
                     anchors.bottomMargin: Kirigami.Units.smallSpacing
                     radius: Math.min(height / 2, Kirigami.Units.gridUnit * 0.7)
-                    color: Qt.rgba(base.r, base.g, base.b, compacta.aberto ? 0.30
-                                   : (pilula.pressed ? 0.22 : (pilula.containsMouse || pilula.activeFocus ? 0.16 : 0.10)))
+                    color: compacta.aberto ? raiz.corAberta(0.30)
+                                           : Qt.rgba(base.r, base.g, base.b,
+                                                     pilula.pressed ? 0.22 : (pilula.containsMouse || pilula.activeFocus ? 0.16 : 0.10))
                     Behavior on color {
                         ColorAnimation { duration: Kirigami.Units.shortDuration }
                     }

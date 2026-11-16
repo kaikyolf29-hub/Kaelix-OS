@@ -1301,6 +1301,22 @@ vidro_gerar() {
   return 0
 }
 
+# O Plasma guarda os desenhos do tema numa memória (em ~/.cache) e só refaz
+# quando a data do arquivo muda. Os arquivos do sistema têm sempre a mesma data
+# (ostree), então, depois de uma atualização que mexe no tema, ele continuaria
+# mostrando o desenho velho. No login, antes da área de trabalho ligar: se o
+# tema do sistema mudou desde a última vez, a memória é apagada (o Plasma
+# refaz sozinho). A marca fica em ~/.cache/matsu-tema-do-sistema.
+vidro_memoria() {
+  local tema="${MATSU_TEMA_SISTEMA:-/usr/share/plasma/desktoptheme/Matsu}" cache="${XDG_CACHE_HOME:-$HOME/.cache}" atual
+  [[ -d $tema ]] || return 0
+  atual="$(cd "$tema" && find . -type f -print0 2>/dev/null | sort -z | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -c1-32)"
+  [[ -n $atual ]] || return 0
+  [[ -r $cache/matsu-tema-do-sistema && "$(cat "$cache/matsu-tema-do-sistema")" == "$atual" ]] && return 0
+  rm -f "$cache"/plasma_theme_Matsu*.kcache "$cache"/plasma-svgelements* "$cache"/ksvg-elements* 2>/dev/null
+  mkdir -p "$cache" && printf '%s\n' "$atual" > "$cache/matsu-tema-do-sistema"
+}
+
 # vidro_sincronizar [recarregar]: o tema da pessoa de acordo com o vidro
 # escolhido e o estilo da barra (no Mac, os avisos dos apps e os balões da
 # bandeja ganham o vidro do Mac). Roda no login (plasma-workspace/env/
@@ -1322,9 +1338,11 @@ vidro_sincronizar() {
 }
 
 cmd_glass() {
-  # Interno (login): só confere o tema da pessoa, sem recarregar nada.
+  # Interno (login): só confere o tema da pessoa, sem recarregar nada, e apaga
+  # a memória do tema se o do sistema mudou numa atualização.
   if [[ ${1:-} == --sincronizar || ${1:-} == --sync ]]; then
     vidro_sincronizar
+    vidro_memoria || true
     return 0
   fi
   local cor="" nivel="" arg hex

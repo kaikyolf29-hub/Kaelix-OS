@@ -1,6 +1,6 @@
 # Onde parou (para continuar de outra conta)
 
-Atualizado em 16/11/2026, 04:15 UTC (01:15 em Brasília).
+Atualizado em 16/11/2026, 07:30 UTC (04:30 em Brasília).
 
 ## O que está pronto
 
@@ -45,19 +45,58 @@ Atualizado em 16/11/2026, 04:15 UTC (01:15 em Brasília).
     bandeja e a central continuam funcionando sem a peça do KDE. Os digests de `:teste`,
     `:estavel` e `:27` ficaram iguais nas duas imagens. Os prints foram mandados ao Kaiky.
 
-## O que falta fazer agora
+## Em andamento: a peça aberta na barra (pílula no lugar do bloco)
 
-Nada pendente dos avisos do Mac: está tudo no estável. Para lembrar:
+Pedido do Kaiky em 16/11 (com um recorte do print 29): com o relógio aberto aparecia
+"uma outra coisa transparente" atrás do arredondado bonito, e o mesmo na esquerda (menu).
 
-- Quem já usa o estilo Mac recebe o vidro novo dos avisos na atualização automática e no
-  login seguinte.
-- Os avisos usam o vidro fino da doca. No PC com placa de vídeo o desfoque ajuda a ler por
-  cima de janelas; se o Kaiky achar difícil de ler, subir só o vidro dos avisos em
-  `vidro/gerar.py` (no bloco `if opcoes.mac:`).
+- **Causa:** o KDE desenha um fundo atrás de qualquer peça aberta na barra
+  (`widgets/tabbar`, peça `south-active-tab`), esticado até as bordas da barra: um bloco
+  da altura inteira da ilha. Quem desenha: `CompactApplet.qml` (toda peça da barra) e a
+  bandeja (`CurrentItemHighLight.qml`). O menu, a central e o relógio do Matsu ainda
+  desenhavam a pílula deles por cima: daí as duas formas.
+- **O que mudou** (ainda NÃO está no estável):
+  - `vidro/gerar.py` agora gera o `widgets/tabbar.svg` (`abas()`): na barra de baixo e
+    nas de pé, uma pílula com folga em volta (36 de altura numa ilha de 48, igual à da
+    central); na barra fina de cima do Mac, uma pílula de 22. Não existe mais a peça
+    `north-active-tab`: a barra de cima cai em `active-tab` e as abas de dentro dos
+    balões (Dias, Meses, Anos) caem nas peças sem nome, que são o fundo suave de sempre.
+  - O menu, a central e o relógio escondem o fundo do KDE (`blocoDoKde`, pela
+    propriedade `expandedFeedback` do `CompactApplet.qml`) e a cor da pílula aberta
+    (`corAberta`) soma o véu que o bloco dava, para ficar com a cor de antes.
+  - `matsu vidro --sincronizar` (login) apaga a memória do tema do Plasma
+    (`~/.cache/ksvg-elements`, `plasma_theme_Matsu*.kcache`) quando o tema do sistema
+    mudou (`vidro_memoria`, marca em `~/.cache/matsu-tema-do-sistema`). É uma garantia:
+    os arquivos do sistema têm sempre a mesma data e o Plasma poderia guardar o desenho velho.
+  - Testes: `bash tests/test_matsu.sh` (226). Prints novos na VM: `13e-relogio-aberto-estilo-mac`,
+    `13f-bandeja-aberta-estilo-mac` e `29b-seguranca-aberta-na-bandeja`.
+- **Conferido num teste aqui** (contêiner da imagem `:teste`, Plasma 6.8.2, sem placa de
+  vídeo, então sem foto da tela): as peças do tema desenhadas pelo KSvg da imagem (pílula
+  nas barras, abas dos balões iguais) e, com o Plasma rodando, o fundo do KDE fica
+  escondido com o menu, a central e o relógio abertos. A prévia foi mandada ao Kaiky
+  dizendo que é teste.
+
+## O que falta fazer agora (nesta ordem)
+
+1. Esperar o "Montar imagem" e o "Testar e tirar prints" do commit desta mudança.
+2. Olhar os prints: `04d-menu` (sem bloco atrás do logo e da busca), `19` e `22` (central),
+   `26-bandeja-mostrar-mais` (uma pílula atrás dos ícones da bandeja, da altura da pílula
+   da central), `29` (relógio: só a pílula; a aba "Dias" igual a antes), `29b` (pílula só
+   atrás do escudo) e `13e`/`13f` (estilo Mac, barra fina).
+   - Se a pílula da bandeja ficar fora do lugar, as medidas são `ABERTA` e `ABERTA_FINA`
+     em `gerar.py` (raio, folga na espessura, folga no comprimento, força).
+   - Se a aba "Dias" do calendário sumir, o KDE mudou a regra das peças sem nome: voltar a
+     gerar `north-active-tab` igual a `ABA`.
+3. Com os prints certos: "Atualizar estável sem versão nova" (`atualizar-estavel.yml`,
+   `confirmar` = `ATUALIZAR`), conferir os digests e mandar os prints ao Kaiky.
+
+Para lembrar, dos avisos do Mac (já no estável):
+
+- Os avisos usam o vidro fino da doca; se o Kaiky achar difícil de ler, subir só o vidro
+  dos avisos em `vidro/gerar.py` (no bloco `if opcoes.mac:`).
 - Os balões da barra de cima do Mac (bandeja, calendário, volume) ficaram com o vidro de
-  antes. Se o Kaiky quiser igual à doca também, é trocar as pastas `solid/dialogs` no
-  mesmo bloco.
-- O fluxo de prints agora tem limite de 130 minutos (era 100 e cortou um teste).
+  antes. Se ele quiser igual à doca, é trocar as pastas `solid/dialogs` no mesmo bloco.
+- O fluxo de prints tem limite de 130 minutos.
 - Para conferir os canais: token anônimo de `ghcr.io/token` e HEAD em
   `/v2/kaikyolf29-hub/<imagem>/manifests/<tag>` (`teste`, `estavel`, `27`).
 - Há um pedido automático do Dependabot aberto (kaikyolf29-hub/Matsu-OS#2, actions/checkout

@@ -10,7 +10,8 @@ dela (~/.local/share/plasma/desktoptheme/Matsu). O Plasma procura cada arquivo
 do tema primeiro na pasta da pessoa e depois na do sistema.
 
 O tema troca o fundo dos painéis (cantos bem redondos, vidro translúcido e uma
-linha clara fina na borda) e o destaque dos apps na barra (pílula redonda).
+linha clara fina na borda), o destaque dos apps na barra (pílula redonda) e o
+da peça aberta na barra (uma pílula, no lugar do bloco da altura da barra).
 Todo o resto vem do tema padrão do KDE.
 São três versões do mesmo desenho, que o Plasma escolhe sozinho:
   translucent/  quando a placa de vídeo faz o desfoque atrás (vidro de verdade)
@@ -447,6 +448,67 @@ def cabecalho(r=RB, cobre=0.75):
             + ESTILO_TAREFAS + "\n" + "\n".join(pecas) + "\n</svg>\n")
 
 
+# A peça aberta na barra (um ícone da bandeja, a setinha "mostrar mais") ganha
+# uma pílula do tamanho das pílulas do Matsu (a da central, a do relógio), e
+# não o bloco da altura inteira da barra. O KDE desenha esse fundo esticado
+# até as bordas da barra: a folga transparente em volta deixa a pílula no
+# tamanho certo. Medidas: (raio, folga na espessura da barra, folga no
+# comprimento, força).
+ABERTA = (11, 6, 6, 0.20)       # barras de baixo e de lado (ilha de 48: pílula de 36)
+ABERTA_FINA = (7, 3, 1, 0.16)   # barra fina de cima do estilo Mac (28: pílula de 22)
+ABA = (6, 0, 0, 0.12)           # a aba escolhida dentro dos balões
+
+
+def abas():
+    """Fundo da peça aberta na barra e da aba escolhida nos balões (widgets/tabbar).
+
+    O KDE pede este desenho com o nome do lado da barra: "south-active-tab" na
+    barra de baixo, "west-" e "east-" nas de lado e "north-" na de cima. As
+    abas de dentro dos balões (Dias, Meses, Anos no calendário) pedem
+    "north-active-tab" também. Por isso o "north-" não existe aqui:
+      - a barra de cima (a fina do estilo Mac), sem ele, usa "active-tab";
+      - as abas dos balões, sem ele, usam as peças sem nome na frente, que são
+        o fundo suave arredondado de sempre.
+    O relógio, a central e o menu do Matsu desenham a própria pílula e
+    escondem este fundo (veja "blocoDoKde" em cada um)."""
+    c = 12
+    inv = 'fill="#000000" opacity="0.001"'
+    pecas = []
+
+    def bloco(pre, x0, y0, medidas, de_pe=False):
+        r, fora_v, fora_h, forca = medidas
+        if de_pe:
+            fora_v, fora_h = fora_h, fora_v
+        f = 'class="ColorScheme-Text" fill="currentColor" opacity="%s"' % forca
+        bw, bh = fora_h + r, fora_v + r
+        x1, x2, y1, y2 = x0 + bw, x0 + bw + c, y0 + bh, y0 + bh + c
+
+        def peca(nome, x, y, w, h, desenho):
+            pecas.append('<g id="%s%s" transform="translate(%d,%d)"><rect %s width="%d" height="%d"/>%s</g>'
+                         % (pre, nome, x, y, inv, w, h, desenho))
+
+        peca("topleft", x0, y0, bw, bh, '<path %s d="M%d,%d A%d,%d 0 0 1 %d,%d V%d Z"/>' % (f, fora_h, bh, r, r, bw, fora_v, bh))
+        peca("topright", x2, y0, bw, bh, '<path %s d="M0,%d A%d,%d 0 0 1 %d,%d H0 Z"/>' % (f, fora_v, r, r, r, bh))
+        peca("bottomleft", x0, y2, bw, bh, '<path %s d="M%d,%d A%d,%d 0 0 1 %d,0 H%d Z"/>' % (f, bw, r, r, r, fora_h, bw))
+        peca("bottomright", x2, y2, bw, bh, '<path %s d="M%d,0 A%d,%d 0 0 1 0,%d V0 Z"/>' % (f, r, r, r, r))
+        peca("top", x1, y0, c, bh, '<rect %s y="%d" width="%d" height="%d"/>' % (f, fora_v, c, r))
+        peca("bottom", x1, y2, c, bh, '<rect %s width="%d" height="%d"/>' % (f, c, r))
+        peca("left", x0, y1, bw, c, '<rect %s x="%d" width="%d" height="%d"/>' % (f, fora_h, r, c))
+        peca("right", x2, y1, bw, c, '<rect %s width="%d" height="%d"/>' % (f, r, c))
+        peca("center", x1, y1, c, c, '<rect %s width="%d" height="%d"/>' % (f, c, c))
+
+    bloco("", 4, 4, ABA)
+    bloco("active-tab-", 4, 60, ABERTA_FINA)
+    bloco("south-active-tab-", 60, 4, ABERTA)
+    bloco("west-active-tab-", 120, 4, ABERTA, de_pe=True)
+    bloco("east-active-tab-", 180, 4, ABERTA, de_pe=True)
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<!-- Peça aberta na barra e aba escolhida nos balões do Matsu: uma pílula suave, nunca um bloco nem um tracinho.\n'
+            '     Gerado por usr/share/matsu/vidro/gerar.py: não editar à mão. -->\n'
+            '<svg xmlns="http://www.w3.org/2000/svg" id="svg2" version="1.1" width="240" height="100" viewBox="0 0 240 100">\n'
+            + ESTILO_TAREFAS + "\n" + "\n".join(pecas) + "\n</svg>\n")
+
+
 def main():
     global TINTA
     args = argparse.ArgumentParser(description="Gera o vidro do Matsu (tema Plasma).")
@@ -485,6 +547,8 @@ def main():
             f.write(painel_mac(op_doca, op_topo, borda_doca, borda_topo, 0.18, NIVEIS_DOCA[opcoes.transparencia]))
     with open(os.path.join(raiz, "widgets", "tasks.svg"), "w") as f:
         f.write(tarefas())
+    with open(os.path.join(raiz, "widgets", "tabbar.svg"), "w") as f:
+        f.write(abas())
     # Balões (menu, bandeja, avisos, a escolha de telas do Meta+P): mesmos cantos e borda das ilhas.
     # Os balões que saem das barras do Mac (marcadas como opacas) o Plasma pede
     # "sólidos": aqui eles também são de vidro (sólidos só sem o efeito vidro).
