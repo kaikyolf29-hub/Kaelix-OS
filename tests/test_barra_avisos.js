@@ -128,5 +128,33 @@ execFileSync("sh", [login], { env: { HOME: casa, PATH: process.env.PATH } });
 confere("no login, sem o relógio do Matsu, não mexe nas barras", fs.readFileSync(arq, "utf8") === antes.replace("plugin=org.matsu.relogio", "plugin=org.kde.plasma.digitalclock"));
 fs.rmSync(casa, { recursive: true, force: true });
 
+// 4) Na montagem da imagem (build.sh), a peça de avisos do KDE sai: uma bandeja
+// nova liga essa peça sozinha antes de o roteiro da barra desligar, e ela deixa
+// os avisos dela na tela até o fim da sessão. O trecho roda aqui numa raiz falsa.
+const build = fs.readFileSync(path.join(__dirname, "..", "build_files", "build.sh"), "utf8");
+const trecho = build.match(/\nif \[\[ -f \/usr\/share\/plasma\/plasmoids\/org\.matsu\.relogio\/contents\/ui\/Avisos\.qml \]\]; then\n[\s\S]*?\n  fi\nfi\n/);
+confere("o build.sh tem o trecho que tira a peça de avisos do KDE", !!trecho);
+if (trecho) {
+  const raiz = fs.mkdtempSync(path.join(os.tmpdir(), "matsu-imagem-"));
+  const pecas = path.join(raiz, "usr", "lib64", "qt6", "plugins", "plasma", "applets");
+  const relogio = path.join(raiz, "usr", "share", "plasma", "plasmoids", "org.matsu.relogio", "contents", "ui");
+  fs.mkdirSync(pecas, { recursive: true });
+  fs.mkdirSync(relogio, { recursive: true });
+  const doKde = path.join(pecas, KDE + ".so");
+  const bandeja = path.join(pecas, "org.kde.plasma.systemtray.so");
+  const roda = () => execFileSync("bash", ["-euo", "pipefail", "-c", trecho[0].split("/usr/").join(raiz + "/usr/")], { encoding: "utf8" });
+  fs.writeFileSync(doKde, "");
+  fs.writeFileSync(bandeja, "");
+  let saida = roda();
+  confere("sem o relógio do Matsu na imagem, a peça do KDE fica", fs.existsSync(doKde) && saida === "", saida);
+  fs.writeFileSync(path.join(relogio, "Avisos.qml"), "");
+  saida = roda();
+  confere("com o relógio do Matsu, a peça de avisos do KDE sai da imagem", !fs.existsSync(doKde) && /fora da imagem/.test(saida), saida);
+  confere("as outras peças do KDE ficam (a bandeja)", fs.existsSync(bandeja));
+  saida = roda();
+  confere("se a peça do KDE mudar de lugar, a montagem avisa e segue", /::warning::/.test(saida), saida);
+  fs.rmSync(raiz, { recursive: true, force: true });
+}
+
 console.log(`\n${passou} passaram, ${falhou} falharam`);
 process.exit(falhou ? 1 : 0);

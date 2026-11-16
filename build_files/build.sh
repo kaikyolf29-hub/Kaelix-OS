@@ -256,6 +256,24 @@ for tema in org.matsu.escuro.desktop org.matsu.claro.desktop; do
     /usr/share/matsu/barra/papel-de-parede.js \
     > "/usr/share/plasma/look-and-feel/$tema/contents/layouts/org.kde.plasma.desktop-layout.js"
 done
+# Os avisos dos apps são do relógio do Matsu (org.matsu.relogio, Avisos.qml).
+# A peça de avisos do KDE sai da imagem: uma bandeja nova (primeiro login ou
+# troca de estilo da barra) liga essa peça sozinha, antes de o roteiro da barra
+# desligar, e no Plasma 6.8 ela deixa os avisos dela na tela até o fim da
+# sessão (cada aviso aparecia duas vezes, um deles no canto de cima, à
+# esquerda). Sem o arquivo, a bandeja nem sabe que a peça existe. O "não
+# perturbe", a lista de avisos e os ajustes de cada app são de outra parte do
+# KDE (libnotificationmanager) e continuam. Só sai se o relógio do Matsu, que
+# mostra os avisos, estiver na imagem.
+if [[ -f /usr/share/plasma/plasmoids/org.matsu.relogio/contents/ui/Avisos.qml ]]; then
+  avisos_kde="$(find /usr/lib64/qt6/plugins/plasma/applets /usr/lib/qt6/plugins/plasma/applets \
+    -name 'org.kde.plasma.notifications.so' -print -delete 2>/dev/null || true)"
+  if [[ -n $avisos_kde ]]; then
+    echo "Peça de avisos do KDE fora da imagem: $avisos_kde"
+  else
+    echo "::warning::A peça de avisos do KDE (org.kde.plasma.notifications.so) não foi achada: conferir se os avisos não aparecem duas vezes."
+  fi
+fi
 # Papel de parede animado: a peça do KDE do Waywallen, que mostra na área de
 # trabalho os papéis do Wallpaper Engine da Steam (e vídeos). O app Waywallen
 # vem do Flathub no primeiro boot. Se não der para baixar, a imagem sai sem ela.
