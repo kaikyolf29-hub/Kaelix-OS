@@ -1,6 +1,6 @@
 # Onde parou (para continuar de outra conta)
 
-Atualizado em 16/11/2026, 02:45 UTC (15/11, 23:45 em Brasília).
+Atualizado em 16/11/2026, 04:15 UTC (01:15 em Brasília).
 
 ## O que está pronto
 
@@ -37,34 +37,31 @@ Atualizado em 16/11/2026, 02:45 UTC (15/11, 23:45 em Brasília).
     Quem já usa o estilo Mac recebe o vidro novo no login seguinte (a marca `.matsu-vidro`
     guarda o gerador).
   - Testes: `node tests/test_barra_avisos.js` (27) e `bash tests/test_matsu.sh` (208).
-  - **Ainda NÃO está no estável.** Commits 78ac498, ab45085 e os dois de 16/11.
+  - **Já está no estável** (`:estavel` e `:27`, normal e NVIDIA), solto "calado" em
+    16/11/2026, 04:12 UTC, com o fluxo `atualizar-estavel.yml` (imagem do commit 56ba1f7).
+    Print da VM conferido antes (`13d-aviso-estilo-mac.png`, ramo `prints`, commit
+    d762347): só os dois cartões do Matsu no canto de cima, à direita, com o vidro da
+    doca, e nenhum aviso do KDE no canto esquerdo; a lista do relógio (print 29), a
+    bandeja e a central continuam funcionando sem a peça do KDE. Os digests de `:teste`,
+    `:estavel` e `:27` ficaram iguais nas duas imagens. Os prints foram mandados ao Kaiky.
 
-## O que falta fazer agora (nesta ordem)
+## O que falta fazer agora
 
-1. Esperar o "Montar imagem" (uns 20 min) e o "Testar e tirar prints" (uns 95 min) do
-   último commit da `main`. Os prints vão para o ramo `prints` (pasta `ultimo/`).
-   O print do ab45085 (16/11, 03:08 UTC) ainda mostrou o aviso do KDE no canto de cima,
-   à esquerda, como esperado: na VM a conta é nova. A montagem do 56ba1f7 já tirou a
-   peça do KDE das duas imagens (linha "Peça de avisos do KDE fora da imagem" no registro).
-   O teste do ab45085 foi cortado nos 100 minutos (faltou só o último print); o limite
-   do fluxo subiu para 130.
-2. Olhar o print `13d-aviso-estilo-mac.png`: devem aparecer **só** os dois cartões do
-   Matsu no canto de cima, à direita ("Atualização pronta" e "Ana" com Responder/Ignorar),
-   **com o vidro transparente da doca** (o papel de parede aparece por trás, como na doca),
-   e **nenhum** aviso do KDE no canto de cima, à esquerda. Conferir também o
-   `29-relogio-notificacoes-e-calendario.png` (a lista do relógio continua funcionando sem
-   a peça do KDE) e, no registro da montagem, a linha "Peça de avisos do KDE fora da imagem".
-   - Se os cartões do Matsu não aparecerem: a peça do KDE fazia falta para alguma coisa;
-     tirar o trecho do `build.sh` e voltar ao plano de reiniciar a área de trabalho uma vez
-     quando mudar alguma bandeja (`systemctl --user restart plasma-plasmashell.service`).
-   - Se o texto do aviso ficar difícil de ler no vidro fino: subir só o vidro "sem
-     desfoque" dos avisos em `gerar.py` (a VM não tem desfoque; o PC com placa de vídeo tem).
-3. Com o print certo: rodar o fluxo **"Atualizar estável sem versão nova"**
-   (`atualizar-estavel.yml`, campo `confirmar` = `ATUALIZAR`). Ele copia `:teste` para
-   `:estavel` e `:27` (normal e NVIDIA), sem Release, sem ISO e sem aviso. Conferir os
-   digests (token anônimo de `ghcr.io/token` e HEAD em
-   `/v2/kaikyolf29-hub/<imagem>/manifests/<tag>`).
-4. Mandar os prints ao Kaiky (os da VM são o sistema de verdade).
+Nada pendente dos avisos do Mac: está tudo no estável. Para lembrar:
+
+- Quem já usa o estilo Mac recebe o vidro novo dos avisos na atualização automática e no
+  login seguinte.
+- Os avisos usam o vidro fino da doca. No PC com placa de vídeo o desfoque ajuda a ler por
+  cima de janelas; se o Kaiky achar difícil de ler, subir só o vidro dos avisos em
+  `vidro/gerar.py` (no bloco `if opcoes.mac:`).
+- Os balões da barra de cima do Mac (bandeja, calendário, volume) ficaram com o vidro de
+  antes. Se o Kaiky quiser igual à doca também, é trocar as pastas `solid/dialogs` no
+  mesmo bloco.
+- O fluxo de prints agora tem limite de 130 minutos (era 100 e cortou um teste).
+- Para conferir os canais: token anônimo de `ghcr.io/token` e HEAD em
+  `/v2/kaikyolf29-hub/<imagem>/manifests/<tag>` (`teste`, `estavel`, `27`).
+- Há um pedido automático do Dependabot aberto (kaikyolf29-hub/Matsu-OS#2, actions/checkout
+  5 para 7). Ninguém mexeu nele.
 
 ## Depois disso
 
