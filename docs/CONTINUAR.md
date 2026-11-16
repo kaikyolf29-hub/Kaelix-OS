@@ -45,7 +45,7 @@ Atualizado em 16/11/2026, 07:30 UTC (04:30 em Brasília).
     bandeja e a central continuam funcionando sem a peça do KDE. Os digests de `:teste`,
     `:estavel` e `:27` ficaram iguais nas duas imagens. Os prints foram mandados ao Kaiky.
 
-## Em andamento: a peça aberta na barra (pílula no lugar do bloco)
+## Feito: a peça aberta na barra (pílula no lugar do bloco), já no estável
 
 Pedido do Kaiky em 16/11 (com um recorte do print 29): com o relógio aberto aparecia
 "uma outra coisa transparente" atrás do arredondado bonito, e o mesmo na esquerda (menu).
@@ -55,10 +55,10 @@ Pedido do Kaiky em 16/11 (com um recorte do print 29): com o relógio aberto apa
   da altura inteira da ilha. Quem desenha: `CompactApplet.qml` (toda peça da barra) e a
   bandeja (`CurrentItemHighLight.qml`). O menu, a central e o relógio do Matsu ainda
   desenhavam a pílula deles por cima: daí as duas formas.
-- **O que mudou** (ainda NÃO está no estável):
-  - `vidro/gerar.py` agora gera o `widgets/tabbar.svg` (`abas()`): na barra de baixo e
-    nas de pé, uma pílula com folga em volta (36 de altura numa ilha de 48, igual à da
-    central); na barra fina de cima do Mac, uma pílula de 22. Não existe mais a peça
+- **O que mudou** (commit 1ff5572):
+  - `vidro/gerar.py` gera o `widgets/tabbar.svg` (`abas()`): na barra de baixo e nas de
+    pé, uma pílula com folga em volta (36 de altura numa ilha de 48, igual à da central);
+    na barra fina de cima do Mac, uma pílula de 22. Não existe mais a peça
     `north-active-tab`: a barra de cima cai em `active-tab` e as abas de dentro dos
     balões (Dias, Meses, Anos) caem nas peças sem nome, que são o fundo suave de sempre.
   - O menu, a central e o relógio escondem o fundo do KDE (`blocoDoKde`, pela
@@ -70,25 +70,19 @@ Pedido do Kaiky em 16/11 (com um recorte do print 29): com o relógio aberto apa
     os arquivos do sistema têm sempre a mesma data e o Plasma poderia guardar o desenho velho.
   - Testes: `bash tests/test_matsu.sh` (226). Prints novos na VM: `13e-relogio-aberto-estilo-mac`,
     `13f-bandeja-aberta-estilo-mac` e `29b-seguranca-aberta-na-bandeja`.
-- **Conferido num teste aqui** (contêiner da imagem `:teste`, Plasma 6.8.2, sem placa de
-  vídeo, então sem foto da tela): as peças do tema desenhadas pelo KSvg da imagem (pílula
-  nas barras, abas dos balões iguais) e, com o Plasma rodando, o fundo do KDE fica
-  escondido com o menu, a central e o relógio abertos. A prévia foi mandada ao Kaiky
-  dizendo que é teste.
+- **Prints da VM do 1ff5572 conferidos** (16/11, 20:14 UTC): `04d` (menu), `19` e `22`
+  (central), `26` (setinha da bandeja: uma pílula só, da altura da pílula da central),
+  `29` (relógio: só a pílula; aba "Dias" igual a antes), `29b` (pílula só atrás do
+  escudo), `13e` e `13f` (barra fina do Mac). Nenhum erro das peças do Matsu no registro.
+- **No estável:** "Atualizar estável sem versão nova" rodado em 16/11/2026, 20:16 UTC
+  (rodada 4); os digests de `:teste`, `:estavel` e `:27` ficaram iguais nas duas
+  imagens. Os prints foram mandados ao Kaiky.
 
-## O que falta fazer agora (nesta ordem)
+## O que falta fazer agora
 
-1. Esperar o "Montar imagem" e o "Testar e tirar prints" do commit desta mudança.
-2. Olhar os prints: `04d-menu` (sem bloco atrás do logo e da busca), `19` e `22` (central),
-   `26-bandeja-mostrar-mais` (uma pílula atrás dos ícones da bandeja, da altura da pílula
-   da central), `29` (relógio: só a pílula; a aba "Dias" igual a antes), `29b` (pílula só
-   atrás do escudo) e `13e`/`13f` (estilo Mac, barra fina).
-   - Se a pílula da bandeja ficar fora do lugar, as medidas são `ABERTA` e `ABERTA_FINA`
-     em `gerar.py` (raio, folga na espessura, folga no comprimento, força).
-   - Se a aba "Dias" do calendário sumir, o KDE mudou a regra das peças sem nome: voltar a
-     gerar `north-active-tab` igual a `ABA`.
-3. Com os prints certos: "Atualizar estável sem versão nova" (`atualizar-estavel.yml`,
-   `confirmar` = `ATUALIZAR`), conferir os digests e mandar os prints ao Kaiky.
+Nada pendente deste pedido. Se o Kaiky pedir ajuste na pílula da bandeja, as medidas são
+`ABERTA` e `ABERTA_FINA` em `gerar.py` (raio, folga na espessura, folga no comprimento,
+força). Na setinha aberta, a pílula da bandeja fica a uns 3 pontos da pílula da central.
 
 Para lembrar, dos avisos do Mac (já no estável):
 
