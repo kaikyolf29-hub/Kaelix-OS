@@ -333,15 +333,23 @@ rm -rf "$VIDRO"
 echo "vidro do Mac nos balões"
 BAL="$VIDRO/translucent/dialogs/background.svg"
 run barra mac
-check "no estilo Mac, os balões (avisos, bandeja) ganham o vidro do Mac" bash -c "grep -qF 'vidro do Mac' '$BAL' && grep -qF 'A16,16' '$BAL' && grep -qF 'mac=1' '$VIDRO/.matsu-vidro'"
+check "no estilo Mac, os balões (avisos, bandeja) ganham o vidro do Mac" bash -c "grep -qF 'vidro do Mac' '$BAL' && grep -qF 'A16,16' '$VIDRO/translucent/solid/dialogs/background.svg' && grep -qF 'mac=1' '$VIDRO/.matsu-vidro'"
 check "o Plasma relê o tema com os balões novos" bash -c "grep -n 'plasma-apply-desktoptheme' '$CALLS' | tr '\n' ' ' | grep -qE 'default.*Matsu'"
-check "os avisos e os balões da barra de cima ficam iguais" cmp -s "$BAL" "$VIDRO/translucent/solid/dialogs/background.svg"
+# Os avisos dos apps levam o mesmo vidro da doca, na mesma proporção (pedido do
+# criador em 16/11/2026): o miolo, o canto e a borda acesa iguais aos da doca.
+peca() { grep -F "<g id=\"$2\"" "$1" | sed 's/^<g [^>]*>//'; } # peca <folha> <nome>: o desenho de uma peça
+DOCA="$VIDRO/solid/widgets/panel-background.svg"
+check "os avisos do Mac têm a mesma transparência da doca" bash -c "[[ -n \$1 && \$1 == \$2 ]] && grep -qF 'opacity=\"0.32\"' <<<\"\$1\"" _ "$(peca "$BAL" center)" "$(peca "$DOCA" doca-center)"
+check "os avisos do Mac têm o canto, a borda acesa e o brilho da doca" bash -c "[[ -n \$1 && \$1 == \$2 ]] && grep -qF 'A18,18' <<<\"\$1\" && grep -qF 'opacity=\"0.8\"' <<<\"\$1\" && grep -qF 'url(#brilho' <<<\"\$1\"" _ "$(peca "$BAL" topleft | sed 's/brilho-doca/brilho/')" "$(peca "$DOCA" doca-topleft | sed 's/brilho-doca/brilho/')"
+check "os avisos do Mac são o mesmo vidro com e sem o desfoque (como a doca)" cmp -s "$BAL" "$VIDRO/dialogs/background.svg"
+check "os balões da barra de cima (bandeja, calendário) continuam com o vidro dos balões do Mac" bash -c "grep -qF 'opacity=\"0.64\"' '$VIDRO/translucent/solid/dialogs/background.svg' && grep -qF 'opacity=\"0.92\"' '$VIDRO/solid/dialogs/background.svg'"
 run barra mac
 check "escolher o Mac de novo não gera nem relê o tema à toa" bash -c "! grep -qF 'plasma-apply-desktoptheme' '$CALLS'"
 run vidro padrao --transparencia normal
 check "no Mac, o vidro padrão mantém os balões do Mac" grep -qF 'vidro do Mac' "$BAL"
 run vidro roxo --transparencia mais
 check "no Mac, a cor escolhida também vai nos balões do Mac" bash -c "grep -qF 'vidro do Mac' '$BAL' && grep -qF 'fill=\"#8b5cf6\"' '$BAL'"
+check "no Mac, com mais transparência, os avisos acompanham a doca" bash -c "[[ -n \$1 && \$1 == \$2 ]]" _ "$(peca "$BAL" center)" "$(peca "$DOCA" doca-center)"
 run barra fusao
 check "na fusão, os balões voltam ao vidro das ilhas (com a cor)" bash -c "! grep -qF 'vidro do Mac' '$BAL' && grep -qF 'fill=\"#8b5cf6\"' '$BAL' && grep -qF 'mac=0' '$VIDRO/.matsu-vidro'"
 run vidro padrao --transparencia normal

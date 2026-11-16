@@ -172,7 +172,8 @@ PlasmaCore.Dialog {
                         Layout.alignment: Qt.AlignTop
                         text: janela.situacao
                         font.pointSize: Kirigami.Theme.smallFont.pointSize
-                        opacity: 0.6
+                        // O vidro do aviso é fino como o da doca: o texto fica mais firme.
+                        opacity: 0.7
                     }
                 }
 
@@ -184,7 +185,7 @@ PlasmaCore.Dialog {
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                     maximumLineCount: 4
-                    opacity: 0.85
+                    opacity: 0.92
                     linkColor: Kirigami.Theme.linkColor
                     onLinkActivated: link => {
                         Qt.openUrlExternally(link);

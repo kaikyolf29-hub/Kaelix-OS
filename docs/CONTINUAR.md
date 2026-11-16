@@ -1,6 +1,6 @@
 # Onde parou (para continuar de outra conta)
 
-Atualizado em 16/11/2026, 01:10 UTC (15/11, 22:10 em Brasília).
+Atualizado em 16/11/2026, 02:45 UTC (15/11, 23:45 em Brasília).
 
 ## O que está pronto
 
@@ -21,23 +21,39 @@ Atualizado em 16/11/2026, 01:10 UTC (15/11, 22:10 em Brasília).
     antes da área de trabalho ligar (`etc/xdg/plasma-workspace/env/matsu-avisos.sh`) e
     depois dela ligar (`usr/libexec/matsu/matsu-avisos` + `barra/avisos.js`).
   - Ponto do app aberto na doca do Mac afastado da borda do vidro (`org.matsu.doca`).
-  - Testes: `node tests/test_barra_avisos.js` (22 testes).
-  - **Ainda NÃO está no estável.** Commits 78ac498 e o seguinte (este arquivo).
+  - **A peça de avisos do KDE sai da imagem** (`build_files/build.sh`, 16/11): uma bandeja
+    nova (primeiro login de uma conta ou troca de estilo da barra) liga essa peça sozinha
+    antes de o roteiro da barra desligar, e no Plasma 6.8 ela deixa os avisos dela na tela
+    até o fim da sessão (o aviso a mais no canto de cima, à esquerda, do print do 78ac498).
+    O ajuste do login só cobre quem já tinha a barra montada; na VM a conta é nova, então
+    ele não muda o print. Sem o arquivo `org.kde.plasma.notifications.so`, a bandeja nem
+    sabe que a peça existe. Nada mais usa esse arquivo: o "não perturbe", a lista e os
+    ajustes de cada app são da `libnotificationmanager`.
+  - **Avisos do Mac com o mesmo vidro da doca** (pedido do Kaiky em 16/11: "transparente
+    estilo vidro, daquela barra embaixo, na mesma proporção"): em `vidro/gerar.py --mac`, os
+    avisos (`dialogs/background`) usam a transparência da doca em cada nível (`NIVEIS_DOCA`,
+    32% no normal), a borda acesa, o brilho, o canto (18) e a sombra dela. Os balões da
+    barra de cima (bandeja, calendário, volume) continuam com o vidro dos balões do Mac.
+    Quem já usa o estilo Mac recebe o vidro novo no login seguinte (a marca `.matsu-vidro`
+    guarda o gerador).
+  - Testes: `node tests/test_barra_avisos.js` (27) e `bash tests/test_matsu.sh` (208).
+  - **Ainda NÃO está no estável.** Commits 78ac498, ab45085 e os dois de 16/11.
 
 ## O que falta fazer agora (nesta ordem)
 
 1. Esperar o "Montar imagem" (uns 20 min) e o "Testar e tirar prints" (uns 95 min) do
    último commit da `main`. Os prints vão para o ramo `prints` (pasta `ultimo/`).
 2. Olhar o print `13d-aviso-estilo-mac.png`: devem aparecer **só** os dois cartões do
-   Matsu no canto de cima, à direita ("Atualização pronta" e "Ana" com Responder/Ignorar).
-   No build 78ac498 apareceu também um aviso do KDE no canto de cima, à esquerda: a peça
-   do KDE tinha carregado no começo da sessão e, no Plasma 6.8, ela deixa os avisos dela
-   ligados até o fim da sessão (singleton `Globals` do applet de notificações). O
-   `matsu-avisos.sh` do login foi feito para isso.
-   - Se o aviso do KDE ainda aparecer (a primeira sessão de uma conta nova monta a barra
-     padrão do KDE antes da barra do Matsu): fazer o `matsu-avisos` reiniciar a área de
-     trabalho uma vez quando mudar alguma bandeja
-     (`systemctl --user restart plasma-plasmashell.service`), testar e mandar de novo.
+   Matsu no canto de cima, à direita ("Atualização pronta" e "Ana" com Responder/Ignorar),
+   **com o vidro transparente da doca** (o papel de parede aparece por trás, como na doca),
+   e **nenhum** aviso do KDE no canto de cima, à esquerda. Conferir também o
+   `29-relogio-notificacoes-e-calendario.png` (a lista do relógio continua funcionando sem
+   a peça do KDE) e, no registro da montagem, a linha "Peça de avisos do KDE fora da imagem".
+   - Se os cartões do Matsu não aparecerem: a peça do KDE fazia falta para alguma coisa;
+     tirar o trecho do `build.sh` e voltar ao plano de reiniciar a área de trabalho uma vez
+     quando mudar alguma bandeja (`systemctl --user restart plasma-plasmashell.service`).
+   - Se o texto do aviso ficar difícil de ler no vidro fino: subir só o vidro "sem
+     desfoque" dos avisos em `gerar.py` (a VM não tem desfoque; o PC com placa de vídeo tem).
 3. Com o print certo: rodar o fluxo **"Atualizar estável sem versão nova"**
    (`atualizar-estavel.yml`, campo `confirmar` = `ATUALIZAR`). Ele copia `:teste` para
    `:estavel` e `:27` (normal e NVIDIA), sem Release, sem ISO e sem aviso. Conferir os

@@ -385,6 +385,14 @@ NIVEIS_BALAO_MAC = {"mais": (0.50, 0.86), "normal": (0.64, 0.92), "menos": (0.82
 BORDA_BALAO_MAC = (0.46, 0.22, 0.26)    # a linha clara: cima, lados, baixo
 BRILHO_BALAO_MAC = 0.12
 MARGEM_BALAO_MAC = 6                    # o canto mais redondo pede um pouco mais de folga dentro
+# Os avisos dos apps no estilo Mac levam o mesmo vidro da doca, na mesma
+# proporção (pedido do criador em 16/11/2026): a mesma transparência em cada
+# nível (NIVEIS_DOCA), a mesma borda acesa, o mesmo brilho em cima, o mesmo
+# canto e a mesma sombra. Como na doca, é o mesmo desenho com e sem o
+# desfoque; no PC com placa de vídeo, o que fica atrás do aviso ainda sai
+# desfocado, e o texto continua fácil de ler. Os balões que saem da barra de
+# cima (bandeja, calendário, volume) têm muito texto e continuam com o vidro
+# dos balões do Mac, acima.
 
 
 def cabecalho(r=RB, cobre=0.75):
@@ -484,23 +492,29 @@ def main():
               "translucent/solid/dialogs": (balao_vidro, 0.18, 0.26), "solid/dialogs": (balao_sem, 0.14, 0.26),
               "opaque/dialogs": (1, 0.12, 0)}
     rb, margem, luz, nome_balao, cobre = RB, 4, 0, "Fundo dos balões", 0.75
+    proprios = {}   # balões com desenho só deles: pasta -> (raio, brilho, nome)
     if opcoes.mac:
-        # Os avisos dos apps não saem de barra nenhuma (usam "dialogs"); os da
-        # bandeja e do calendário saem da barra de cima (usam "solid/dialogs"):
-        # todos com o mesmo vidro do Mac.
+        # Os avisos dos apps não saem de barra nenhuma (usam "dialogs"): levam o
+        # vidro da doca. Os da bandeja e do calendário saem da barra de cima
+        # (usam "solid/dialogs"): levam o vidro dos balões do Mac.
         vidro_mac, sem_mac = NIVEIS_BALAO_MAC[opcoes.transparencia]
         if TINTA:
             # Com uma cor escolhida, o vidro não fica mais claro que o das ilhas.
             vidro_mac, sem_mac = max(vidro_mac, balao_vidro - 0.06), max(sem_mac, balao_sem - 0.02)
-        baloes = {"translucent/dialogs": (vidro_mac, BORDA_BALAO_MAC, 0.26), "dialogs": (sem_mac, BORDA_BALAO_MAC, 0.26),
+        vidro_aviso = NIVEIS_DOCA[opcoes.transparencia]
+        baloes = {"translucent/dialogs": (vidro_aviso, BORDA_DOCA, SOMBRA_DOCA), "dialogs": (vidro_aviso, BORDA_DOCA, SOMBRA_DOCA),
                   "translucent/solid/dialogs": (vidro_mac, BORDA_BALAO_MAC, 0.26), "solid/dialogs": (sem_mac, BORDA_BALAO_MAC, 0.26),
                   "opaque/dialogs": (1, 0.12, 0)}
         rb, margem, luz, nome_balao, cobre = RB_MAC, MARGEM_BALAO_MAC, BRILHO_BALAO_MAC, "Fundo dos balões (vidro do Mac)", 0.30
+        # Os avisos (e os outros balões soltos, como o do volume) com o vidro da doca.
+        for pasta in ("translucent/dialogs", "dialogs"):
+            proprios[pasta] = (R_DOCA, BRILHO_DOCA, "Fundo dos avisos (vidro do Mac, o mesmo da doca)")
     for pasta, (op, borda, somb) in baloes.items():
         os.makedirs(os.path.join(raiz, pasta), exist_ok=True)
-        brilho = luz if op < 1 else 0
+        r, brilho, nome = proprios.get(pasta, (rb, luz, nome_balao))
+        brilho = brilho if op < 1 else 0
         with open(os.path.join(raiz, pasta, "background.svg"), "w") as f:
-            f.write(painel(op, borda, somb, r=rb, mv=margem, mh=margem, grosso=False, nome=nome_balao, brilho=brilho))
+            f.write(painel(op, borda, somb, r=r, mv=margem, mh=margem, grosso=False, nome=nome, brilho=brilho))
     with open(os.path.join(raiz, "widgets", "plasmoidheading.svg"), "w") as f:
         f.write(cabecalho(rb, cobre))
     with open(os.path.join(raiz, "widgets", "tooltip.svg"), "w") as f:
