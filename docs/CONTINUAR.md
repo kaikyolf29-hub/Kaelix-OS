@@ -43,6 +43,11 @@ Atualizado em 16/11/2026, 02:45 UTC (15/11, 23:45 em Brasília).
 
 1. Esperar o "Montar imagem" (uns 20 min) e o "Testar e tirar prints" (uns 95 min) do
    último commit da `main`. Os prints vão para o ramo `prints` (pasta `ultimo/`).
+   O print do ab45085 (16/11, 03:08 UTC) ainda mostrou o aviso do KDE no canto de cima,
+   à esquerda, como esperado: na VM a conta é nova. A montagem do 56ba1f7 já tirou a
+   peça do KDE das duas imagens (linha "Peça de avisos do KDE fora da imagem" no registro).
+   O teste do ab45085 foi cortado nos 100 minutos (faltou só o último print); o limite
+   do fluxo subiu para 130.
 2. Olhar o print `13d-aviso-estilo-mac.png`: devem aparecer **só** os dois cartões do
    Matsu no canto de cima, à direita ("Atualização pronta" e "Ana" com Responder/Ignorar),
    **com o vidro transparente da doca** (o papel de parede aparece por trás, como na doca),

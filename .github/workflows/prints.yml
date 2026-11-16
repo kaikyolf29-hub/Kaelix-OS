@@ -30,7 +30,9 @@ jobs:
   vm:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
-    timeout-minutes: 100
+    # O teste leva uns 95 minutos; quando o GitHub demora a baixar a imagem,
+    # passava dos 100 e era cortado antes do último print (16/11/2026).
+    timeout-minutes: 130
     steps:
       - uses: actions/checkout@v5
 
