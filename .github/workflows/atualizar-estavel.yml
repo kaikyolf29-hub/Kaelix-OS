@@ -34,7 +34,7 @@ jobs:
     if: inputs.confirmar == 'ATUALIZAR' && github.actor == github.repository_owner
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: sigstore/cosign-installer@v3
         with:

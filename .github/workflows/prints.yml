@@ -34,7 +34,7 @@ jobs:
     # passava dos 100 e era cortado antes do último print (16/11/2026).
     timeout-minutes: 130
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Preparar nomes
         env:
