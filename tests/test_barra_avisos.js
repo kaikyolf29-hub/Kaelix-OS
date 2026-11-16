@@ -107,5 +107,26 @@ confere("a janela do aviso é pedida de novo ao mudar de lugar (no Wayland)", /r
 confere("o \"não perturbe\" do relógio vale para os avisos", /Server[\s\S]*property: "inhibited"/.test(avisos));
 confere("\"Mostrar notificações\" abre o balão do relógio", /onShowNotificationsRequested/.test(avisos) && /mostrarLista\.connect/.test(principal));
 
+// Antes da área de trabalho ligar (login): a peça do KDE sai do arquivo das barras.
+// Se ela carregar uma vez, os avisos dela ficam ligados até o fim da sessão.
+const os = require("os");
+const { execFileSync } = require("child_process");
+const casa = fs.mkdtempSync(path.join(os.tmpdir(), "matsu-avisos-"));
+fs.mkdirSync(path.join(casa, ".config"));
+const arq = path.join(casa, ".config", "plasma-org.kde.plasma.desktop-appletsrc");
+const antes = "[Containments][2][Applets][5][Configuration][General]\nextraItems=org.kde.plasma.clipboard," + KDE + "\nknownItems=org.kde.plasma.clipboard\n\n[Containments][2][Applets][6]\nplugin=org.matsu.relogio\n\n[Containments][3][General]\nextraItems=" + KDE + "\n";
+const login = path.join(RAIZ, "etc", "xdg", "plasma-workspace", "env", "matsu-avisos.sh");
+fs.writeFileSync(arq, antes);
+execFileSync("sh", [login], { env: { HOME: casa, PATH: process.env.PATH } });
+let depois = fs.readFileSync(arq, "utf8");
+confere("no login, a peça do KDE sai das bandejas antes de carregar", !/extraItems=.*notifications/.test(depois) && /extraItems=org\.kde\.plasma\.clipboard\n/.test(depois), depois);
+confere("no login, ela entra nas conhecidas (também onde não havia a lista)", (depois.match(/knownItems=[^\n]*org\.kde\.plasma\.notifications/g) || []).length === 2, depois);
+execFileSync("sh", [login], { env: { HOME: casa, PATH: process.env.PATH } });
+confere("no login seguinte, não muda nada", fs.readFileSync(arq, "utf8") === depois);
+fs.writeFileSync(arq, antes.replace("plugin=org.matsu.relogio", "plugin=org.kde.plasma.digitalclock"));
+execFileSync("sh", [login], { env: { HOME: casa, PATH: process.env.PATH } });
+confere("no login, sem o relógio do Matsu, não mexe nas barras", fs.readFileSync(arq, "utf8") === antes.replace("plugin=org.matsu.relogio", "plugin=org.kde.plasma.digitalclock"));
+fs.rmSync(casa, { recursive: true, force: true });
+
 console.log(`\n${passou} passaram, ${falhou} falharam`);
 process.exit(falhou ? 1 : 0);
