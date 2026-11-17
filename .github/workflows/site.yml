@@ -45,7 +45,7 @@ jobs:
             if [[ ! -f "$f" ]]; then echo "falta $f"; exit 1; fi
           done
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
       - id: publicar
